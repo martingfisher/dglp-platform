@@ -15,5 +15,6 @@ require __DIR__ . '/test-brand.php';
 require __DIR__ . '/test-logo.php';
 require __DIR__ . '/test-schema-fields.php';
 require __DIR__ . '/test-planner.php';
+require __DIR__ . '/test-digest.php';
 
 Harness::finish();
