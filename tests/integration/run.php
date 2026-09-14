@@ -23,6 +23,8 @@ use DGL\Org\Trust;
 use DGL\PostTypes;
 use DGL\Roles;
 use DGL\Statuses;
+use DGL\Workflow\StateMachine;
+use DGL\Workflow\Transition;
 
 $passed   = 0;
 $failures = [];
@@ -300,6 +302,101 @@ $ok( count( Log::for_org( $org_b ) ) === 0, 'and never sees another organisation
 
 $hash = $item_history[0]['actor_ip_hash'];
 $ok( null === $hash || 64 === strlen( (string) $hash ), 'the actor address is stored as a hash or not at all' );
+
+
+/* ------------------------------------------------------- workflow, end to end */
+
+$group( 'Workflow: the moderated path' );
+
+
+$w_item = $make_item( $org_a, $alice, Statuses::DRAFT );
+$future_start = gmdate( 'Y-m-d H:i:s', strtotime( '+30 days 10:00' ) );
+$future_end   = gmdate( 'Y-m-d H:i:s', strtotime( '+30 days 15:00' ) );
+update_post_meta( $w_item, 'dgl_start_datetime', $future_start );
+update_post_meta( $w_item, 'dgl_end_datetime', $future_end );
+Access::flush_cache();
+
+$r = Transition::apply( $w_item, StateMachine::SUBMIT, $alice );
+$ok( true === $r, 'Alice can submit her draft' );
+$ok( Statuses::PENDING === get_post_status( $w_item ), 'it lands in the queue' );
+$ok( '' !== (string) get_post_meta( $w_item, Meta::ITEM_SUBMITTED_AT, true ), 'the submission time is stamped' );
+$ok( $future_end === get_post_meta( $w_item, Meta::ITEM_EXPIRES_AT, true ), 'expiry was computed from the event end time' );
+$ok( in_array( $w_item, ItemsTable::queue(), true ), 'and it appears in the moderation queue' );
+
+$r = Transition::apply( $w_item, StateMachine::SUBMIT, $alice );
+$ok( is_wp_error( $r ), 'submitting twice is refused' );
+$ok( is_wp_error( $r ) && 'dgl_illegal_transition' === $r->get_error_code(), 'and says why' );
+
+$r = Transition::apply( $w_item, StateMachine::APPROVE, $bella );
+$ok( is_wp_error( $r ), 'a member of another organisation cannot approve it' );
+$ok( Statuses::PENDING === get_post_status( $w_item ), 'and the status is untouched by the attempt' );
+
+$r = Transition::apply( $w_item, StateMachine::REJECT, $mod );
+$ok( is_wp_error( $r ) && 'dgl_note_required' === $r->get_error_code(), 'rejecting without a reason is refused' );
+$ok( Statuses::PENDING === get_post_status( $w_item ), 'and nothing changed' );
+
+$r = Transition::apply( $w_item, StateMachine::APPROVE, $mod );
+$ok( true === $r, 'the moderator can approve it' );
+$ok( Statuses::LIVE === get_post_status( $w_item ), 'it goes live' );
+$ok( '' !== (string) get_post_meta( $w_item, Meta::ITEM_APPROVED_AT, true ), 'the approval time is stamped' );
+
+$history = Log::for_object( 'item', $w_item );
+$actions = array_column( $history, 'action' );
+$ok( [ 'submit', 'approve' ] === $actions, 'the audit trail records both steps in order' );
+
+$group( 'Workflow: trust, and losing it' );
+
+$org_t  = $make_org( 'Trusted Org', Meta::ORG_APPROVED, Trust::TRUSTED );
+$tina   = $make_member( 'dgl_tina', $org_t, 'owner' );
+$t_item = $make_item( $org_t, $tina, Statuses::DRAFT );
+Access::flush_cache();
+
+$ok( true === Transition::apply( $t_item, StateMachine::SUBMIT, $tina ), 'a trusted member can submit' );
+$ok( Statuses::LIVE === get_post_status( $t_item ), 'and it publishes without waiting' );
+$ok( '' !== (string) get_post_meta( $t_item, Meta::ITEM_APPROVED_AT, true ), 'approval time is stamped even though nobody approved it' );
+
+$r = Transition::apply( $t_item, StateMachine::TAKE_DOWN, $mod, 'Reported by a reader.' );
+$ok( true === $r, 'a moderator can take it down with a reason' );
+$ok( Statuses::PENDING === get_post_status( $t_item ), 'it returns to the queue rather than vanishing' );
+$ok( Trust::MODERATED === Trust::normalise( get_post_meta( $org_t, Meta::ORG_TRUST, true ) ), 'and the organisation loses its trust automatically' );
+
+$trust_log = Log::for_org( $org_t );
+$ok( in_array( 'trust_revoked', array_column( $trust_log, 'action' ), true ), 'the trust change is audited' );
+
+Access::flush_cache();
+$t_item2 = $make_item( $org_t, $tina, Statuses::DRAFT );
+$ok( true === Transition::apply( $t_item2, StateMachine::SUBMIT, $tina ), 'the same member can still submit' );
+$ok( Statuses::PENDING === get_post_status( $t_item2 ), 'but now waits in the queue like everyone else' );
+
+$group( 'Workflow: expiry runs itself' );
+
+$e_item = $make_item( $org_a, $alice, Statuses::DRAFT );
+update_post_meta( $e_item, 'dgl_start_datetime', '2020-01-01 10:00:00' );
+update_post_meta( $e_item, 'dgl_end_datetime', '2020-01-01 12:00:00' );
+Access::flush_cache();
+Transition::apply( $e_item, StateMachine::SUBMIT, $alice );
+Transition::apply( $e_item, StateMachine::APPROVE, $mod );
+$ok( Statuses::LIVE === get_post_status( $e_item ), 'a past-dated event is live until the sweep runs' );
+
+$expired = Transition::run_expiry_sweep();
+$ok( $expired >= 1, 'the sweep expired at least one item' );
+$ok( Statuses::EXPIRED === get_post_status( $e_item ), 'the past-dated event came off the listings' );
+$ok( Statuses::LIVE === get_post_status( $w_item ), 'a future-dated event was left alone' );
+
+$group( 'Workflow: the system cannot act outside expiry' );
+
+$r = Transition::apply( $w_item, StateMachine::APPROVE, 0 );
+$ok( is_wp_error( $r ) && 'dgl_no_actor' === $r->get_error_code(), 'nothing approves itself' );
+
+$group( 'Index stays in step with the posts' );
+
+$row_status = $wpdb->get_var( $wpdb->prepare( 'SELECT status FROM ' . ItemsTable::name() . ' WHERE post_id = %d', $e_item ) );
+$ok( Statuses::EXPIRED === $row_status, 'the index followed the expiry' );
+
+$rebuilt = \DGL\Index\Sync::rebuild_all();
+$ok( $rebuilt > 0, 'a full reindex rebuilds every item (' . $rebuilt . ')' );
+$row_status_after = $wpdb->get_var( $wpdb->prepare( 'SELECT status FROM ' . ItemsTable::name() . ' WHERE post_id = %d', $e_item ) );
+$ok( $row_status === $row_status_after, 'and the rebuilt row matches what was already there' );
 
 /* ----------------------------------------------------------------- report */
 

@@ -27,6 +27,7 @@ final class Install {
 	public static function activate(): void {
 		self::migrate();
 		Roles::install();
+		self::schedule_expiry();
 
 		// Post types and taxonomies must exist before their rewrite rules mean anything.
 		PostTypes::register();
@@ -40,7 +41,25 @@ final class Install {
 	 * throw away the audit trail.
 	 */
 	public static function deactivate(): void {
+		wp_clear_scheduled_hook( Plugin::EXPIRY_HOOK );
 		flush_rewrite_rules();
+	}
+
+	/**
+	 * Run the expiry sweep hourly.
+	 *
+	 * Hourly rather than daily because an event that finished at 15:00 looking
+	 * live until midnight is a listing that sends somebody to a closed door.
+	 * The sweep is batched and indexed, so an hourly run that finds nothing
+	 * costs almost nothing.
+	 *
+	 * This needs a real system cron behind it. On WordPress's own pseudo-cron a
+	 * quiet site simply will not fire it.
+	 */
+	public static function schedule_expiry(): void {
+		if ( ! wp_next_scheduled( Plugin::EXPIRY_HOOK ) ) {
+			wp_schedule_event( time() + HOUR_IN_SECONDS, 'hourly', Plugin::EXPIRY_HOOK );
+		}
 	}
 
 	/**

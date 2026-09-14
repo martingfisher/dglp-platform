@@ -10,6 +10,9 @@ declare( strict_types=1 );
 namespace DGL;
 
 use DGL\Access\Access;
+use DGL\Index\Sync;
+use DGL\Workflow\Transition;
+use DGL\Schema\FieldRegistry;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -31,10 +34,14 @@ final class Plugin {
 		self::$booted = true;
 
 		add_action( 'init', [ self::class, 'register_content' ], 5 );
+		add_action( 'init', [ FieldRegistry::class, 'register_meta' ], 6 );
 		add_action( 'init', [ self::class, 'load_textdomain' ] );
 		add_action( 'admin_init', [ Install::class, 'maybe_migrate' ] );
 
 		Access::init();
+		Sync::init();
+
+		add_action( self::EXPIRY_HOOK, [ Transition::class, 'run_expiry_sweep' ] );
 	}
 
 	/**
@@ -45,6 +52,11 @@ final class Plugin {
 		Statuses::register();
 		Taxonomies::register();
 	}
+
+	/**
+	 * Cron hook name for the expiry sweep.
+	 */
+	public const EXPIRY_HOOK = 'dgl_run_expiry_sweep';
 
 	public static function load_textdomain(): void {
 		load_plugin_textdomain( 'dgl-platform', false, dirname( plugin_basename( PLUGIN_FILE ) ) . '/languages' );
