@@ -30,8 +30,20 @@ final class Access {
 	/** @var array<int, UserContext> Per-request cache. */
 	private static array $user_cache = [];
 
-	/** Meta capability => policy action. */
+	/**
+	 * Meta capability => policy action.
+	 *
+	 * Core's `map_meta_cap()` resolves a post type's own capability names
+	 * internally and then fires the filter with the ORIGINAL request, so what
+	 * arrives here is `edit_post`, never `edit_dgl_item`. Both spellings are
+	 * mapped: the core ones because they are what WordPress actually asks, and
+	 * the post-type ones so a direct `current_user_can( 'edit_dgl_item', $id )`
+	 * reaches the same decision rather than quietly bypassing it.
+	 */
 	private const META_CAP_MAP = [
+		'edit_post'       => Policy::EDIT_ITEM,
+		'delete_post'     => Policy::DELETE_ITEM,
+		'read_post'       => Policy::VIEW_ITEM,
 		'edit_dgl_item'   => Policy::EDIT_ITEM,
 		'delete_dgl_item' => Policy::DELETE_ITEM,
 		'read_dgl_item'   => Policy::VIEW_ITEM,

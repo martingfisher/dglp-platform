@@ -40,15 +40,31 @@ organisations post as a body and their members cover for each other.
 
 ## Tests
 
-The pure-logic classes run without WordPress or a database:
+Two suites. Both have to pass.
+
+**Standalone** — the pure-logic classes, no WordPress and no database:
 
 ```
 php tests/run.php
 ```
 
-That covers cross-organisation isolation, the status lifecycle, trust levels, `dbDelta` schema
-formatting and WCAG contrast on every brand colour pair. Anything touching WordPress is covered by
-the integration suite that runs on staging.
+Covers the access policy, the status lifecycle, trust levels, transition planning, the field schema
+and its validation, `dbDelta` formatting, and WCAG contrast on every brand colour pair.
+
+**Integration** — real WordPress, real capability system, real `dbDelta`:
+
+```
+./bin/setup-test-wp.sh
+cd <target>/core && wp eval-file <plugin>/tests/integration/run.php
+```
+
+The setup script builds a throwaway WordPress on SQLite, so it needs neither a database server nor a
+web server. It is repeatable: the suite clears its own fixtures before each run.
+
+This suite is not optional decoration. It caught a live bug the standalone tests could not see: the
+`map_meta_cap` filter receives `edit_post`, never the post type's own `edit_dgl_item`, so the
+original mapping never fired and WordPress quietly fell back to author-based permissions. That is
+the exact class of defect that ships silently and leaks one organisation's drafts to another.
 
 ## Brand
 
