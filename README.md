@@ -1,0 +1,66 @@
+# DGLP Platform
+
+Member organisation accounts, content submission and a moderation workflow for
+[partnership.doinggoodleeds.org.uk](https://partnership.doinggoodleeds.org.uk).
+
+A self-contained WordPress plugin. No Advanced Custom Fields, no Gravity Forms, no WP Job Manager.
+It uses WordPress primitives throughout: custom post types, custom post statuses, roles and
+capabilities, taxonomies, cron and `wp_mail`.
+
+## What it does
+
+Verified member organisations submit News, Events, Training, Grants and Volunteering opportunities
+through a front-end dashboard. Nothing appears on the site until a moderator approves it. Members
+receive digest emails matching the content types and topics they asked for, daily, weekly or monthly.
+
+Twelve wireframes covering the member and moderator screens are in
+[`docs/wireframes/`](docs/wireframes/member-dashboard-wireframes.html) (open it in a browser, it is
+self-contained). The reasoning behind the build is in [`docs/architecture.md`](docs/architecture.md).
+
+## Status
+
+Phase 1a, foundations. Post types, statuses, roles, the access policy, the workflow state machine,
+trust levels, the items index and the audit log. No dashboard views, no submission wizard and no
+email yet.
+
+## Requirements
+
+PHP 8.2 or later, WordPress 6.4 or later. Target environment runs PHP 8.4 with a Blocksy child theme.
+
+## Two things worth knowing before you read the code
+
+**`src/Access/Policy.php` is the single gatekeeper.** Every permission decision in the plugin
+resolves there, and it is pure logic with no WordPress calls so it can be tested exhaustively.
+Organisation scoping is the highest risk in this build: one missed check leaks one member
+organisation's unpublished drafts to another. Nothing should ever compare organisation IDs by hand.
+
+**The organisation owns the content, not the author.** WordPress's default capability mapping would
+stop a colleague editing a teammate's submission. `src/Access/Access.php` overrides that, because
+organisations post as a body and their members cover for each other.
+
+## Tests
+
+The pure-logic classes run without WordPress or a database:
+
+```
+php tests/run.php
+```
+
+That covers cross-organisation isolation, the status lifecycle, trust levels, `dbDelta` schema
+formatting and WCAG contrast on every brand colour pair. Anything touching WordPress is covered by
+the integration suite that runs on staging.
+
+## Brand
+
+Colours and typography are read from the live site's Blocksy theme mods, not chosen here. The
+stylesheet consumes the `--theme-palette-color-N` custom properties Blocksy already emits, so a
+palette change in the customiser flows through without a code edit.
+
+One constraint to be aware of: the site's signature teal `#57b0b6` measures 2.53:1 against white and
+2.40:1 against the page background. It fails WCAG AA both ways, so it is used for borders, tints and
+rails only, never for text or a button fill. Deep navy `#2d3b6b` carries primary actions at 10.77:1.
+`tests/test-brand.php` enforces this.
+
+---
+
+Built by [Results You Can Measure](https://resultsyoucanmeasure.com).

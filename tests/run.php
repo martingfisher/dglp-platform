@@ -1,0 +1,16 @@
+<?php
+/**
+ * Runs the standalone suite. `php tests/run.php` from the plugin root.
+ *
+ * @package DGL
+ */
+
+declare( strict_types=1 );
+
+require __DIR__ . '/bootstrap.php';
+require __DIR__ . '/test-policy.php';
+require __DIR__ . '/test-state-machine.php';
+require __DIR__ . '/test-schema.php';
+require __DIR__ . '/test-brand.php';
+
+Harness::finish();

@@ -1,0 +1,166 @@
+/*
+ * DGLP Platform dashboard.
+ *
+ * Every colour here reads from the custom properties Blocksy already emits on
+ * the page, with the live palette hex as a fallback. Change the palette in the
+ * WordPress customiser and the dashboard follows, with no code edit. The
+ * fallbacks cover the two surfaces that render outside theme context: the
+ * standalone auth screens and the email templates.
+ *
+ * Source of the fallback values: wp option get theme_mods_blocksy-child.
+ * The status chip pairs are asserted against WCAG AA in tests/test-brand.php.
+ */
+
+.dgl-dash {
+	/* Palette */
+	--dgl-teal: var(--theme-palette-color-1, #57b0b6);
+	--dgl-teal-solid: var(--theme-palette-color-3, #1d6265);
+	--dgl-ink: var(--theme-palette-color-4, #1e3232);
+	--dgl-page: var(--theme-palette-color-5, #fdf8f0);
+	--dgl-white: var(--theme-palette-color-8, #ffffff);
+	--dgl-navy: var(--theme-palette-color-14, #2d3b6b);
+	--dgl-purple: var(--theme-palette-color-15, #5b6bae);
+	--dgl-surface: var(--theme-palette-color-18, #f4f6fb);
+	--dgl-danger: var(--theme-palette-color-10, #cc0053);
+
+	/*
+	 * Semantic roles. The teal is absent from every one of these on purpose:
+	 * at 2.53:1 on white it cannot carry text. It appears below as borders and
+	 * rails only.
+	 */
+	--dgl-primary: var(--dgl-navy);
+	--dgl-primary-text: var(--dgl-white);
+	--dgl-link: var(--dgl-purple);
+	--dgl-text: var(--dgl-ink);
+	--dgl-text-muted: color-mix(in srgb, var(--dgl-ink) 68%, var(--dgl-page));
+	--dgl-border: color-mix(in srgb, var(--dgl-ink) 14%, transparent);
+	--dgl-border-strong: color-mix(in srgb, var(--dgl-navy) 28%, transparent);
+	--dgl-focus: var(--dgl-purple);
+
+	/* Type */
+	--dgl-font: var(--theme-font-family, "Montserrat", system-ui, sans-serif);
+	--dgl-size: 18px;
+	--dgl-line: 1.65;
+	--dgl-weight-body: 400;
+	--dgl-weight-heading: 700;
+	--dgl-weight-button: 500;
+
+	/* Geometry */
+	--dgl-radius-button: 8px;
+	--dgl-radius-card: 20px;
+	--dgl-radius-field: 10px;
+	--dgl-field-border: 2px;
+	--dgl-field-height: 45px;
+
+	/* Rhythm */
+	--dgl-gap: 16px;
+	--dgl-gap-lg: 24px;
+	--dgl-pad-card: 24px;
+
+	font-family: var(--dgl-font);
+	font-size: var(--dgl-size);
+	line-height: var(--dgl-line);
+	color: var(--dgl-text);
+	background: var(--dgl-page);
+}
+
+/* ---- Status chips -------------------------------------------------------
+ * Backgrounds are the source palette colour mixed 88% into white; text is that
+ * colour darkened until it clears 4.5:1. Measured ratios are in the comments
+ * and asserted in the test suite.
+ * ------------------------------------------------------------------------- */
+
+.dgl-chip {
+	display: inline-flex;
+	align-items: center;
+	padding: 3px 10px;
+	border-radius: 999px;
+	font-size: 0.72em;
+	font-weight: 600;
+	line-height: 1.5;
+	white-space: nowrap;
+}
+
+.dgl-chip--draft    { background: #e4e6e6; color: #1e3232; } /* 10.76:1 */
+.dgl-chip--pending  { background: #fff7e8; color: #8f6c26; } /*  4.54:1 */
+.dgl-chip--live     { background: #eaf4e6; color: #387923; } /*  4.73:1 */
+.dgl-chip--changes  { background: #f9e0ea; color: #cc0053; } /*  4.57:1 */
+.dgl-chip--expired  { background: #e6e7ed; color: #2d3b6b; } /*  8.73:1 */
+.dgl-chip--archived { background: #ebedf5; color: #5767a7; } /*  4.60:1 */
+.dgl-chip--rejected { background: #ffede7; color: #b84925; } /*  4.61:1 */
+
+/* ---- Primitives --------------------------------------------------------- */
+
+.dgl-dash a {
+	color: var(--dgl-link);
+}
+
+.dgl-dash :is(a, button, input, select, textarea, [tabindex]):focus-visible {
+	outline: 2px solid var(--dgl-focus);
+	outline-offset: 2px;
+}
+
+.dgl-card {
+	background: var(--dgl-white);
+	border: 1px solid var(--dgl-border);
+	border-radius: var(--dgl-radius-card);
+	padding: var(--dgl-pad-card);
+}
+
+.dgl-button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-height: var(--dgl-field-height);
+	padding: 0 20px;
+	border: 0;
+	border-radius: var(--dgl-radius-button);
+	background: var(--dgl-primary);
+	color: var(--dgl-primary-text);
+	font: var(--dgl-weight-button) 15px / 1 var(--dgl-font);
+	cursor: pointer;
+}
+
+.dgl-button:hover {
+	background: color-mix(in srgb, var(--dgl-primary) 88%, #000);
+}
+
+.dgl-button--secondary {
+	background: transparent;
+	border: var(--dgl-field-border) solid var(--dgl-border-strong);
+	color: var(--dgl-primary);
+}
+
+.dgl-button--secondary:hover {
+	background: var(--dgl-surface);
+}
+
+.dgl-field {
+	width: 100%;
+	min-height: var(--dgl-field-height);
+	padding: 0 12px;
+	border: var(--dgl-field-border) solid var(--dgl-border);
+	border-radius: var(--dgl-radius-field);
+	background: var(--dgl-white);
+	color: var(--dgl-text);
+	font: var(--dgl-weight-body) 15px / var(--dgl-line) var(--dgl-font);
+}
+
+.dgl-field:focus {
+	border-color: var(--dgl-focus);
+}
+
+/* The one place the teal earns its keep: a non-text-bearing rail. */
+.dgl-nav__item--active {
+	border-inline-start: 3px solid var(--dgl-teal);
+	background: var(--dgl-surface);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.dgl-dash *,
+	.dgl-dash *::before,
+	.dgl-dash *::after {
+		animation-duration: 0.01ms !important;
+		transition-duration: 0.01ms !important;
+	}
+}
