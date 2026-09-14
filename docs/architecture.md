@@ -40,7 +40,7 @@ The legacy doinggoodleeds.org.uk site is out of scope: it comes down when this g
 | SmartCache | on, TTL 86400, **no exclusions** | on, TTL 86400, **no exclusions** |
 | CDN | **enabled**, Bunny, optimizer + WebP + minify on | disabled |
 | Redis | off | off |
-| Email | SMTP2GO **inactive** | — |
+| Email | SMTP2GO installed, **plugin inactive** (sending domain verified) | — |
 | Notable plugins | ACF free 6.8.10, Gravity Forms 3.1.1, Rank Math Pro, Wordfence, GreenShift, FileBird Pro | — |
 | Hosting country | uk | uk |
 
@@ -56,8 +56,9 @@ Server sizing is Martin's to change as load requires and is not treated as a con
    any dashboard route is reachable. This is a correctness and privacy bug, not a tuning task.
 2. **System cron.** Confirmed off. Enable it (Wordify supports a 15-minute interval) and set
    `DISABLE_WP_CRON`. Digests cannot run on pseudo-cron.
-3. **SMTP2GO** activated and keyed on partnership, and **the plan checked against projected volume**
-   (see the digest maths below). Do not assume the current tier covers it.
+3. **SMTP2GO credentials** on the sites, and **the plan checked against projected volume** (see the
+   digest maths below). The sending domain is already done, see Email below. Do not assume the
+   current tier covers the volume.
 4. **Commercial variation.** Volunteering as a fifth type and SSO are both beyond the signed £9,900
    Phase 1. Agree in writing before build starts.
 5. **`block_post_requests: true`** on the production CDN. Confirm the POST-based wizard reaches the
@@ -272,6 +273,24 @@ architectural one.
 
 ### Email at 5-10k users
 
+**Sending domain: already verified.** `doinggoodleeds.org.uk` is verified in SMTP2GO with DKIM
+(`s751102._domainkey`), return path (`em751102`) and tracking (`link.`) CNAMEs live in Cloudflare,
+tracking SSL issued 21 August 2026.
+
+Two things follow. SMTP2GO verifies the domain in the From address, not the machine sending, so
+**staging needs no separate registration**: it points at the same account with a From address on
+`@doinggoodleeds.org.uk`. And the verified domain is the apex, so if the From address is ever moved
+to `@partnership.doinggoodleeds.org.uk` that subdomain needs checking as its own verified sender
+first.
+
+Use an SMTP2GO **subaccount** for staging so its credentials, sending limits and statistics stay
+separate from production while sharing the verified domain. Staging also hard-routes every outbound
+message to one test inbox at the plugin level, so a test can never reach a real member. That is a
+code-level guard, not a matter of discipline.
+
+Click and open tracking runs through `link.doinggoodleeds.org.uk`. It is useful to DGLP, and it is
+processing personal data, so it belongs in the privacy notice rather than arriving unannounced.
+
 **Transactional** (submitted, approved, changes requested, rejected, invite, account approved):
 templated, `wp_mail`, intercepted by SMTP2GO. Modest volume.
 
@@ -405,7 +424,8 @@ Nothing is reported as working without evidence from these.
   SmartCache. This is the test that catches the exclusion bug.
 - **Security**: `/security-review` on the diff, plus a manual pass confirming every `$_POST` and
   `$_GET` handler has nonce, capability check, input sanitisation and output escaping.
-- **Email**: activate SMTP2GO, send one of each transactional template, confirm delivery and headers.
+- **Email**: activate the SMTP2GO plugin and key it, send one of each transactional template,
+  confirm delivery plus a passing DKIM signature in the received headers.
   Run the digest builder against seeded content and assert the item set matches the preference
   filters before any real send. Time a 1,000-recipient batch against the 30 second limit.
 - **Cron**: enable system cron, confirm `DISABLE_WP_CRON`, then `wp cron event list` and observe a
