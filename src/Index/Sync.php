@@ -37,6 +37,43 @@ final class Sync {
 		add_action( 'deleted_post', [ self::class, 'on_delete' ], 10, 1 );
 		add_action( 'trashed_post', [ self::class, 'on_delete' ], 10, 1 );
 		add_action( 'untrashed_post', [ self::class, 'on_save_id' ], 20, 1 );
+
+		/*
+		 * Meta is almost always written after wp_insert_post returns, so the row
+		 * written during save_post has no organisation on it yet and the item is
+		 * invisible to the organisation that owns it. Re-syncing when a mirrored
+		 * key changes closes that window without callers having to remember.
+		 */
+		add_action( 'added_post_meta', [ self::class, 'on_meta' ], 10, 3 );
+		add_action( 'updated_post_meta', [ self::class, 'on_meta' ], 10, 3 );
+		add_action( 'deleted_post_meta', [ self::class, 'on_meta' ], 10, 3 );
+	}
+
+	/**
+	 * Keys the index mirrors. A change to any of them makes the row stale.
+	 *
+	 * @return string[]
+	 */
+	public static function mirrored_keys(): array {
+		return [
+			Meta::ITEM_ORG,
+			Meta::ITEM_SUBMITTED_AT,
+			Meta::ITEM_APPROVED_AT,
+			Meta::ITEM_EXPIRES_AT,
+		];
+	}
+
+	/**
+	 * @param int|array<int> $meta_id  Ignored.
+	 * @param int            $post_id  The post the meta belongs to.
+	 * @param string         $meta_key Which key changed.
+	 */
+	public static function on_meta( int|array $meta_id, int $post_id, string $meta_key ): void {
+		if ( self::$syncing || ! in_array( $meta_key, self::mirrored_keys(), true ) ) {
+			return;
+		}
+
+		self::sync( $post_id );
 	}
 
 	/**

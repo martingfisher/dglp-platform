@@ -223,3 +223,29 @@ foreach ( [
 	$r = Validator::validate( [ $link ], [ 'link' => $in ] );
 	Harness::assert_same( $expected, $r['values']['link'] ?? null, '"' . $in . '" accepted as ' . $expected );
 }
+
+Harness::group( 'Meta registration defaults match their declared types' );
+
+/*
+ * Regression guard. WordPress logs a _doing_it_wrong for every registration
+ * whose default does not match its declared type, which on five content types
+ * meant seventeen notices on every single page load.
+ */
+foreach ( PostTypes::submittable() as $type ) {
+	foreach ( FieldRegistry::for_type( $type ) as $field ) {
+		$args    = $field->meta_args();
+		$default = $args['default'];
+
+		$matches = match ( $args['type'] ) {
+			'integer' => is_int( $default ),
+			'number'  => is_float( $default ) || is_int( $default ),
+			'boolean' => is_bool( $default ),
+			default   => is_string( $default ),
+		};
+
+		Harness::assert_true(
+			$matches,
+			sprintf( '%s.%s declares %s and defaults to %s', $type, $field->key, $args['type'], gettype( $default ) )
+		);
+	}
+}

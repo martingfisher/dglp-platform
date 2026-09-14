@@ -10,6 +10,7 @@ declare( strict_types=1 );
 namespace DGL;
 
 use DGL\Access\Access;
+use DGL\Dashboard\Router;
 use DGL\Index\Sync;
 use DGL\Workflow\Transition;
 use DGL\Schema\FieldRegistry;
@@ -40,6 +41,7 @@ final class Plugin {
 
 		Access::init();
 		Sync::init();
+		Router::init();
 
 		add_action( self::EXPIRY_HOOK, [ Transition::class, 'run_expiry_sweep' ] );
 	}

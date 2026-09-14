@@ -101,18 +101,33 @@ final readonly class Field {
 	 * @return array<string, mixed>
 	 */
 	public function meta_args(): array {
+		$type = $this->meta_type();
+
 		return [
-			'type'         => match ( $this->type ) {
-				self::NUMBER   => 'integer',
-				self::MONEY    => 'number',
-				self::CHECKBOX => 'boolean',
-				self::IMAGE    => 'integer',
-				default        => 'string',
-			},
+			'type'         => $type,
 			'single'       => true,
-			'default'      => self::CHECKBOX === $this->type ? false : '',
+			// The default has to match the declared type or WordPress logs a
+			// _doing_it_wrong on every single registration.
+			'default'      => match ( $type ) {
+				'integer' => 0,
+				'number'  => 0.0,
+				'boolean' => false,
+				default   => '',
+			},
 			'description'  => $this->label,
 			'show_in_rest' => false,
 		];
+	}
+
+	/**
+	 * The scalar type this field stores.
+	 */
+	public function meta_type(): string {
+		return match ( $this->type ) {
+			self::NUMBER, self::IMAGE => 'integer',
+			self::MONEY               => 'number',
+			self::CHECKBOX            => 'boolean',
+			default                   => 'string',
+		};
 	}
 }

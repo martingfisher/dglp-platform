@@ -398,6 +398,56 @@ $ok( $rebuilt > 0, 'a full reindex rebuilds every item (' . $rebuilt . ')' );
 $row_status_after = $wpdb->get_var( $wpdb->prepare( 'SELECT status FROM ' . ItemsTable::name() . ' WHERE post_id = %d', $e_item ) );
 $ok( $row_status === $row_status_after, 'and the rebuilt row matches what was already there' );
 
+
+$group( 'An item indexed before its organisation meta is written' );
+
+/*
+ * Regression guard. wp_insert_post fires save_post before the caller has had a
+ * chance to write dgl_org, so the first index row carries org_id 0. Without a
+ * re-sync on the meta write, that item is invisible to the organisation that
+ * owns it and stays that way, which is how a member ends up with a draft they
+ * can neither see nor finish.
+ */
+$late = wp_insert_post(
+	[
+		'post_type'   => PostTypes::EVENT,
+		'post_title'  => 'Indexed before its org was set',
+		'post_status' => Statuses::DRAFT,
+		'post_author' => $alice,
+	]
+);
+$drafts_before = ItemsTable::counts_for_org( $org_a )[ Statuses::DRAFT ] ?? 0;
+
+$ok( ! in_array( (int) $late, ItemsTable::for_org( $org_a ), true ), 'before the meta is written the item has no organisation' );
+
+update_post_meta( $late, Meta::ITEM_ORG, $org_a );
+
+$ok( in_array( (int) $late, ItemsTable::for_org( $org_a ), true ), 'writing the organisation meta re-indexes it immediately' );
+$ok(
+	( ItemsTable::counts_for_org( $org_a )[ Statuses::DRAFT ] ?? 0 ) === $drafts_before + 1,
+	'and the drafts tile count goes up by exactly one'
+);
+
+
+$group( 'A broken template cannot blank the page' );
+
+/*
+ * Regression guard. A TypeError inside a template used to abort the render with
+ * its partial output still in the buffer, which PHP then flushed at shutdown.
+ * The member got a fragment with no navigation and no error: their work looked
+ * like it had vanished. The render now discards the partial and returns an
+ * honest message instead.
+ */
+$broken = \DGL\Dashboard\View::render( 'dashboard/does-not-exist' );
+$ok( '' === $broken, 'a template that does not exist renders nothing rather than warning' );
+
+$ok( '' === \DGL\Dashboard\View::render( '../../../wp-config' ), 'a traversal attempt resolves to nothing' );
+$ok( '' === \DGL\Dashboard\View::render( 'dashboard/../../etc/passwd' ), 'so does a nested one' );
+
+$ok( '' === \DGL\Dashboard\View::date( false ), 'a false date renders as empty rather than throwing' );
+$ok( '' === \DGL\Dashboard\View::date( null ), 'so does a null one' );
+$ok( '' !== \DGL\Dashboard\View::date( '2026-09-14 12:00:00' ), 'and a real one still formats' );
+
 /* ----------------------------------------------------------------- report */
 
 echo "\n" . str_repeat( '-', 60 ) . "\n";

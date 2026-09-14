@@ -240,14 +240,21 @@ final class ItemsTable {
 	 *
 	 * @return array<string, int> Status => count.
 	 */
-	public static function counts_for_org( int $org_id ): array {
+	public static function counts_for_org( int $org_id, ?string $post_type = null ): array {
 		global $wpdb;
 
-		$sql = 'SELECT status, COUNT(*) AS total FROM ' . self::name()
-			. ' WHERE org_id = %d GROUP BY status';
+		$sql    = 'SELECT status, COUNT(*) AS total FROM ' . self::name() . ' WHERE org_id = %d';
+		$params = [ $org_id ];
+
+		if ( null !== $post_type ) {
+			$sql     .= ' AND post_type = %s';
+			$params[] = $post_type;
+		}
+
+		$sql .= ' GROUP BY status';
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$rows = (array) $wpdb->get_results( $wpdb->prepare( $sql, $org_id ), ARRAY_A );
+		$rows = (array) $wpdb->get_results( $wpdb->prepare( $sql, $params ), ARRAY_A );
 
 		$counts = array_fill_keys( Statuses::all(), 0 );
 

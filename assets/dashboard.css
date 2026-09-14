@@ -118,6 +118,7 @@
 	background: var(--dgl-primary);
 	color: var(--dgl-primary-text);
 	font: var(--dgl-weight-button) 15px / 1 var(--dgl-font);
+	text-decoration: none;
 	cursor: pointer;
 }
 
@@ -163,4 +164,354 @@
 		animation-duration: 0.01ms !important;
 		transition-duration: 0.01ms !important;
 	}
+}
+
+/* ---- Layout -------------------------------------------------------------- */
+
+.dgl-dash__layout {
+	display: grid;
+	grid-template-columns: 260px minmax(0, 1fr);
+	gap: 0;
+	min-height: 70vh;
+}
+
+.dgl-dash__sidebar {
+	display: flex;
+	flex-direction: column;
+	gap: var(--dgl-gap-lg);
+	padding: var(--dgl-gap-lg);
+	background: var(--dgl-navy);
+	color: var(--dgl-white);
+}
+
+.dgl-dash__brand {
+	display: block;
+	max-width: 180px;
+}
+
+.dgl-dash__logo {
+	display: block;
+	height: auto;
+	max-width: 100%;
+}
+
+.dgl-nav__heading {
+	margin: var(--dgl-gap-lg) 0 6px;
+	font-size: 0.66em;
+	font-weight: 700;
+	letter-spacing: 0.09em;
+	text-transform: uppercase;
+	color: rgba(255, 255, 255, 0.62);
+}
+
+.dgl-nav__list {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.dgl-nav__item {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	padding: 8px 12px;
+	border-inline-start: 3px solid transparent;
+	border-radius: 0 var(--dgl-radius-button) var(--dgl-radius-button) 0;
+	font-size: 0.82em;
+	color: rgba(255, 255, 255, 0.86);
+	text-decoration: none;
+}
+
+.dgl-nav__item:hover {
+	background: rgba(255, 255, 255, 0.08);
+	color: var(--dgl-white);
+}
+
+/* The one place the teal earns its keep: a rail, carrying no text. */
+.dgl-nav__item--active {
+	border-inline-start-color: var(--dgl-teal);
+	background: rgba(255, 255, 255, 0.12);
+	color: var(--dgl-white);
+	font-weight: 600;
+}
+
+.dgl-nav__count {
+	font-size: 0.86em;
+	color: rgba(255, 255, 255, 0.7);
+}
+
+.dgl-dash__account {
+	margin-top: auto;
+	padding-top: var(--dgl-gap);
+	border-top: 1px solid rgba(255, 255, 255, 0.18);
+	font-size: 0.8em;
+}
+
+.dgl-dash__account-name { margin: 0; font-weight: 600; }
+.dgl-dash__account-org  { margin: 2px 0 10px; color: rgba(255, 255, 255, 0.66); }
+.dgl-dash__signout      { color: rgba(255, 255, 255, 0.86); }
+
+.dgl-dash__main {
+	padding: var(--dgl-gap-lg) clamp(16px, 4vw, 40px) 48px;
+	background: var(--dgl-page);
+}
+
+/* ---- Page furniture ------------------------------------------------------ */
+
+.dgl-page-head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: var(--dgl-gap);
+	margin-bottom: var(--dgl-gap-lg);
+}
+
+.dgl-page-head__title {
+	margin: 0 0 6px;
+	font-size: clamp(1.6rem, 3vw, 2.2rem);
+	font-weight: var(--dgl-weight-heading);
+	line-height: 1.2;
+	color: var(--dgl-navy);
+}
+
+.dgl-page-head__lede {
+	margin: 0;
+	max-width: 62ch;
+	font-size: 0.9em;
+	color: var(--dgl-text-muted);
+}
+
+.dgl-crumbs {
+	margin: 0 0 6px;
+	font-size: 0.76em;
+	color: var(--dgl-text-muted);
+}
+
+.dgl-banner {
+	margin-bottom: var(--dgl-gap-lg);
+	padding: 14px 18px;
+	border: 1px solid var(--dgl-border);
+	border-inline-start: 4px solid var(--dgl-purple);
+	border-radius: var(--dgl-radius-field);
+	background: var(--dgl-surface);
+	font-size: 0.86em;
+}
+
+.dgl-banner strong { display: block; color: var(--dgl-navy); }
+
+.dgl-empty {
+	margin: 0;
+	padding: 28px;
+	border: 1px dashed var(--dgl-border);
+	border-radius: var(--dgl-radius-card);
+	color: var(--dgl-text-muted);
+	font-size: 0.88em;
+	text-align: center;
+}
+
+/* ---- Stats --------------------------------------------------------------- */
+
+.dgl-stats {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+	gap: var(--dgl-gap);
+	margin: 0 0 var(--dgl-gap-lg);
+	padding: 0;
+	list-style: none;
+}
+
+.dgl-stat {
+	padding: 16px 18px;
+	border: 1px solid var(--dgl-border);
+	border-radius: var(--dgl-radius-card);
+	background: var(--dgl-white);
+}
+
+.dgl-stat--attention { border-color: var(--dgl-danger); }
+
+.dgl-stat__label {
+	display: block;
+	font-size: 0.68em;
+	font-weight: 600;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--dgl-text-muted);
+}
+
+.dgl-stat--attention .dgl-stat__label { color: var(--dgl-danger); }
+
+.dgl-stat__value {
+	display: block;
+	margin-top: 4px;
+	font-size: 1.7em;
+	font-weight: var(--dgl-weight-heading);
+	color: var(--dgl-navy);
+}
+
+/* ---- Sections and tiles -------------------------------------------------- */
+
+.dgl-section { margin-top: 40px; }
+
+.dgl-section__head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 8px;
+	margin-bottom: var(--dgl-gap);
+}
+
+.dgl-section__title {
+	margin: 0;
+	font-size: 1.05em;
+	font-weight: var(--dgl-weight-heading);
+	color: var(--dgl-navy);
+}
+
+.dgl-section__note { margin: 0; font-size: 0.78em; color: var(--dgl-text-muted); }
+
+.dgl-tiles {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(178px, 1fr));
+	gap: var(--dgl-gap);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.dgl-tile {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	height: 100%;
+	padding: 18px 20px;
+	border: 1px solid var(--dgl-border);
+	border-radius: var(--dgl-radius-card);
+	background: var(--dgl-white);
+	text-decoration: none;
+}
+
+.dgl-tile:hover { border-color: var(--dgl-purple); }
+
+.dgl-tile__label { font-weight: var(--dgl-weight-heading); color: var(--dgl-navy); }
+.dgl-tile__blurb { font-size: 0.82em; color: var(--dgl-text-muted); }
+
+.dgl-tile__cta {
+	margin-top: auto;
+	padding-top: 10px;
+	font-size: 0.8em;
+	font-weight: 600;
+	color: var(--dgl-link);
+}
+
+/* ---- Filters ------------------------------------------------------------- */
+
+.dgl-filters {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-bottom: var(--dgl-gap);
+}
+
+.dgl-filter {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 5px 12px;
+	border: 1px solid var(--dgl-border);
+	border-radius: 999px;
+	background: var(--dgl-white);
+	font-size: 0.78em;
+	color: var(--dgl-text);
+	text-decoration: none;
+}
+
+.dgl-filter--on {
+	background: var(--dgl-navy);
+	border-color: var(--dgl-navy);
+	color: var(--dgl-white);
+}
+
+.dgl-filter__count { opacity: 0.7; }
+
+/* ---- Table --------------------------------------------------------------- */
+
+.dgl-table {
+	width: 100%;
+	border-collapse: collapse;
+	background: var(--dgl-white);
+	border: 1px solid var(--dgl-border);
+	border-radius: var(--dgl-radius-card);
+	overflow: hidden;
+	font-size: 0.84em;
+}
+
+.dgl-table th {
+	padding: 10px 16px;
+	background: var(--dgl-surface);
+	border-bottom: 1px solid var(--dgl-border);
+	font-size: 0.8em;
+	font-weight: 600;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	text-align: start;
+	color: var(--dgl-text-muted);
+}
+
+.dgl-table td {
+	padding: 12px 16px;
+	border-bottom: 1px solid var(--dgl-border);
+	vertical-align: middle;
+}
+
+.dgl-table tr:last-child td { border-bottom: 0; }
+
+/* ---- Standalone notice pages --------------------------------------------- */
+
+.dgl-notice-page,
+.dgl-signin {
+	max-width: 460px;
+	margin: 48px auto;
+	padding: var(--dgl-pad-card);
+	border: 1px solid var(--dgl-border);
+	border-radius: var(--dgl-radius-card);
+	background: var(--dgl-white);
+}
+
+.dgl-signin input[type="text"],
+.dgl-signin input[type="password"] {
+	width: 100%;
+	min-height: var(--dgl-field-height);
+	padding: 0 12px;
+	border: var(--dgl-field-border) solid var(--dgl-border);
+	border-radius: var(--dgl-radius-field);
+	font: var(--dgl-weight-body) 15px / var(--dgl-line) var(--dgl-font);
+}
+
+.dgl-signin input[type="submit"] {
+	min-height: var(--dgl-field-height);
+	padding: 0 20px;
+	border: 0;
+	border-radius: var(--dgl-radius-button);
+	background: var(--dgl-primary);
+	color: var(--dgl-primary-text);
+	font: var(--dgl-weight-button) 15px / 1 var(--dgl-font);
+	cursor: pointer;
+}
+
+.dgl-signin__foot { margin-top: var(--dgl-gap); font-size: 0.82em; }
+
+/* ---- Narrow screens ------------------------------------------------------ */
+
+@media (max-width: 782px) {
+	.dgl-dash__layout { grid-template-columns: minmax(0, 1fr); }
+
+	.dgl-dash__sidebar {
+		flex-direction: column;
+		gap: var(--dgl-gap);
+	}
+
+	.dgl-table { display: block; overflow-x: auto; }
 }
