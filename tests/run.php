@@ -12,5 +12,7 @@ require __DIR__ . '/test-policy.php';
 require __DIR__ . '/test-state-machine.php';
 require __DIR__ . '/test-schema.php';
 require __DIR__ . '/test-brand.php';
+require __DIR__ . '/test-logo.php';
+require __DIR__ . '/test-schema-fields.php';
 
 Harness::finish();
