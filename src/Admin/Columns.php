@@ -87,10 +87,32 @@ final class Columns {
 					return;
 				}
 
+				$name = (string) get_the_title( $org_id );
+
+				/*
+				 * An item can outlive the organisation it was filed under, and
+				 * an empty cell reads as "no organisation" when the truth is
+				 * "an organisation that is no longer there". Saying so, with the
+				 * ID, is what lets somebody actually go and fix it.
+				 */
+				if ( '' === trim( $name ) || ! Org::exists( $org_id ) ) {
+					printf(
+						'<span style="color:#b32d2e">%s</span>',
+						esc_html(
+							sprintf(
+								/* translators: %d: the missing organisation's ID. */
+								__( 'Missing organisation (#%d)', 'dgl-platform' ),
+								$org_id
+							)
+						)
+					);
+					return;
+				}
+
 				printf(
 					'<a href="%s">%s</a>',
 					esc_url( add_query_arg( self::FILTER, $org_id ) ),
-					esc_html( get_the_title( $org_id ) )
+					esc_html( $name )
 				);
 				return;
 

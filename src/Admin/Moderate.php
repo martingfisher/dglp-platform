@@ -213,6 +213,17 @@ final class Moderate {
 			return;
 		}
 
+		/*
+		 * Submissions only. The organisations screen has its own decisions and
+		 * its own wording, and this notice claimed "the member has been told"
+		 * on a screen where no email is sent at all.
+		 */
+		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+
+		if ( null === $screen || ! PostTypes::is_submittable( (string) $screen->post_type ) ) {
+			return;
+		}
+
 		$post_id = isset( $_GET['post'] ) ? (int) $_GET['post'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 
 		if ( 'error' === $decided ) {
