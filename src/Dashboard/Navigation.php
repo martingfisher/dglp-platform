@@ -28,9 +28,15 @@ final class Navigation {
 	 * @return array<int, array{label:string, url:string, count:?int, section:string, current:bool}>
 	 */
 	public static function items( UserContext $user ): array {
-		$segments = Router::segments();
-		$first    = $segments[0] ?? '';
-		$counts   = null !== $user->org_id ? self::counts_by_type( $user->org_id ) : [];
+		$first  = Router::segments()[0] ?? '';
+		$counts = null !== $user->org_id ? self::counts_by_type( $user->org_id ) : [];
+
+		/*
+		 * Review-team accounts are not members and submit nothing, so listing
+		 * five content types at zero would be five lines of noise on every
+		 * screen they use.
+		 */
+		$has_own_work = null !== $user->org_id;
 
 		$items = [
 			[
@@ -42,23 +48,25 @@ final class Navigation {
 			],
 		];
 
-		foreach ( PostTypes::definitions() as $post_type => $def ) {
+		if ( $has_own_work ) {
+			foreach ( PostTypes::definitions() as $post_type => $def ) {
+				$items[] = [
+					'label'   => $def['plural'],
+					'url'     => Router::url( $def['slug'] ),
+					'count'   => $counts[ $post_type ] ?? 0,
+					'section' => __( 'Your submissions', 'dgl-platform' ),
+					'current' => $def['slug'] === $first,
+				];
+			}
+
 			$items[] = [
-				'label'   => $def['plural'],
-				'url'     => Router::url( $def['slug'] ),
-				'count'   => $counts[ $post_type ] ?? 0,
-				'section' => __( 'Your submissions', 'dgl-platform' ),
-				'current' => $def['slug'] === $first,
+				'label'   => __( 'Archive', 'dgl-platform' ),
+				'url'     => Router::url( 'archive' ),
+				'count'   => null,
+				'section' => __( 'Account', 'dgl-platform' ),
+				'current' => 'archive' === $first,
 			];
 		}
-
-		$items[] = [
-			'label'   => __( 'Archive', 'dgl-platform' ),
-			'url'     => Router::url( 'archive' ),
-			'count'   => null,
-			'section' => __( 'Account', 'dgl-platform' ),
-			'current' => 'archive' === $first,
-		];
 
 		$items[] = [
 			'label'   => __( 'Notifications', 'dgl-platform' ),

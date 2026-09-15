@@ -19,6 +19,7 @@ use DGL\Access\Policy;
 use DGL\Audit\Log;
 use DGL\Index\ItemsTable;
 use DGL\Meta;
+use DGL\Moderation\Checks;
 use DGL\Org\Trust;
 use DGL\PostTypes;
 use DGL\Roles;
@@ -520,6 +521,77 @@ $read_back = \DGL\Dashboard\Wizard::values( $blank_item, PostTypes::EVENT );
 $ok( '' === $read_back['capacity'], 'so it reads back as empty, not as zero' );
 $ok( 'Somewhere' === $read_back['venue_name'], 'while the fields that were filled in survive' );
 $ok( metadata_exists( 'post', $blank_item, 'dgl_venue_name' ), 'and keep their meta row' );
+
+
+$group( 'Automatic checks' );
+
+
+$chk_item = $make_item( $org_a, $alice, Statuses::DRAFT );
+$chk = Checks::run( $chk_item, PostTypes::EVENT );
+$by_key = [];
+foreach ( $chk as $row ) {
+	$by_key[ $row['key'] ] = $row;
+}
+
+$ok( 4 === count( $chk ), 'four checks run' );
+$ok( Checks::FAIL === $by_key['required']['status'], 'an empty item fails the required-fields check' );
+
+/*
+ * A reviewer should read field labels, not database column names. "Missing:
+ * start_datetime" is the kind of detail that makes a tool feel like it was
+ * built for the developer rather than the person using it.
+ */
+$ok( str_contains( $by_key['required']['detail'], 'Start date and time' ), 'missing fields are named by their label' );
+$ok( ! str_contains( $by_key['required']['detail'], 'start_datetime' ), 'and never by their meta key' );
+
+$ok( Checks::WARN === $by_key['image']['status'], 'a missing header image warns rather than fails' );
+$ok( Checks::PASS === $by_key['links']['status'], 'no external links is a pass, not an unknown' );
+
+$group( 'Checks never block a decision' );
+
+/*
+ * The checks are advice. A moderator has to be able to publish something that
+ * every check is complaining about, because they can see things the checks
+ * cannot.
+ */
+$bad_item = $make_item( $org_a, $alice, Statuses::DRAFT );
+update_post_meta( $bad_item, Meta::ITEM_ORG, $org_a );
+Access::flush_cache();
+Transition::apply( $bad_item, StateMachine::SUBMIT, $alice );
+
+$failing = Checks::run( $bad_item, PostTypes::EVENT );
+$has_failure = false;
+foreach ( $failing as $row ) {
+	if ( Checks::FAIL === $row['status'] ) {
+		$has_failure = true;
+	}
+}
+$ok( $has_failure, 'the item genuinely has a failing check' );
+$ok( true === Transition::apply( $bad_item, StateMachine::APPROVE, $mod ), 'and the moderator can still approve it' );
+$ok( Statuses::LIVE === get_post_status( $bad_item ), 'so it publishes' );
+
+$group( 'Duplicate detection is scoped to one organisation' );
+
+$dup_a = $make_item( $org_a, $alice, Statuses::DRAFT );
+wp_update_post( [ 'ID' => $dup_a, 'post_title' => 'Summer Fete', 'post_status' => Statuses::LIVE ] );
+$dup_b = $make_item( $org_a, $alice, Statuses::DRAFT );
+wp_update_post( [ 'ID' => $dup_b, 'post_title' => 'summer  FETE' ] );
+
+$dup_check = Checks::run( $dup_b, PostTypes::EVENT );
+foreach ( $dup_check as $row ) {
+	if ( 'duplicate' === $row['key'] ) {
+		$ok( Checks::WARN === $row['status'], 'the same organisation posting the same title twice is flagged' );
+	}
+}
+
+$other_org_dup = $make_item( $org_b, $bella, Statuses::DRAFT );
+wp_update_post( [ 'ID' => $other_org_dup, 'post_title' => 'Summer Fete' ] );
+
+foreach ( Checks::run( $other_org_dup, PostTypes::EVENT ) as $row ) {
+	if ( 'duplicate' === $row['key'] ) {
+		$ok( Checks::PASS === $row['status'], 'but a different organisation with the same title is not a duplicate' );
+	}
+}
 
 /* ----------------------------------------------------------------- report */
 

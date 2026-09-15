@@ -14,6 +14,7 @@ use DGL\Access\Policy;
 use DGL\Access\UserContext;
 use DGL\Index\ItemsTable;
 use DGL\Org\Org;
+use DGL\Moderation\Checks;
 use DGL\PostTypes;
 use DGL\Schema\FieldRegistry;
 use DGL\Statuses;
@@ -173,15 +174,100 @@ final class Controller {
 			return;
 		}
 
+		$post_id = (int) ( $segments[1] ?? 0 );
+
+		if ( $post_id > 0 ) {
+			self::review_item( $post_id, $user );
+			return;
+		}
+
 		$ids = ItemsTable::queue( null, 50 );
 
 		self::screen(
 			'review-queue',
 			[
 				'user'  => $user,
-				'items' => array_map( [ self::class, 'row' ], $ids ),
+				'items' => array_map( static fn( int $id ): array => self::row( $id, true ), $ids ),
 			],
 			__( 'Review queue', 'dgl-platform' ),
+			$user
+		);
+	}
+
+	/**
+	 * One submission, read and decided. Wireframe 1l.
+	 */
+	private static function review_item( int $post_id, UserContext $user ): void {
+		$post = get_post( $post_id );
+
+		if ( null === $post || ! PostTypes::is_submittable( $post->post_type ) ) {
+			self::not_found( $user );
+			return;
+		}
+
+		$error = '';
+
+		if ( 'POST' === ( $_SERVER['REQUEST_METHOD'] ?? 'GET' ) ) {
+			check_admin_referer( Wizard::NONCE );
+
+			$intent = isset( $_POST['dgl_intent'] ) ? sanitize_key( wp_unslash( $_POST['dgl_intent'] ) ) : '';
+			$note   = isset( $_POST['dgl_note'] ) ? sanitize_textarea_field( wp_unslash( $_POST['dgl_note'] ) ) : '';
+
+			if ( 'check_links' === $intent ) {
+				Checks::check_links_now( $post_id, (string) $post->post_type );
+				wp_safe_redirect( Router::url( 'review', (string) $post_id ) );
+				exit;
+			}
+
+			$action = match ( $intent ) {
+				'approve' => StateMachine::APPROVE,
+				'changes' => StateMachine::REQUEST_CHANGES,
+				'reject'  => StateMachine::REJECT,
+				default   => '',
+			};
+
+			if ( '' !== $action ) {
+				$result = Transition::apply( $post_id, $action, $user->user_id, $note );
+
+				if ( is_wp_error( $result ) ) {
+					$error = $result->get_error_message();
+				} else {
+					wp_safe_redirect( add_query_arg( 'decided', $intent, Router::url( 'review' ) ) );
+					exit;
+				}
+			}
+		}
+
+		$queue    = ItemsTable::queue( null, 500 );
+		$position = array_search( $post_id, $queue, true );
+		$def      = PostTypes::definitions()[ $post->post_type ];
+		$org_id   = \DGL\Org\Org::for_item( $post_id );
+		$counts   = $org_id > 0 ? ItemsTable::counts_for_org( $org_id ) : [];
+
+		self::screen(
+			'review-item',
+			[
+				'user'      => $user,
+				'post'      => $post,
+				'singular'  => $def['singular'],
+				'fields'    => FieldRegistry::for_type( (string) $post->post_type ),
+				'values'    => Wizard::values( $post_id, (string) $post->post_type ),
+				'checks'    => Checks::run( $post_id, (string) $post->post_type ),
+				'history'   => \DGL\Audit\Log::for_object( 'item', $post_id ),
+				'topics'    => wp_get_object_terms( $post_id, Taxonomies::TOPIC, [ 'fields' => 'names' ] ),
+				'error'     => $error,
+				'org'       => $org_id > 0 ? get_post( $org_id ) : null,
+				'org_trust' => \DGL\Org\Trust::label( \DGL\Org\Org::trust_level( $org_id > 0 ? $org_id : null ) ),
+				'submitter' => get_userdata( (int) $post->post_author ),
+				'approved'  => $counts[ Statuses::LIVE ] ?? 0,
+				'rejected'  => $counts[ Statuses::REJECTED ] ?? 0,
+				'position'  => false === $position ? null : (int) $position + 1,
+				'total'     => count( $queue ),
+				'prev'      => false !== $position && $position > 0 ? $queue[ $position - 1 ] : null,
+				'next'      => false !== $position && isset( $queue[ $position + 1 ] ) ? $queue[ $position + 1 ] : null,
+				'decidable' => Access::can( $user->user_id, Policy::MODERATE_ITEM, $post_id ),
+			],
+			$post->post_title !== '' ? $post->post_title : __( 'Review', 'dgl-platform' ),
 			$user
 		);
 	}
@@ -391,7 +477,7 @@ final class Controller {
 	 *
 	 * @return array<string, mixed>
 	 */
-	private static function row( int $post_id ): array {
+	private static function row( int $post_id, bool $for_review = false ): array {
 		$post = get_post( $post_id );
 
 		if ( null === $post ) {
@@ -407,7 +493,9 @@ final class Controller {
 			'type'     => $def['singular'],
 			'status'   => $post->post_status,
 			'updated'  => is_string( $modified ) ? $modified : null,
-			'url'      => Router::url( 'item', (string) $post_id ),
+			'url'      => $for_review
+				? Router::url( 'review', (string) $post_id )
+				: Router::url( 'item', (string) $post_id ),
 			'can_edit' => Access::current_user_can( Policy::EDIT_ITEM, $post_id ),
 		];
 	}
