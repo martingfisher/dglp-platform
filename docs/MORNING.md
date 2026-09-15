@@ -1,82 +1,95 @@
-# Overnight summary, 14 September
+# Morning notes, 16 September
 
-Repo: `github.com/martingfisher/dglp-platform`, branch `main`.
-Screenshots of the working screens: `docs/wireframes/built-*.png`.
+Everything below is pushed to `main` and in the zip. Five commits overnight:
+`5cf8336`, `9015cb2`, `30e9217`, `f617870`.
 
-## Where it got to
+## Decisions I need from you
 
-Built and verified against a real WordPress 6.7.1: five content types, seven
-statuses, roles and capabilities, the access policy, the items index, the audit
-log, the full submission workflow, trust levels, the expiry sweep, digest
-cadence and matching, brand tokens, and the member dashboard (home, category
-list, archive, review queue).
+1. **Grants or Funding.** You settled this: the proposal is the source of truth,
+   so it is built as **Grants**. Worth a line to DGLP anyway, because the
+   wireframes say Funding six times and DGLP's own live site has a
+   "Funding and Finance" page. If they want the other word it is one line.
+2. **"Member area"** is the label in the new top bar. DGLP may prefer their own
+   wording.
+3. **Repo visibility.** Still private, so I still cannot deploy to staging
+   myself. One click in GitHub settings and every future deploy is a single
+   command from here.
+4. **The RYCM handoff notes** are out of the tree but still in git history.
+   Purging them needs a force-push, which I did not do without asking.
 
-**918 standalone assertions, 88 integration.** Both suites run on demand:
+## What I did
+
+**The member area has its own shell.** No site menu, no breadcrumb, no site
+footer, no WordPress admin bar. Slim branded top bar with a link back to the
+public site. Members are also now redirected out of wp-admin, which the original
+plan specified and nobody had built.
+
+**The dashboard leads with what needs doing.** The four stat tiles are links
+that filter the activity list. Anything the team sent back is named in a banner.
+A brand new member is not shown four noughts.
+
+**The client's own admin is real now.** Meta boxes so every field shows in
+wp-admin, list columns for organisation, status and how long something has been
+waiting, an organisation filter, and quick decisions from the list row or the
+edit screen. Classic editor rather than the block editor, which could not show a
+custom status at all.
+
+**Organisations screen.** Verification, trust level, and the name and logo
+changes a member can request. That last one closed a dead end I had created: the
+request could be made and nothing anywhere could say yes.
+
+**Notifications screen**, built from the audit trail that already existed.
+
+## Bugs found, all by using it rather than reading it
+
+1. **An administrator could publish a pending submission by accident.** Open it
+   in wp-admin, fix a typo, press the normal save button, and it went live.
+   WordPress's publish box cannot represent our statuses, so it posts its own
+   and the save promotes the post. Member work reaching the public with nobody
+   deciding and nobody being told. The status is now held on wp-admin's save
+   paths. This is the most serious thing found tonight.
+2. **The whole sidebar navigation was 2.13:1.** Partnership purple on deep navy,
+   failing WCAG AA badly, on the primary navigation of the entire member area.
+   The active filter chip and every button that was a link had the same fault.
+   Found by the contrast checker I added, not by any test we had.
+3. **The design tokens were scoped to `.dgl-dash`**, so the new top bar had no
+   background colour at all.
+4. **A decision panel cannot contain a form.** Meta boxes sit inside WordPress's
+   own form, nested forms are invalid, and the browser drops the inner one
+   silently. Built wrong twice before it was built right.
+5. **A notice claimed "the member has been told"** after an organisation change
+   decision. No such email exists. See below.
+
+## New tool
+
+`bin/check-contrast.mjs` walks the member area in a real browser and fails on
+anything below WCAG AA. The palette test in `tests/test-brand.php` only checks
+colours we *intend* to pair; this checks what actually renders, which is how the
+2.13:1 navigation had survived. Run it as:
 
 ```
-php tests/run.php
-./bin/setup-test-wp.sh && cd <target>/core && wp eval-file <plugin>/tests/integration/run.php
+node bin/check-contrast.mjs <base-url> <user> <password>
 ```
 
-I could not deploy to staging (see Blocked), so I stood up a throwaway
-WordPress on SQLite locally instead. That turned out to be worth more than
-staging would have been, because it let me drive the dashboard in a real
-browser and find things reasoning alone would not have.
+## Known gaps, stated plainly
 
-## Six bugs it caught
+- **No email when an organisation's name or logo change is decided.**
+  `dgl_org_change_approved` and `dgl_org_change_rejected` both fire and nothing
+  listens. The screens no longer claim otherwise.
+- **The notification badge counts what needs doing, not unread items.** There is
+  no read/unread store yet. Deliberate, and said on the screen.
+- **Members, invites, email preferences and closing an account** are still the
+  three tabs on the profile screen that say they are not built.
+- **Still unbuilt:** SSO, digest sending, CSV export, privacy exporters, public
+  templates.
 
-1. `map_meta_cap` receives `edit_post`, never the post type's `edit_dgl_item`.
-   The mapping keyed on the latter, so it never fired: a colleague could not
-   edit a teammate's submission, and a member could edit their own item while a
-   moderator was reading it. That second one is the exact hole you asked about.
-2. Items were indexed during `save_post`, before the caller had written
-   `dgl_org`, so a new draft landed with no organisation and was invisible to
-   the people who owned it, permanently.
-3. A `TypeError` in a template aborted the render with partial output still
-   buffered, which PHP flushed at shutdown. The member saw an unstyled fragment
-   with no navigation and no error, as though their work had vanished.
-4. `register_post_meta` defaults did not match their declared types, logging a
-   `_doing_it_wrong` for every field on every page load.
-5. A URL field prepended `https://` to anything without an `http` prefix,
-   turning `javascript:alert(1)` into `https://javascript:alert(1)` — passes a
-   naive scheme check, carries the payload through.
-6. Status filter counts were organisation-wide on a single-type screen.
+## Verification
 
-All fixed, all with regression tests.
-
-## Blocked, needs you
-
-**Deployment.** The repo is private, so the staging site's
-`wp plugin install <github zip>` 404s. Wordify's `install_plugin` only takes
-wp.org slugs, and `wp eval`, `wp shell` and `wp config` are blocked. I did not
-make the repo public: that is your call on a client codebase. Options are a
-deploy key on the server, SFTP, or Wordify's own git deploy if it has one.
-
-**Production cron.** Enabling it was refused by my permission layer. Staging
-cron you turned back off, which is fine, nothing needs it yet.
-
-**`DISABLE_WP_CRON`.** Needs `wp config set DISABLE_WP_CRON true --raw` from
-your WP-CLI terminal when cron goes back on. The MCP blocks `wp config`.
-
-## Questions
-
-1. **Field lists.** I wrote step 2 for all five types from the wireframes and
-   the proposal. The proposal says DGLP owe us "field definitions for each
-   content type" — these need their sign-off before they harden. Grants and
-   Volunteering are the two I would most want checked.
-2. **Trust levels.** Three levels: moderated, trusted for edits, trusted. Does
-   DGLP want all three, or just on and off?
-3. **Topics.** Who writes the topic list? It drives the digest filtering, so it
-   wants to exist before the first digest goes out.
-4. **Volunteering migration.** Is there live WP Job Manager content to bring
-   across, or does volunteering start empty?
-5. **SMTP2GO plan** against roughly 115,000 emails a month at 10k subscribers.
-6. **Logo.** Found it already on the site: attachment 8268 is the landscape
-   SVG, 8270 the PNG twin. Nothing needed from you. The plugin resolves it from
-   the media library rather than bundling it, so swapping it is a media library
-   job. Email uses the PNG deliberately, because Gmail strips SVG.
-
-## Next
-
-The submission wizard. Everything behind it exists, so it is the form, the
-per-step save, and the review-and-submit step.
+| Check | Result |
+|---|---|
+| `php tests/run.php` | 1078 passed, 0 failed |
+| `wp eval-file tests/integration/run.php` | 270 passed, 0 failed |
+| Contrast, as member | 448 pairs, all clear of AA |
+| Contrast, as moderator | 446 pairs, all clear of AA |
+| Zip installed into clean WordPress | activates, five routes return 200, tests pass on the server |
+| Browser walk | member and admin paths at 1200px and 390px |
