@@ -75,7 +75,7 @@ $group( 'Fixtures' );
  * Fixtures are also cleared before each run rather than after, because a run
  * that fails half way through still has to leave the next one a clean start.
  */
-foreach ( [ 'dgl_alice', 'dgl_aaron', 'dgl_bella', 'dgl_mod', 'dgl_pending', 'dgl_susp', 'dgl_carl', 'dgl_tina' ] as $login ) {
+foreach ( [ 'dgl_alice', 'dgl_aaron', 'dgl_bella', 'dgl_mod', 'dgl_pending', 'dgl_susp', 'dgl_carl', 'dgl_tina', 'dgl_owen' ] as $login ) {
 	$existing = get_user_by( 'login', $login );
 	if ( $existing ) {
 		require_once ABSPATH . 'wp-admin/includes/user.php';
@@ -123,7 +123,7 @@ $make_org = static function ( string $name, string $status = Meta::ORG_APPROVED,
 	return (int) $id;
 };
 
-$make_member = static function ( string $login, int $org_id, string $org_role, string $account = 'approved' ): int {
+$make_member = static function ( string $login, int $org_id, string $org_role, string $account = 'approved' ) use ( $ok ): int {
 	$id = wp_insert_user(
 		[
 			'user_login' => $login,
@@ -132,6 +132,17 @@ $make_member = static function ( string $login, int $org_id, string $org_role, s
 			'role'       => Roles::MEMBER,
 		]
 	);
+
+	/*
+	 * A duplicate login returns WP_Error, which casts to 0, and every
+	 * assertion downstream then runs against user 0 and passes for the wrong
+	 * reason. Caught once for real, so the fixture now fails loudly.
+	 */
+	if ( is_wp_error( $id ) ) {
+		$ok( false, 'fixture user ' . $login . ' could not be created: ' . $id->get_error_message() );
+		return 0;
+	}
+
 	update_user_meta( $id, Meta::USER_ORG, $org_id );
 	update_user_meta( $id, Meta::USER_ORG_ROLE, $org_role );
 	update_user_meta( $id, Meta::USER_ACCOUNT_STATUS, $account );
@@ -360,7 +371,7 @@ $ok( true === $r, 'Alice can submit her draft' );
 $ok( Statuses::PENDING === get_post_status( $w_item ), 'it lands in the queue' );
 $ok( '' !== (string) get_post_meta( $w_item, Meta::ITEM_SUBMITTED_AT, true ), 'the submission time is stamped' );
 $ok( $future_end === get_post_meta( $w_item, Meta::ITEM_EXPIRES_AT, true ), 'expiry was computed from the event end time' );
-$ok( in_array( $w_item, ItemsTable::queue(), true ), 'and it appears in the moderation queue' );
+$ok( in_array( $w_item, ItemsTable::queue( null, 1000 ), true ), 'and it appears in the moderation queue' );
 
 $r = Transition::apply( $w_item, StateMachine::SUBMIT, $alice );
 $ok( is_wp_error( $r ), 'submitting twice is refused' );
@@ -1010,6 +1021,162 @@ $ok( null === get_post( $doomed_done ), 'including one that was already resolved
 
 delete_option( \DGL\Email\Routing::OPTION_REDIRECT );
 delete_option( \DGL\Email\Routing::OPTION_ENABLED );
+
+/* ------------------------------------------------- deploys repair themselves */
+
+$group( 'A plugin update rebuilds its own routes' );
+
+/*
+ * Uploading a new copy of a plugin that is already active does not fire the
+ * activation hook, so nothing reflushes the rewrite rules and every route under
+ * /dashboard/ 404s until somebody deactivates and reactivates. Found by doing
+ * exactly that, so it is pinned here.
+ */
+delete_option( \DGL\Install::VERSION_OPTION );
+update_option( 'rewrite_rules', [] );
+
+\DGL\Install::maybe_flush_rewrites();
+
+$rules = (array) get_option( 'rewrite_rules', [] );
+$found = false;
+
+foreach ( array_keys( $rules ) as $pattern ) {
+	if ( str_contains( (string) $pattern, \DGL\Dashboard\Router::base() ) ) {
+		$found = true;
+	}
+}
+
+$ok( $found, 'the dashboard rewrite rule is rebuilt without anybody reactivating' );
+$ok( \DGL\VERSION === get_option( \DGL\Install::VERSION_OPTION ), 'and the version is recorded so it happens once, not every request' );
+
+$before = get_option( 'rewrite_rules' );
+update_option( 'rewrite_rules', [ 'sentinel' => 'untouched' ] );
+\DGL\Install::maybe_flush_rewrites();
+$ok( [ 'sentinel' => 'untouched' ] === get_option( 'rewrite_rules' ), 'a second call on the same version does no work' );
+update_option( 'rewrite_rules', $before );
+
+/* ------------------------------------------------------ organisation profile */
+
+$group( 'Most of a profile is the organisation s own business' );
+
+$profile_org = $make_org( 'Profile Test Org' );
+$owner       = $make_member( 'dgl_owen', $profile_org, 'owner' );
+Access::flush_cache();
+
+$saved = \DGL\Org\Profile::save(
+	$profile_org,
+	[
+		'org_name'        => 'Profile Test Org',
+		'org_email'       => 'hello@example.test',
+		'org_phone'       => '0113 000 0000',
+		'org_description' => 'We do things in Leeds.',
+	],
+	$owner
+);
+
+$ok( [] === $saved['errors'], 'a valid profile saves' );
+$ok( [] === $saved['held'], 'and nothing is waiting, because the name did not change' );
+$ok( '0113 000 0000' === get_post_meta( $profile_org, 'dgl_org_phone', true ), 'the phone number took effect immediately' );
+$ok( ! \DGL\Org\Profile::has_pending( $profile_org ), 'no proposal was created' );
+
+$group( 'The name and the logo are not' );
+
+$saved = \DGL\Org\Profile::save(
+	$profile_org,
+	[
+		'org_name'  => 'Renamed Without Asking',
+		'org_email' => 'hello@example.test',
+		'org_phone' => '0113 111 1111',
+	],
+	$owner
+);
+
+$ok( [] === $saved['errors'], 'the form still saves' );
+$ok( [ 'org_name' ] === $saved['held'], 'but the name is held back' );
+$ok( 'Profile Test Org' === get_the_title( $profile_org ), 'the organisation is still called what it was called' );
+$ok( '0113 111 1111' === get_post_meta( $profile_org, 'dgl_org_phone', true ), 'while the phone number changed anyway' );
+$ok( \DGL\Org\Profile::has_pending( $profile_org ), 'a proposal is waiting' );
+$ok( in_array( $profile_org, \DGL\Org\Profile::awaiting_review(), true ), 'and the team can find it' );
+
+$changes = \DGL\Org\Profile::pending_changes( $profile_org );
+$ok( 1 === count( $changes ), 'one thing is proposed' );
+$ok( 'Profile Test Org' === $changes[0]['before'] && 'Renamed Without Asking' === $changes[0]['after'], 'shown as before and after' );
+
+$group( 'Nothing is not a change from nothing' );
+
+/*
+ * The image control posts a hidden 0 when no file is attached, and an unset
+ * field reads back as an empty string. Compared as strings those differ, so an
+ * organisation with no logo was told it had asked to change its logo from
+ * "Not given" to "Not given", and that request went to a moderator.
+ */
+$logo_keys = array_column( \DGL\Org\Profile::pending_changes( $profile_org ), 'key' );
+$ok( ! in_array( 'org_logo', $logo_keys, true ), 'a logo nobody attached is not a proposed change' );
+
+\DGL\Org\Profile::save(
+	$profile_org,
+	[ 'org_name' => 'Renamed Without Asking', 'org_email' => 'hello@example.test', 'org_logo' => '0' ],
+	$owner
+);
+
+$ok( [ 'org_name' ] === array_column( \DGL\Org\Profile::pending_changes( $profile_org ), 'key' ), 'and posting the control s empty value does not create one' );
+
+$group( 'The form shows what was asked for, not what it replaced' );
+
+$form = \DGL\Org\Profile::form_values( $profile_org );
+$live = \DGL\Org\Profile::values( $profile_org );
+
+$ok( 'Renamed Without Asking' === $form['org_name'], 'the box holds the name the member asked for' );
+$ok( 'Profile Test Org' === $live['org_name'], 'while the live name is untouched' );
+$ok( $form['org_phone'] === $live['org_phone'], 'and a field with no proposal reads the same either way' );
+
+$group( 'Changing it back withdraws the request' );
+
+\DGL\Org\Profile::save(
+	$profile_org,
+	[ 'org_name' => 'Profile Test Org', 'org_email' => 'hello@example.test' ],
+	$owner
+);
+
+$ok( ! \DGL\Org\Profile::has_pending( $profile_org ), 'putting the old name back clears the proposal' );
+$ok( ! in_array( $profile_org, \DGL\Org\Profile::awaiting_review(), true ), 'so it leaves the team s list' );
+
+$group( 'Only the team can make a name stick' );
+
+\DGL\Org\Profile::save(
+	$profile_org,
+	[ 'org_name' => 'Leeds Community Trust CIO', 'org_email' => 'hello@example.test' ],
+	$owner
+);
+
+$ok( true === \DGL\Org\Profile::approve_pending( $profile_org, $mod ), 'the team approve it' );
+$ok( 'Leeds Community Trust CIO' === get_the_title( $profile_org ), 'and only then does the name change' );
+$ok( ! \DGL\Org\Profile::has_pending( $profile_org ), 'the proposal is cleared' );
+
+\DGL\Org\Profile::save(
+	$profile_org,
+	[ 'org_name' => 'Something The Team Will Refuse', 'org_email' => 'hello@example.test' ],
+	$owner
+);
+
+$ok( is_wp_error( \DGL\Org\Profile::reject_pending( $profile_org, $mod, '' ) ), 'a refusal with no reason is not allowed' );
+$ok( true === \DGL\Org\Profile::reject_pending( $profile_org, $mod, 'That is not your registered name.' ), 'with a reason it is' );
+$ok( 'Leeds Community Trust CIO' === get_the_title( $profile_org ), 'and the name is left as it was' );
+
+$group( 'A profile still has to be valid' );
+
+$bad = \DGL\Org\Profile::save( $profile_org, [ 'org_name' => '', 'org_email' => 'not-an-email' ], $owner );
+
+$ok( isset( $bad['errors']['org_name'] ), 'an organisation with no name is refused' );
+$ok( isset( $bad['errors']['org_email'] ), 'and so is a contact address that is not one' );
+$ok( 'Leeds Community Trust CIO' === get_the_title( $profile_org ), 'nothing was written' );
+
+$group( 'A person can edit their own details' );
+
+$ok( [] === \DGL\Org\Profile::save_person( $owner, [ 'person_name' => 'Carl Reeves', 'person_job' => 'Volunteer coordinator' ] ), 'valid details save' );
+$ok( 'Carl Reeves' === get_userdata( $owner )->display_name, 'the name is used' );
+$ok( 'Volunteer coordinator' === get_user_meta( $owner, \DGL\Org\Profile::USER_JOB, true ), 'and the role is kept' );
+$ok( isset( \DGL\Org\Profile::save_person( $owner, [ 'person_name' => '' ] )['person_name'] ), 'a blank name is refused' );
 
 /* ----------------------------------------------------------------- report */
 

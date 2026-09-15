@@ -207,6 +207,30 @@ final class ItemsTable {
 	}
 
 	/**
+	 * How many submissions are waiting, for the queue's pager and its badge.
+	 *
+	 * Counted rather than inferred from a page of results. A queue that silently
+	 * stops at its first page is a queue where the oldest waiting submission is
+	 * the one nobody can reach, and this is the number that stops that.
+	 *
+	 * @param string[]|null $types
+	 */
+	public static function queue_count( ?array $types = null ): int {
+		global $wpdb;
+
+		$sql    = 'SELECT COUNT(*) FROM ' . self::name() . ' WHERE status = %s';
+		$params = [ Statuses::PENDING ];
+
+		if ( ! empty( $types ) ) {
+			$sql   .= ' AND post_type IN (' . implode( ',', array_fill( 0, count( $types ), '%s' ) ) . ')';
+			$params = array_merge( $params, $types );
+		}
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		return (int) $wpdb->get_var( $wpdb->prepare( $sql, $params ) );
+	}
+
+	/**
 	 * Live items whose end date or deadline has passed. Drives the expiry sweep.
 	 *
 	 * Uses the `expiry` index.

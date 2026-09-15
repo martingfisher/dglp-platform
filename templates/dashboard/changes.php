@@ -48,7 +48,11 @@ $side = static function ( array $change, string $which ): string {
 	</h2>
 
 	<p class="dgl-changes__lede">
-		<?php esc_html_e( 'Everything not listed here is the same as the published version.', 'dgl-platform' ); ?>
+		<?php
+		echo esc_html(
+			$data['changes_lede'] ?? __( 'Everything not listed here is the same as the published version.', 'dgl-platform' )
+		);
+		?>
 	</p>
 
 	<ol class="dgl-changes__list">

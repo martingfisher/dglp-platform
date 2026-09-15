@@ -42,6 +42,13 @@ final class Plugin {
 		add_action( 'init', [ self::class, 'load_textdomain' ] );
 		add_action( 'admin_init', [ Install::class, 'maybe_migrate' ] );
 
+		/*
+		 * After the post types and rewrite rules are registered, so the flush
+		 * rebuilds from the complete set. Priority 99 on `init`, not
+		 * `admin_init`: the routes this repairs are on the front end.
+		 */
+		add_action( 'init', [ Install::class, 'maybe_flush_rewrites' ], 99 );
+
 		Access::init();
 		Sync::init();
 		Router::init();

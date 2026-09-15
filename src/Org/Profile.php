@@ -64,6 +64,23 @@ final class Profile {
 	}
 
 	/**
+	 * What the profile form should show.
+	 *
+	 * The live values, with any pending proposal laid over the top. A member who
+	 * has asked for a name change should see the name they asked for in the box,
+	 * not the old one: showing the live value made the field appear to reject
+	 * their edit, and saving again would have silently withdrawn the request.
+	 *
+	 * The before-and-after panel above the form is what shows them the live
+	 * value, which is the right place for it.
+	 *
+	 * @return array<string, mixed>
+	 */
+	public static function form_values( int $org_id ): array {
+		return array_merge( self::values( $org_id ), self::pending( $org_id ) );
+	}
+
+	/**
 	 * The proposal waiting on the team, or an empty array.
 	 *
 	 * @return array<string, mixed>
@@ -117,7 +134,7 @@ final class Profile {
 			$before = $live[ $field->key ] ?? '';
 			$after  = $pending[ $field->key ];
 
-			if ( (string) $before === (string) $after ) {
+			if ( self::same( $field, $before, $after ) ) {
 				continue;
 			}
 
@@ -166,7 +183,7 @@ final class Profile {
 				continue;
 			}
 
-			if ( (string) ( $live[ $field->key ] ?? '' ) !== (string) $values[ $field->key ] ) {
+			if ( ! self::same( $field, $live[ $field->key ] ?? '', $values[ $field->key ] ) ) {
 				$changed[ $field->key ] = [ $live[ $field->key ] ?? '', $values[ $field->key ] ];
 			}
 
@@ -180,7 +197,7 @@ final class Profile {
 
 			$proposed = $values[ $field->key ];
 
-			if ( (string) ( $live[ $field->key ] ?? '' ) === (string) $proposed ) {
+			if ( self::same( $field, $live[ $field->key ] ?? '', $proposed ) ) {
 				// Back to what is already live, so there is nothing to ask for.
 				unset( $held[ $field->key ] );
 				continue;
@@ -389,6 +406,26 @@ final class Profile {
 	/* ---------------------------------------------------------------------
 	 * Helpers
 	 * ------------------------------------------------------------------ */
+
+	/**
+	 * Whether two values for a field mean the same thing.
+	 *
+	 * The image control posts a hidden `0` when nothing is attached, and an
+	 * unset field reads back as an empty string. Compared as strings those
+	 * differ, so an organisation with no logo was told it had asked to change
+	 * its logo from "Not given" to "Not given" and that request went to a
+	 * moderator. Both spellings of nothing are nothing.
+	 */
+	private static function same( Field $field, mixed $a, mixed $b ): bool {
+		$blank = static fn( mixed $v ): bool => '' === (string) $v
+			|| ( Field::IMAGE === $field->type && 0 === (int) $v );
+
+		if ( $blank( $a ) && $blank( $b ) ) {
+			return true;
+		}
+
+		return (string) $a === (string) $b;
+	}
 
 	private static function meta( int $org_id, Field $field ): mixed {
 		$key = $field->meta_key();

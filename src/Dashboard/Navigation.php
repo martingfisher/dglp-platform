@@ -88,7 +88,9 @@ final class Navigation {
 			$items[] = [
 				'label'   => __( 'Review queue', 'dgl-platform' ),
 				'url'     => Router::url( 'review' ),
-				'count'   => count( ItemsTable::queue( null, 500 ) ),
+				// Counted, not measured off a capped page: a badge that stops at
+				// 500 stops being a number and starts being a guess.
+				'count'   => ItemsTable::queue_count(),
 				'section' => __( 'Review team', 'dgl-platform' ),
 				'current' => 'review' === $first,
 			];

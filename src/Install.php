@@ -21,6 +21,9 @@ final class Install {
 
 	public const DB_VERSION_OPTION = 'dgl_platform_db_version';
 
+	/** The plugin version the rewrite rules were last built for. */
+	public const VERSION_OPTION = 'dgl_platform_version';
+
 	/**
 	 * Runs on plugin activation.
 	 */
@@ -33,6 +36,8 @@ final class Install {
 		PostTypes::register();
 		Taxonomies::register();
 		flush_rewrite_rules();
+
+		update_option( self::VERSION_OPTION, VERSION, false );
 	}
 
 	/**
@@ -86,5 +91,34 @@ final class Install {
 		if ( (int) get_option( self::DB_VERSION_OPTION, 0 ) !== DB_VERSION ) {
 			self::migrate();
 		}
+	}
+
+	/**
+	 * Rebuild the rewrite rules after a version change.
+	 *
+	 * Uploading a new copy of a plugin that is already active does not fire the
+	 * activation hook, so nothing reflushes the rewrite rules. Every route under
+	 * `/dashboard/` then 404s until somebody thinks to deactivate and reactivate
+	 * the plugin, and the member area appears to have vanished after a routine
+	 * update. This was found by doing exactly that.
+	 *
+	 * Runs on `init` rather than `admin_init`, because the routes it repairs are
+	 * on the front end and nobody should have to open wp-admin to fix them. The
+	 * flush is expensive, so it happens once per deployed version and then never
+	 * again until the next one.
+	 */
+	public static function maybe_flush_rewrites(): void {
+		if ( get_option( self::VERSION_OPTION, '' ) === VERSION ) {
+			return;
+		}
+
+		/*
+		 * Written before the flush, not after. A fatal inside flush_rewrite_rules
+		 * would otherwise mean this runs again on every single request, and an
+		 * expensive repair on a loop is worse than the thing it repairs.
+		 */
+		update_option( self::VERSION_OPTION, VERSION, false );
+
+		flush_rewrite_rules();
 	}
 }

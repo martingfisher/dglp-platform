@@ -71,7 +71,7 @@ final class Controller {
 			'' === $first                  => self::home( $user ),
 			'archive' === $first           => self::archive( $user ),
 			'notifications' === $first     => self::stub( 'Notifications', $user ),
-			'profile' === $first           => self::stub( 'Organisation and profile', $user ),
+			'profile' === $first           => self::profile( $segments, $user ),
 			'review' === $first            => self::review( $segments, $user ),
 			'new' === $first               => self::new_item( $segments[1] ?? '', $user ),
 			'edit' === $first              => self::edit( $segments, $user ),
@@ -183,13 +183,27 @@ final class Controller {
 			return;
 		}
 
-		$ids = ItemsTable::queue( null, 50 );
+		/*
+		 * Paged. The queue is oldest-first, so an unpaged list capped at fifty
+		 * hides the newest arrivals; cap it the other way and it hides the
+		 * oldest, which is worse. A backlog over one page has to be reachable.
+		 */
+		$per_page = 50;
+		$total    = ItemsTable::queue_count();
+		$pages    = max( 1, (int) ceil( $total / $per_page ) );
+		$page     = min( $pages, max( 1, (int) ( $_GET['paged'] ?? 1 ) ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$ids      = ItemsTable::queue( null, $per_page, ( $page - 1 ) * $per_page );
 
 		self::screen(
 			'review-queue',
 			[
 				'user'  => $user,
 				'items' => array_map( static fn( int $id ): array => self::row( $id, true ), $ids ),
+				'total' => $total,
+				'page'  => $page,
+				'pages' => $pages,
+				'first' => $total > 0 ? ( ( $page - 1 ) * $per_page ) + 1 : 0,
+				'last'  => min( $total, $page * $per_page ),
 			],
 			__( 'Review queue', 'dgl-platform' ),
 			$user
@@ -254,7 +268,7 @@ final class Controller {
 			}
 		}
 
-		$queue    = ItemsTable::queue( null, 500 );
+		$queue    = ItemsTable::queue( null, max( 500, ItemsTable::queue_count() ) );
 		$position = array_search( $post_id, $queue, true );
 		$def      = PostTypes::definitions()[ $schema_type ];
 		$org_id   = \DGL\Org\Org::for_item( $is_edit ? (int) $parent->ID : $post_id );
@@ -626,6 +640,156 @@ final class Controller {
 			$post->post_title !== '' ? $post->post_title : __( 'Submission', 'dgl-platform' ),
 			$user
 		);
+	}
+
+	/**
+	 * Wireframe 1i: the organisation, the person, and who can post.
+	 *
+	 * Tabs rather than one long form, because the five groups have nothing to do
+	 * with each other and a member coming here to change a phone number should
+	 * not scroll past their colleagues' accounts to find it.
+	 *
+	 * @param string[] $segments
+	 */
+	private static function profile( array $segments, UserContext $user ): void {
+		$tabs = [
+			'organisation' => __( 'Organisation', 'dgl-platform' ),
+			'you'          => __( 'Your details', 'dgl-platform' ),
+			'members'      => __( 'Members', 'dgl-platform' ),
+			'signin'       => __( 'Sign-in and security', 'dgl-platform' ),
+			'email'        => __( 'Email preferences', 'dgl-platform' ),
+		];
+
+		$tab    = (string) ( $segments[1] ?? 'organisation' );
+		$tab    = isset( $tabs[ $tab ] ) ? $tab : 'organisation';
+		$org_id = $user->org_id ?? 0;
+
+		/*
+		 * A review-team account has no organisation, so the organisation and
+		 * members tabs have nothing behind them. They are removed rather than
+		 * shown empty.
+		 */
+		if ( $org_id <= 0 ) {
+			unset( $tabs['organisation'], $tabs['members'] );
+
+			if ( ! isset( $tabs[ $tab ] ) ) {
+				$tab = 'you';
+			}
+		}
+
+		$errors = [];
+		$notice = '';
+
+		if ( 'POST' === ( $_SERVER['REQUEST_METHOD'] ?? 'GET' ) ) {
+			check_admin_referer( Wizard::NONCE );
+
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- the validator sanitises every declared field.
+			$input = isset( $_POST[ FieldRenderer::INPUT_NAME ] ) ? (array) wp_unslash( $_POST[ FieldRenderer::INPUT_NAME ] ) : [];
+
+			[ $errors, $notice ] = self::save_profile( $tab, $org_id, $user, $input );
+
+			if ( [] === $errors ) {
+				wp_safe_redirect( add_query_arg( 'saved', '1', Router::url( 'profile', $tab ) ) );
+				exit;
+			}
+		}
+
+		self::screen(
+			'profile',
+			[
+				'user'       => $user,
+				'tabs'       => $tabs,
+				'tab'        => $tab,
+				'org'        => $org_id > 0 ? get_post( $org_id ) : null,
+				'org_status' => $org_id > 0 ? Org::status( $org_id ) : '',
+				'org_trust'  => \DGL\Org\Trust::label( \DGL\Org\Org::trust_level( $org_id > 0 ? $org_id : null ) ),
+				'fields'     => \DGL\Org\Schema::fields(),
+				// The form shows what was asked for; the panel above it shows
+				// what is live. Swapping those round makes the field look as if
+				// it rejected the member's edit.
+				'values'     => $org_id > 0 ? \DGL\Org\Profile::form_values( $org_id ) : [],
+				'pending'    => $org_id > 0 ? \DGL\Org\Profile::pending_changes( $org_id ) : [],
+				'person_fields' => \DGL\Org\Schema::person_fields(),
+				'person'     => \DGL\Org\Profile::person_values( $user->user_id ),
+				'account'    => get_userdata( $user->user_id ),
+				'colleagues' => $org_id > 0 ? self::colleagues( $org_id ) : [],
+				'errors'     => $errors,
+				'notice'     => $notice,
+				'saved'      => isset( $_GET['saved'] ), // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			],
+			__( 'Organisation and profile', 'dgl-platform' ),
+			$user
+		);
+	}
+
+	/**
+	 * Save whichever tab was posted.
+	 *
+	 * @param array<string, mixed> $input
+	 * @return array{0: array<string,string>, 1: string} Errors, then a notice.
+	 */
+	private static function save_profile( string $tab, int $org_id, UserContext $user, array $input ): array {
+		if ( 'you' === $tab ) {
+			return [ \DGL\Org\Profile::save_person( $user->user_id, $input ), '' ];
+		}
+
+		if ( 'organisation' !== $tab ) {
+			return [ [], '' ];
+		}
+
+		/*
+		 * Only an owner edits the organisation. A contributor can submit content
+		 * for it, which is not the same as being able to rename it.
+		 */
+		if ( $org_id <= 0 || ! $user->is_org_owner() ) {
+			return [
+				[ 'org_name' => __( 'Only an owner can change the organisation.', 'dgl-platform' ) ],
+				'',
+			];
+		}
+
+		$result = \DGL\Org\Profile::save( $org_id, $input, $user->user_id );
+
+		return [ $result['errors'], '' ];
+	}
+
+	/**
+	 * Everybody who can post for this organisation.
+	 *
+	 * @return array<int, array<string, mixed>>
+	 */
+	private static function colleagues( int $org_id ): array {
+		$rows = [];
+
+		foreach ( Org::members( $org_id ) as $user_id ) {
+			$person = get_userdata( $user_id );
+
+			if ( ! $person ) {
+				continue;
+			}
+
+			$rows[] = [
+				'id'      => $user_id,
+				'name'    => (string) $person->display_name,
+				'email'   => (string) $person->user_email,
+				'role'    => Org::role_for_user( $user_id ),
+				'status'  => (string) get_user_meta( $user_id, \DGL\Meta::USER_ACCOUNT_STATUS, true ),
+				'is_you'  => $user_id === get_current_user_id(),
+			];
+		}
+
+		// Owners first, then alphabetical, so the list reads the way people
+		// think about it rather than in user-ID order.
+		usort(
+			$rows,
+			static function ( array $a, array $b ): int {
+				$rank = static fn( array $r ): int => UserContext::ORG_OWNER === $r['role'] ? 0 : 1;
+
+				return [ $rank( $a ), strtolower( $a['name'] ) ] <=> [ $rank( $b ), strtolower( $b['name'] ) ];
+			}
+		);
+
+		return $rows;
 	}
 
 	private static function stub( string $title, UserContext $user ): void {

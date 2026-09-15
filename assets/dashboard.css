@@ -1129,3 +1129,89 @@
 
 .dgl-change__value { overflow-wrap: anywhere; }
 .dgl-change__value img { max-width: 120px; height: auto; border-radius: 6px; }
+
+/* ---- Profile tabs --------------------------------------------------------
+ *
+ * Five groups that have nothing to do with each other. One long form would
+ * make somebody changing a phone number scroll past their colleagues' accounts
+ * to find it. Real links, not JavaScript panels, so each tab is its own URL and
+ * a browser back button does what people expect. */
+
+.dgl-tabs {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+	margin-bottom: var(--dgl-gap-lg);
+	border-bottom: 1px solid var(--dgl-border);
+}
+
+.dgl-tab {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	padding: 10px 16px;
+	border-bottom: 3px solid transparent;
+	color: var(--dgl-text-muted);
+	font-size: 0.9em;
+	font-weight: 500;
+	text-decoration: none;
+	/* The border sits on the container's line, not below it. */
+	margin-bottom: -1px;
+}
+
+.dgl-tab:hover {
+	color: var(--dgl-text);
+	background: var(--dgl-surface);
+}
+
+.dgl-tab--on {
+	border-bottom-color: var(--dgl-primary);
+	color: var(--dgl-primary);
+	font-weight: 700;
+}
+
+.dgl-tab__count {
+	padding: 1px 8px;
+	border-radius: 999px;
+	background: var(--dgl-surface);
+	color: var(--dgl-text-muted);
+	font-size: 0.8em;
+	font-weight: 600;
+}
+
+.dgl-tab--on .dgl-tab__count {
+	background: var(--dgl-primary);
+	color: var(--dgl-primary-text);
+}
+
+/* A field whose change waits for the review team. Sits under the control it
+ * belongs to, pulled up against it so it reads as part of that field. */
+.dgl-help--gated {
+	margin-top: -14px;
+	margin-bottom: 18px;
+	padding-inline-start: 10px;
+	border-inline-start: 3px solid var(--theme-palette-color-1, #57b0b6);
+	font-style: italic;
+}
+
+/* ---- Pager --------------------------------------------------------------- */
+
+.dgl-pager {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px;
+	align-items: center;
+	justify-content: space-between;
+	margin-top: var(--dgl-gap-lg);
+}
+
+.dgl-pager__count { margin: 0; color: var(--dgl-text-muted); font-size: 0.86em; }
+
+.dgl-pager__links {
+	display: flex;
+	gap: 12px;
+	align-items: center;
+	margin: 0;
+}
+
+.dgl-pager__where { color: var(--dgl-text-muted); font-size: 0.86em; }
