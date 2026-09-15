@@ -243,7 +243,21 @@ final class Validator {
 	 * @return array{0: mixed, 1: string|null}
 	 */
 	private static function check_image( Field $field, string $value ): array {
-		if ( ! preg_match( '/^\d+$/', $value ) || (int) $value < 1 ) {
+		/*
+		 * The control posts a hidden 0 when nothing is attached yet, so that
+		 * saving a step without touching the file input does not wipe an
+		 * existing image. Zero therefore means "no image", not "broken image".
+		 */
+		if ( '0' === $value ) {
+			if ( $field->required ) {
+				/* translators: %s: field label. */
+				return [ null, sprintf( __( '%s is needed.', 'dgl-platform' ), $field->label ) ];
+			}
+
+			return [ 0, null ];
+		}
+
+		if ( ! preg_match( '/^\d+$/', $value ) ) {
 			/* translators: %s: field label. */
 			return [ null, sprintf( __( '%s was not uploaded properly. Try again.', 'dgl-platform' ), $field->label ) ];
 		}

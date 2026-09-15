@@ -70,6 +70,8 @@ define( 'WP_DEBUG', true );
 define( 'WP_DEBUG_LOG', true );
 define( 'WP_DEBUG_DISPLAY', false );
 define( 'DISABLE_WP_CRON', true );
+// Lets tests/integration/run.php create and delete content. Throwaway installs only.
+define( 'DGL_TEST_SITE', true );
 if ( ! defined( 'ABSPATH' ) ) { define( 'ABSPATH', __DIR__ . '/' ); }
 require_once ABSPATH . 'wp-settings.php';
 CFG

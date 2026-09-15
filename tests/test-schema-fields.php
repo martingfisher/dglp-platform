@@ -249,3 +249,31 @@ foreach ( PostTypes::submittable() as $type ) {
 		);
 	}
 }
+
+Harness::group( 'An empty image field is not an error' );
+
+/*
+ * Regression guard. The image control posts a hidden 0 so that saving a step
+ * without touching the file input keeps any existing attachment. Reading that
+ * 0 as a malformed attachment id made every step-one save fail with an error
+ * against a field the member had not touched, and no way to get past it.
+ */
+$image = FieldRegistry::find( PostTypes::EVENT, 'image' );
+Harness::assert_true( null !== $image, 'the image field exists' );
+
+$r = Validator::validate( [ $image ], [ 'image' => '0' ] );
+Harness::assert_false( isset( $r['errors']['image'] ), 'a hidden zero is not an error on an optional image' );
+Harness::assert_same( 0, $r['values']['image'] ?? null, 'and stores as zero' );
+
+$r = Validator::validate( [ $image ], [ 'image' => '' ] );
+Harness::assert_false( isset( $r['errors']['image'] ), 'an empty image field is not an error either' );
+
+$r = Validator::validate( [ $image ], [ 'image' => '42' ] );
+Harness::assert_same( 42, $r['values']['image'] ?? null, 'a real attachment id passes through as an integer' );
+
+$r = Validator::validate( [ $image ], [ 'image' => 'not-an-id' ] );
+Harness::assert_true( isset( $r['errors']['image'] ), 'a non-numeric attachment id is refused' );
+
+$required_image = new Field( key: 'image', label: 'Image', type: Field::IMAGE, required: true );
+$r = Validator::validate( [ $required_image ], [ 'image' => '0' ] );
+Harness::assert_true( isset( $r['errors']['image'] ), 'but a required image still has to be there' );

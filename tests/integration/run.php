@@ -45,15 +45,36 @@ $group = static function ( string $name ): void {
 
 /* ---------------------------------------------------------------- fixtures */
 
+/*
+ * Safety gate. This suite creates and destroys content. Without a guard it
+ * would happily run against a site with real member submissions on it and
+ * delete them, which is the sort of mistake that ends a client relationship.
+ *
+ * Define DGL_TEST_SITE in wp-config.php on a throwaway install to allow it.
+ * bin/setup-test-wp.sh does that for you.
+ */
+if ( ! defined( 'DGL_TEST_SITE' ) || ! DGL_TEST_SITE ) {
+	echo "\nREFUSED. This suite creates and deletes content.\n";
+	echo "Add define( 'DGL_TEST_SITE', true ); to wp-config.php on a throwaway install.\n";
+	echo "Never define it on staging or production.\n";
+	exit( 1 );
+}
+
+/** Marks a post as ours to clean up. Nothing without it is ever deleted. */
+const DGL_FIXTURE_FLAG = '_dgl_test_fixture';
+
 $group( 'Fixtures' );
 
 /*
- * Wipe anything left by a previous run first. Without this the second run
- * silently diverges: wp_insert_user() refuses a duplicate login, returns a
- * WP_Error, and every assertion downstream is measuring nonsense. A test suite
- * that only works on a clean database is a test suite you stop trusting.
+ * Remove only what previous runs of this suite created. An earlier version
+ * deleted every dgl_org and every item on the site, which wiped the demo
+ * content sitting alongside it and would have wiped real content just as
+ * cheerfully.
+ *
+ * Fixtures are also cleared before each run rather than after, because a run
+ * that fails half way through still has to leave the next one a clean start.
  */
-foreach ( [ 'dgl_alice', 'dgl_aaron', 'dgl_bella', 'dgl_mod', 'dgl_pending', 'dgl_susp', 'dgl_carl' ] as $login ) {
+foreach ( [ 'dgl_alice', 'dgl_aaron', 'dgl_bella', 'dgl_mod', 'dgl_pending', 'dgl_susp', 'dgl_carl', 'dgl_tina' ] as $login ) {
 	$existing = get_user_by( 'login', $login );
 	if ( $existing ) {
 		require_once ABSPATH . 'wp-admin/includes/user.php';
@@ -61,15 +82,30 @@ foreach ( [ 'dgl_alice', 'dgl_aaron', 'dgl_bella', 'dgl_mod', 'dgl_pending', 'dg
 	}
 }
 
-foreach ( array_merge( PostTypes::submittable(), [ PostTypes::ORG, PostTypes::REVISION ] ) as $type ) {
-	foreach ( get_posts( [ 'post_type' => $type, 'post_status' => 'any', 'numberposts' => -1, 'fields' => 'ids' ] ) as $stale ) {
-		wp_delete_post( $stale, true );
-	}
+$stale = get_posts(
+	[
+		'post_type'      => array_merge( PostTypes::submittable(), [ PostTypes::ORG, PostTypes::REVISION ] ),
+		'post_status'    => 'any',
+		'numberposts'    => -1,
+		'fields'         => 'ids',
+		'meta_key'       => DGL_FIXTURE_FLAG,
+		'meta_value'     => '1',
+	]
+);
+
+foreach ( $stale as $stale_id ) {
+	wp_delete_post( $stale_id, true );
 }
 
 global $wpdb;
-$wpdb->query( 'DELETE FROM ' . ItemsTable::name() );
-$wpdb->query( 'DELETE FROM ' . \DGL\Audit\Table::name() );
+
+// The index and audit rows for anything that just went, and nothing else.
+if ( ! empty( $stale ) ) {
+	$in = implode( ',', array_map( 'intval', $stale ) );
+	$wpdb->query( 'DELETE FROM ' . ItemsTable::name() . " WHERE post_id IN ({$in})" );
+	$wpdb->query( 'DELETE FROM ' . \DGL\Audit\Table::name() . " WHERE object_id IN ({$in})" );
+}
+
 Access::flush_cache();
 
 $make_org = static function ( string $name, string $status = Meta::ORG_APPROVED, int $trust = Trust::MODERATED ): int {
@@ -80,6 +116,7 @@ $make_org = static function ( string $name, string $status = Meta::ORG_APPROVED,
 			'post_status' => 'publish',
 		]
 	);
+	update_post_meta( $id, DGL_FIXTURE_FLAG, '1' );
 	update_post_meta( $id, Meta::ORG_STATUS, $status );
 	update_post_meta( $id, Meta::ORG_TRUST, $trust );
 	return (int) $id;
@@ -109,6 +146,7 @@ $make_item = static function ( int $org_id, int $author_id, string $status ): in
 			'post_author' => $author_id,
 		]
 	);
+	update_post_meta( $id, DGL_FIXTURE_FLAG, '1' );
 	update_post_meta( $id, Meta::ITEM_ORG, $org_id );
 	return (int) $id;
 };
@@ -447,6 +485,41 @@ $ok( '' === \DGL\Dashboard\View::render( 'dashboard/../../etc/passwd' ), 'so doe
 $ok( '' === \DGL\Dashboard\View::date( false ), 'a false date renders as empty rather than throwing' );
 $ok( '' === \DGL\Dashboard\View::date( null ), 'so does a null one' );
 $ok( '' !== \DGL\Dashboard\View::date( '2026-09-14 12:00:00' ), 'and a real one still formats' );
+
+
+$group( 'A blank optional field leaves no answer behind' );
+
+/*
+ * Regression guard. Sanitising '' for a number field cast it to int 0 and
+ * stored it, so an untouched Capacity read back as "Capacity: 0" on the review
+ * screen and in the moderator's view. That is a claim the member never made,
+ * about a field they never touched.
+ */
+$blank_item = $make_item( $org_a, $alice, Statuses::DRAFT );
+Access::flush_cache();
+
+\DGL\Dashboard\Wizard::save_step(
+	$blank_item,
+	PostTypes::EVENT,
+	\DGL\Schema\FieldRegistry::STEP_DETAILS,
+	[
+		'start_datetime' => gmdate( 'Y-m-d H:i:s', strtotime( '+10 days' ) ),
+		'venue_name'     => 'Somewhere',
+		'address'        => 'A street',
+		'postcode'       => 'LS1 1UD',
+		'cost'           => 'free',
+		'capacity'       => '',
+		'booking_url'    => '',
+	]
+);
+
+$ok( ! metadata_exists( 'post', $blank_item, 'dgl_capacity' ), 'a blank number stores no meta row at all' );
+$ok( ! metadata_exists( 'post', $blank_item, 'dgl_booking_url' ), 'and neither does a blank url' );
+
+$read_back = \DGL\Dashboard\Wizard::values( $blank_item, PostTypes::EVENT );
+$ok( '' === $read_back['capacity'], 'so it reads back as empty, not as zero' );
+$ok( 'Somewhere' === $read_back['venue_name'], 'while the fields that were filled in survive' );
+$ok( metadata_exists( 'post', $blank_item, 'dgl_venue_name' ), 'and keep their meta row' );
 
 /* ----------------------------------------------------------------- report */
 

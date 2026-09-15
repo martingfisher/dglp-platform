@@ -148,6 +148,51 @@ final class View {
 	}
 
 	/**
+	 * Render one field's value for reading, as opposed to editing.
+	 *
+	 * Shared by the review step and the submission detail screen so the two
+	 * cannot drift. A member who reads their answer on review and then sees it
+	 * formatted differently afterwards reasonably wonders what got saved.
+	 */
+	public static function field_value( \DGL\Schema\Field $field, mixed $value ): string {
+		$blank = '<span class="dgl-review__blank">' . esc_html__( 'Not given', 'dgl-platform' ) . '</span>';
+
+		return match ( $field->type ) {
+			\DGL\Schema\Field::CHECKBOX => esc_html( $value ? __( 'Yes', 'dgl-platform' ) : __( 'No', 'dgl-platform' ) ),
+			\DGL\Schema\Field::IMAGE    => self::image_value( $value, $blank ),
+			\DGL\Schema\Field::SELECT   => '' === (string) $value
+				? $blank
+				: esc_html( (string) ( $field->options[ (string) $value ] ?? $value ) ),
+			\DGL\Schema\Field::DATE     => '' === (string) $value ? $blank : esc_html( self::date( (string) $value ) ),
+			\DGL\Schema\Field::DATETIME => '' === (string) $value ? $blank : esc_html( self::date( (string) $value, true ) ),
+			\DGL\Schema\Field::MONEY    => '' === (string) $value
+				? $blank
+				: esc_html( '£' . number_format( (float) $value, 2 ) ),
+			\DGL\Schema\Field::URL      => '' === (string) $value
+				? $blank
+				: '<a href="' . esc_url( (string) $value ) . '" rel="nofollow noopener">' . esc_html( (string) $value ) . '</a>',
+			default                      => '' === (string) $value
+				? $blank
+				: nl2br( esc_html( (string) $value ) ),
+		};
+	}
+
+	/**
+	 * An attachment as a thumbnail, or the blank marker.
+	 */
+	private static function image_value( mixed $value, string $blank ): string {
+		$id = is_numeric( $value ) ? (int) $value : 0;
+
+		if ( $id < 1 ) {
+			return $blank;
+		}
+
+		$image = wp_get_attachment_image( $id, 'medium', false, [ 'class' => 'dgl-image-preview' ] );
+
+		return '' !== $image ? $image : $blank;
+	}
+
+	/**
 	 * A human date, in the site's timezone and UK format.
 	 */
 	public static function date( mixed $utc, bool $with_time = false ): string {
