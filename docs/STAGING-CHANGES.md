@@ -38,3 +38,14 @@ deliberately free of WordPress.
   Left in place because deleting a plugin needs a separate go-ahead. Safe to
   delete whenever: Plugins → Hello Dolly → Delete.
 - System cron still **off**. Nothing needs it yet.
+
+## 16 September
+
+- Repository made public so deploys can run from a URL. The manual attempts had
+  never applied: the repo's event log showed twelve PushEvents and zero
+  PublicEvents, so nothing was reverting it.
+- Plugin version 0.1.0 → 0.2.0 and deployed from the public zip. Carries the
+  member-area app shell, the wp-admin client admin, the Organisations screen,
+  the notifications screen, and the fix for an administrator being able to
+  publish a pending submission with the normal save button.
+- Mail still off. System cron still off.
