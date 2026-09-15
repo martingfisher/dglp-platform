@@ -1362,6 +1362,53 @@ $ok(
 	'and an approved edit archiving itself is not reported as a bypass either'
 );
 
+/* ---------------------------------------------------------- notifications */
+
+$group( 'The notifications feed is the audit trail, read back to the member' );
+
+$feed_item = $make_item( $org_a, $alice, Statuses::DRAFT );
+wp_update_post( [ 'ID' => $feed_item, 'post_title' => 'Feed test item' ] );
+Transition::apply( $feed_item, StateMachine::SUBMIT, $alice );
+Transition::apply( $feed_item, StateMachine::REQUEST_CHANGES, $mod, 'Add a contact email.' );
+
+$feed = \DGL\Dashboard\Notifications::for_org( $org_a );
+$ok( [] !== $feed, 'the organisation has entries' );
+
+$actions = array_column( $feed, 'action' );
+$ok( in_array( StateMachine::REQUEST_CHANGES, $actions, true ), 'a change request appears' );
+$ok( in_array( StateMachine::SUBMIT, $actions, true ), 'and so does the submission' );
+
+foreach ( $feed as $row ) {
+	if ( StateMachine::REQUEST_CHANGES === $row['action'] ) {
+		$ok( 'Add a contact email.' === $row['note'], 'the moderator note is carried through' );
+		$ok( 'The DGLP team' === $row['who'], 'the reviewer is not named to the member' );
+		$ok( str_contains( $row['url'], 'item/' . $feed_item ), 'and it links to the item' );
+		break;
+	}
+}
+
+$group( 'A member never sees another organisation s history' );
+
+$other = \DGL\Dashboard\Notifications::for_org( $org_b );
+
+foreach ( $other as $row ) {
+	$ok( 'Feed test item' !== $row['subject'], 'Org B s feed does not contain Org A s work' );
+	break;
+}
+
+$ok( [] === \DGL\Dashboard\Notifications::for_org( 0 ), 'and an account with no organisation has no feed at all' );
+
+$group( 'Bookkeeping is not read out as news' );
+
+/*
+ * The trail records more than a member needs. An index rebuild or a direct
+ * status change is for DGLP, not for the person who submitted, and an audit log
+ * read out in full buries the four entries that matter.
+ */
+$readable = array_keys( \DGL\Dashboard\Notifications::readable() );
+$ok( ! in_array( 'status_changed_directly', $readable, true ), 'a workflow bypass is not shown to the member' );
+$ok( in_array( StateMachine::APPROVE, $readable, true ), 'but an approval is' );
+
 /* ----------------------------------------------------------------- report */
 
 echo "\n" . str_repeat( '-', 60 ) . "\n";

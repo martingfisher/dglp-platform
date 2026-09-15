@@ -19,6 +19,7 @@ use DGL\PostTypes;
 use DGL\Schema\FieldRegistry;
 use DGL\Statuses;
 use DGL\Taxonomies;
+use DGL\Dashboard\Notifications;
 use DGL\Workflow\Revisions;
 use DGL\Workflow\StateMachine;
 use DGL\Workflow\Transition;
@@ -70,7 +71,7 @@ final class Controller {
 		match ( true ) {
 			'' === $first                  => self::home( $user ),
 			'archive' === $first           => self::archive( $user ),
-			'notifications' === $first     => self::stub( 'Notifications', $user ),
+			'notifications' === $first     => self::notifications( $user ),
 			'profile' === $first           => self::profile( $segments, $user ),
 			'review' === $first            => self::review( $segments, $user ),
 			'new' === $first               => self::new_item( $segments[1] ?? '', $user ),
@@ -817,6 +818,21 @@ final class Controller {
 		);
 
 		return $rows;
+	}
+
+	/**
+	 * Wireframe 1j: every decision the team has made, newest first.
+	 */
+	private static function notifications( UserContext $user ): void {
+		self::screen(
+			'notifications',
+			[
+				'user' => $user,
+				'rows' => Notifications::for_org( $user->org_id ?? 0 ),
+			],
+			__( 'Notifications', 'dgl-platform' ),
+			$user
+		);
 	}
 
 	private static function stub( string $title, UserContext $user ): void {

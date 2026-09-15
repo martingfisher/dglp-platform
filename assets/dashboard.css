@@ -1417,3 +1417,51 @@ body.dgl-body {
 }
 
 .dgl-pager__where { color: var(--dgl-text-muted); font-size: 0.86em; }
+
+/* ---- Notifications feed --------------------------------------------------
+ *
+ * The audit trail, read back to the member. Tone is carried by a rail down the
+ * left rather than by colouring the text, so the text itself stays at full
+ * contrast and colour is never the only signal — every row says what happened
+ * in words. */
+
+.dgl-feed {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.dgl-feed__item {
+	padding: 14px 18px;
+	margin-bottom: 10px;
+	border: 1px solid var(--dgl-border);
+	border-inline-start: 4px solid var(--dgl-border-strong);
+	border-radius: var(--dgl-radius-field);
+	background: var(--dgl-white);
+}
+
+.dgl-feed__item--good      { border-inline-start-color: #387923; }
+.dgl-feed__item--attention { border-inline-start-color: #8f6c26; }
+.dgl-feed__item--bad       { border-inline-start-color: var(--dgl-danger); }
+.dgl-feed__item--quiet     { border-inline-start-color: var(--theme-palette-color-1, #57b0b6); }
+
+.dgl-feed__what {
+	margin: 0 0 2px;
+	font-weight: 600;
+}
+
+.dgl-feed__subject { margin: 0 0 6px; }
+
+.dgl-feed__note {
+	margin: 0 0 6px;
+	padding: 8px 12px;
+	border-radius: var(--dgl-radius-field);
+	background: var(--dgl-surface);
+	font-size: 0.9em;
+}
+
+.dgl-feed__when {
+	margin: 0;
+	color: var(--dgl-text-muted);
+	font-size: 0.8em;
+}
