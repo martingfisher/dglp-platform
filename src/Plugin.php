@@ -10,6 +10,7 @@ declare( strict_types=1 );
 namespace DGL;
 
 use DGL\Access\Access;
+use DGL\Dashboard\AdminLockout;
 use DGL\Dashboard\Router;
 use DGL\Email\Command as MailCommand;
 use DGL\Email\Mailer;
@@ -52,6 +53,7 @@ final class Plugin {
 		Access::init();
 		Sync::init();
 		Router::init();
+		AdminLockout::init();
 		Revisions::init();
 		Mailer::init();
 

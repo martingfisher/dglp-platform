@@ -13,14 +13,19 @@ use DGL\Statuses;
 
 defined( 'ABSPATH' ) || exit;
 
-$counts = $data['counts'] ?? [];
-$org    = $data['org'] ?? null;
+use DGL\Dashboard\Router;
+
+$counts    = $data['counts'] ?? [];
+$org       = $data['org'] ?? null;
+$filter    = (string) ( $data['filter'] ?? '' );
+$attention = $data['attention'] ?? [];
+$has_any   = ! empty( $data['has_any'] );
 
 $tiles = [
-	[ 'label' => __( 'Awaiting review', 'dgl-platform' ), 'value' => $counts[ Statuses::PENDING ] ?? 0, 'accent' => false ],
-	[ 'label' => __( 'Live on site', 'dgl-platform' ), 'value' => $counts[ Statuses::LIVE ] ?? 0, 'accent' => false ],
-	[ 'label' => __( 'Needs your attention', 'dgl-platform' ), 'value' => $counts[ Statuses::CHANGES ] ?? 0, 'accent' => true ],
-	[ 'label' => __( 'Drafts', 'dgl-platform' ), 'value' => $counts[ Statuses::DRAFT ] ?? 0, 'accent' => false ],
+	[ 'label' => __( 'Awaiting review', 'dgl-platform' ), 'status' => Statuses::PENDING, 'accent' => false ],
+	[ 'label' => __( 'Live on site', 'dgl-platform' ), 'status' => Statuses::LIVE, 'accent' => false ],
+	[ 'label' => __( 'Needs your attention', 'dgl-platform' ), 'status' => Statuses::CHANGES, 'accent' => true ],
+	[ 'label' => __( 'Drafts', 'dgl-platform' ), 'status' => Statuses::DRAFT, 'accent' => false ],
 ];
 ?>
 <header class="dgl-page-head">
@@ -40,16 +45,73 @@ $tiles = [
 			<?php endif; ?>
 		</p>
 	</div>
+
+	<?php /* Straight to the forms, per the wireframe. An anchor, so it works with no JavaScript. */ ?>
+	<a class="dgl-button" href="#dgl-submit-heading"><?php esc_html_e( 'New submission', 'dgl-platform' ); ?></a>
 </header>
 
-<ul class="dgl-stats">
-	<?php foreach ( $tiles as $tile ) : ?>
-		<li class="dgl-stat<?php echo $tile['accent'] && $tile['value'] > 0 ? ' dgl-stat--attention' : ''; ?>">
-			<span class="dgl-stat__label"><?php echo esc_html( $tile['label'] ); ?></span>
-			<span class="dgl-stat__value"><?php echo esc_html( (string) $tile['value'] ); ?></span>
-		</li>
-	<?php endforeach; ?>
-</ul>
+<?php
+/*
+ * Anything the team has sent back is the only thing on this page that demands
+ * something of the member, so it is named and linked rather than left as one
+ * number among four.
+ */
+?>
+<?php if ( ! empty( $attention ) ) : ?>
+	<div class="dgl-alert dgl-alert--edit" role="status">
+		<p>
+			<strong>
+				<?php
+				echo esc_html(
+					sprintf(
+						/* translators: %d: how many submissions were sent back. */
+						_n(
+							'The team have asked for a change on %d submission.',
+							'The team have asked for a change on %d submissions.',
+							count( $attention ),
+							'dgl-platform'
+						),
+						count( $attention )
+					)
+				);
+				?>
+			</strong>
+			<?php esc_html_e( 'Nothing is on the site until you send it back.', 'dgl-platform' ); ?>
+		</p>
+		<ul class="dgl-alert__list">
+			<?php foreach ( $attention as $row ) : ?>
+				<li><a href="<?php echo esc_url( $row['url'] ); ?>"><?php echo esc_html( $row['title'] ); ?></a></li>
+			<?php endforeach; ?>
+		</ul>
+	</div>
+<?php endif; ?>
+
+<?php
+/*
+ * A member with nothing yet sees four noughts above the only thing they can
+ * usefully do. The tiles stand down until there is something to count.
+ */
+?>
+<?php if ( $has_any ) : ?>
+	<ul class="dgl-stats">
+		<?php foreach ( $tiles as $tile ) : ?>
+			<?php
+			$value = (int) ( $counts[ $tile['status'] ] ?? 0 );
+			$is_on = $filter === $tile['status'];
+			?>
+			<li>
+				<a
+					class="dgl-stat<?php echo $tile['accent'] && $value > 0 ? ' dgl-stat--attention' : ''; ?><?php echo $is_on ? ' dgl-stat--on' : ''; ?>"
+					href="<?php echo esc_url( $is_on ? Router::url() : add_query_arg( 'status', $tile['status'], Router::url() ) ); ?>"
+					<?php echo $is_on ? 'aria-current="true"' : ''; ?>
+				>
+					<span class="dgl-stat__label"><?php echo esc_html( $tile['label'] ); ?></span>
+					<span class="dgl-stat__value"><?php echo esc_html( (string) $value ); ?></span>
+				</a>
+			</li>
+		<?php endforeach; ?>
+	</ul>
+<?php endif; ?>
 
 <section class="dgl-section" aria-labelledby="dgl-submit-heading">
 	<div class="dgl-section__head">
@@ -72,12 +134,33 @@ $tiles = [
 
 <section class="dgl-section" aria-labelledby="dgl-recent-heading">
 	<div class="dgl-section__head">
-		<h2 class="dgl-section__title" id="dgl-recent-heading"><?php esc_html_e( 'Recent activity', 'dgl-platform' ); ?></h2>
+		<h2 class="dgl-section__title" id="dgl-recent-heading">
+			<?php
+			if ( '' !== $filter ) {
+				printf(
+					/* translators: %s: a status name, for example "Drafts". */
+					esc_html__( 'Showing: %s', 'dgl-platform' ),
+					esc_html( Statuses::label( $filter ) )
+				);
+			} else {
+				esc_html_e( 'Recent activity', 'dgl-platform' );
+			}
+			?>
+		</h2>
+		<?php if ( '' !== $filter ) : ?>
+			<p class="dgl-section__note">
+				<a href="<?php echo esc_url( Router::url() ); ?>"><?php esc_html_e( 'Show everything', 'dgl-platform' ); ?></a>
+			</p>
+		<?php endif; ?>
 	</div>
 
 	<?php if ( empty( $data['recent'] ) ) : ?>
 		<p class="dgl-empty">
-			<?php esc_html_e( 'Nothing here yet. Once you submit something it will show up here with its status.', 'dgl-platform' ); ?>
+			<?php
+			echo '' !== $filter
+				? esc_html__( 'Nothing with that status.', 'dgl-platform' )
+				: esc_html__( 'Nothing here yet. Once you submit something it will show up here with its status.', 'dgl-platform' );
+			?>
 		</p>
 	<?php else : ?>
 		<table class="dgl-table">

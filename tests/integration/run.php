@@ -1263,6 +1263,57 @@ $ok( 'Carl Reeves' === get_userdata( $owner )->display_name, 'the name is used' 
 $ok( 'Volunteer coordinator' === get_user_meta( $owner, \DGL\Org\Profile::USER_JOB, true ), 'and the role is kept' );
 $ok( isset( \DGL\Org\Profile::save_person( $owner, [ 'person_name' => '' ] )['person_name'] ), 'a blank name is refused' );
 
+/* --------------------------------------------------- members and wp-admin */
+
+$group( 'A member account is for the member area, not for WordPress' );
+
+$ok( \DGL\Dashboard\AdminLockout::is_member_only( $alice ), 'a member is recognised as member-only' );
+$ok( ! \DGL\Dashboard\AdminLockout::is_member_only( $mod ), 'a moderator is not' );
+$ok( ! \DGL\Dashboard\AdminLockout::is_member_only( 1 ), 'and neither is an administrator' );
+$ok( ! \DGL\Dashboard\AdminLockout::is_member_only( 0 ), 'a signed-out visitor is not either' );
+
+/*
+ * An administrator who has also been given the member role for testing keeps
+ * their admin. Asked by capability rather than by role name, which is what
+ * makes that work.
+ */
+$admin_user = get_userdata( 1 );
+$admin_user->add_role( Roles::MEMBER );
+Access::flush_cache();
+$ok( ! \DGL\Dashboard\AdminLockout::is_member_only( 1 ), 'an administrator who also holds the member role keeps wp-admin' );
+$admin_user->remove_role( Roles::MEMBER );
+Access::flush_cache();
+
+$group( 'The admin bar is hidden from members only' );
+
+wp_set_current_user( $alice );
+$ok( false === \DGL\Dashboard\AdminLockout::hide_admin_bar( true ), 'a member never sees the WordPress bar' );
+
+wp_set_current_user( $mod );
+$ok( true === \DGL\Dashboard\AdminLockout::hide_admin_bar( true ), 'a moderator still does' );
+
+wp_set_current_user( 0 );
+
+/* ------------------------------------------------------------ content types */
+
+$group( 'Reordering the labels moved no data' );
+
+/*
+ * The five types are ordered for members, and their labels are DGLP's wording.
+ * Neither is allowed to touch the post type keys or the URLs, because those are
+ * stored rows and published links.
+ */
+$defs = PostTypes::definitions();
+
+$ok( [ 'dgl_event', 'dgl_news', 'dgl_training', 'dgl_grant', 'dgl_volunteering' ] === array_keys( $defs ), 'events lead, and the keys are unchanged' );
+$ok( PostTypes::submittable() === array_keys( $defs ), 'the submittable list follows the same order rather than restating it' );
+$ok( 'grants' === $defs[ PostTypes::GRANT ]['slug'], 'the grants slug is untouched, so no published URL breaks' );
+$ok( 'events' === $defs[ PostTypes::EVENT ]['slug'], 'and so is events' );
+
+foreach ( $defs as $type => $def ) {
+	$ok( '' !== trim( (string) $def['singular'] ) && '' !== trim( (string) $def['plural'] ), $type . ' has both labels' );
+}
+
 /* ----------------------------------------------------------------- report */
 
 echo "\n" . str_repeat( '-', 60 ) . "\n";

@@ -195,6 +195,42 @@
 		} );
 	}
 
+	/*
+	 * The sidebar is a <details> element. On a phone it should start collapsed
+	 * so the page opens at the content rather than after nine navigation links;
+	 * on a wide screen it should always be open and show no toggle.
+	 *
+	 * The `open` attribute cannot be removed by CSS, so this does it. It is
+	 * progressive enhancement: with JavaScript off the markup keeps `open` and
+	 * every member simply sees the full navigation, which is usable, just
+	 * longer. That is the right way round for a failure.
+	 */
+	function responsiveMenu() {
+		var menu = document.getElementById( 'dgl-menu' );
+
+		if ( ! menu || ! window.matchMedia ) {
+			return;
+		}
+
+		var narrow = window.matchMedia( '(max-width: 782px)' );
+
+		function apply( query ) {
+			// Only forced shut on a narrow screen. On a wide one it is opened
+			// and left alone, because there is no toggle to reopen it with.
+			if ( query.matches ) {
+				menu.removeAttribute( 'open' );
+			} else {
+				menu.setAttribute( 'open', '' );
+			}
+		}
+
+		apply( narrow );
+
+		if ( narrow.addEventListener ) {
+			narrow.addEventListener( 'change', apply );
+		}
+	}
+
 	function init() {
 		var forms = document.querySelectorAll( '.dgl-form' );
 
@@ -206,6 +242,7 @@
 		} );
 
 		confirmDestructive();
+		responsiveMenu();
 	}
 
 	if ( 'loading' === document.readyState ) {

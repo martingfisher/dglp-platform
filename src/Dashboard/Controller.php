@@ -102,7 +102,29 @@ final class Controller {
 		$org_id = $user->org_id ?? 0;
 		$counts = $org_id > 0 ? ItemsTable::counts_for_org( $org_id ) : array_fill_keys( Statuses::all(), 0 );
 
-		$recent = $org_id > 0 ? ItemsTable::for_org( $org_id, null, null, 5 ) : [];
+		/*
+		 * The four stat tiles filter the activity list below them rather than
+		 * being decoration. A number you cannot click is a number you cannot act
+		 * on: a member who sees "Needs your attention 2" wants those two, and
+		 * was previously left to go and find them.
+		 *
+		 * Filtering in place rather than linking to a new screen, because the
+		 * counts are across all five content types and no cross-type list
+		 * exists. This is the list that is already here.
+		 */
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- a read-only filter.
+		$filter = isset( $_GET['status'] ) ? sanitize_key( wp_unslash( $_GET['status'] ) ) : '';
+		$filter = in_array( $filter, Statuses::all(), true ) ? $filter : '';
+
+		$statuses = '' !== $filter ? [ $filter ] : null;
+		$limit    = '' !== $filter ? 50 : 5;
+
+		$recent = $org_id > 0 ? ItemsTable::for_org( $org_id, null, $statuses, $limit ) : [];
+
+		// A brand new member has five zeros. Four noughts above the only thing
+		// they can usefully do is noise, so the tiles stand down until there is
+		// something to count.
+		$has_anything = array_sum( array_map( 'intval', $counts ) ) > 0;
 
 		self::screen(
 			'home',
@@ -112,6 +134,11 @@ final class Controller {
 				'counts'   => $counts,
 				'recent'   => array_map( [ self::class, 'row' ], $recent ),
 				'tiles'    => self::tiles( $org_id ),
+				'filter'   => $filter,
+				'has_any'  => $has_anything,
+				'attention'=> $org_id > 0 && ( $counts[ Statuses::CHANGES ] ?? 0 ) > 0
+					? array_map( [ self::class, 'row' ], ItemsTable::for_org( $org_id, null, [ Statuses::CHANGES ], 5 ) )
+					: [],
 			],
 			__( 'Your dashboard', 'dgl-platform' ),
 			$user
@@ -881,18 +908,22 @@ final class Controller {
 		// The editor only appears in the wizard, so only the wizard pays for it.
 		Assets::enqueue( in_array( $template, [ 'wizard' ], true ) );
 
-		get_header();
-
+		/*
+		 * The shell renders the whole document. It is deliberately not wrapped
+		 * in `get_header()` and `get_footer()` any more: a member signed into a
+		 * tool was being shown the public site's menu, a breadcrumb, and an
+		 * invitation to "Register/Login". The shell still calls `wp_head()` and
+		 * `wp_footer()`, so everything hooked there is unaffected.
+		 */
 		View::output(
 			'dashboard/shell',
 			[
-				'title'    => $title,
-				'user'     => $user,
-				'nav'      => null !== $user ? Navigation::items( $user ) : [],
-				'content'  => View::render( 'dashboard/' . $template, $data ),
+				'title'   => $title,
+				'user'    => $user,
+				'nav'     => null !== $user ? Navigation::items( $user ) : [],
+				'alerts'  => null !== $user ? Navigation::attention_count( $user ) : 0,
+				'content' => View::render( 'dashboard/' . $template, $data ),
 			]
 		);
-
-		get_footer();
 	}
 }

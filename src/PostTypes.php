@@ -32,18 +32,16 @@ final class PostTypes {
 	public const REVISION = 'dgl_revision';
 
 	/**
-	 * The types a member can submit.
+	 * The types a member can submit, in the order members see them.
+	 *
+	 * Derived from {@see self::definitions()} rather than listed again. Two
+	 * hand-maintained orderings of the same five things drift, and the one that
+	 * drifts is the one nobody is looking at.
 	 *
 	 * @return string[]
 	 */
 	public static function submittable(): array {
-		return [
-			self::NEWS,
-			self::EVENT,
-			self::TRAINING,
-			self::GRANT,
-			self::VOLUNTEERING,
-		];
+		return array_keys( self::definitions() );
 	}
 
 	/**
@@ -76,16 +74,26 @@ final class PostTypes {
 	 * @return array<string, array{singular: string, plural: string, slug: string}>
 	 */
 	public static function definitions(): array {
+		/*
+		 * Order is the order members see everywhere: the sidebar, the submit
+		 * tiles, the filters. Events lead because events are what members post
+		 * most, which is what the wireframes show. Alphabetical or
+		 * whatever-order-the-constants-happen-to-be-in is not a decision.
+		 *
+		 * The keys and the slugs are separate from the labels on purpose. A
+		 * label is DGLP's wording and can change; `dgl_grant` and `/grants/` are
+		 * stored data and published URLs and must not.
+		 */
 		return [
-			self::NEWS         => [
-				'singular' => __( 'News item', 'dgl-platform' ),
-				'plural'   => __( 'News', 'dgl-platform' ),
-				'slug'     => 'news',
-			],
 			self::EVENT        => [
 				'singular' => __( 'Event', 'dgl-platform' ),
 				'plural'   => __( 'Events', 'dgl-platform' ),
 				'slug'     => 'events',
+			],
+			self::NEWS         => [
+				'singular' => __( 'News item', 'dgl-platform' ),
+				'plural'   => __( 'News', 'dgl-platform' ),
+				'slug'     => 'news',
 			],
 			self::TRAINING     => [
 				'singular' => __( 'Training opportunity', 'dgl-platform' ),
@@ -93,6 +101,18 @@ final class PostTypes {
 				'slug'     => 'training',
 			],
 			self::GRANT        => [
+				/*
+				 * "Grants" is the word in the signed proposal, which is the
+				 * document DGLP actually agreed. The wireframes say "Funding"
+				 * throughout and DGLP's own live site has a "Funding and
+				 * Finance" page, so their members' word may well be the broader
+				 * one — but that is DGLP's call to make, not a rename to slip
+				 * in from a design artefact nobody signed off.
+				 *
+				 * It is on the open questions list. Changing it is this one
+				 * line: the post type key and the /grants/ slug are separate
+				 * from the label, so no data moves and no URL breaks.
+				 */
 				'singular' => __( 'Grant', 'dgl-platform' ),
 				'plural'   => __( 'Grants', 'dgl-platform' ),
 				'slug'     => 'grants',

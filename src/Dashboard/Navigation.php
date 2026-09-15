@@ -12,6 +12,7 @@ namespace DGL\Dashboard;
 use DGL\Access\UserContext;
 use DGL\Index\ItemsTable;
 use DGL\PostTypes;
+use DGL\Statuses;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -68,10 +69,14 @@ final class Navigation {
 			];
 		}
 
+		$alerts = self::attention_count( $user );
+
 		$items[] = [
 			'label'   => __( 'Notifications', 'dgl-platform' ),
 			'url'     => Router::url( 'notifications' ),
-			'count'   => null,
+			// Zero shows no badge rather than a nought. A count is a prompt to
+			// act, and "0" is a prompt to act on nothing.
+			'count'   => $alerts > 0 ? $alerts : null,
 			'section' => __( 'Account', 'dgl-platform' ),
 			'current' => 'notifications' === $first,
 		];
@@ -97,6 +102,27 @@ final class Navigation {
 		}
 
 		return $items;
+	}
+
+	/**
+	 * How many things are waiting on this member.
+	 *
+	 * Today that means submissions a moderator has sent back, which is the only
+	 * state that actually requires the member to do something. It is a real
+	 * number rather than a placeholder.
+	 *
+	 * When the notifications screen lands with a read/unread store behind it,
+	 * this becomes the unread count. Showing "3 unread" now, against nothing
+	 * that records reading, would be a badge nobody could ever clear.
+	 */
+	public static function attention_count( UserContext $user ): int {
+		if ( null === $user->org_id ) {
+			return 0;
+		}
+
+		$counts = ItemsTable::counts_for_org( $user->org_id );
+
+		return (int) ( $counts[ Statuses::CHANGES ] ?? 0 );
 	}
 
 	/**

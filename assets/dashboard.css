@@ -8,10 +8,17 @@
  * standalone auth screens and the email templates.
  *
  * Source of the fallback values: wp option get theme_mods_blocksy-child.
- * The status chip pairs are asserted against WCAG AA in tests/test-brand.php.
+ * The status chip pairs are asserted against WCAG AA in tests/test-brand.php,
+ * and bin/check-contrast.mjs walks the rendered pages to catch the pairs a
+ * palette test cannot see.
+ *
+ * Declared on :root rather than on .dgl-dash. The member area renders its own
+ * document now, so the top bar sits outside .dgl-dash — scoped to the old
+ * selector it had no background colour at all, because every token it asked
+ * for resolved to nothing.
  */
 
-.dgl-dash {
+:root {
 	/* Palette */
 	--dgl-teal: var(--theme-palette-color-1, #57b0b6);
 	--dgl-teal-solid: var(--theme-palette-color-3, #1d6265);
@@ -91,7 +98,20 @@
 
 /* ---- Primitives --------------------------------------------------------- */
 
-.dgl-dash a {
+/*
+ * The default link colour, deliberately at the lowest specificity there is.
+ *
+ * Written as `.dgl-dash a` this scored 0,2,0 and beat every component rule at
+ * 0,1,0. The whole sidebar navigation rendered Partnership purple on deep navy
+ * at 2.13:1, and so did the active filter chip and every button that happened
+ * to be an <a>. Each was the same bug wearing a different hat.
+ *
+ * `:where()` contributes no specificity, so this rule scores 0,0,1: any
+ * component that sets its own colour wins automatically, including components
+ * nobody has written yet. Fixing it here rather than raising specificity on
+ * each component is what stops the next one happening.
+ */
+:where( .dgl-dash__main ) a {
 	color: var(--dgl-link);
 }
 
@@ -166,6 +186,111 @@
 	}
 }
 
+/* ---- The document --------------------------------------------------------
+ *
+ * The member area renders its own page rather than sitting inside the theme's
+ * header and footer, so these are the only base styles it gets. Blocksy's
+ * stylesheet still loads through wp_head, which is why everything here is
+ * scoped and why the body rules are stated rather than inherited. */
+
+body.dgl-body {
+	margin: 0;
+	background: var(--dgl-page);
+	color: var(--dgl-text);
+	font-family: var(--dgl-font);
+	font-size: var(--dgl-size);
+	line-height: var(--dgl-line);
+	-webkit-font-smoothing: antialiased;
+}
+
+.dgl-skip {
+	position: absolute;
+	left: -9999px;
+	top: 0;
+	padding: 12px 20px;
+	background: var(--dgl-primary);
+	color: var(--dgl-primary-text);
+	z-index: 100;
+}
+
+.dgl-skip:focus {
+	left: 0;
+}
+
+/* ---- Top bar ------------------------------------------------------------- */
+
+.dgl-topbar {
+	background: var(--dgl-white);
+	border-bottom: 1px solid var(--dgl-border);
+}
+
+.dgl-topbar__inner {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px 24px;
+	align-items: center;
+	justify-content: space-between;
+	max-width: 1400px;
+	margin: 0 auto;
+	padding: 12px 24px;
+}
+
+.dgl-topbar__brand {
+	display: flex;
+	gap: 14px;
+	align-items: center;
+	text-decoration: none;
+	color: inherit;
+}
+
+.dgl-topbar__logo {
+	display: block;
+	height: 40px;
+	width: auto;
+}
+
+.dgl-topbar__label {
+	padding-inline-start: 14px;
+	border-inline-start: 1px solid var(--dgl-border);
+	color: var(--dgl-text-muted);
+	font-size: 0.82em;
+	font-weight: 600;
+	letter-spacing: 0.02em;
+	text-transform: uppercase;
+}
+
+.dgl-topbar__end {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px 20px;
+	align-items: center;
+}
+
+.dgl-topbar__link {
+	display: inline-flex;
+	gap: 8px;
+	align-items: center;
+	color: var(--dgl-text);
+	font-size: 0.86em;
+	font-weight: 500;
+	text-decoration: none;
+}
+
+.dgl-topbar__link:hover { text-decoration: underline; }
+
+.dgl-topbar__link--back { color: var(--dgl-link); }
+
+.dgl-topbar__badge {
+	min-width: 20px;
+	padding: 1px 7px;
+	border-radius: 999px;
+	background: var(--dgl-danger);
+	color: #fff;
+	font-size: 0.76em;
+	font-weight: 700;
+	text-align: center;
+}
+
 /* ---- Layout -------------------------------------------------------------- */
 
 .dgl-dash__layout {
@@ -173,6 +298,8 @@
 	grid-template-columns: 260px minmax(0, 1fr);
 	gap: 0;
 	min-height: 70vh;
+	max-width: 1400px;
+	margin: 0 auto;
 }
 
 .dgl-dash__sidebar {
@@ -183,6 +310,13 @@
 	background: var(--dgl-navy);
 	color: var(--dgl-white);
 }
+
+/*
+ * The sidebar is a <details> element so the phone layout needs no JavaScript.
+ * On a wide screen it is forced open and its summary is hidden, so the marker
+ * and the toggle behaviour never appear where they are not wanted.
+ */
+.dgl-dash__menu-toggle { display: none; }
 
 .dgl-dash__brand {
 	display: block;
@@ -322,11 +456,26 @@
 	list-style: none;
 }
 
+/* Each tile is a link that filters the list below, so it behaves like one:
+ * block, no underline, and a visible state when it is the active filter. */
 .dgl-stat {
+	display: block;
 	padding: 16px 18px;
 	border: 1px solid var(--dgl-border);
 	border-radius: var(--dgl-radius-card);
 	background: var(--dgl-white);
+	color: inherit;
+	text-decoration: none;
+}
+
+.dgl-stat:hover {
+	border-color: var(--dgl-border-strong);
+	box-shadow: 0 2px 10px rgb(0 0 0 / 6%);
+}
+
+.dgl-stat--on {
+	border-color: var(--dgl-primary);
+	box-shadow: inset 0 0 0 1px var(--dgl-primary);
 }
 
 .dgl-stat--attention { border-color: var(--dgl-danger); }
@@ -372,9 +521,13 @@
 
 .dgl-section__note { margin: 0; font-size: 0.78em; color: var(--dgl-text-muted); }
 
+/* Five content types. At full width they sit on one row; below that they wrap
+ * evenly rather than leaving one stranded on a line of its own. */
 .dgl-tiles {
 	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(178px, 1fr));
+	/* 150px, not 178px: at the content width this sits in, 178 fitted four and
+	 * stranded Volunteering alone on a second row, which reads as a mistake. */
+	grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
 	gap: var(--dgl-gap);
 	margin: 0;
 	padding: 0;
@@ -511,9 +664,51 @@
 	.dgl-dash__sidebar {
 		flex-direction: column;
 		gap: var(--dgl-gap);
+		padding: 0;
 	}
 
+	/*
+	 * Collapsed by default on a phone, so the page starts at the content
+	 * instead of making somebody scroll past nine navigation links to reach it.
+	 * The `open` attribute in the markup is what keeps it expanded on a wide
+	 * screen, and this overrides it only here.
+	 */
+	.dgl-dash__sidebar[open] > *:not(summary) { margin-top: var(--dgl-gap); }
+
+	.dgl-dash__menu-toggle {
+		display: block;
+		padding: 14px var(--dgl-gap-lg);
+		color: var(--dgl-white);
+		font-size: 0.9em;
+		font-weight: 600;
+		cursor: pointer;
+		list-style: none;
+	}
+
+	.dgl-dash__menu-toggle::-webkit-details-marker { display: none; }
+
+	.dgl-dash__menu-toggle::after {
+		content: " ▾";
+	}
+
+	.dgl-dash__sidebar[open] .dgl-dash__menu-toggle::after {
+		content: " ▴";
+	}
+
+	.dgl-dash__sidebar > .dgl-nav,
+	.dgl-dash__sidebar > .dgl-dash__account {
+		padding-inline: var(--dgl-gap-lg);
+		padding-bottom: var(--dgl-gap);
+	}
+
+	.dgl-topbar__label { display: none; }
+
 	.dgl-table { display: block; overflow-x: auto; }
+}
+
+/* Wide screens: the disclosure is not a disclosure. */
+@media (min-width: 783px) {
+	.dgl-dash__sidebar > summary { display: none; }
 }
 
 /* ---- Wizard -------------------------------------------------------------- */
@@ -746,6 +941,13 @@
 }
 
 .dgl-alert p { margin: 0 0 6px; }
+
+.dgl-alert__list {
+	margin: 6px 0 0;
+	padding-inline-start: 20px;
+}
+
+.dgl-alert__list a { font-weight: 600; }
 .dgl-alert ul { margin: 0; padding-inline-start: 20px; }
 .dgl-alert a { color: inherit; }
 
