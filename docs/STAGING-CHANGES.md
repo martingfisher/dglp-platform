@@ -28,3 +28,13 @@ Not doing any of these unilaterally.
 Until one is in place, WordPress-facing code is lint-clean but unexecuted.
 Everything in `tests/run.php` is genuinely verified, because those layers are
 deliberately free of WordPress.
+
+## 15 September
+
+- Confirmed SmartCache exclusions are now set: `/dashboard`, `/wp-login.php`,
+  `/wp-admin`, `/wp-json`. This was a launch blocker and is now clear.
+- Installed `hello-dolly` 1.7.2 **inactive**, purely to prove that
+  `wp plugin install <public zip url>` works through the hosting API. It does.
+  Left in place because deleting a plugin needs a separate go-ahead. Safe to
+  delete whenever: Plugins → Hello Dolly → Delete.
+- System cron still **off**. Nothing needs it yet.
