@@ -77,6 +77,36 @@ final class Copy {
 	 * ------------------------------------------------------------------ */
 
 	private static function compose_submitted( string $audience, Context $c ): ?Message {
+		if ( Plan::NOTIFY_MEMBER === $audience ) {
+			/*
+			 * A receipt, not an announcement. The member knows what they just
+			 * did, so this exists to be the thing in writing afterwards: it
+			 * arrived, it is not on the site, and nobody has to chase anybody.
+			 * No date is promised, because this plugin does not know one and a
+			 * promise it cannot keep is worse than no promise.
+			 */
+			return new Message(
+				key: 'submitted',
+				audience: $audience,
+				/* translators: %s: item title. */
+				subject: sprintf( __( 'We have got it: %s', 'dgl-platform' ), $c->title() ),
+				preheader: __( 'It is with the review team. Nothing more to do for now.', 'dgl-platform' ),
+				heading: __( 'Sent for review', 'dgl-platform' ),
+				paragraphs: [
+					sprintf(
+						/* translators: %s: item title. */
+						__( '%s is with the DGLP team. It is not on the site yet, and it will not be until somebody has read it.', 'dgl-platform' ),
+						$c->title()
+					),
+					__( 'You will get an email when they decide. You do not need to do anything until then, and you cannot edit it while they have it.', 'dgl-platform' ),
+				],
+				facts: self::facts( $c, [ 'type', 'org', 'actor' ] ),
+				cta_label: __( 'See the submission', 'dgl-platform' ),
+				cta_url: $c->member_link(),
+				footnotes: self::footnotes( $audience, $c ),
+			);
+		}
+
 		if ( Plan::NOTIFY_MODERATORS !== $audience ) {
 			return null;
 		}

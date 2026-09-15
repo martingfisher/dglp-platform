@@ -640,7 +640,7 @@ $clear();
 $ok( true === Transition::apply( $mail_item, StateMachine::SUBMIT, $alice ), 'a submission goes through with mail off' );
 $ok( [] === $sent, 'and sends nothing at all' );
 
-$group( 'A submission reaches the review team and nobody else' );
+$group( 'A submission reaches the review team and its own author, nobody else' );
 
 update_option( \DGL\Email\Routing::OPTION_ENABLED, true );
 
@@ -653,9 +653,12 @@ Transition::apply( $mail_item2, StateMachine::SUBMIT, $alice );
 $to = $addressed();
 $ok( [] !== $sent, 'submitting now sends something' );
 $ok( in_array( 'mod@example.test', $to, true ), 'the moderator is told' );
-$ok( ! in_array( 'dgl_alice@example.test', $to, true ), 'the member who submitted is not, because the plan does not ask for it' );
+$ok( in_array( 'dgl_alice@example.test', $to, true ), 'and the member gets a receipt' );
+$ok( 2 === count( $sent ), 'as two separate emails, because the two say different things' );
 $ok( ! in_array( 'dgl_bella@example.test', $to, true ), 'and nobody in another organisation hears about it' );
-$ok( str_contains( (string) $sent[0]['subject'], 'Repair cafe' ), 'the subject names the item' );
+foreach ( $sent as $one ) {
+	$ok( str_contains( (string) $one['subject'], 'Repair cafe' ), 'the subject names the item' );
+}
 
 $group( 'A decision reaches the organisation, not the person who made it' );
 

@@ -24,7 +24,7 @@ Harness::group( 'Submitting under moderation' );
 $plan = Planner::plan( StateMachine::SUBMIT, Statuses::DRAFT, Trust::MODERATED );
 Harness::assert_same( Statuses::PENDING, $plan->to, 'a moderated submission waits in the queue' );
 Harness::assert_true( $plan->notifies( Plan::NOTIFY_MODERATORS ), 'the review team is told there is something to read' );
-Harness::assert_false( $plan->notifies( Plan::NOTIFY_MEMBER ), 'the member is not emailed about their own click' );
+Harness::assert_true( $plan->notifies( Plan::NOTIFY_MEMBER ), 'and the member gets a receipt, because they can no longer edit it' );
 Harness::assert_true( $plan->stamp_submitted, 'the submission time is recorded' );
 Harness::assert_false( $plan->stamp_approved, 'nothing is approved yet' );
 Harness::assert_true( $plan->recompute_expiry, 'the expiry date is rebuilt from the submitted dates' );

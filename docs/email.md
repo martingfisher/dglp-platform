@@ -6,7 +6,7 @@ moderator has already made.
 
 | Message | Goes to | Sent when |
 |---|---|---|
-| `submitted` | review team | A member sends something for review |
+| `submitted` | member + review team | A member sends something for review. The member's copy is a receipt |
 | `published_on_trust` | member + review team | A trusted organisation's item goes live unreviewed |
 | `approved` | member | A moderator approves |
 | `changes_requested` | member | A moderator asks for a change. Reason is mandatory |

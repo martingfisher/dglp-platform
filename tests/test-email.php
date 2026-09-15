@@ -78,7 +78,6 @@ foreach ( $pairs as $label => [ $key, $audience ] ) {
 Harness::group( 'Copy fails loudly rather than inventing a fallback' );
 
 Harness::assert_same( null, Copy::compose( 'no_such_message', Plan::NOTIFY_MEMBER, $ctx() ), 'an unknown key returns null' );
-Harness::assert_same( null, Copy::compose( 'submitted', Plan::NOTIFY_MEMBER, $ctx() ), 'a key with no copy for that audience returns null' );
 Harness::assert_same( null, Copy::compose( 'restored', Plan::NOTIFY_MEMBER, $ctx() ), 'restore tells the team, not the member' );
 Harness::assert_true( Copy::compose( 'restored', Plan::NOTIFY_MODERATORS, $ctx() ) instanceof Message, 'and the team version exists' );
 
@@ -201,3 +200,14 @@ Harness::assert_true(
 	str_contains( Copy::compose( 'submitted', Plan::NOTIFY_MODERATORS, $ctx( [ 'type_label' => 'Event' ] ) )->paragraphs[0], 'has submitted an event' ),
 	'so the review team are never told about "a event"'
 );
+
+Harness::group( 'Submitting produces a receipt' );
+
+$receipt = Copy::compose( 'submitted', Plan::NOTIFY_MEMBER, $ctx() );
+$queue   = Copy::compose( 'submitted', Plan::NOTIFY_MODERATORS, $ctx() );
+
+Harness::assert_true( $receipt instanceof Message, 'the member is told their work arrived' );
+Harness::assert_true( $receipt->paragraphs !== $queue->paragraphs, 'and not in the words written for the review team' );
+Harness::assert_same( 'https://example.test/dashboard/item/12', $receipt->cta_url, 'it links to their own submission' );
+Harness::assert_true( str_contains( $receipt->paragraphs[0], 'not on the site yet' ), 'it says where the work is not' );
+Harness::assert_false( str_contains( strtolower( $receipt->to_text() ), 'within' ), 'and promises no turnaround this plugin cannot know' );

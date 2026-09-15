@@ -53,6 +53,11 @@ final class Planner {
 	 * A trusted organisation's submission skips the queue, so the member is told
 	 * it is live rather than told it is waiting, and it joins the spot-check
 	 * list so the team can still read it afterwards.
+	 *
+	 * Either way the member gets a receipt. They have just handed something to
+	 * somebody else and lost the ability to edit it, and the confirmation screen
+	 * they saw is gone the moment they close the tab. Without an email there is
+	 * nothing in writing that says it arrived.
 	 */
 	private static function submit( string $from, string $to ): Plan {
 		$published = Statuses::LIVE === $to;
@@ -61,9 +66,7 @@ final class Planner {
 			action: StateMachine::SUBMIT,
 			from: $from,
 			to: $to,
-			notify: $published
-				? [ Plan::NOTIFY_MEMBER, Plan::NOTIFY_MODERATORS ]
-				: [ Plan::NOTIFY_MODERATORS ],
+			notify: [ Plan::NOTIFY_MEMBER, Plan::NOTIFY_MODERATORS ],
 			message_key: $published ? 'published_on_trust' : 'submitted',
 			stamp_submitted: true,
 			stamp_approved: $published,
