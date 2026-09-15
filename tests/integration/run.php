@@ -593,6 +593,172 @@ foreach ( Checks::run( $other_org_dup, PostTypes::EVENT ) as $row ) {
 	}
 }
 
+/* ------------------------------------------------------- transactional email */
+
+$group( 'Nothing is sent until somebody turns sending on' );
+
+/*
+ * Every email in this section is caught at `pre_wp_mail` and never leaves the
+ * process. The point is to prove who WOULD have been written to, which is the
+ * part that goes wrong, without a mail server being involved at all.
+ */
+$sent = [];
+
+add_filter(
+	'pre_wp_mail',
+	static function ( $short, $atts ) use ( &$sent ) {
+		$sent[] = $atts;
+		return true;
+	},
+	10,
+	2
+);
+
+$clear = static function () use ( &$sent ): void {
+	$sent = [];
+};
+
+/** Every address a captured batch was addressed to. */
+$addressed = static function () use ( &$sent ): array {
+	$all = [];
+	foreach ( $sent as $mail ) {
+		foreach ( (array) $mail['to'] as $address ) {
+			$all[] = strtolower( (string) $address );
+		}
+	}
+	sort( $all );
+	return $all;
+};
+
+delete_option( \DGL\Email\Routing::OPTION_REDIRECT );
+delete_option( \DGL\Email\Routing::OPTION_ENABLED );
+
+$mail_item = $make_item( $org_a, $alice, Statuses::DRAFT );
+wp_update_post( [ 'ID' => $mail_item, 'post_title' => 'Coffee morning at the Hub' ] );
+
+$clear();
+$ok( true === Transition::apply( $mail_item, StateMachine::SUBMIT, $alice ), 'a submission goes through with mail off' );
+$ok( [] === $sent, 'and sends nothing at all' );
+
+$group( 'A submission reaches the review team and nobody else' );
+
+update_option( \DGL\Email\Routing::OPTION_ENABLED, true );
+
+$mail_item2 = $make_item( $org_a, $alice, Statuses::DRAFT );
+wp_update_post( [ 'ID' => $mail_item2, 'post_title' => 'Repair cafe' ] );
+
+$clear();
+Transition::apply( $mail_item2, StateMachine::SUBMIT, $alice );
+
+$to = $addressed();
+$ok( [] !== $sent, 'submitting now sends something' );
+$ok( in_array( 'mod@example.test', $to, true ), 'the moderator is told' );
+$ok( ! in_array( 'dgl_alice@example.test', $to, true ), 'the member who submitted is not, because the plan does not ask for it' );
+$ok( ! in_array( 'dgl_bella@example.test', $to, true ), 'and nobody in another organisation hears about it' );
+$ok( str_contains( (string) $sent[0]['subject'], 'Repair cafe' ), 'the subject names the item' );
+
+$group( 'A decision reaches the organisation, not the person who made it' );
+
+$clear();
+$ok( true === Transition::apply( $mail_item2, StateMachine::APPROVE, $mod ), 'the moderator approves it' );
+
+$to = $addressed();
+$ok( in_array( 'dgl_alice@example.test', $to, true ), 'the author is told' );
+$ok( ! in_array( 'mod@example.test', $to, true ), 'the moderator who just decided it is not emailed about their own decision' );
+$ok( ! in_array( 'dgl_bella@example.test', $to, true ), 'and the other organisation still hears nothing' );
+$ok( str_starts_with( (string) $sent[0]['subject'], 'Approved:' ), 'the subject leads with the decision' );
+
+$group( 'The owner is copied even when a colleague submitted' );
+
+$colleague_item = $make_item( $org_a, $aaron, Statuses::PENDING );
+wp_update_post( [ 'ID' => $colleague_item, 'post_title' => 'Aaron s workshop' ] );
+
+$clear();
+Transition::apply( $colleague_item, StateMachine::APPROVE, $mod );
+
+$to = $addressed();
+$ok( in_array( 'dgl_aaron@example.test', $to, true ), 'the contributor who wrote it is told' );
+$ok( in_array( 'dgl_alice@example.test', $to, true ), 'and the owner accountable for it is copied' );
+
+$group( 'A suspended account is never written to' );
+
+update_user_meta( $aaron, Meta::USER_ACCOUNT_STATUS, 'suspended' );
+
+$susp_item = $make_item( $org_a, $aaron, Statuses::PENDING );
+wp_update_post( [ 'ID' => $susp_item, 'post_title' => 'Suspended author item' ] );
+
+$clear();
+Transition::apply( $susp_item, StateMachine::APPROVE, $mod );
+
+$to = $addressed();
+$ok( ! in_array( 'dgl_aaron@example.test', $to, true ), 'the suspended member gets nothing' );
+$ok( in_array( 'dgl_alice@example.test', $to, true ), 'but their organisation owner still does' );
+
+update_user_meta( $aaron, Meta::USER_ACCOUNT_STATUS, 'approved' );
+
+$group( 'A change request carries the moderator s words' );
+
+$changes_item = $make_item( $org_a, $alice, Statuses::PENDING );
+wp_update_post( [ 'ID' => $changes_item, 'post_title' => 'Needs a contact address' ] );
+
+$clear();
+$ok(
+	is_wp_error( Transition::apply( $changes_item, StateMachine::REQUEST_CHANGES, $mod ) ),
+	'a change request with no reason is refused'
+);
+$ok( [] === $sent, 'and sends nothing' );
+
+$clear();
+Transition::apply( $changes_item, StateMachine::REQUEST_CHANGES, $mod, 'Please add a contact email address.' );
+
+$ok( [] !== $sent, 'with a reason it sends' );
+$ok( str_contains( (string) $sent[0]['message'], 'Please add a contact email address.' ), 'and the reason is in the email the member reads' );
+
+$group( 'The email is a real HTML email' );
+
+$body = (string) $sent[0]['message'];
+
+$ok( str_starts_with( $body, '<!DOCTYPE html' ), 'it is a full document, not a fragment' );
+$ok( str_contains( $body, '#2d3b6b' ), 'it uses the DGLP navy rather than a default blue' );
+$ok( str_contains( $body, 'dashboard/item/' . $changes_item ), 'the button points at the member s own item' );
+$ok( ! str_contains( $body, 'var(--' ), 'no CSS custom properties, which email clients do not support' );
+$ok( ! str_contains( $body, '<script' ), 'and no script' );
+
+$group( 'Sending leaves no filters behind' );
+
+$ok( 'text/plain' === apply_filters( 'wp_mail_content_type', 'text/plain' ), 'the HTML content type is not left attached for other plugins mail' );
+$ok( ! has_action( 'phpmailer_init' ), 'and neither is the plain-text alternative' );
+
+$group( 'Staging cannot reach a real member' );
+
+update_option( \DGL\Email\Routing::OPTION_REDIRECT, 'test-inbox@example.test' );
+
+$diverted_item = $make_item( $org_a, $alice, Statuses::PENDING );
+wp_update_post( [ 'ID' => $diverted_item, 'post_title' => 'Diverted item' ] );
+
+$clear();
+Transition::apply( $diverted_item, StateMachine::APPROVE, $mod );
+
+$to = $addressed();
+$ok( [] !== $sent, 'mail is still produced' );
+$ok( [ 'test-inbox@example.test' ] === array_unique( $to ), 'but every message goes to the test inbox and nowhere else' );
+$ok( ! in_array( 'dgl_alice@example.test', $to, true ), 'the real member is not written to' );
+$ok( str_contains( (string) $sent[0]['subject'], '[DIVERTED: dgl_alice@example.test' ), 'and the subject says who it was meant for' );
+
+delete_option( \DGL\Email\Routing::OPTION_REDIRECT );
+
+$group( 'Expiry tells the member, with nobody to blame' );
+
+$expired_item = $make_item( $org_a, $alice, Statuses::LIVE );
+wp_update_post( [ 'ID' => $expired_item, 'post_title' => 'Finished event' ] );
+
+$clear();
+$ok( true === Transition::apply( $expired_item, StateMachine::EXPIRE, 0 ), 'the system expires it on its own' );
+$ok( in_array( 'dgl_alice@example.test', $addressed(), true ), 'and the member is told' );
+$ok( str_starts_with( (string) $sent[0]['subject'], 'Expired:' ), 'with a subject that says what happened' );
+
+delete_option( \DGL\Email\Routing::OPTION_ENABLED );
+
 /* ----------------------------------------------------------------- report */
 
 echo "\n" . str_repeat( '-', 60 ) . "\n";

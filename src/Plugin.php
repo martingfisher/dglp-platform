@@ -11,6 +11,8 @@ namespace DGL;
 
 use DGL\Access\Access;
 use DGL\Dashboard\Router;
+use DGL\Email\Command as MailCommand;
+use DGL\Email\Mailer;
 use DGL\Index\Sync;
 use DGL\Workflow\Transition;
 use DGL\Schema\FieldRegistry;
@@ -42,6 +44,11 @@ final class Plugin {
 		Access::init();
 		Sync::init();
 		Router::init();
+		Mailer::init();
+
+		if ( defined( 'WP_CLI' ) && WP_CLI ) {
+			MailCommand::register();
+		}
 
 		add_action( self::EXPIRY_HOOK, [ Transition::class, 'run_expiry_sweep' ] );
 	}
