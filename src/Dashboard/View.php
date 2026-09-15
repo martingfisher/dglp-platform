@@ -171,6 +171,20 @@ final class View {
 			\DGL\Schema\Field::URL      => '' === (string) $value
 				? $blank
 				: '<a href="' . esc_url( (string) $value ) . '" rel="nofollow noopener">' . esc_html( (string) $value ) . '</a>',
+			/*
+			 * The description is the one field members write markup into, and
+			 * the visual editor stores it as HTML. Escaping it prints the tags
+			 * on screen: a moderator reads "<p>An afternoon for" and a member
+			 * reviewing their own work thinks the editor has broken it.
+			 *
+			 * `wp_kses_post` rather than raw output. The wizard already filters
+			 * it on the way in; filtering again on the way out means content
+			 * that reached the database by some other route still cannot put a
+			 * script on the page.
+			 */
+			\DGL\Schema\Field::RICHTEXT => '' === trim( wp_strip_all_tags( (string) $value ) )
+				? $blank
+				: wp_kses_post( (string) $value ),
 			default                      => '' === (string) $value
 				? $blank
 				: nl2br( esc_html( (string) $value ) ),

@@ -201,6 +201,18 @@ final class Wizard {
 				continue;
 			}
 
+			/*
+			 * The image control posts a hidden 0 when nothing is attached, and
+			 * a stored 0 is not the same as no row. It reads back as an answer,
+			 * so an item with no picture and an edit with no picture compared
+			 * as different and the moderator was shown "Image: Not given"
+			 * changing to "Image: Not given".
+			 */
+			if ( Field::IMAGE === $field->type && 0 === (int) $value ) {
+				delete_post_meta( $post_id, $field->meta_key() );
+				continue;
+			}
+
 			update_post_meta( $post_id, $field->meta_key(), self::sanitise( $field, $value ) );
 		}
 

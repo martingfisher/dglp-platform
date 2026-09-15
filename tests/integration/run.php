@@ -762,6 +762,255 @@ $ok( str_starts_with( (string) $sent[0]['subject'], 'Expired:' ), 'with a subjec
 
 delete_option( \DGL\Email\Routing::OPTION_ENABLED );
 
+/* ---------------------------------------------------------- pending edits */
+
+$group( 'Editing a live item does not touch the live item' );
+
+update_option( \DGL\Email\Routing::OPTION_ENABLED, true );
+update_option( \DGL\Email\Routing::OPTION_REDIRECT, 'test-inbox@example.test' );
+
+$live = $make_item( $org_a, $alice, Statuses::LIVE );
+wp_update_post( [ 'ID' => $live, 'post_title' => 'Summer picnic', 'post_content' => 'Bring a blanket.' ] );
+update_post_meta( $live, 'dgl_venue_name', 'Hyde Park' );
+
+$rev = \DGL\Workflow\Revisions::open( $live, $alice );
+$ok( is_int( $rev ) && $rev > 0, 'an edit can be opened against a live item' );
+update_post_meta( (int) $rev, DGL_FIXTURE_FLAG, '1' );
+
+$ok( PostTypes::REVISION === get_post_type( $rev ), 'it is a revision, not a copy of the item' );
+$ok( $live === (int) get_post( $rev )->post_parent, 'and it hangs off the item it would replace' );
+$ok( 'Summer picnic' === get_post( $rev )->post_title, 'it starts as a copy of what is published' );
+$ok( 'Hyde Park' === get_post_meta( (int) $rev, 'dgl_venue_name', true ), 'fields included' );
+$ok( $org_a === (int) get_post_meta( (int) $rev, Meta::ITEM_ORG, true ), 'and it belongs to the same organisation' );
+
+// Now change it, the way the wizard would.
+wp_update_post( [ 'ID' => $rev, 'post_title' => 'Summer picnic and bring-and-buy' ] );
+update_post_meta( (int) $rev, 'dgl_venue_name', 'Roundhay Park' );
+
+$ok( 'Summer picnic' === get_post( $live )->post_title, 'the published title is untouched' );
+$ok( 'Hyde Park' === get_post_meta( $live, 'dgl_venue_name', true ), 'and so is the published venue' );
+$ok( Statuses::LIVE === get_post( $live )->post_status, 'the item is still live' );
+
+$group( 'Two people editing produce one edit, not two' );
+
+$again = \DGL\Workflow\Revisions::open( $live, $aaron );
+$ok( (int) $again === (int) $rev, 'a colleague opening an edit picks up the one that already exists' );
+
+$group( 'A moderator sees what changed, not the whole thing again' );
+
+$changes = \DGL\Workflow\Revisions::changed_fields( (int) $rev );
+$keys    = array_column( $changes, 'key' );
+sort( $keys );
+
+$ok( [ 'title', 'venue_name' ] === $keys, 'only the two altered fields are reported' );
+
+foreach ( $changes as $change ) {
+	if ( 'venue_name' === $change['key'] ) {
+		$ok( 'Hyde Park' === $change['before'], 'the published value is the before' );
+		$ok( 'Roundhay Park' === $change['after'], 'and the proposed value is the after' );
+	}
+}
+
+$group( 'The comparison reports real changes, not editor noise' );
+
+$noise_live = $make_item( $org_a, $alice, Statuses::LIVE );
+wp_update_post( [ 'ID' => $noise_live, 'post_title' => 'Noise test', 'post_content' => "<p>One line.</p>\n<p>Two lines.</p>" ] );
+$noise = (int) \DGL\Workflow\Revisions::open( $noise_live, $alice );
+update_post_meta( $noise, DGL_FIXTURE_FLAG, '1' );
+
+// The visual editor reflows whitespace on every save, so the same description
+// comes back byte-different without a word having changed.
+wp_update_post( [ 'ID' => $noise, 'post_content' => "<p>One line.</p>  <p>Two lines.</p>" ] );
+$ok( [] === \DGL\Workflow\Revisions::changed_fields( $noise ), 'reflowed whitespace in a description is not a change' );
+
+wp_update_post( [ 'ID' => $noise, 'post_content' => '<p>One line.</p><p>Two lines, edited.</p>' ] );
+$ok( [ 'body' ] === array_column( \DGL\Workflow\Revisions::changed_fields( $noise ), 'key' ), 'but an altered word is' );
+
+wp_update_post( [ 'ID' => $noise, 'post_content' => '<p>One line.</p><p>Two <strong>lines.</strong></p>' ] );
+$ok( [ 'body' ] === array_column( \DGL\Workflow\Revisions::changed_fields( $noise ), 'key' ), 'and so is formatting, which markup-stripping would have hidden' );
+
+$group( 'An empty image is no answer, not a zero' );
+
+$img_live = $make_item( $org_a, $alice, Statuses::LIVE );
+wp_update_post( [ 'ID' => $img_live, 'post_title' => 'No picture' ] );
+$img_rev = (int) \DGL\Workflow\Revisions::open( $img_live, $alice );
+update_post_meta( $img_rev, DGL_FIXTURE_FLAG, '1' );
+
+// What the wizard receives when the member attaches nothing.
+\DGL\Dashboard\Wizard::save_step( $img_rev, PostTypes::EVENT, 1, [ 'title' => 'No picture', 'summary' => 'A summary.', 'body' => 'Some words.', 'image' => '0' ] );
+
+$ok( ! metadata_exists( 'post', $img_rev, 'dgl_image' ), 'attaching nothing leaves no row behind' );
+$ok(
+	! in_array( 'image', array_column( \DGL\Workflow\Revisions::changed_fields( $img_rev ), 'key' ), true ),
+	'so no picture is never reported as a change from no picture'
+);
+
+$group( 'An edit that changes nothing is recognised as nothing' );
+
+$idle_live = $make_item( $org_a, $alice, Statuses::LIVE );
+wp_update_post( [ 'ID' => $idle_live, 'post_title' => 'Unchanged item' ] );
+$idle = (int) \DGL\Workflow\Revisions::open( $idle_live, $alice );
+update_post_meta( $idle, DGL_FIXTURE_FLAG, '1' );
+
+$ok( \DGL\Workflow\Revisions::is_empty( $idle ), 'an untouched edit has nothing in it' );
+$ok( ! \DGL\Workflow\Revisions::is_empty( (int) $rev ), 'and a real one does' );
+
+$group( 'An edit queues without taking the item off the site' );
+
+$clear();
+$ok( true === Transition::apply( (int) $rev, StateMachine::SUBMIT, $alice ), 'the edit is submitted' );
+$ok( Statuses::PENDING === get_post( $rev )->post_status, 'the edit is in the queue' );
+$ok( Statuses::LIVE === get_post( $live )->post_status, 'and the item is still on the site' );
+$ok( 'Summer picnic' === get_post( $live )->post_title, 'still showing the approved version' );
+$ok( in_array( (int) $rev, ItemsTable::queue( null, 200 ), true ), 'the edit appears in the moderation queue' );
+$ok( ! in_array( (int) $rev, ItemsTable::for_org( $org_a, null, null, 200 ), true ), 'but not in the organisation s own item list' );
+
+$counts = ItemsTable::counts_for_org( $org_a );
+$ok( ! in_array( (int) $rev, ItemsTable::for_org( $org_a, [ PostTypes::REVISION ], null, 200 ), true ), 'and cannot be pulled into it by asking for the type' );
+
+$group( 'The emails about an edit say it is an edit' );
+
+$subjects = [];
+foreach ( $sent as $one ) {
+	$subjects[] = (string) $one['subject'];
+}
+
+$ok( [] !== $subjects, 'submitting an edit sends email' );
+
+$found_edit_wording = false;
+foreach ( $subjects as $subject ) {
+	if ( str_contains( strtolower( $subject ), 'edit' ) ) {
+		$found_edit_wording = true;
+	}
+}
+$ok( $found_edit_wording, 'and the subject lines say so' );
+
+$group( 'Editing is frozen while the team have it' );
+
+$blocked = \DGL\Workflow\Revisions::open( $live, $alice );
+$ok( is_wp_error( $blocked ), 'a second edit cannot be opened while one is pending' );
+$ok( ! Access::can( $alice, Policy::EDIT_ITEM, (int) $rev ), 'and the pending edit itself is locked' );
+
+$group( 'Approving an edit writes it on to the live item' );
+
+$clear();
+$ok( true === Transition::apply( (int) $rev, StateMachine::APPROVE, $mod ), 'the moderator approves the edit' );
+
+$ok( 'Summer picnic and bring-and-buy' === get_post( $live )->post_title, 'the live item now carries the new title' );
+$ok( 'Roundhay Park' === get_post_meta( $live, 'dgl_venue_name', true ), 'and the new venue' );
+$ok( Statuses::LIVE === get_post( $live )->post_status, 'it never left the site' );
+$ok( Statuses::ARCHIVED === get_post( $rev )->post_status, 'the edit is kept as a record, out of the queue' );
+$ok( ! in_array( (int) $rev, ItemsTable::queue( null, 200 ), true ), 'so the queue is clear' );
+$ok( null === \DGL\Workflow\Revisions::open_for( $live ), 'and the item has no open edit any more' );
+$ok( in_array( 'dgl_alice@example.test', array_column( array_map( static fn( $m ) => [ 'to' => is_array( $m['to'] ) ? reset( $m['to'] ) : $m['to'] ], $sent ), 'to' ), true ) === false, 'mail is still diverted, not sent to the member' );
+
+$group( 'The history survives the edit being resolved' );
+
+/*
+ * An approved edit is archived, and `post_status => 'any'` in WP_Query drops
+ * statuses registered with `exclude_from_search`, which is most of this
+ * plugin's. So the item's timeline went blank the moment its edit was approved
+ * and the member saw "Nothing yet" on work they had just had published.
+ */
+$ok( [ (int) $rev ] === \DGL\Workflow\Revisions::all_for( $live ), 'an approved edit is still findable against its item' );
+
+$timeline = \DGL\Workflow\Revisions::history_for( $live );
+$actions  = array_column( $timeline, 'action' );
+
+$ok( in_array( 'submit', $actions, true ), 'the item timeline shows the edit being sent' );
+$ok( in_array( 'approve', $actions, true ), 'and being approved' );
+
+foreach ( $timeline as $entry ) {
+	if ( 'approve' === $entry['action'] ) {
+		$ok( ! empty( $entry['is_edit'] ), 'and each edit entry is marked as one, so it does not read as a repeat' );
+	}
+}
+
+$group( 'A refused edit leaves the site exactly as it was' );
+
+$rev2 = (int) \DGL\Workflow\Revisions::open( $live, $alice );
+update_post_meta( $rev2, DGL_FIXTURE_FLAG, '1' );
+wp_update_post( [ 'ID' => $rev2, 'post_title' => 'Something the team will not accept' ] );
+
+Transition::apply( $rev2, StateMachine::SUBMIT, $alice );
+$clear();
+$ok( true === Transition::apply( $rev2, StateMachine::REJECT, $mod, 'Not suitable.' ), 'the moderator refuses it' );
+
+$ok( 'Summer picnic and bring-and-buy' === get_post( $live )->post_title, 'the published title is unchanged' );
+$ok( Statuses::LIVE === get_post( $live )->post_status, 'and it is still on the site' );
+$ok( Statuses::REJECTED === get_post( $rev2 )->post_status, 'the refusal is recorded against the edit' );
+
+$group( 'A change request sends the edit back, not the item' );
+
+$rev3 = (int) \DGL\Workflow\Revisions::open( $live, $alice );
+update_post_meta( $rev3, DGL_FIXTURE_FLAG, '1' );
+wp_update_post( [ 'ID' => $rev3, 'post_title' => 'Needs a tweak' ] );
+Transition::apply( $rev3, StateMachine::SUBMIT, $alice );
+Transition::apply( $rev3, StateMachine::REQUEST_CHANGES, $mod, 'Add the start time.' );
+
+$ok( Statuses::CHANGES === get_post( $rev3 )->post_status, 'the edit is back with the member' );
+$ok( Statuses::LIVE === get_post( $live )->post_status, 'the item is still live' );
+$ok( 'Summer picnic and bring-and-buy' === get_post( $live )->post_title, 'and still shows the approved wording' );
+$ok( Access::can( $alice, Policy::EDIT_ITEM, $rev3 ), 'the member can pick the edit back up' );
+
+$group( 'A member can throw their own edit away' );
+
+$ok( true === \DGL\Workflow\Revisions::discard( $rev3 ), 'the edit is discarded' );
+$ok( null === get_post( $rev3 ), 'and gone' );
+$ok( 'Summer picnic and bring-and-buy' === get_post( $live )->post_title, 'the live item is unaffected' );
+
+$group( 'Trust for edits is a separate permission from trust for new work' );
+
+update_post_meta( $org_a, Meta::ORG_TRUST, \DGL\Org\Trust::TRUSTED_EDITS );
+Access::flush_cache();
+
+$trusted_new = $make_item( $org_a, $alice, Statuses::DRAFT );
+wp_update_post( [ 'ID' => $trusted_new, 'post_title' => 'Brand new thing' ] );
+Transition::apply( $trusted_new, StateMachine::SUBMIT, $alice );
+$ok( Statuses::PENDING === get_post( $trusted_new )->post_status, 'new work from a trusted-for-edits organisation is still read first' );
+
+$rev4 = (int) \DGL\Workflow\Revisions::open( $live, $alice );
+update_post_meta( $rev4, DGL_FIXTURE_FLAG, '1' );
+wp_update_post( [ 'ID' => $rev4, 'post_title' => 'Trusted edit applied straight away' ] );
+Transition::apply( $rev4, StateMachine::SUBMIT, $alice );
+
+$ok( 'Trusted edit applied straight away' === get_post( $live )->post_title, 'but its edit goes straight on to the site' );
+$ok( Statuses::ARCHIVED === get_post( $rev4 )->post_status, 'and the edit resolves itself without a moderator' );
+$ok( ! in_array( $rev4, ItemsTable::queue( null, 200 ), true ), 'so it never reaches the queue' );
+
+update_post_meta( $org_a, Meta::ORG_TRUST, \DGL\Org\Trust::MODERATED );
+Access::flush_cache();
+
+$group( 'An edit is never mistaken for live content' );
+
+$expiring = $make_item( $org_a, $alice, Statuses::LIVE );
+wp_update_post( [ 'ID' => $expiring, 'post_title' => 'Has an end date' ] );
+$rev5 = (int) \DGL\Workflow\Revisions::open( $expiring, $alice );
+update_post_meta( $rev5, DGL_FIXTURE_FLAG, '1' );
+update_post_meta( $rev5, Meta::ITEM_EXPIRES_AT, '2020-01-01 00:00:00' );
+wp_update_post( [ 'ID' => $rev5, 'post_status' => Statuses::LIVE ] );
+\DGL\Index\Sync::sync( $rev5 );
+
+$due = ItemsTable::due_for_expiry( current_time( 'mysql', true ), 200 );
+$ok( ! in_array( $rev5, $due, true ), 'even a revision left at a live status is never swept up by the expiry run' );
+
+$group( 'Deleting an item takes its edits with it' );
+
+$doomed = $make_item( $org_a, $alice, Statuses::LIVE );
+$doomed_rev = (int) \DGL\Workflow\Revisions::open( $doomed, $alice );
+
+// A resolved edit, which is the one `any` would have missed.
+$doomed_done = (int) \DGL\Workflow\Revisions::open( $doomed, $alice );
+wp_update_post( [ 'ID' => $doomed_done, 'post_status' => Statuses::ARCHIVED ] );
+
+wp_delete_post( $doomed, true );
+
+$ok( null === get_post( $doomed_rev ), 'no orphaned edit is left pointing at nothing' );
+$ok( null === get_post( $doomed_done ), 'including one that was already resolved' );
+
+delete_option( \DGL\Email\Routing::OPTION_REDIRECT );
+delete_option( \DGL\Email\Routing::OPTION_ENABLED );
+
 /* ----------------------------------------------------------------- report */
 
 echo "\n" . str_repeat( '-', 60 ) . "\n";

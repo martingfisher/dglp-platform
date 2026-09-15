@@ -19,6 +19,7 @@ use DGL\PostTypes;
 use DGL\Schema\FieldRegistry;
 use DGL\Statuses;
 use DGL\Taxonomies;
+use DGL\Workflow\Revisions;
 use DGL\Workflow\StateMachine;
 use DGL\Workflow\Transition;
 
@@ -74,6 +75,7 @@ final class Controller {
 			'review' === $first            => self::review( $segments, $user ),
 			'new' === $first               => self::new_item( $segments[1] ?? '', $user ),
 			'edit' === $first              => self::edit( $segments, $user ),
+			'discard' === $first           => self::discard( (int) ( $segments[1] ?? 0 ), $user ),
 			'item' === $first              => self::detail( (int) ( $segments[1] ?? 0 ), $user ),
 			null !== self::type_for( $first ) => self::category( (string) self::type_for( $first ), $user ),
 			default                        => self::not_found( $user ),
@@ -200,7 +202,21 @@ final class Controller {
 	private static function review_item( int $post_id, UserContext $user ): void {
 		$post = get_post( $post_id );
 
-		if ( null === $post || ! PostTypes::is_submittable( $post->post_type ) ) {
+		if ( null === $post || ! PostTypes::is_reviewable( $post->post_type ) ) {
+			self::not_found( $user );
+			return;
+		}
+
+		/*
+		 * A pending edit is reviewed as itself, against its parent's schema.
+		 * The moderator is reading the proposed version and the difference, not
+		 * the version that is currently on the site.
+		 */
+		$is_edit     = PostTypes::REVISION === $post->post_type;
+		$schema_type = $is_edit ? Revisions::type_of( $post_id ) : (string) $post->post_type;
+		$parent      = $is_edit ? get_post( Revisions::target( $post_id ) ) : null;
+
+		if ( $is_edit && ( '' === $schema_type || null === $parent ) ) {
 			self::not_found( $user );
 			return;
 		}
@@ -214,7 +230,7 @@ final class Controller {
 			$note   = isset( $_POST['dgl_note'] ) ? sanitize_textarea_field( wp_unslash( $_POST['dgl_note'] ) ) : '';
 
 			if ( 'check_links' === $intent ) {
-				Checks::check_links_now( $post_id, (string) $post->post_type );
+				Checks::check_links_now( $post_id, $schema_type );
 				wp_safe_redirect( Router::url( 'review', (string) $post_id ) );
 				exit;
 			}
@@ -240,8 +256,8 @@ final class Controller {
 
 		$queue    = ItemsTable::queue( null, 500 );
 		$position = array_search( $post_id, $queue, true );
-		$def      = PostTypes::definitions()[ $post->post_type ];
-		$org_id   = \DGL\Org\Org::for_item( $post_id );
+		$def      = PostTypes::definitions()[ $schema_type ];
+		$org_id   = \DGL\Org\Org::for_item( $is_edit ? (int) $parent->ID : $post_id );
 		$counts   = $org_id > 0 ? ItemsTable::counts_for_org( $org_id ) : [];
 
 		self::screen(
@@ -250,10 +266,18 @@ final class Controller {
 				'user'      => $user,
 				'post'      => $post,
 				'singular'  => $def['singular'],
-				'fields'    => FieldRegistry::for_type( (string) $post->post_type ),
-				'values'    => Wizard::values( $post_id, (string) $post->post_type ),
-				'checks'    => Checks::run( $post_id, (string) $post->post_type ),
-				'history'   => \DGL\Audit\Log::for_object( 'item', $post_id ),
+				'is_edit'   => $is_edit,
+				'parent'    => $parent,
+				/*
+				 * Reading a form twice and spotting the one altered sentence is
+				 * proofreading, not review, and at volume nobody does it
+				 * reliably. So an edit is shown as its differences first.
+				 */
+				'changes'   => $is_edit ? Revisions::changed_fields( $post_id ) : [],
+				'fields'    => FieldRegistry::for_type( $schema_type ),
+				'values'    => Wizard::values( $post_id, $schema_type ),
+				'checks'    => Checks::run( $post_id, $schema_type ),
+				'history'   => \DGL\Audit\Log::for_object( $is_edit ? 'revision' : 'item', $post_id ),
 				'topics'    => wp_get_object_terms( $post_id, Taxonomies::TOPIC, [ 'fields' => 'names' ] ),
 				'error'     => $error,
 				'org'       => $org_id > 0 ? get_post( $org_id ) : null,
@@ -304,7 +328,49 @@ final class Controller {
 		$step    = max( 1, min( FieldRegistry::STEP_REVIEW, (int) ( $segments[2] ?? 1 ) ) );
 		$post    = get_post( $post_id );
 
-		if ( null === $post || ! PostTypes::is_submittable( $post->post_type ) ) {
+		if ( null === $post || ! PostTypes::is_reviewable( $post->post_type ) ) {
+			self::not_found( $user );
+			return;
+		}
+
+		/*
+		 * Editing something that is already on the site does not edit the thing
+		 * on the site. It opens a pending edit and works on that, so the
+		 * published version is never altered by anybody except a moderator
+		 * approving the change. The redirect happens before the permission
+		 * check does any work, because from here on the subject is the edit.
+		 */
+		if ( PostTypes::is_submittable( $post->post_type ) && Revisions::needs_revision( (string) $post->post_status ) ) {
+			if ( ! Access::can( $user->user_id, Policy::EDIT_ITEM, $post_id ) ) {
+				self::screen( 'no-access', [], __( 'No access', 'dgl-platform' ), $user );
+				return;
+			}
+
+			$revision_id = Revisions::open( $post_id, $user->user_id );
+
+			if ( is_wp_error( $revision_id ) ) {
+				self::screen(
+					'error',
+					[ 'user' => $user, 'message' => $revision_id->get_error_message() ],
+					__( 'Cannot edit', 'dgl-platform' ),
+					$user
+				);
+				return;
+			}
+
+			wp_safe_redirect( Router::url( 'edit', (string) $revision_id, '1' ) );
+			exit;
+		}
+
+		/*
+		 * A pending edit carries no field schema of its own, so every screen
+		 * that renders, validates or saves one works against its parent's type.
+		 */
+		$is_edit     = PostTypes::REVISION === $post->post_type;
+		$schema_type = $is_edit ? Revisions::type_of( $post_id ) : (string) $post->post_type;
+		$parent      = $is_edit ? get_post( Revisions::target( $post_id ) ) : null;
+
+		if ( $is_edit && ( '' === $schema_type || null === $parent ) ) {
 			self::not_found( $user );
 			return;
 		}
@@ -336,15 +402,21 @@ final class Controller {
 			$intent = isset( $_POST['dgl_intent'] ) ? sanitize_key( wp_unslash( $_POST['dgl_intent'] ) ) : 'next';
 
 			if ( 'submit' === $intent ) {
-				self::handle_submit( $post_id, (string) $post->post_type, $user );
+				self::handle_submit( $post_id, $schema_type, $user );
 				return;
 			}
 
-			$errors = Wizard::save_step( $post_id, (string) $post->post_type, $step, $input, $_FILES );
+			$errors = Wizard::save_step( $post_id, $schema_type, $step, $input, $_FILES );
 
 			if ( empty( $errors ) ) {
 				if ( 'close' === $intent ) {
-					wp_safe_redirect( Router::url( PostTypes::definitions()[ $post->post_type ]['slug'] ) );
+					// Closing an edit goes back to the item it belongs to, not
+					// to a list the edit does not appear in.
+					wp_safe_redirect(
+						$is_edit
+							? Router::url( 'item', (string) $parent->ID )
+							: Router::url( PostTypes::definitions()[ $post->post_type ]['slug'] )
+					);
 					exit;
 				}
 
@@ -356,7 +428,7 @@ final class Controller {
 			$notice = __( 'Almost there. A few things need fixing before you can carry on.', 'dgl-platform' );
 		}
 
-		$values = Wizard::values( $post_id, (string) $post->post_type );
+		$values = Wizard::values( $post_id, $schema_type );
 
 		// Show what they just typed, not what was saved, so nothing looks lost.
 		if ( $is_post ) {
@@ -368,36 +440,92 @@ final class Controller {
 			}
 		}
 
-		$def = PostTypes::definitions()[ $post->post_type ];
+		$def = PostTypes::definitions()[ $schema_type ];
 
 		self::screen(
 			FieldRegistry::STEP_REVIEW === $step ? 'wizard-review' : 'wizard',
 			[
 				'user'      => $user,
 				'post'      => $post,
-				'post_type' => $post->post_type,
+				'post_type' => $schema_type,
 				'singular'  => $def['singular'],
 				'plural'    => $def['plural'],
 				'slug'      => $def['slug'],
 				'step'      => $step,
-				'fields'    => FieldRegistry::for_step( (string) $post->post_type, $step ),
+				'fields'    => FieldRegistry::for_step( $schema_type, $step ),
 				'values'    => $values,
 				'errors'    => $errors,
 				'notice'    => $notice,
+				'is_edit'   => $is_edit,
+				'parent'    => $parent,
+				'changes'   => $is_edit && FieldRegistry::STEP_REVIEW === $step ? Revisions::changed_fields( $post_id ) : [],
 				'topics'    => get_terms( [ 'taxonomy' => Taxonomies::TOPIC, 'hide_empty' => false ] ),
 				'chosen'    => wp_get_object_terms( $post_id, Taxonomies::TOPIC, [ 'fields' => 'ids' ] ),
 				'chosen_names' => wp_get_object_terms( $post_id, Taxonomies::TOPIC, [ 'fields' => 'names' ] ),
 				'all_errors' => FieldRegistry::STEP_REVIEW === $step
-					? Wizard::validate_all( $post_id, (string) $post->post_type )
+					? Wizard::validate_all( $post_id, $schema_type )
 					: [],
 			],
-			sprintf(
-				/* translators: %s: content type name. */
-				__( 'New %s', 'dgl-platform' ),
-				strtolower( $def['singular'] )
-			),
+			$is_edit
+				? sprintf(
+					/* translators: %s: content type name. */
+					__( 'Edit %s', 'dgl-platform' ),
+					strtolower( $def['singular'] )
+				)
+				: sprintf(
+					/* translators: %s: content type name. */
+					__( 'New %s', 'dgl-platform' ),
+					strtolower( $def['singular'] )
+				),
 			$user
 		);
+	}
+
+	/**
+	 * Abandon a pending edit and leave the published version as it is.
+	 *
+	 * A member's own edit is theirs to throw away. A moderator refusing one
+	 * rejects it instead, so the refusal leaves a record behind.
+	 */
+	private static function discard( int $revision_id, UserContext $user ): void {
+		$post = get_post( $revision_id );
+
+		if ( null === $post || PostTypes::REVISION !== $post->post_type ) {
+			self::not_found( $user );
+			return;
+		}
+
+		$parent_id = Revisions::target( $revision_id );
+
+		if ( 'POST' !== ( $_SERVER['REQUEST_METHOD'] ?? 'GET' ) ) {
+			wp_safe_redirect( Router::url( 'item', (string) $parent_id ) );
+			exit;
+		}
+
+		check_admin_referer( Wizard::NONCE );
+
+		/*
+		 * An edit sitting with a moderator is not the member's to withdraw. It
+		 * is frozen for the same reason a pending submission is: what the team
+		 * decide on has to be what they read.
+		 */
+		if ( Statuses::PENDING === $post->post_status || ! Access::can( $user->user_id, Policy::EDIT_ITEM, $revision_id ) ) {
+			self::screen(
+				'error',
+				[
+					'user'    => $user,
+					'message' => __( 'That edit is with the review team, so it cannot be withdrawn until they have read it.', 'dgl-platform' ),
+				],
+				__( 'Locked', 'dgl-platform' ),
+				$user
+			);
+			return;
+		}
+
+		Revisions::discard( $revision_id );
+
+		wp_safe_redirect( add_query_arg( 'discarded', '1', Router::url( 'item', (string) $parent_id ) ) );
+		exit;
 	}
 
 	/**
@@ -409,6 +537,27 @@ final class Controller {
 		if ( ! empty( $outstanding ) ) {
 			wp_safe_redirect( Router::url( 'edit', (string) $post_id, (string) FieldRegistry::STEP_REVIEW ) );
 			exit;
+		}
+
+		$is_edit = PostTypes::REVISION === get_post_type( $post_id );
+
+		/*
+		 * An edit that changes nothing is not sent. Somebody opening a listing,
+		 * looking at it and pressing through to the end should not cost a
+		 * moderator a review, and it should not lock their own content for
+		 * three days either.
+		 */
+		if ( $is_edit && Revisions::is_empty( $post_id ) ) {
+			self::screen(
+				'error',
+				[
+					'user'    => $user,
+					'message' => __( 'Nothing has changed, so there is nothing to review. Make a change first, or discard the edit and leave the published version as it is.', 'dgl-platform' ),
+				],
+				__( 'Nothing to submit', 'dgl-platform' ),
+				$user
+			);
+			return;
 		}
 
 		$result = Transition::apply( $post_id, StateMachine::SUBMIT, $user->user_id );
@@ -423,7 +572,11 @@ final class Controller {
 			return;
 		}
 
-		wp_safe_redirect( add_query_arg( 'submitted', '1', Router::url( 'item', (string) $post_id ) ) );
+		// An edit sends the member back to the item it belongs to, because the
+		// edit itself is about to stop existing as a thing they can open.
+		$landing = $is_edit ? Revisions::target( $post_id ) : $post_id;
+
+		wp_safe_redirect( add_query_arg( 'submitted', '1', Router::url( 'item', (string) $landing ) ) );
 		exit;
 	}
 
@@ -443,7 +596,8 @@ final class Controller {
 			return;
 		}
 
-		$def = PostTypes::definitions()[ $post->post_type ];
+		$def      = PostTypes::definitions()[ $post->post_type ];
+		$revision = Revisions::open_for( $post_id );
 
 		self::screen(
 			'detail',
@@ -454,9 +608,20 @@ final class Controller {
 				'slug'       => $def['slug'],
 				'fields'     => FieldRegistry::for_type( (string) $post->post_type ),
 				'values'     => Wizard::values( $post_id, (string) $post->post_type ),
-				'history'    => \DGL\Audit\Log::for_object( 'item', $post_id ),
+				// One timeline, with any edits folded in. Two separate histories
+				// is an accurate model and a confusing screen.
+				'history'    => Revisions::history_for( $post_id ),
 				'can_edit'   => Access::can( $user->user_id, Policy::EDIT_ITEM, $post_id ),
 				'submitted'  => isset( $_GET['submitted'] ), // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+				'discarded'  => isset( $_GET['discarded'] ), // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+				/*
+				 * What is shown below is the published version, always. The
+				 * pending edit is announced in a banner rather than rendered in
+				 * place, so nobody reads an unapproved change and takes it for
+				 * what is on the site.
+				 */
+				'revision'   => $revision,
+				'changes'    => null !== $revision ? Revisions::changed_fields( (int) $revision->ID ) : [],
 			],
 			$post->post_title !== '' ? $post->post_title : __( 'Submission', 'dgl-platform' ),
 			$user
@@ -484,13 +649,27 @@ final class Controller {
 			return [];
 		}
 
-		$def      = PostTypes::definitions()[ $post->post_type ] ?? [ 'singular' => '', 'slug' => '' ];
+		$is_edit  = PostTypes::REVISION === $post->post_type;
+		$type_key = $is_edit ? Revisions::type_of( $post_id ) : (string) $post->post_type;
+		$def      = PostTypes::definitions()[ $type_key ] ?? [ 'singular' => '', 'slug' => '' ];
 		$modified = get_post_modified_time( 'Y-m-d H:i:s', true, $post );
 
 		return [
 			'id'       => $post_id,
 			'title'    => $post->post_title !== '' ? $post->post_title : __( 'Untitled', 'dgl-platform' ),
-			'type'     => $def['singular'],
+			/*
+			 * The queue has to say which rows are edits. A reviewer who opens
+			 * what they think is a new listing and finds a published one with
+			 * two words changed has been sent to the wrong screen.
+			 */
+			'type'     => $is_edit
+				? sprintf(
+					/* translators: %s: content type name, for example "event". */
+					__( 'Edit to %s', 'dgl-platform' ),
+					strtolower( (string) $def['singular'] )
+				)
+				: $def['singular'],
+			'is_edit'  => $is_edit,
 			'status'   => $post->post_status,
 			'updated'  => is_string( $modified ) ? $modified : null,
 			'url'      => $for_review

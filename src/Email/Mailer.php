@@ -16,6 +16,7 @@ use DGL\Org\Org;
 use DGL\PostTypes;
 use DGL\Statuses;
 use DGL\Workflow\Plan;
+use DGL\Workflow\Revisions;
 use PHPMailer\PHPMailer\PHPMailer;
 use WP_Post;
 
@@ -107,24 +108,47 @@ final class Mailer {
 			return null;
 		}
 
-		$definitions = PostTypes::definitions();
-		$type_label  = $definitions[ $post->post_type ]['singular'] ?? '';
+		/*
+		 * A pending edit borrows almost everything from the item it would
+		 * replace: the type, the organisation, the page the member goes back
+		 * to. What it does not borrow is the fact that it is an edit, which is
+		 * the one thing the wording has to get right.
+		 */
+		$is_edit = PostTypes::REVISION === $post->post_type;
+		$subject = $post;
 
-		$org_id   = Org::for_item( $post_id );
+		if ( $is_edit ) {
+			$parent = get_post( Revisions::target( $post_id ) );
+
+			if ( ! $parent instanceof WP_Post ) {
+				return null;
+			}
+
+			$subject = $parent;
+		}
+
+		$definitions = PostTypes::definitions();
+		$type_label  = $definitions[ $subject->post_type ]['singular'] ?? '';
+
+		$org_id   = Org::for_item( (int) $subject->ID );
 		$org_name = $org_id > 0 ? (string) get_the_title( $org_id ) : '';
 
 		return new Context(
-			title: (string) get_the_title( $post ),
+			title: (string) get_the_title( $subject ),
 			type_label: (string) $type_label,
 			org_name: $org_name,
 			actor_name: self::actor_name( $actor_id ),
 			site_name: (string) get_bloginfo( 'name' ),
-			item_url: Router::url( 'item', (string) $post_id ),
+			// Always the item's own page. An edit has no page of its own once
+			// it has been applied, so a link to it would die on approval.
+			item_url: Router::url( 'item', (string) $subject->ID ),
+			// The review link is to the thing being decided, edit included.
 			review_url: Router::url( 'review', (string) $post_id ),
-			public_url: self::public_url( $post ),
+			public_url: self::public_url( $subject ),
 			queue_url: Router::url( 'review' ),
-			expires_on: self::expires_on( $post_id ),
+			expires_on: self::expires_on( (int) $subject->ID ),
 			note: $note,
+			is_edit: $is_edit,
 		);
 	}
 

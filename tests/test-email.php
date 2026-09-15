@@ -211,3 +211,75 @@ Harness::assert_true( $receipt->paragraphs !== $queue->paragraphs, 'and not in t
 Harness::assert_same( 'https://example.test/dashboard/item/12', $receipt->cta_url, 'it links to their own submission' );
 Harness::assert_true( str_contains( $receipt->paragraphs[0], 'not on the site yet' ), 'it says where the work is not' );
 Harness::assert_false( str_contains( strtolower( $receipt->to_text() ), 'within' ), 'and promises no turnaround this plugin cannot know' );
+
+Harness::group( 'An edit is never described as a new submission' );
+
+$edit = static fn( array $o = [] ): Context => new Context(
+	title: $o['title'] ?? 'Coffee morning at the Hub',
+	type_label: $o['type_label'] ?? 'Event',
+	org_name: 'Leeds Community Trust',
+	actor_name: 'Jo Bloggs',
+	site_name: 'Doing Good Leeds Partnership',
+	item_url: 'https://example.test/dashboard/item/12',
+	review_url: 'https://example.test/dashboard/review/99',
+	public_url: $o['public_url'] ?? '',
+	queue_url: 'https://example.test/dashboard/review',
+	expires_on: '',
+	note: $o['note'] ?? '',
+	is_edit: true,
+);
+
+/*
+ * The five messages an edit can produce. Each has to say something different
+ * from its new-submission twin, because the two are not the same event and a
+ * member reading "your event is live" about an edit that was refused would be
+ * badly misled.
+ */
+$edit_pairs = [
+	[ 'submitted', Plan::NOTIFY_MEMBER ],
+	[ 'submitted', Plan::NOTIFY_MODERATORS ],
+	[ 'published_on_trust', Plan::NOTIFY_MEMBER ],
+	[ 'published_on_trust', Plan::NOTIFY_MODERATORS ],
+	[ 'approved', Plan::NOTIFY_MEMBER ],
+	[ 'changes_requested', Plan::NOTIFY_MEMBER ],
+	[ 'rejected', Plan::NOTIFY_MEMBER ],
+];
+
+foreach ( $edit_pairs as [ $key, $audience ] ) {
+	$new  = Copy::compose( $key, $audience, $ctx() );
+	$made = Copy::compose( $key, $audience, $edit() );
+	$name = $key . '/' . $audience;
+
+	Harness::assert_true( $made instanceof Message, $name . ' has edit copy' );
+	Harness::assert_true( $made->subject !== $new->subject, $name . ' has its own subject' );
+	Harness::assert_true( $made->paragraphs !== $new->paragraphs, $name . ' has its own words' );
+	Harness::assert_true( str_contains( strtolower( $made->subject . ' ' . implode( ' ', $made->paragraphs ) ), 'edit' ), $name . ' says it is an edit' );
+}
+
+Harness::group( 'An edit in trouble says the site is still fine' );
+
+foreach ( [ 'changes_requested', 'rejected' ] as $key ) {
+	$m = Copy::compose( $key, Plan::NOTIFY_MEMBER, $edit( [ 'note' => 'Wrong date.' ] ) );
+
+	Harness::assert_true(
+		str_contains( implode( ' ', $m->paragraphs ), 'published version is unchanged' ),
+		$key . ' reassures the member their live listing has not come down'
+	);
+}
+
+Harness::assert_true(
+	str_contains( implode( ' ', Copy::compose( 'submitted', Plan::NOTIFY_MEMBER, $edit() )->paragraphs ), 'has not changed' ),
+	'and so does the receipt, which is when they will be most worried'
+);
+
+Harness::group( 'The review team are told what they are opening' );
+
+$m = Copy::compose( 'submitted', Plan::NOTIFY_MODERATORS, $edit() );
+
+Harness::assert_true( str_contains( $m->subject, 'Edit to a published event' ), 'the subject says it is an edit before they click' );
+Harness::assert_same( 'https://example.test/dashboard/review/99', $m->cta_url, 'and the link goes to the edit, not the item' );
+Harness::assert_same(
+	'https://example.test/dashboard/item/12',
+	Copy::compose( 'approved', Plan::NOTIFY_MEMBER, $edit() )->cta_url,
+	'while the member is sent to the item, which is the thing that still exists afterwards'
+);

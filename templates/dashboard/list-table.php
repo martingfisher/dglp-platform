@@ -30,7 +30,12 @@ $items = $data['items'] ?? [];
 			<?php foreach ( $items as $row ) : ?>
 				<tr>
 					<td><a href="<?php echo esc_url( $row['url'] ); ?>"><?php echo esc_html( $row['title'] ); ?></a></td>
-					<td><?php echo esc_html( $row['type'] ); ?></td>
+					<td>
+						<?php echo esc_html( $row['type'] ); ?>
+						<?php if ( ! empty( $row['is_edit'] ) ) : ?>
+							<span class="dgl-edit-flag"><?php esc_html_e( 'Edit', 'dgl-platform' ); ?></span>
+						<?php endif; ?>
+					</td>
 					<td><?php echo View::chip( $row['status'] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></td>
 					<td><?php echo esc_html( View::date( $row['updated'], true ) ); ?></td>
 				</tr>

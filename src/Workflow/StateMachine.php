@@ -80,11 +80,13 @@ final class StateMachine {
 	/**
 	 * Where an action lands, or null if the move is illegal from this status.
 	 *
-	 * @param string $action One of the class constants.
-	 * @param string $from   The item's current status.
-	 * @param int    $trust  The owning organisation's trust level.
+	 * @param string $action  One of the class constants.
+	 * @param string $from     The item's current status.
+	 * @param int    $trust    The owning organisation's trust level.
+	 * @param bool   $is_edit  Whether this is an edit to something already
+	 *                         published, rather than a new submission.
 	 */
-	public static function next( string $action, string $from, int $trust = Trust::MODERATED ): ?string {
+	public static function next( string $action, string $from, int $trust = Trust::MODERATED, bool $is_edit = false ): ?string {
 		$to = self::table()[ $action ][ $from ] ?? null;
 
 		if ( null === $to ) {
@@ -95,12 +97,19 @@ final class StateMachine {
 		 * A trusted organisation's submission goes straight live. Everything
 		 * else about the move, including the audit entry, is unchanged: the
 		 * item simply lands on `publish` instead of waiting in the queue.
+		 *
+		 * Edits and new items are two different permissions. The middle trust
+		 * level exists precisely so an organisation can fix its own typos
+		 * without waiting, while anything genuinely new is still read first.
 		 */
-		if ( self::SUBMIT === $action
-			&& Statuses::PENDING === $to
-			&& Trust::auto_publishes_new( $trust )
-		) {
-			return Statuses::LIVE;
+		if ( self::SUBMIT === $action && Statuses::PENDING === $to ) {
+			$skips_queue = $is_edit
+				? Trust::auto_publishes_edits( $trust )
+				: Trust::auto_publishes_new( $trust );
+
+			if ( $skips_queue ) {
+				return Statuses::LIVE;
+			}
 		}
 
 		return $to;

@@ -28,9 +28,11 @@ final class Planner {
 	 * @param string $from           Current status.
 	 * @param int    $trust          The owning organisation's trust level.
 	 * @param bool   $actor_is_staff Whether a moderator or administrator is acting.
+	 * @param bool   $is_edit        Whether the thing moving is an edit to
+	 *                               already-published content.
 	 */
-	public static function plan( string $action, string $from, int $trust = Trust::MODERATED, bool $actor_is_staff = false ): ?Plan {
-		$to = StateMachine::next( $action, $from, $trust );
+	public static function plan( string $action, string $from, int $trust = Trust::MODERATED, bool $actor_is_staff = false, bool $is_edit = false ): ?Plan {
+		$to = StateMachine::next( $action, $from, $trust, $is_edit );
 
 		if ( null === $to ) {
 			return null;

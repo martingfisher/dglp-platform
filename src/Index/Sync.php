@@ -85,7 +85,7 @@ final class Sync {
 			return;
 		}
 
-		if ( ! PostTypes::is_submittable( $post->post_type ) ) {
+		if ( ! PostTypes::is_reviewable( $post->post_type ) ) {
 			return;
 		}
 
@@ -110,13 +110,23 @@ final class Sync {
 	public static function sync( int $post_id ): bool {
 		$post = get_post( $post_id );
 
-		if ( ! $post instanceof WP_Post || ! PostTypes::is_submittable( $post->post_type ) ) {
+		/*
+		 * Pending edits are indexed alongside the items they would replace, so
+		 * the moderation queue is one query rather than a union of two. The
+		 * queries that mean "live content" filter them back out by type, which
+		 * is what `ItemsTable::CONTENT_ONLY` is for.
+		 */
+		if ( ! $post instanceof WP_Post || ! PostTypes::is_reviewable( $post->post_type ) ) {
 			return false;
 		}
 
 		self::$syncing = true;
 
-		$org_id = Org::for_item( $post_id );
+		$org_source = PostTypes::REVISION === $post->post_type && $post->post_parent > 0
+			? (int) $post->post_parent
+			: $post_id;
+
+		$org_id = Org::for_item( $org_source );
 
 		$result = ItemsTable::upsert(
 			[

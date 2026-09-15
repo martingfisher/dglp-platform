@@ -58,9 +58,12 @@ final class Transition {
 	public static function apply( int $post_id, string $action, int $actor_id, string $note = '' ) {
 		$post = get_post( $post_id );
 
-		if ( ! $post instanceof WP_Post || ! PostTypes::is_submittable( $post->post_type ) ) {
+		if ( ! $post instanceof WP_Post || ! PostTypes::is_reviewable( $post->post_type ) ) {
 			return new WP_Error( 'dgl_not_an_item', __( 'That is not a submission.', 'dgl-platform' ) );
 		}
+
+		// A pending edit moves through the same states as the item it replaces.
+		$is_edit = PostTypes::REVISION === $post->post_type;
 
 		$system = 0 === $actor_id;
 
@@ -95,7 +98,7 @@ final class Transition {
 		$trust  = Org::trust_level( $org_id > 0 ? $org_id : null );
 		$staff  = ! $system && Access::user_context( $actor_id )->is_moderator();
 
-		$plan = Planner::plan( $action, (string) $post->post_status, $trust, $staff );
+		$plan = Planner::plan( $action, (string) $post->post_status, $trust, $staff, $is_edit );
 
 		if ( null === $plan ) {
 			return self::illegal( $action, (string) $post->post_status );
@@ -159,7 +162,18 @@ final class Transition {
 		}
 
 		if ( $plan->recompute_expiry ) {
-			self::recompute_expiry( $post_id, (string) $post->post_type );
+			/*
+			 * A revision has no schema of its own, so its dates are read
+			 * against its parent's field list. Without this the expiry stamp on
+			 * an edit is always null and an approved edit loses the end date.
+			 */
+			$schema_type = PostTypes::REVISION === $post->post_type
+				? Revisions::type_of( $post_id )
+				: (string) $post->post_type;
+
+			if ( '' !== $schema_type ) {
+				self::recompute_expiry( $post_id, $schema_type );
+			}
 		}
 
 		if ( $plan->revokes_trust && $org_id > 0 && Trust::MODERATED !== Trust::normalise( get_post_meta( $org_id, Meta::ORG_TRUST, true ) ) ) {
@@ -184,7 +198,7 @@ final class Transition {
 
 		Log::record(
 			$plan->action,
-			'item',
+			PostTypes::REVISION === $post->post_type ? 'revision' : 'item',
 			$post_id,
 			$org_id,
 			$note,

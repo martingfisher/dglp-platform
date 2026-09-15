@@ -19,6 +19,8 @@ defined( 'ABSPATH' ) || exit;
 $post      = $data['post'];
 $values    = $data['values'] ?? [];
 $decidable = ! empty( $data['decidable'] );
+$is_edit   = ! empty( $data['is_edit'] );
+$parent    = $data['parent'] ?? null;
 
 $check_class = static fn( string $status ): string => match ( $status ) {
 	Checks::PASS => 'dgl-check-row--pass',
@@ -38,7 +40,18 @@ $check_word = static fn( string $status ): string => match ( $status ) {
 	<div>
 		<p class="dgl-crumbs">
 			<a href="<?php echo esc_url( Router::url( 'review' ) ); ?>"><?php esc_html_e( 'Review queue', 'dgl-platform' ); ?></a>
-			<span aria-hidden="true">/</span> <?php echo esc_html( $data['singular'] ); ?>
+			<span aria-hidden="true">/</span>
+			<?php
+			echo $is_edit
+				? esc_html(
+					sprintf(
+						/* translators: %s: content type name, for example "event". */
+						__( 'Edit to %s', 'dgl-platform' ),
+						strtolower( (string) $data['singular'] )
+					)
+				)
+				: esc_html( (string) $data['singular'] );
+			?>
 		</p>
 		<h1 class="dgl-page-head__title">
 			<?php echo esc_html( $post->post_title !== '' ? $post->post_title : __( 'Untitled', 'dgl-platform' ) ); ?>
@@ -91,6 +104,38 @@ $check_word = static fn( string $status ): string => match ( $status ) {
 		</nav>
 	<?php endif; ?>
 </header>
+
+<?php if ( $is_edit ) : ?>
+	<div class="dgl-alert dgl-alert--edit" role="status">
+		<p>
+			<strong><?php esc_html_e( 'This is an edit to something already on the site.', 'dgl-platform' ); ?></strong>
+			<?php esc_html_e( 'The published version is unchanged and still live. Approving this replaces it. Refusing it leaves the site exactly as it is.', 'dgl-platform' ); ?>
+		</p>
+		<?php if ( $parent instanceof WP_Post ) : ?>
+			<p class="dgl-alert__actions">
+				<a class="dgl-button dgl-button--small dgl-button--quiet" href="<?php echo esc_url( (string) get_permalink( $parent ) ); ?>" rel="noopener">
+					<?php esc_html_e( 'See the published version', 'dgl-platform' ); ?>
+				</a>
+			</p>
+		<?php endif; ?>
+	</div>
+
+	<?php
+	if ( empty( $data['changes'] ) ) {
+		echo '<div class="dgl-alert dgl-alert--warn" role="status"><p>'
+			. esc_html__( 'Nothing in this edit is different from the published version. Approving it changes nothing.', 'dgl-platform' )
+			. '</p></div>';
+	} else {
+		View::output(
+			'dashboard/changes',
+			[
+				'changes'       => $data['changes'],
+				'changes_title' => __( 'What this edit would change', 'dgl-platform' ),
+			]
+		);
+	}
+	?>
+<?php endif; ?>
 
 <?php if ( '' !== ( $data['error'] ?? '' ) ) : ?>
 	<div class="dgl-alert" role="alert"><p><?php echo esc_html( $data['error'] ); ?></p></div>
@@ -176,7 +221,13 @@ $check_word = static fn( string $status ): string => match ( $status ) {
 
 					<div class="dgl-decision__actions">
 						<button class="dgl-button" type="submit" name="dgl_intent" value="approve">
-							<?php esc_html_e( 'Approve and publish', 'dgl-platform' ); ?>
+							<?php
+							// An edit is not published, it is applied. The item
+							// was already on the site and never came off it.
+							echo $is_edit
+								? esc_html__( 'Approve this edit', 'dgl-platform' )
+								: esc_html__( 'Approve and publish', 'dgl-platform' );
+							?>
 						</button>
 						<button class="dgl-button dgl-button--secondary" type="submit" name="dgl_intent" value="changes">
 							<?php esc_html_e( 'Ask for a change', 'dgl-platform' ); ?>

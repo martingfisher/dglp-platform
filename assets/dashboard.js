@@ -172,6 +172,29 @@
 		} );
 	}
 
+	/*
+	 * Ask before anything that throws work away.
+	 *
+	 * Progressive enhancement, like everything else here: with JavaScript off
+	 * the button still works, it just does not ask first. That is the right way
+	 * round. A discard that silently fails because a script did not load would
+	 * be worse than one that happens without a prompt.
+	 */
+	function confirmDestructive() {
+		document.addEventListener( 'click', function ( event ) {
+			var trigger = event.target.closest ? event.target.closest( '[data-dgl-confirm]' ) : null;
+
+			if ( ! trigger ) {
+				return;
+			}
+
+			if ( ! window.confirm( trigger.getAttribute( 'data-dgl-confirm' ) ) ) {
+				event.preventDefault();
+				event.stopPropagation();
+			}
+		} );
+	}
+
 	function init() {
 		var forms = document.querySelectorAll( '.dgl-form' );
 
@@ -181,6 +204,8 @@
 			guardUnsavedWork( form );
 			guardDoubleSubmit( form );
 		} );
+
+		confirmDestructive();
 	}
 
 	if ( 'loading' === document.readyState ) {

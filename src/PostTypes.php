@@ -49,6 +49,23 @@ final class PostTypes {
 	/**
 	 * Whether a post type is one members submit through the dashboard.
 	 */
+	/**
+	 * Every type that moves through the review workflow.
+	 *
+	 * The five content types plus pending edits. A revision is not submittable
+	 * in its own right — nobody creates one from a menu — but it is submitted,
+	 * queued, approved and rejected exactly like the thing it would replace.
+	 *
+	 * @return string[]
+	 */
+	public static function reviewable(): array {
+		return array_merge( self::submittable(), [ self::REVISION ] );
+	}
+
+	public static function is_reviewable( string $post_type ): bool {
+		return in_array( $post_type, self::reviewable(), true );
+	}
+
 	public static function is_submittable( string $post_type ): bool {
 		return in_array( $post_type, self::submittable(), true );
 	}

@@ -997,3 +997,135 @@
 
 .dgl-review-side .dgl-review__list dd { margin-bottom: 10px; }
 .dgl-review-side .dgl-review__list dd:last-child { margin-bottom: 0; }
+
+/* ---- Pending edits -------------------------------------------------------
+ *
+ * An edit to published content is a state members find genuinely worrying:
+ * their listing is live, they have changed it, and they want to know whether
+ * they have just taken it down. So the edit is announced in its own banner
+ * above the published version rather than replacing it, and every one of these
+ * says out loud that the live version is untouched.
+ *
+ * Amber, not red. Nothing has gone wrong. */
+
+.dgl-alert--edit {
+	border-color: #8f6c26;
+	background: #fff7e8;
+	color: #7a5a1c;
+}
+
+.dgl-alert--warn {
+	border-color: #8f6c26;
+	background: #fff7e8;
+	color: #7a5a1c;
+}
+
+.dgl-alert__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+	align-items: center;
+	margin-top: 10px;
+}
+
+.dgl-alert__actions:empty { display: none; }
+
+.dgl-inline-form { display: inline; margin: 0; }
+
+.dgl-button--small {
+	padding: 7px 14px;
+	font-size: 0.82em;
+}
+
+.dgl-button--quiet {
+	background: transparent;
+	border: 1px solid currentColor;
+	color: inherit;
+}
+
+.dgl-button--quiet:hover {
+	background: rgb(0 0 0 / 6%);
+	color: inherit;
+}
+
+/* The "Edit" marker beside a type in a list. */
+.dgl-edit-flag {
+	display: inline-block;
+	margin-inline-start: 6px;
+	padding: 2px 7px;
+	border-radius: 999px;
+	background: #fff7e8;
+	color: #8f6c26;
+	font-size: 0.74em;
+	font-weight: 600;
+	letter-spacing: 0.02em;
+	vertical-align: middle;
+}
+
+/* ---- The comparison ------------------------------------------------------ */
+
+.dgl-changes__lede {
+	margin: -6px 0 18px;
+	color: var(--dgl-text-muted);
+	font-size: 0.86em;
+}
+
+.dgl-changes__list {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.dgl-change + .dgl-change {
+	margin-top: 18px;
+	padding-top: 18px;
+	border-top: 1px solid var(--dgl-border);
+}
+
+.dgl-change__label {
+	margin: 0 0 10px;
+	font-weight: 600;
+}
+
+/* Two columns side by side where there is room, stacked on a phone. Stacked is
+ * not a worse reading: before above after is how a person reads a change
+ * anyway, and it is why the captions are there rather than relying on order. */
+.dgl-change__pair {
+	display: grid;
+	gap: 12px;
+	grid-template-columns: 1fr;
+}
+
+@media (min-width: 720px) {
+	.dgl-change__pair { grid-template-columns: 1fr 1fr; }
+}
+
+.dgl-change__side {
+	padding: 12px 14px;
+	border-radius: var(--dgl-radius-field);
+	background: var(--dgl-surface);
+}
+
+.dgl-change__side--before {
+	/* Struck through would be unreadable on a long description, so the old
+	 * version is simply muted and captioned. */
+	color: var(--dgl-text-muted);
+}
+
+.dgl-change__side--after {
+	background: #eaf4e6;
+	color: var(--dgl-ink);
+	border-inline-start: 3px solid #387923;
+}
+
+.dgl-change__cap {
+	margin: 0 0 6px;
+	font-size: 0.74em;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	opacity: 0.8;
+}
+
+.dgl-change__value { overflow-wrap: anywhere; }
+.dgl-change__value img { max-width: 120px; height: auto; border-radius: 6px; }

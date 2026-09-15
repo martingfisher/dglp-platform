@@ -17,9 +17,24 @@ use DGL\Schema\FieldRegistry;
 defined( 'ABSPATH' ) || exit;
 
 $post       = $data['post'];
+/*
+ * A pending edit is a `dgl_revision`, which has no field schema of its own.
+ * Every schema lookup on this screen has to use the type of the item being
+ * edited, which the controller passes in, not the type of the post in front of
+ * us. Reading it off the post gives a revision an empty form.
+ */
+$post_type  = (string) ( $data['post_type'] ?? $post->post_type );
 $values     = $data['values'] ?? [];
 $all_errors = $data['all_errors'] ?? [];
-$ready      = empty( $all_errors );
+$is_edit    = ! empty( $data['is_edit'] );
+$changes    = $data['changes'] ?? [];
+
+/*
+ * An edit that changes nothing is not sendable. Letting it through would cost a
+ * moderator a review for no reason and freeze the member's own listing while
+ * they waited for a decision about nothing.
+ */
+$ready = empty( $all_errors ) && ( ! $is_edit || ! empty( $changes ) );
 ?>
 <div class="dgl-wizard">
 	<?php
@@ -36,10 +51,27 @@ $ready      = empty( $all_errors );
 	<div class="dgl-wizard__main">
 		<header class="dgl-page-head">
 			<div>
-				<h1 class="dgl-page-head__title"><?php esc_html_e( 'Review and submit', 'dgl-platform' ); ?></h1>
-				<p class="dgl-page-head__lede"><?php esc_html_e( 'Read it back the way the team will. Anything you change here goes back to step one, so nothing is lost.', 'dgl-platform' ); ?></p>
+				<h1 class="dgl-page-head__title">
+					<?php echo $is_edit
+						? esc_html__( 'Check your changes, then send them', 'dgl-platform' )
+						: esc_html__( 'Review and submit', 'dgl-platform' ); ?>
+				</h1>
+				<p class="dgl-page-head__lede">
+					<?php echo $is_edit
+						? esc_html__( 'The version on the site has not changed. It stays up while the team read your edit.', 'dgl-platform' )
+						: esc_html__( 'Read it back the way the team will. Anything you change here goes back to step one, so nothing is lost.', 'dgl-platform' ); ?>
+				</p>
 			</div>
 		</header>
+
+		<?php if ( $is_edit && empty( $changes ) ) : ?>
+			<div class="dgl-alert dgl-alert--warn" role="status">
+				<p><strong><?php esc_html_e( 'Nothing has changed yet.', 'dgl-platform' ); ?></strong>
+				<?php esc_html_e( 'There is nothing to send until something is different from the published version. Go back and make a change, or leave this and the site stays as it is.', 'dgl-platform' ); ?></p>
+			</div>
+		<?php elseif ( $is_edit ) : ?>
+			<?php View::output( 'dashboard/changes', [ 'changes' => $changes ] ); ?>
+		<?php endif; ?>
 
 		<?php if ( ! $ready ) : ?>
 			<div class="dgl-alert" role="alert">
@@ -47,7 +79,7 @@ $ready      = empty( $all_errors );
 				<ul>
 					<?php foreach ( $all_errors as $key => $message ) : ?>
 						<li>
-							<a href="<?php echo esc_url( Router::url( 'edit', (string) $post->ID, (string) Wizard::step_of( (string) $post->post_type, $key ) ) ); ?>">
+							<a href="<?php echo esc_url( Router::url( 'edit', (string) $post->ID, (string) Wizard::step_of( $post_type, $key ) ) ); ?>">
 								<?php echo esc_html( $message ); ?>
 							</a>
 						</li>
@@ -59,7 +91,7 @@ $ready      = empty( $all_errors );
 		<div class="dgl-review">
 			<?php foreach ( FieldRegistry::steps() as $number => $step_label ) : ?>
 				<?php
-				$step_fields = FieldRegistry::for_step( (string) $post->post_type, $number );
+				$step_fields = FieldRegistry::for_step( $post_type, $number );
 
 				if ( empty( $step_fields ) ) {
 					continue;

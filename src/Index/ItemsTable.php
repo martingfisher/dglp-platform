@@ -9,6 +9,7 @@ declare( strict_types=1 );
 
 namespace DGL\Index;
 
+use DGL\PostTypes;
 use DGL\Statuses;
 
 defined( 'ABSPATH' ) || exit;
@@ -128,6 +129,23 @@ final class ItemsTable {
 	}
 
 	/**
+	 * SQL excluding pending edits.
+	 *
+	 * Edits live in this table so the moderation queue can be one indexed
+	 * query. Everywhere else, an edit is not a thing in its own right: it must
+	 * not appear in a member's list, must not be counted on their dashboard
+	 * tiles and must never be picked up by the expiry sweep. A revision that
+	 * reached the expiry sweep would be "expired" while the item it belonged to
+	 * carried on, which is a state nothing else in the system understands.
+	 *
+	 * Written as a literal rather than a placeholder because it is a constant
+	 * this class owns, and `prepare()` complains when a query has no arguments.
+	 */
+	private static function content_only(): string {
+		return " AND post_type <> '" . PostTypes::REVISION . "'";
+	}
+
+	/**
 	 * One organisation's items, newest activity first. Serves the member
 	 * dashboard and the category list screens.
 	 *
@@ -141,7 +159,7 @@ final class ItemsTable {
 	public static function for_org( int $org_id, ?array $types = null, ?array $statuses = null, int $limit = 50, int $offset = 0 ): array {
 		global $wpdb;
 
-		$sql    = 'SELECT post_id FROM ' . self::name() . ' WHERE org_id = %d';
+		$sql    = 'SELECT post_id FROM ' . self::name() . ' WHERE org_id = %d' . self::content_only();
 		$params = [ $org_id ];
 
 		if ( ! empty( $statuses ) ) {
@@ -200,6 +218,7 @@ final class ItemsTable {
 
 		$sql = 'SELECT post_id FROM ' . self::name()
 			. ' WHERE status = %s AND expires_at IS NOT NULL AND expires_at <= %s'
+			. self::content_only()
 			. ' ORDER BY expires_at ASC LIMIT %d';
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -226,6 +245,7 @@ final class ItemsTable {
 		$sql = 'SELECT post_id FROM ' . self::name()
 			. ' WHERE status = %s'
 			. ' AND post_type IN (' . implode( ',', array_fill( 0, count( $types ), '%s' ) ) . ')'
+			. self::content_only()
 			. ' AND approved_at IS NOT NULL AND approved_at > %s'
 			. ' ORDER BY approved_at DESC LIMIT %d';
 
@@ -243,7 +263,7 @@ final class ItemsTable {
 	public static function counts_for_org( int $org_id, ?string $post_type = null ): array {
 		global $wpdb;
 
-		$sql    = 'SELECT status, COUNT(*) AS total FROM ' . self::name() . ' WHERE org_id = %d';
+		$sql    = 'SELECT status, COUNT(*) AS total FROM ' . self::name() . ' WHERE org_id = %d' . self::content_only();
 		$params = [ $org_id ];
 
 		if ( null !== $post_type ) {

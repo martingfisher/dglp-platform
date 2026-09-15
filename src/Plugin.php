@@ -14,6 +14,7 @@ use DGL\Dashboard\Router;
 use DGL\Email\Command as MailCommand;
 use DGL\Email\Mailer;
 use DGL\Index\Sync;
+use DGL\Workflow\Revisions;
 use DGL\Workflow\Transition;
 use DGL\Schema\FieldRegistry;
 
@@ -44,6 +45,7 @@ final class Plugin {
 		Access::init();
 		Sync::init();
 		Router::init();
+		Revisions::init();
 		Mailer::init();
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {

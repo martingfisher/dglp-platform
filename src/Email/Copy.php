@@ -88,18 +88,34 @@ final class Copy {
 			return new Message(
 				key: 'submitted',
 				audience: $audience,
-				/* translators: %s: item title. */
-				subject: sprintf( __( 'We have got it: %s', 'dgl-platform' ), $c->title() ),
-				preheader: __( 'It is with the review team. Nothing more to do for now.', 'dgl-platform' ),
-				heading: __( 'Sent for review', 'dgl-platform' ),
-				paragraphs: [
-					sprintf(
-						/* translators: %s: item title. */
-						__( '%s is with the DGLP team. It is not on the site yet, and it will not be until somebody has read it.', 'dgl-platform' ),
-						$c->title()
-					),
-					__( 'You will get an email when they decide. You do not need to do anything until then, and you cannot edit it while they have it.', 'dgl-platform' ),
-				],
+				subject: $c->is_edit
+					/* translators: %s: item title. */
+					? sprintf( __( 'We have got your edit: %s', 'dgl-platform' ), $c->title() )
+					/* translators: %s: item title. */
+					: sprintf( __( 'We have got it: %s', 'dgl-platform' ), $c->title() ),
+				preheader: $c->is_edit
+					? __( 'The published version stays up while they read it.', 'dgl-platform' )
+					: __( 'It is with the review team. Nothing more to do for now.', 'dgl-platform' ),
+				heading: $c->is_edit
+					? __( 'Your edit is with the team', 'dgl-platform' )
+					: __( 'Sent for review', 'dgl-platform' ),
+				paragraphs: $c->is_edit
+					? [
+						sprintf(
+							/* translators: %s: item title. */
+							__( 'Your edit to %s is with the DGLP team. The version on the site has not changed, and it stays up while they read the edit.', 'dgl-platform' ),
+							$c->title()
+						),
+						__( 'You will get an email when they decide. You cannot make another edit to this one until they have.', 'dgl-platform' ),
+					]
+					: [
+						sprintf(
+							/* translators: %s: item title. */
+							__( '%s is with the DGLP team. It is not on the site yet, and it will not be until somebody has read it.', 'dgl-platform' ),
+							$c->title()
+						),
+						__( 'You will get an email when they decide. You do not need to do anything until then, and you cannot edit it while they have it.', 'dgl-platform' ),
+					],
 				facts: self::facts( $c, [ 'type', 'org', 'actor' ] ),
 				cta_label: __( 'See the submission', 'dgl-platform' ),
 				cta_url: $c->member_link(),
@@ -114,22 +130,35 @@ final class Copy {
 		return new Message(
 			key: 'submitted',
 			audience: $audience,
-			/* translators: 1: content type, 2: item title. */
-			subject: sprintf( __( 'New %1$s for review: %2$s', 'dgl-platform' ), $c->type_lower(), $c->title() ),
+			subject: $c->is_edit
+				/* translators: 1: content type, 2: item title. */
+				? sprintf( __( 'Edit to a published %1$s: %2$s', 'dgl-platform' ), $c->type_lower(), $c->title() )
+				/* translators: 1: content type, 2: item title. */
+				: sprintf( __( 'New %1$s for review: %2$s', 'dgl-platform' ), $c->type_lower(), $c->title() ),
 			preheader: sprintf(
 				/* translators: %s: organisation name. */
 				__( '%s is waiting on a decision.', 'dgl-platform' ),
 				$c->org()
 			),
 			heading: $c->title(),
-			paragraphs: [
-				sprintf(
-					/* translators: 1: organisation, 2: content type with its article, for example "an event". */
-					__( '%1$s has submitted %2$s for review. Nothing is on the site until somebody approves it.', 'dgl-platform' ),
-					$c->org(),
-					$c->type_with_article()
-				),
-			],
+			paragraphs: $c->is_edit
+				? [
+					sprintf(
+						/* translators: 1: organisation, 2: content type with its article, for example "an event". */
+						__( '%1$s has edited %2$s that is already on the site. The published version is unchanged and stays up until you approve the edit.', 'dgl-platform' ),
+						$c->org(),
+						$c->type_with_article()
+					),
+					__( 'The review screen shows you what changed, so you are reading the difference rather than the whole thing again.', 'dgl-platform' ),
+				]
+				: [
+					sprintf(
+						/* translators: 1: organisation, 2: content type with its article, for example "an event". */
+						__( '%1$s has submitted %2$s for review. Nothing is on the site until somebody approves it.', 'dgl-platform' ),
+						$c->org(),
+						$c->type_with_article()
+					),
+				],
 			facts: self::facts( $c, [ 'org', 'type', 'actor' ] ),
 			cta_label: __( 'Review this submission', 'dgl-platform' ),
 			cta_url: $c->review_link(),
@@ -142,19 +171,34 @@ final class Copy {
 			return new Message(
 				key: 'published_on_trust',
 				audience: $audience,
-				/* translators: 1: content type, 2: item title. */
-				subject: sprintf( __( 'Your %1$s is live: %2$s', 'dgl-platform' ), $c->type_lower(), $c->title() ),
+				subject: $c->is_edit
+					/* translators: %s: item title. */
+					? sprintf( __( 'Your edit is live: %s', 'dgl-platform' ), $c->title() )
+					/* translators: 1: content type, 2: item title. */
+					: sprintf( __( 'Your %1$s is live: %2$s', 'dgl-platform' ), $c->type_lower(), $c->title() ),
 				preheader: __( 'It went straight on to the site.', 'dgl-platform' ),
-				heading: __( 'It is on the site', 'dgl-platform' ),
-				paragraphs: [
-					sprintf(
-						/* translators: 1: item title, 2: organisation. */
-						__( '%1$s was published straight away, because %2$s is a trusted organisation on the Partnership.', 'dgl-platform' ),
-						$c->title(),
-						$c->org()
-					),
-					__( 'The DGLP team still read trusted submissions, so they may come back to you about it.', 'dgl-platform' ),
-				],
+				heading: $c->is_edit
+					? __( 'Your edit is on the site', 'dgl-platform' )
+					: __( 'It is on the site', 'dgl-platform' ),
+				paragraphs: $c->is_edit
+					? [
+						sprintf(
+							/* translators: 1: item title, 2: organisation. */
+							__( 'Your edit to %1$s went on to the site straight away, because %2$s is trusted for edits.', 'dgl-platform' ),
+							$c->title(),
+							$c->org()
+						),
+						__( 'The DGLP team still read edits from trusted organisations, so they may come back to you about it.', 'dgl-platform' ),
+					]
+					: [
+						sprintf(
+							/* translators: 1: item title, 2: organisation. */
+							__( '%1$s was published straight away, because %2$s is a trusted organisation on the Partnership.', 'dgl-platform' ),
+							$c->title(),
+							$c->org()
+						),
+						__( 'The DGLP team still read trusted submissions, so they may come back to you about it.', 'dgl-platform' ),
+					],
 				facts: self::facts( $c, [ 'type', 'org', 'expires' ] ),
 				cta_label: __( 'View it on the site', 'dgl-platform' ),
 				cta_url: $c->public_link(),
@@ -169,19 +213,32 @@ final class Copy {
 		return new Message(
 			key: 'published_on_trust',
 			audience: $audience,
-			/* translators: %s: item title. */
-			subject: sprintf( __( 'Published on trust: %s', 'dgl-platform' ), $c->title() ),
+			subject: $c->is_edit
+				/* translators: %s: item title. */
+				? sprintf( __( 'Edit published on trust: %s', 'dgl-platform' ), $c->title() )
+				/* translators: %s: item title. */
+				: sprintf( __( 'Published on trust: %s', 'dgl-platform' ), $c->title() ),
 			preheader: __( 'Live on the site without review. Read it when you can.', 'dgl-platform' ),
 			heading: $c->title(),
-			paragraphs: [
-				sprintf(
-					/* translators: 1: organisation, 2: content type. */
-					__( '%1$s is a trusted organisation, so this %2$s went live without review. It is on the site now.', 'dgl-platform' ),
-					$c->org(),
-					$c->type_lower()
-				),
-				__( 'Read it when you can. You can take it down from the review screen if it needs it.', 'dgl-platform' ),
-			],
+			paragraphs: $c->is_edit
+				? [
+					sprintf(
+						/* translators: 1: organisation, 2: content type. */
+						__( '%1$s is trusted for edits, so this change to a published %2$s went live without review. The site shows the edited version now.', 'dgl-platform' ),
+						$c->org(),
+						$c->type_lower()
+					),
+					__( 'Read it when you can. You can take the item down from the review screen if the change is not right.', 'dgl-platform' ),
+				]
+				: [
+					sprintf(
+						/* translators: 1: organisation, 2: content type. */
+						__( '%1$s is a trusted organisation, so this %2$s went live without review. It is on the site now.', 'dgl-platform' ),
+						$c->org(),
+						$c->type_lower()
+					),
+					__( 'Read it when you can. You can take it down from the review screen if it needs it.', 'dgl-platform' ),
+				],
 			facts: self::facts( $c, [ 'org', 'type', 'actor' ] ),
 			cta_label: __( 'Read it', 'dgl-platform' ),
 			cta_url: $c->review_link(),
@@ -201,19 +258,33 @@ final class Copy {
 		return new Message(
 			key: 'approved',
 			audience: $audience,
-			/* translators: %s: item title. */
-			subject: sprintf( __( 'Approved: %s', 'dgl-platform' ), $c->title() ),
+			subject: $c->is_edit
+				/* translators: %s: item title. */
+				? sprintf( __( 'Edit approved: %s', 'dgl-platform' ), $c->title() )
+				/* translators: %s: item title. */
+				: sprintf( __( 'Approved: %s', 'dgl-platform' ), $c->title() ),
 			preheader: __( 'It is on the site now.', 'dgl-platform' ),
-			/* translators: %s: content type. */
-			heading: sprintf( __( 'Your %s is live', 'dgl-platform' ), $c->type_lower() ),
-			paragraphs: [
-				sprintf(
-					/* translators: 1: item title, 2: site name. */
-					__( 'The DGLP team have approved %1$s. It is on %2$s now.', 'dgl-platform' ),
-					$c->title(),
-					$c->site()
-				),
-			],
+			heading: $c->is_edit
+				? __( 'Your edit is live', 'dgl-platform' )
+				/* translators: %s: content type. */
+				: sprintf( __( 'Your %s is live', 'dgl-platform' ), $c->type_lower() ),
+			paragraphs: $c->is_edit
+				? [
+					sprintf(
+						/* translators: 1: item title, 2: site name. */
+						__( 'The DGLP team have approved your edit to %1$s. %2$s now shows the updated version.', 'dgl-platform' ),
+						$c->title(),
+						$c->site()
+					),
+				]
+				: [
+					sprintf(
+						/* translators: 1: item title, 2: site name. */
+						__( 'The DGLP team have approved %1$s. It is on %2$s now.', 'dgl-platform' ),
+						$c->title(),
+						$c->site()
+					),
+				],
 			facts: self::facts( $c, [ 'type', 'org', 'expires' ] ),
 			note: $c->note,
 			note_label: __( 'Note from the review team', 'dgl-platform' ),
@@ -231,18 +302,30 @@ final class Copy {
 		return new Message(
 			key: 'changes_requested',
 			audience: $audience,
-			/* translators: %s: item title. */
-			subject: sprintf( __( 'Changes needed: %s', 'dgl-platform' ), $c->title() ),
+			subject: $c->is_edit
+				/* translators: %s: item title. */
+				? sprintf( __( 'Changes needed on your edit: %s', 'dgl-platform' ), $c->title() )
+				/* translators: %s: item title. */
+				: sprintf( __( 'Changes needed: %s', 'dgl-platform' ), $c->title() ),
 			preheader: __( 'Make the changes and send it back.', 'dgl-platform' ),
 			heading: __( 'The team have asked for a change', 'dgl-platform' ),
-			paragraphs: [
-				sprintf(
-					/* translators: %s: item title. */
-					__( '%s is not on the site yet. Make the changes below and send it back for review.', 'dgl-platform' ),
-					$c->title()
-				),
-				__( 'Nothing is lost. Your submission is waiting in your dashboard exactly as you left it.', 'dgl-platform' ),
-			],
+			paragraphs: $c->is_edit
+				? [
+					sprintf(
+						/* translators: %s: item title. */
+						__( 'Your edit to %s has not gone on to the site. The published version is unchanged and still up, so nothing has broken while this is sorted out.', 'dgl-platform' ),
+						$c->title()
+					),
+					__( 'Make the changes below and send the edit back for review. Your work is waiting in your dashboard exactly as you left it.', 'dgl-platform' ),
+				]
+				: [
+					sprintf(
+						/* translators: %s: item title. */
+						__( '%s is not on the site yet. Make the changes below and send it back for review.', 'dgl-platform' ),
+						$c->title()
+					),
+					__( 'Nothing is lost. Your submission is waiting in your dashboard exactly as you left it.', 'dgl-platform' ),
+				],
 			facts: self::facts( $c, [ 'type', 'org' ] ),
 			note: $c->note,
 			note_label: __( 'What needs to change', 'dgl-platform' ),
@@ -260,19 +343,34 @@ final class Copy {
 		return new Message(
 			key: 'rejected',
 			audience: $audience,
-			/* translators: %s: item title. */
-			subject: sprintf( __( 'Not approved: %s', 'dgl-platform' ), $c->title() ),
+			subject: $c->is_edit
+				/* translators: %s: item title. */
+				? sprintf( __( 'Edit not approved: %s', 'dgl-platform' ), $c->title() )
+				/* translators: %s: item title. */
+				: sprintf( __( 'Not approved: %s', 'dgl-platform' ), $c->title() ),
 			preheader: __( 'The reason is in the email.', 'dgl-platform' ),
-			heading: __( 'This one was not approved', 'dgl-platform' ),
-			paragraphs: [
-				sprintf(
-					/* translators: 1: item title, 2: site name. */
-					__( 'The DGLP team have not approved %1$s, so it will not appear on %2$s. Their reason is below.', 'dgl-platform' ),
-					$c->title(),
-					$c->site()
-				),
-				__( 'You can still submit other content. This decision applies to this item only.', 'dgl-platform' ),
-			],
+			heading: $c->is_edit
+				? __( 'Your edit was not approved', 'dgl-platform' )
+				: __( 'This one was not approved', 'dgl-platform' ),
+			paragraphs: $c->is_edit
+				? [
+					sprintf(
+						/* translators: 1: item title, 2: site name. */
+						__( 'The DGLP team have not approved your edit to %1$s, so the change will not appear on %2$s. The published version is unchanged and still on the site. Their reason is below.', 'dgl-platform' ),
+						$c->title(),
+						$c->site()
+					),
+					__( 'You can edit it again. This decision applies to the change that was refused, not to the listing.', 'dgl-platform' ),
+				]
+				: [
+					sprintf(
+						/* translators: 1: item title, 2: site name. */
+						__( 'The DGLP team have not approved %1$s, so it will not appear on %2$s. Their reason is below.', 'dgl-platform' ),
+						$c->title(),
+						$c->site()
+					),
+					__( 'You can still submit other content. This decision applies to this item only.', 'dgl-platform' ),
+				],
 			facts: self::facts( $c, [ 'type', 'org' ] ),
 			note: $c->note,
 			note_label: __( 'Why', 'dgl-platform' ),

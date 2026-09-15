@@ -97,3 +97,37 @@ Harness::assert_same(
 );
 Harness::assert_same( [], StateMachine::available_from( 'not_a_status' ), 'an unknown status offers no actions' );
 Harness::assert_same( null, StateMachine::next( 'not_an_action', Statuses::DRAFT ), 'an unknown action is illegal' );
+
+Harness::group( 'Trust treats an edit and a new item as different permissions' );
+
+Harness::assert_same(
+	Statuses::PENDING,
+	StateMachine::next( StateMachine::SUBMIT, Statuses::DRAFT, Trust::TRUSTED_EDITS, false ),
+	'a trusted-for-edits organisation still has new work read first'
+);
+Harness::assert_same(
+	Statuses::LIVE,
+	StateMachine::next( StateMachine::SUBMIT, Statuses::DRAFT, Trust::TRUSTED_EDITS, true ),
+	'but its edits go straight on to the site'
+);
+Harness::assert_same(
+	Statuses::PENDING,
+	StateMachine::next( StateMachine::SUBMIT, Statuses::DRAFT, Trust::MODERATED, true ),
+	'a moderated organisation has its edits read like everything else'
+);
+Harness::assert_same(
+	Statuses::LIVE,
+	StateMachine::next( StateMachine::SUBMIT, Statuses::DRAFT, Trust::TRUSTED, true ),
+	'and a fully trusted one skips the queue either way'
+);
+Harness::assert_same(
+	Statuses::LIVE,
+	StateMachine::next( StateMachine::SUBMIT, Statuses::DRAFT, Trust::TRUSTED, false ),
+	'both ways round'
+);
+
+Harness::group( 'An edit is decided like anything else once it is in the queue' );
+
+Harness::assert_same( Statuses::LIVE, StateMachine::next( StateMachine::APPROVE, Statuses::PENDING, Trust::MODERATED, true ), 'approving an edit resolves it' );
+Harness::assert_same( Statuses::CHANGES, StateMachine::next( StateMachine::REQUEST_CHANGES, Statuses::PENDING, Trust::MODERATED, true ), 'changes can be asked for' );
+Harness::assert_same( Statuses::REJECTED, StateMachine::next( StateMachine::REJECT, Statuses::PENDING, Trust::MODERATED, true ), 'and it can be refused' );

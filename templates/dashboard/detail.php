@@ -15,14 +15,63 @@ use DGL\Statuses;
 
 defined( 'ABSPATH' ) || exit;
 
-$post   = $data['post'];
-$values = $data['values'] ?? [];
+$post     = $data['post'];
+$values   = $data['values'] ?? [];
+$revision = $data['revision'] ?? null;
+$pending  = $revision instanceof WP_Post && Statuses::PENDING === $revision->post_status;
 ?>
 <?php if ( ! empty( $data['submitted'] ) ) : ?>
 	<div class="dgl-alert dgl-alert--good" role="status">
 		<p><strong><?php esc_html_e( 'Sent for review.', 'dgl-platform' ); ?></strong>
 		<?php esc_html_e( 'Somebody will read it and either publish it or come back to you. You will get an email either way.', 'dgl-platform' ); ?></p>
 	</div>
+<?php endif; ?>
+
+<?php if ( ! empty( $data['discarded'] ) ) : ?>
+	<div class="dgl-alert" role="status">
+		<p><strong><?php esc_html_e( 'Edit discarded.', 'dgl-platform' ); ?></strong>
+		<?php esc_html_e( 'The version below is what is on the site, and it has not changed.', 'dgl-platform' ); ?></p>
+	</div>
+<?php endif; ?>
+
+<?php
+/*
+ * The edit is announced, never rendered in place. What is shown below this is
+ * always the published version, so nobody reads an unapproved change and takes
+ * it for what is on the site.
+ */
+?>
+<?php if ( $revision instanceof WP_Post ) : ?>
+	<div class="dgl-alert dgl-alert--edit" role="status">
+		<p>
+			<strong>
+				<?php echo $pending
+					? esc_html__( 'You have an edit waiting for review.', 'dgl-platform' )
+					: esc_html__( 'You have an unfinished edit.', 'dgl-platform' ); ?>
+			</strong>
+			<?php
+			echo $pending
+				? esc_html__( 'The version below is the one on the site. It stays up while the team read your edit, so nothing has come down.', 'dgl-platform' )
+				: esc_html__( 'It has not been sent to anybody yet. The version below is still what is on the site.', 'dgl-platform' );
+			?>
+		</p>
+
+		<p class="dgl-alert__actions">
+			<?php if ( ! $pending ) : ?>
+				<a class="dgl-button dgl-button--small" href="<?php echo esc_url( Router::url( 'edit', (string) $revision->ID, '1' ) ); ?>">
+					<?php esc_html_e( 'Carry on editing', 'dgl-platform' ); ?>
+				</a>
+				<form method="post" action="<?php echo esc_url( Router::url( 'discard', (string) $revision->ID ) ); ?>" class="dgl-inline-form">
+					<?php wp_nonce_field( \DGL\Dashboard\Wizard::NONCE ); ?>
+					<button type="submit" class="dgl-button dgl-button--small dgl-button--quiet"
+						data-dgl-confirm="<?php esc_attr_e( 'Throw this edit away? The version on the site is not affected.', 'dgl-platform' ); ?>">
+						<?php esc_html_e( 'Discard the edit', 'dgl-platform' ); ?>
+					</button>
+				</form>
+			<?php endif; ?>
+		</p>
+	</div>
+
 <?php endif; ?>
 
 <header class="dgl-page-head">
@@ -40,18 +89,52 @@ $values = $data['values'] ?? [];
 		</h1>
 	</div>
 
-	<?php if ( ! empty( $data['can_edit'] ) ) : ?>
-		<a class="dgl-button" href="<?php echo esc_url( Router::url( 'edit', (string) $post->ID, '1' ) ); ?>">
-			<?php echo Statuses::CHANGES === $post->post_status
-				? esc_html__( 'Edit and resubmit', 'dgl-platform' )
-				: esc_html__( 'Edit', 'dgl-platform' ); ?>
+	<?php if ( ! empty( $data['can_edit'] ) && ! $pending ) : ?>
+		<?php
+		/*
+		 * Where this goes depends on the state. An open edit is reopened rather
+		 * than a second one started, because two pending edits to one item is a
+		 * question with no good answer.
+		 */
+		$edit_target = $revision instanceof WP_Post ? (int) $revision->ID : (int) $post->ID;
+		?>
+		<a class="dgl-button" href="<?php echo esc_url( Router::url( 'edit', (string) $edit_target, '1' ) ); ?>">
+			<?php
+			if ( $revision instanceof WP_Post ) {
+				esc_html_e( 'Carry on editing', 'dgl-platform' );
+			} elseif ( Statuses::CHANGES === $post->post_status ) {
+				esc_html_e( 'Edit and resubmit', 'dgl-platform' );
+			} else {
+				esc_html_e( 'Edit', 'dgl-platform' );
+			}
+			?>
 		</a>
 	<?php endif; ?>
 </header>
 
+<?php
+/*
+ * Below the title, not above it. A comparison that appears before the reader
+ * knows which item they are looking at is a list of words with no subject.
+ */
+if ( $revision instanceof WP_Post ) {
+	View::output(
+		'dashboard/changes',
+		[
+			'changes'       => $data['changes'] ?? [],
+			'changes_title' => __( 'What your edit would change', 'dgl-platform' ),
+		]
+	);
+}
+?>
+
 <div class="dgl-detail">
 	<section class="dgl-card">
-		<h2 class="dgl-section__title"><?php esc_html_e( 'What you submitted', 'dgl-platform' ); ?></h2>
+		<h2 class="dgl-section__title">
+			<?php echo $revision instanceof WP_Post
+				? esc_html__( 'What is on the site now', 'dgl-platform' )
+				: esc_html__( 'What you submitted', 'dgl-platform' ); ?>
+		</h2>
 		<dl class="dgl-review__list">
 			<?php foreach ( $data['fields'] as $field ) : ?>
 				<?php
@@ -80,7 +163,13 @@ $values = $data['values'] ?? [];
 			<ol class="dgl-timeline">
 				<?php foreach ( array_reverse( $data['history'] ) as $entry ) : ?>
 					<li class="dgl-timeline__item">
-						<p class="dgl-timeline__action"><?php echo esc_html( ucfirst( str_replace( '_', ' ', (string) $entry['action'] ) ) ); ?></p>
+						<p class="dgl-timeline__action">
+							<?php echo esc_html( ucfirst( str_replace( '_', ' ', (string) $entry['action'] ) ) ); ?>
+							<?php if ( ! empty( $entry['is_edit'] ) ) : ?>
+								<?php /* Otherwise "Approved" twice in one timeline reads as a repeat. */ ?>
+								<span class="dgl-edit-flag"><?php esc_html_e( 'Edit', 'dgl-platform' ); ?></span>
+							<?php endif; ?>
+						</p>
 						<p class="dgl-timeline__when"><?php echo esc_html( View::date( $entry['logged_at'], true ) ); ?></p>
 						<?php if ( '' !== (string) ( $entry['note'] ?? '' ) ) : ?>
 							<p class="dgl-timeline__note"><?php echo esc_html( (string) $entry['note'] ); ?></p>

@@ -116,7 +116,19 @@ if ( FieldRegistry::STEP_DETAILS === $step ) {
 						<?php esc_html_e( 'Back', 'dgl-platform' ); ?>
 					</button>
 				<?php else : ?>
-					<a class="dgl-button dgl-button--secondary" href="<?php echo esc_url( Router::url( $data['slug'] ) ); ?>">
+					<?php
+					/*
+					 * Cancelling an edit goes back to the item it belongs to,
+					 * not to a list the edit does not appear in. The work is
+					 * kept either way: cancelling leaves the edit open, and
+					 * discarding it is a separate, deliberate action on the
+					 * item screen.
+					 */
+					$cancel_url = ! empty( $data['is_edit'] ) && isset( $data['parent'] )
+						? Router::url( 'item', (string) $data['parent']->ID )
+						: Router::url( $data['slug'] );
+					?>
+					<a class="dgl-button dgl-button--secondary" href="<?php echo esc_url( $cancel_url ); ?>">
 						<?php esc_html_e( 'Cancel', 'dgl-platform' ); ?>
 					</a>
 				<?php endif; ?>
