@@ -50,6 +50,7 @@ final class Event implements TypeDefinition {
 				type: Field::TEXT,
 				help: __( 'For example, every Tuesday at 13:00.', 'dgl-platform' ),
 				max_length: 120,
+				depends_on: [ 'field' => 'is_recurring', 'value' => true ],
 			),
 			new Field(
 				key: 'venue_name',
@@ -90,6 +91,7 @@ final class Event implements TypeDefinition {
 				type: Field::TEXT,
 				help: __( 'For example, £5 waged, £2 unwaged.', 'dgl-platform' ),
 				max_length: 120,
+				depends_on: [ 'field' => 'cost', 'value' => [ 'paid', 'donation' ] ],
 			),
 			new Field(
 				key: 'capacity',

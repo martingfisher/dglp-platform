@@ -447,7 +447,8 @@ final class Controller {
 	private static function screen( string $template, array $data, string $title, ?UserContext $user = null ): void {
 		add_filter( 'pre_get_document_title', static fn(): string => $title . ' | ' . get_bloginfo( 'name' ) );
 
-		Assets::enqueue();
+		// The editor only appears in the wizard, so only the wizard pays for it.
+		Assets::enqueue( in_array( $template, [ 'wizard' ], true ) );
 
 		get_header();
 

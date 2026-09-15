@@ -52,7 +52,24 @@ final class FieldRenderer {
 
 		$aria = $describe ? ' aria-describedby="' . esc_attr( implode( ' ', $describe ) ) . '"' : '';
 
-		$out = '<div class="dgl-field-row' . ( $has_err ? ' dgl-field-row--error' : '' ) . '">';
+		$row_attrs = '';
+
+		foreach ( $field->depends_attrs() as $attr => $attr_value ) {
+			$row_attrs .= sprintf( ' %s="%s"', esc_attr( $attr ), esc_attr( $attr_value ) );
+		}
+
+		/*
+		 * TinyMCE will not accept a hyphen in its editor id, so a rich text
+		 * control cannot use the shared dgl-{key} id. The row carries it
+		 * instead, which keeps the error summary's jump links working for every
+		 * field type.
+		 */
+		if ( Field::RICHTEXT === $field->type ) {
+			$row_attrs .= sprintf( ' id="%s"', esc_attr( $id ) );
+			$id         = 'dgl' . preg_replace( '/[^a-z0-9]/', '', strtolower( $field->key ) );
+		}
+
+		$out = '<div class="dgl-field-row' . ( $has_err ? ' dgl-field-row--error' : '' ) . '"' . $row_attrs . '>';
 
 		if ( Field::CHECKBOX === $field->type ) {
 			$out .= self::checkbox( $field, $id, $name, $value, $aria );
@@ -94,9 +111,9 @@ final class FieldRenderer {
 		$common   = sprintf( ' id="%s" name="%s"', esc_attr( $id ), esc_attr( $name ) );
 
 		return match ( $field->type ) {
-			Field::TEXTAREA, Field::RICHTEXT => sprintf(
-				'<textarea class="dgl-field dgl-field--area" rows="%d"%s%s%s%s>%s</textarea>',
-				Field::RICHTEXT === $field->type ? 10 : 4,
+			Field::RICHTEXT => self::rich_text( $id, $name, $value ),
+			Field::TEXTAREA => sprintf(
+				'<textarea class="dgl-field dgl-field--area" rows="4"%s%s%s%s>%s</textarea>',
 				$common,
 				$required,
 				$maxlen,
@@ -116,6 +133,53 @@ final class FieldRenderer {
 				$aria
 			),
 		};
+	}
+
+	/**
+	 * WordPress's own editor, cut down to what a member actually needs.
+	 *
+	 * Deliberately minimal: bold, italic, lists, links, undo. No media button,
+	 * no heading dropdown, no kitchen sink. Members are volunteers and small
+	 * charity staff, and every extra button is another thing that can produce a
+	 * listing nobody meant to publish.
+	 *
+	 * Falls back to a plain textarea when the editor cannot load, so the form
+	 * still works rather than showing an empty box.
+	 */
+	private static function rich_text( string $id, string $name, mixed $value ): string {
+		$content = is_scalar( $value ) ? (string) $value : '';
+
+		if ( ! function_exists( 'wp_editor' ) ) {
+			return sprintf(
+				'<textarea class="dgl-field dgl-field--area" rows="10" id="%s" name="%s">%s</textarea>',
+				esc_attr( $id ),
+				esc_attr( $name ),
+				esc_textarea( $content )
+			);
+		}
+
+		ob_start();
+
+		wp_editor(
+			$content,
+			$id,
+			[
+				'textarea_name' => $name,
+				'textarea_rows' => 12,
+				'media_buttons' => false,
+				'teeny'         => true,
+				'quicktags'     => [ 'buttons' => 'strong,em,ul,ol,li,link' ],
+				'tinymce'       => [
+					'toolbar1'     => 'bold,italic,bullist,numlist,link,unlink,undo,redo',
+					'toolbar2'     => '',
+					'statusbar'    => false,
+					'branding'     => false,
+					'paste_as_text' => true,
+				],
+			]
+		);
+
+		return '<div class="dgl-editor">' . (string) ob_get_clean() . '</div>';
 	}
 
 	/**

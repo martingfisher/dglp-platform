@@ -836,3 +836,30 @@
 	.dgl-review__list { grid-template-columns: minmax(0, 1fr); gap: 2px; }
 	.dgl-review__list dd { margin-bottom: 10px; }
 }
+
+/* ---- Progressive enhancement --------------------------------------------- */
+
+.dgl-counter {
+	margin: 6px 0 0;
+	font-size: 0.74em;
+	color: var(--dgl-text-muted);
+}
+
+.dgl-counter--low { color: var(--dgl-danger); font-weight: 600; }
+
+.dgl-button.is-working { opacity: 0.6; cursor: progress; }
+
+/* The editor is WordPress's own, so it only needs boxing in to match. */
+.dgl-editor .wp-editor-container {
+	border: var(--dgl-field-border) solid var(--dgl-border);
+	border-radius: var(--dgl-radius-field);
+	overflow: hidden;
+}
+
+.dgl-editor .mce-toolbar-grp,
+.dgl-editor .quicktags-toolbar {
+	background: var(--dgl-surface);
+	border-bottom: 1px solid var(--dgl-border);
+}
+
+.dgl-editor .wp-editor-area { border: 0; }

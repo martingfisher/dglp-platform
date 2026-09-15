@@ -84,6 +84,7 @@ final class Training implements TypeDefinition {
 				label: __( 'Cost detail', 'dgl-platform' ),
 				type: Field::TEXT,
 				max_length: 120,
+				depends_on: [ 'field' => 'cost', 'value' => [ 'paid', 'donation' ] ],
 			),
 			new Field(
 				key: 'who_for',

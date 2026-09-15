@@ -22,15 +22,45 @@ final class Assets {
 
 	public const HANDLE = 'dgl-dashboard';
 
-	public static function enqueue(): void {
-		$relative = 'assets/dashboard.css';
-		$path     = \DGL\PLUGIN_DIR . $relative;
+	public static function enqueue( bool $with_editor = false ): void {
+		self::style( 'assets/dashboard.css', self::HANDLE );
+		self::script( 'assets/dashboard.js', self::HANDLE );
+
+		if ( $with_editor ) {
+			/*
+			 * Front-end wp_editor() only works if the editor's own assets are
+			 * queued before wp_head runs. This is called from the controller
+			 * ahead of get_header(), which is the window where that is still
+			 * possible.
+			 */
+			wp_enqueue_editor();
+		}
+	}
+
+	private static function style( string $relative, string $handle ): void {
+		$path = \DGL\PLUGIN_DIR . $relative;
 
 		wp_enqueue_style(
-			self::HANDLE,
+			$handle,
 			\DGL\PLUGIN_URL . $relative,
 			[],
 			is_readable( $path ) ? (string) filemtime( $path ) : \DGL\VERSION
+		);
+	}
+
+	private static function script( string $relative, string $handle ): void {
+		$path = \DGL\PLUGIN_DIR . $relative;
+
+		if ( ! is_readable( $path ) ) {
+			return;
+		}
+
+		wp_enqueue_script(
+			$handle,
+			\DGL\PLUGIN_URL . $relative,
+			[],
+			(string) filemtime( $path ),
+			true
 		);
 	}
 }

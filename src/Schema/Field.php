@@ -49,6 +49,10 @@ final readonly class Field {
 	 * @param bool                  $public    Whether it renders on the public listing.
 	 * @param bool                  $in_digest Whether it can appear in a digest summary.
 	 * @param bool                  $in_csv    Whether it appears in the CSV export.
+	 * @param array{field:string, value:mixed}|null $depends_on Show only when
+	 *        another field on the same step holds one of these values. Purely a
+	 *        display nicety: the field still validates and saves normally, so
+	 *        the form works identically with JavaScript turned off.
 	 */
 	public function __construct(
 		public string $key,
@@ -62,7 +66,26 @@ final readonly class Field {
 		public bool $public = true,
 		public bool $in_digest = false,
 		public bool $in_csv = true,
+		public ?array $depends_on = null,
 	) {}
+
+	/**
+	 * The dependency as data attributes for the client.
+	 *
+	 * @return array<string, string>
+	 */
+	public function depends_attrs(): array {
+		if ( null === $this->depends_on ) {
+			return [];
+		}
+
+		$values = (array) ( $this->depends_on['value'] ?? [] );
+
+		return [
+			'data-dgl-depends'    => (string) ( $this->depends_on['field'] ?? '' ),
+			'data-dgl-depends-on' => implode( '|', array_map( static fn( $v ): string => is_bool( $v ) ? ( $v ? '1' : '0' ) : (string) $v, $values ) ),
+		];
+	}
 
 	/**
 	 * Every field type the system knows.

@@ -218,7 +218,10 @@ final class Wizard {
 	 */
 	private static function sanitise( Field $field, mixed $value ): mixed {
 		return match ( $field->type ) {
-			Field::TEXTAREA, Field::RICHTEXT => sanitize_textarea_field( (string) $value ),
+			Field::TEXTAREA => sanitize_textarea_field( (string) $value ),
+			// Rich text keeps its markup, filtered to what a post may contain.
+			// sanitize_textarea_field would strip the formatting the editor exists to produce.
+			Field::RICHTEXT => wp_kses_post( (string) $value ),
 			Field::URL                       => esc_url_raw( (string) $value ),
 			Field::EMAIL                     => sanitize_email( (string) $value ),
 			Field::CHECKBOX                  => (bool) $value,
