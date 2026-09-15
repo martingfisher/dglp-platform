@@ -310,12 +310,22 @@ final class Revisions {
 		 * published revision would be picked up by the expiry sweep and by
 		 * anything else that means "live item".
 		 */
+		/*
+		 * Flagged as ours. This is the workflow resolving an edit it just
+		 * applied, not somebody changing a status by hand, and the audit guard
+		 * would otherwise record every approved edit as having gone round the
+		 * side of the workflow.
+		 */
+		Transition::$in_progress = true;
+
 		wp_update_post(
 			[
 				'ID'          => $revision_id,
 				'post_status' => Statuses::ARCHIVED,
 			]
 		);
+
+		Transition::$in_progress = false;
 
 		Sync::sync( $revision_id );
 		Sync::sync( $parent_id );

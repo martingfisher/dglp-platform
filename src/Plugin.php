@@ -10,6 +10,8 @@ declare( strict_types=1 );
 namespace DGL;
 
 use DGL\Access\Access;
+use DGL\Admin\Admin;
+use DGL\Admin\Guard;
 use DGL\Dashboard\AdminLockout;
 use DGL\Dashboard\Router;
 use DGL\Email\Command as MailCommand;
@@ -54,6 +56,15 @@ final class Plugin {
 		Sync::init();
 		Router::init();
 		AdminLockout::init();
+		Admin::init();
+
+		/*
+		 * Not inside Admin::init(). A status can be changed from WP-CLI, from a
+		 * REST call or from another plugin's code, none of which are wp-admin, and
+		 * an audit trail that only watches one surface is an audit trail with
+		 * holes in it.
+		 */
+		Guard::init();
 		Revisions::init();
 		Mailer::init();
 

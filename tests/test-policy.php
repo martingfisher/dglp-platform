@@ -133,3 +133,28 @@ Harness::group( 'Unknown actions fail closed' );
 
 Harness::assert_false( Policy::decide( administrator(), 'do_anything_at_all' ), 'an unrecognised action is denied even for an administrator' );
 Harness::assert_false( Policy::decide( member_a(), Policy::VIEW_ITEM, null ), 'an item action with no item is denied' );
+
+Harness::group( 'Only a person pressing a button has their status change held' );
+
+/*
+ * Found by doing it: open a pending submission in wp-admin, fix a typo, press
+ * the normal save button, and it went live. WordPress's publish box cannot
+ * represent a custom status, so it posts its own and the save promotes the
+ * post. The member's work reached the public with nobody deciding and nobody
+ * telling them.
+ *
+ * Held for wp-admin's own save paths only. Pinning it for every caller also
+ * pinned WP-CLI and left no way to put a broken item right.
+ */
+$hold = static fn( string $page, bool $admin, bool $ajax = false, bool $cron = false, string $action = '' ): bool
+	=> DGL\Admin\Guard::should_hold( $page, $admin, $ajax, $cron, $action );
+
+Harness::assert_true( $hold( 'post.php', true ), 'the edit screen is held' );
+Harness::assert_true( $hold( 'edit.php', true ), 'and so is bulk edit' );
+Harness::assert_true( $hold( '', true, true, false, 'inline-save' ), 'and Quick Edit, which posts through ajax' );
+
+Harness::assert_false( $hold( 'post.php', false ), 'a front-end request is not' );
+Harness::assert_false( $hold( '', false ), 'nor is WP-CLI, so a broken item can still be put right' );
+Harness::assert_false( $hold( 'post.php', true, false, true ), 'nor is cron, which runs the expiry sweep' );
+Harness::assert_false( $hold( '', true, true, false, 'heartbeat' ), 'and another ajax action is not Quick Edit' );
+Harness::assert_false( $hold( 'upload.php', true ), 'nor is an unrelated admin screen' );

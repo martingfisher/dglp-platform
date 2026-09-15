@@ -137,9 +137,21 @@ final class Transition {
 	 *
 	 * @return true|WP_Error
 	 */
+	/**
+	 * True while this class is moving something.
+	 *
+	 * Read by {@see \DGL\Admin\Guard}, which records any status change that
+	 * happens without it. Without that, a status altered directly in wp-admin
+	 * leaves no trail at all, and an audit log with holes in it is worse than
+	 * none: it is one you believe.
+	 */
+	public static bool $in_progress = false;
+
 	private static function carry_out( WP_Post $post, Plan $plan, int $actor_id, string $note, int $org_id ) {
 		$post_id = (int) $post->ID;
 		$now     = current_time( 'mysql', true );
+
+		self::$in_progress = true;
 
 		$updated = wp_update_post(
 			[
@@ -148,6 +160,8 @@ final class Transition {
 			],
 			true
 		);
+
+		self::$in_progress = false;
 
 		if ( is_wp_error( $updated ) ) {
 			return $updated;

@@ -1314,6 +1314,54 @@ foreach ( $defs as $type => $def ) {
 	$ok( '' !== trim( (string) $def['singular'] ) && '' !== trim( (string) $def['plural'] ), $type . ' has both labels' );
 }
 
+/* ------------------------------------------------- the audit trail is true */
+
+$group( 'A status changed outside the workflow is still recorded' );
+
+/*
+ * WordPress will change a post status from the Publish box, from Quick Edit,
+ * from a bulk action or from WP-CLI, and none of those know this plugin exists.
+ * An administrator pressing Publish on a pending submission used to move it live
+ * and leave no record at all. An audit log with holes in it is worse than none,
+ * because it is one you believe.
+ */
+$rogue = $make_item( $org_a, $alice, Statuses::PENDING );
+wp_update_post( [ 'ID' => $rogue, 'post_title' => 'Published behind the workflow s back' ] );
+
+$before_rows = count( Log::for_object( 'item', $rogue ) );
+
+// Exactly what the Publish button does.
+wp_update_post( [ 'ID' => $rogue, 'post_status' => Statuses::LIVE ] );
+
+$rows = Log::for_object( 'item', $rogue );
+$ok( count( $rows ) > $before_rows, 'the change is written to the audit trail' );
+
+$actions = array_column( $rows, 'action' );
+$ok( in_array( 'status_changed_directly', $actions, true ), 'and marked as having gone round the workflow' );
+
+$group( 'The workflow itself is not accused of going round itself' );
+
+$clean = $make_item( $org_a, $alice, Statuses::PENDING );
+Transition::apply( $clean, StateMachine::APPROVE, $mod );
+
+$ok(
+	! in_array( 'status_changed_directly', array_column( Log::for_object( 'item', $clean ), 'action' ), true ),
+	'a proper approval records an approval, not a bypass'
+);
+
+$applied_live = $make_item( $org_a, $alice, Statuses::LIVE );
+wp_update_post( [ 'ID' => $applied_live, 'post_title' => 'Guard false positive check' ] );
+$applied_rev = (int) \DGL\Workflow\Revisions::open( $applied_live, $alice );
+update_post_meta( $applied_rev, DGL_FIXTURE_FLAG, '1' );
+wp_update_post( [ 'ID' => $applied_rev, 'post_title' => 'Guard false positive check, edited' ] );
+Transition::apply( $applied_rev, StateMachine::SUBMIT, $alice );
+Transition::apply( $applied_rev, StateMachine::APPROVE, $mod );
+
+$ok(
+	! in_array( 'status_changed_directly', array_column( Log::for_object( 'revision', $applied_rev ), 'action' ), true ),
+	'and an approved edit archiving itself is not reported as a bypass either'
+);
+
 /* ----------------------------------------------------------------- report */
 
 echo "\n" . str_repeat( '-', 60 ) . "\n";
