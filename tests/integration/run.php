@@ -1024,6 +1024,80 @@ delete_option( \DGL\Email\Routing::OPTION_ENABLED );
 
 /* ------------------------------------------------- deploys repair themselves */
 
+$group( 'Activation produces a rule set the member area is actually in' );
+
+/*
+ * Activation registered the post types and taxonomies and then flushed, but
+ * never registered the dashboard rule, so the flush wrote a complete set of
+ * content-type rules with the member area missing from it. Every /dashboard/
+ * route 404d except the root, which rendered through a fallback and hid the
+ * fault. Found on a real staging install, not here, which is why it is pinned.
+ */
+update_option( 'rewrite_rules', [] );
+delete_option( \DGL\Install::VERSION_OPTION );
+
+/*
+ * Reproduce the state a real activation runs in, which is the whole point.
+ *
+ * When wp-admin activates a plugin, `plugins_loaded` for that request has
+ * already fired without the plugin in it, so the plugin never hooked `init`
+ * and `init` has already passed. Its rewrite rules are therefore NOT in
+ * $wp_rewrite, and whatever activate() does not register itself is simply
+ * absent from the flush. That is why activate() registers the post types by
+ * hand, and it is why forgetting the dashboard rule was invisible until a
+ * real install.
+ *
+ * Here the plugin is already active and init has run normally, so the rule is
+ * in memory and the bug cannot reproduce unless that memory is cleared first.
+ */
+global $wp_rewrite;
+$wp_rewrite->extra_rules_top = [];
+
+\DGL\Install::activate();
+
+$after   = (array) get_option( 'rewrite_rules', [] );
+$base    = \DGL\Dashboard\Router::base();
+$has_dash = false;
+$has_cpt  = false;
+
+foreach ( array_keys( $after ) as $pattern ) {
+	if ( str_starts_with( (string) $pattern, '^' . $base ) ) {
+		$has_dash = true;
+	}
+	if ( str_starts_with( (string) $pattern, 'events/' ) ) {
+		$has_cpt = true;
+	}
+}
+
+$ok( $has_dash, 'activation writes the member area rewrite rule' );
+$ok( $has_cpt, 'and still writes the content type rules' );
+$ok( \DGL\Install::rules_look_right(), 'so the rule set passes its own check' );
+
+$group( 'A rule set missing the member area repairs itself' );
+
+/*
+ * The version stamp alone was not enough. A faulty activation wrote bad rules,
+ * stamped the version, and switched off the repair that would have fixed them.
+ * The check is now the invariant, so a wrong rule set is repaired whatever the
+ * stamp says.
+ */
+$without = [];
+
+foreach ( (array) get_option( 'rewrite_rules', [] ) as $pattern => $query ) {
+	if ( ! str_starts_with( (string) $pattern, '^' . $base ) ) {
+		$without[ $pattern ] = $query;
+	}
+}
+
+update_option( 'rewrite_rules', $without );
+update_option( \DGL\Install::VERSION_OPTION, \DGL\VERSION, false );
+
+$ok( ! \DGL\Install::rules_look_right(), 'a rule set with no member area is recognised as wrong' );
+
+\DGL\Install::maybe_flush_rewrites();
+
+$ok( \DGL\Install::rules_look_right(), 'and is rebuilt even though the version stamp said it was current' );
+
 $group( 'A plugin update rebuilds its own routes' );
 
 /*
@@ -1049,10 +1123,21 @@ foreach ( array_keys( $rules ) as $pattern ) {
 $ok( $found, 'the dashboard rewrite rule is rebuilt without anybody reactivating' );
 $ok( \DGL\VERSION === get_option( \DGL\Install::VERSION_OPTION ), 'and the version is recorded so it happens once, not every request' );
 
-$before = get_option( 'rewrite_rules' );
-update_option( 'rewrite_rules', [ 'sentinel' => 'untouched' ] );
+/*
+ * A second call does no work, but only because the rules are genuinely right.
+ * The check is the rule set, not the stamp, so the sentinel used here has to be
+ * a rule set that actually contains the member area.
+ */
+$before = (array) get_option( 'rewrite_rules', [] );
+$before['dgl-sentinel'] = 'untouched';
+update_option( 'rewrite_rules', $before );
+
 \DGL\Install::maybe_flush_rewrites();
-$ok( [ 'sentinel' => 'untouched' ] === get_option( 'rewrite_rules' ), 'a second call on the same version does no work' );
+
+$after_second = (array) get_option( 'rewrite_rules', [] );
+$ok( isset( $after_second['dgl-sentinel'] ), 'a second call on a healthy rule set does no work' );
+
+unset( $before['dgl-sentinel'] );
 update_option( 'rewrite_rules', $before );
 
 /* ------------------------------------------------------ organisation profile */

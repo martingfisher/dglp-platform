@@ -10,6 +10,7 @@ declare( strict_types=1 );
 namespace DGL;
 
 use DGL\Audit\Table as AuditTable;
+use DGL\Dashboard\Router;
 use DGL\Index\ItemsTable;
 
 defined( 'ABSPATH' ) || exit;
@@ -32,9 +33,19 @@ final class Install {
 		Roles::install();
 		self::schedule_expiry();
 
-		// Post types and taxonomies must exist before their rewrite rules mean anything.
+		/*
+		 * Everything that owns a rewrite rule has to be registered before the
+		 * flush, or the flush writes a rule set with that thing missing from it.
+		 *
+		 * The dashboard rule was left out of this list once, and the result was
+		 * that activation produced a site with every content-type rule present
+		 * and no `/dashboard/` rule at all. The member area then 404d on every
+		 * route except its own root, which still rendered through a fallback
+		 * and so hid the fault.
+		 */
 		PostTypes::register();
 		Taxonomies::register();
+		Router::add_rules();
 		flush_rewrite_rules();
 
 		update_option( self::VERSION_OPTION, VERSION, false );
@@ -108,7 +119,18 @@ final class Install {
 	 * again until the next one.
 	 */
 	public static function maybe_flush_rewrites(): void {
-		if ( get_option( self::VERSION_OPTION, '' ) === VERSION ) {
+		$stale = get_option( self::VERSION_OPTION, '' ) !== VERSION;
+
+		/*
+		 * A version stamp alone is not enough, and trusting it made a real
+		 * outage worse: a faulty activation wrote rules with the dashboard rule
+		 * missing, stamped the version, and thereby switched off the very
+		 * repair that would have fixed it.
+		 *
+		 * So the check is the invariant itself. If the member area's rule is not
+		 * in the stored rule set, the rules are wrong whatever the stamp says.
+		 */
+		if ( ! $stale && self::rules_look_right() ) {
 			return;
 		}
 
@@ -120,5 +142,36 @@ final class Install {
 		update_option( self::VERSION_OPTION, VERSION, false );
 
 		flush_rewrite_rules();
+	}
+
+	/**
+	 * Whether the stored rewrite rules still contain the member area.
+	 *
+	 * Reads the option rather than the live `$wp_rewrite` object, because what
+	 * matters is what was saved, not what this request happens to have built in
+	 * memory.
+	 */
+	public static function rules_look_right(): bool {
+		// Plain permalinks store no rules at all. Nothing to repair, and
+		// flushing on every request would be the worse bug.
+		if ( '' === (string) get_option( 'permalink_structure', '' ) ) {
+			return true;
+		}
+
+		$rules = get_option( 'rewrite_rules' );
+
+		if ( ! is_array( $rules ) || [] === $rules ) {
+			return false;
+		}
+
+		$needle = '^' . Router::base();
+
+		foreach ( array_keys( $rules ) as $pattern ) {
+			if ( str_starts_with( (string) $pattern, $needle ) ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 }

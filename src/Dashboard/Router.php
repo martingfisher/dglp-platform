@@ -118,6 +118,26 @@ final class Router {
 
 		status_header( 200 );
 
+		/*
+		 * Tell the main query this is a real page.
+		 *
+		 * `status_header()` sets what goes on the wire; it does not change what
+		 * WordPress thinks it is looking at. Anything that asks `is_404()` —
+		 * the theme, the breadcrumb trail, the SEO plugin — still sees a
+		 * not-found and says so. A member area whose breadcrumb reads
+		 * "Home > 404 Not Found" looks broken even when every link on it works,
+		 * and a 404-flagged page is treated as disposable by caches and
+		 * crawlers.
+		 */
+		global $wp_query;
+
+		if ( $wp_query instanceof \WP_Query ) {
+			$wp_query->is_404     = false;
+			$wp_query->is_home    = false;
+			$wp_query->is_archive = false;
+			$wp_query->is_page    = true;
+		}
+
 		Controller::handle( self::segments() );
 		exit;
 	}
