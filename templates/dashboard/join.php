@@ -54,8 +54,8 @@ $v      = static fn( string $k ): string => (string) ( $values[ $k ] ?? '' );
 	<?php elseif ( 'sent' === $stage ) : ?>
 		<div class="dgl-card">
 			<h2 class="dgl-section__title"><?php esc_html_e( 'Check your email', 'dgl-platform' ); ?></h2>
-			<p><?php esc_html_e( 'We have sent you a link. Use it and you can carry on. It works once and for two days.', 'dgl-platform' ); ?></p>
-			<p class="dgl-help"><?php esc_html_e( 'Nothing arrived? Check your junk folder, then start again and a fresh link will be sent.', 'dgl-platform' ); ?></p>
+			<p><?php esc_html_e( 'We have sent you a link. Use it and you can carry on. It works once, and for two days: after that you will need to start again and request another.', 'dgl-platform' ); ?></p>
+			<p class="dgl-help"><?php esc_html_e( 'Nothing arrived? Check your junk folder, then start again and a fresh link will be sent. Only the newest link works.', 'dgl-platform' ); ?></p>
 		</div>
 
 	<?php elseif ( 'signed-in' === $stage ) : ?>

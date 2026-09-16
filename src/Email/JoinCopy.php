@@ -27,7 +27,7 @@ final class JoinCopy {
 			cta_label: __( 'Confirm my email address', 'dgl-platform' ),
 			cta_url: $link,
 			footnotes: [
-				__( 'The link works once and for two days.', 'dgl-platform' ),
+				__( 'The link works once, and for two days. After that, start again from the join page and a new one will be sent.', 'dgl-platform' ),
 			]
 		);
 	}
