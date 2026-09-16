@@ -9,6 +9,8 @@ declare( strict_types=1 );
 
 namespace DGL\Schema;
 
+use DGL\Content;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -47,9 +49,9 @@ final class Store {
 			}
 
 			if ( 'body' === $field->key ) {
-				// wp_kses_post rather than stripping tags: somebody pasting a
-				// formatted description should keep their paragraphs and links.
-				$post_update['post_content'] = wp_kses_post( (string) $value );
+				// Filtered, not stripped: somebody pasting a formatted description
+				// keeps their paragraphs, lists and links, and nothing else.
+				$post_update['post_content'] = Content::clean( (string) $value );
 				continue;
 			}
 
@@ -94,10 +96,10 @@ final class Store {
 	public static function sanitise( Field $field, mixed $value ): mixed {
 		return match ( $field->type ) {
 			Field::TEXTAREA => sanitize_textarea_field( (string) $value ),
-			// Rich text keeps its markup, filtered to what a post may contain.
+			// Rich text keeps its markup, filtered to what the toolbar can make.
 			// sanitize_textarea_field would strip the formatting the editor
-			// exists to produce.
-			Field::RICHTEXT             => wp_kses_post( (string) $value ),
+			// exists to produce; wp_kses_post would keep a pasted document's.
+			Field::RICHTEXT             => Content::clean( (string) $value ),
 			Field::URL                  => esc_url_raw( (string) $value ),
 			Field::EMAIL                => sanitize_email( (string) $value ),
 			Field::CHECKBOX             => (bool) $value,

@@ -1377,7 +1377,7 @@ $group( 'Reordering the labels moved no data' );
  */
 $defs = PostTypes::definitions();
 
-$ok( [ 'dgl_event', 'dgl_news', 'dgl_training', 'dgl_grant', 'dgl_volunteering' ] === array_keys( $defs ), 'events lead, and the keys are unchanged' );
+$ok( [ 'dgl_news', 'dgl_event', 'dgl_training', 'dgl_grant', 'dgl_volunteering' ] === array_keys( $defs ), 'news, events, training lead, and the keys are unchanged' );
 $ok( PostTypes::submittable() === array_keys( $defs ), 'the submittable list follows the same order rather than restating it' );
 $ok( 'grants' === $defs[ PostTypes::GRANT ]['slug'], 'the grants slug is untouched, so no published URL breaks' );
 $ok( 'events' === $defs[ PostTypes::EVENT ]['slug'], 'and so is events' );
@@ -1538,7 +1538,7 @@ $ok( '' !== $link, 'an email went out with a link in it' );
  * invitee is not promised something the site will not let them do.
  */
 $invite_body = implode( ' ', $sent_bodies );
-$ok( str_contains( $invite_body, 'events, news and training' ), 'the email names exactly the enabled types' );
+$ok( str_contains( $invite_body, 'news, events and training' ), 'the email names exactly the enabled types, in their display order' );
 $ok( ! str_contains( strtolower( $invite_body ), 'volunteering' ), 'and not volunteering' );
 $ok( ! str_contains( strtolower( $invite_body ), 'grant' ), 'nor grants' );
 $ok( str_contains( (string) end( $sent_to ), 'newcomer@example.test' ) || '' !== (string) end( $sent_to ), 'addressed to somebody' );
@@ -2106,6 +2106,141 @@ $group( 'Public listings are ordered by when the thing happens' );
  */
 $ok( 'start_datetime' === \DGL\Frontend\Frontend::sort_key( PostTypes::EVENT ), 'events sort by their start date' );
 $ok( null === \DGL\Frontend\Frontend::sort_key( PostTypes::NEWS ), 'news has no date of its own, so it keeps newest first' );
+
+$group( 'Rich text: a pasted document loses its formatting and keeps its words' );
+
+$pasted = '<style>.MsoNormal{mso-style:1}</style>'
+	. '<p class="MsoNormal" style="margin:0;text-align:justify"><span style="font-family:Calibri;color:#1F497D">Hello <b>world</b></span></p>'
+	. '<h2>A heading</h2><table><tr><td>cell</td></tr></table>'
+	. '<script>alert(1)</script>'
+	. '<ul><li>one</li></ul>'
+	. '<a href="https://example.test/" style="color:red" target="_blank" rel="noopener" onclick="x()">link</a>'
+	. '<img src="x.jpg"><iframe src="https://evil.test/"></iframe>'
+	. '<p>&nbsp;</p><p> </p>';
+
+$cleaned = \DGL\Content::clean( $pasted );
+
+$ok( str_contains( $cleaned, '<p>Hello <b>world</b></p>' ), 'the paragraph and its bold survive without class or style' );
+$ok( ! str_contains( $cleaned, 'style=' ), 'no inline style anywhere' );
+$ok( ! str_contains( $cleaned, '<span' ) && ! str_contains( $cleaned, '<h2' ) && ! str_contains( $cleaned, '<table' ) && ! str_contains( $cleaned, '<td' ), 'span, heading and table tags are gone' );
+$ok( str_contains( $cleaned, 'A heading' ) && str_contains( $cleaned, 'cell' ), 'the words inside them are not' );
+$ok( ! str_contains( $cleaned, 'alert' ) && ! str_contains( $cleaned, 'mso-style' ), 'script and style go with their contents' );
+$ok( str_contains( $cleaned, '<ul><li>one</li></ul>' ), 'a list survives' );
+$ok( str_contains( $cleaned, '<a href="https://example.test/" target="_blank" rel="noopener">link</a>' ), 'a link keeps href, target and rel and loses style and onclick' );
+$ok( ! str_contains( $cleaned, '<img' ) && ! str_contains( $cleaned, '<iframe' ) && ! str_contains( $cleaned, 'evil.test' ), 'images and frames are gone' );
+$ok( ! str_contains( $cleaned, '&nbsp;' ) && ! str_contains( $cleaned, '<p></p>' ) && ! str_contains( $cleaned, '<p> </p>' ), 'empty paragraphs are dropped' );
+
+$body_field = \DGL\Schema\FieldRegistry::find( PostTypes::EVENT, 'body' );
+$ok( null !== $body_field && \DGL\Schema\Field::RICHTEXT === $body_field->type, 'the event body is the rich text field' );
+$ok( null !== $body_field && \DGL\Schema\Store::sanitise( $body_field, '<p style="x">a</p><span>b</span>' ) === '<p>a</p>b', 'storage runs rich text through the same cleaner' );
+
+$group( 'Uploads: every image is cut to 1600px and stripped of metadata' );
+
+/*
+ * Built here rather than committed: a JPEG with a real EXIF block (an APP1
+ * segment carrying an Artist tag) and a PNG with transparency, so the test can
+ * see the metadata go and the alpha stay.
+ */
+$exif_jpeg = static function ( int $w, int $h, string $out ): void {
+	$artist = "Test Camera Owner\0";
+	$desc   = "Taken at 53.7997,-1.5492\0";
+	$n      = 2;
+	$data   = 8 + 2 + 12 * $n + 4;
+	$tiff   = 'II' . pack( 'v', 42 ) . pack( 'V', 8 ) . pack( 'v', $n )
+		. pack( 'vvVV', 0x010E, 2, strlen( $desc ), $data )
+		. pack( 'vvVV', 0x013B, 2, strlen( $artist ), $data + strlen( $desc ) )
+		. pack( 'V', 0 ) . $desc . $artist;
+	$app1   = "Exif\0\0" . $tiff;
+	$im     = imagecreatetruecolor( $w, $h );
+	for ( $i = 0; $i < 40; $i++ ) {
+		imagefilledrectangle( $im, wp_rand( 0, $w ), wp_rand( 0, $h ), wp_rand( 0, $w ), wp_rand( 0, $h ), imagecolorallocate( $im, wp_rand( 0, 255 ), wp_rand( 0, 255 ), wp_rand( 0, 255 ) ) );
+	}
+	ob_start();
+	imagejpeg( $im, null, 92 );
+	$jpg = (string) ob_get_clean();
+	file_put_contents( $out, substr( $jpg, 0, 2 ) . "\xFF\xE1" . pack( 'n', strlen( $app1 ) + 2 ) . $app1 . substr( $jpg, 2 ) );
+};
+
+$fixtures = get_temp_dir() . 'dgl-fixtures-' . wp_generate_password( 6, false );
+wp_mkdir_p( $fixtures );
+$exif_jpeg( 3000, 2000, $fixtures . '/big-exif.jpg' );
+$exif_jpeg( 900, 600, $fixtures . '/small-exif.jpg' );
+$png = imagecreatetruecolor( 2400, 1200 );
+imagesavealpha( $png, true );
+imagefill( $png, 0, 0, imagecolorallocatealpha( $png, 0, 0, 0, 127 ) );
+imagefilledellipse( $png, 1200, 600, 1000, 800, imagecolorallocate( $png, 214, 38, 42 ) );
+imagepng( $png, $fixtures . '/big.png' );
+
+$fixture_exif = @exif_read_data( $fixtures . '/big-exif.jpg' );
+$ok( 'Test Camera Owner' === ( $fixture_exif['Artist'] ?? '' ), 'the fixture really carries EXIF before the test starts' );
+
+$updir   = wp_upload_dir();
+$workdir = trailingslashit( $updir['basedir'] ) . 'dgl-test-' . wp_generate_password( 6, false );
+wp_mkdir_p( $workdir );
+
+$shrink = static function ( string $name, string $type ) use ( $fixtures, $workdir ): array {
+	$path = $workdir . '/' . $name;
+	copy( $fixtures . '/' . $name, $path );
+	$before = filesize( $path );
+	$after  = \DGL\Uploads::shrink( [ 'file' => $path, 'url' => 'http://example.test/' . $name, 'type' => $type ] );
+	clearstatcache();
+	$size = getimagesize( (string) $after['file'] );
+	$exif = 'image/jpeg' === $type ? @exif_read_data( (string) $after['file'] ) : [];
+	return [ 'w' => (int) $size[0], 'h' => (int) $size[1], 'before' => $before, 'after' => filesize( (string) $after['file'] ), 'artist' => $exif['Artist'] ?? '', 'path' => (string) $after['file'] ];
+};
+
+$r = $shrink( 'big-exif.jpg', 'image/jpeg' );
+$ok( 1600 === $r['w'] && 1067 === $r['h'], 'a 3000x2000 JPEG becomes 1600x1067' );
+$ok( '' === $r['artist'], 'its EXIF (Artist tag in the fixture) is gone' );
+$ok( $r['after'] < $r['before'], 'and the file is smaller (' . size_format( $r['before'] ) . ' to ' . size_format( $r['after'] ) . ')' );
+
+$r = $shrink( 'small-exif.jpg', 'image/jpeg' );
+$ok( 900 === $r['w'] && 600 === $r['h'], 'a 900x600 JPEG keeps its size' );
+$ok( '' === $r['artist'], 'but still loses its metadata' );
+
+$r = $shrink( 'big.png', 'image/png' );
+$ok( 1600 === $r['w'] && 800 === $r['h'], 'a 2400x1200 PNG becomes 1600x800' );
+$png_im = imagecreatefrompng( $r['path'] );
+$ok( false !== $png_im && 127 === ( imagecolorat( $png_im, 2, 2 ) >> 24 ), 'and its transparency survives the rewrite' );
+
+$untouched = \DGL\Uploads::shrink( [ 'file' => $workdir . '/nothing.pdf', 'url' => '', 'type' => 'application/pdf' ] );
+$ok( $workdir . '/nothing.pdf' === $untouched['file'], 'a non-image type is left alone' );
+
+foreach ( glob( $workdir . '/*' ) as $f ) {
+	unlink( $f );
+}
+rmdir( $workdir );
+
+$group( 'Uploads: the organisation logo goes through the same door' );
+
+/*
+ * The organisation form offered a logo control whose file was never read:
+ * Profile::save() took the POST and not $_FILES. Under the CLI a file cannot
+ * be moved as an upload, so the assertion is that the attempt is made and its
+ * failure reported against the logo, where before it was silently ignored.
+ */
+$logo_key = \DGL\Dashboard\FieldRenderer::INPUT_NAME . '_file_org_logo';
+$tmp_logo = wp_tempnam( 'logo.jpg' );
+copy( $fixtures . '/small-exif.jpg', $tmp_logo );
+$fake_file = [ 'name' => 'logo.jpg', 'type' => 'image/jpeg', 'tmp_name' => $tmp_logo, 'error' => 0, 'size' => filesize( $tmp_logo ) ];
+$_FILES[ $logo_key ] = $fake_file;
+
+$org_input              = \DGL\Org\Profile::form_values( $org_a );
+$org_input['org_email'] = 'orga@example.test'; // Required, and the fixture has none.
+$saved     = \DGL\Org\Profile::save( $org_a, $org_input, $alice, [ $logo_key => $fake_file ] );
+
+$ok( isset( $saved['errors']['org_logo'] ) && '' !== $saved['errors']['org_logo'], 'a logo file that cannot be stored is reported on the logo field: ' . ( $saved['errors']['org_logo'] ?? '(nothing)' ) );
+
+unset( $_FILES[ $logo_key ] );
+@unlink( $tmp_logo );
+
+$saved = \DGL\Org\Profile::save( $org_a, $org_input, $alice, [] );
+$ok( [] === $saved['errors'], 'with no file chosen the organisation saves as before' );
+
+foreach ( glob( $fixtures . '/*' ) as $f ) {
+	unlink( $f );
+}
+rmdir( $fixtures );
 
 /* ----------------------------------------------------------------- report */
 

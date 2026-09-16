@@ -143,6 +143,14 @@ final class FieldRenderer {
 	 * charity staff, and every extra button is another thing that can produce a
 	 * listing nobody meant to publish.
 	 *
+	 * No code view either. It was a second door into the same field, and the
+	 * only thing it could add that the toolbar cannot was markup the site does
+	 * not want: a document pasted out of Word arrives as spans, styles and
+	 * tables, and lands on the public page wearing its own formatting. Paste is
+	 * plain text, `valid_elements` is the same list storage enforces in
+	 * `Content::allowed_html()`, and the words survive with the formatting
+	 * re-applied from the toolbar.
+	 *
 	 * Falls back to a plain textarea when the editor cannot load, so the form
 	 * still works rather than showing an empty box.
 	 */
@@ -168,13 +176,17 @@ final class FieldRenderer {
 				'textarea_rows' => 12,
 				'media_buttons' => false,
 				'teeny'         => true,
-				'quicktags'     => [ 'buttons' => 'strong,em,ul,ol,li,link' ],
+				'quicktags'     => false,
 				'tinymce'       => [
-					'toolbar1'     => 'bold,italic,bullist,numlist,link,unlink,undo,redo',
-					'toolbar2'     => '',
-					'statusbar'    => false,
-					'branding'     => false,
-					'paste_as_text' => true,
+					'toolbar1'            => 'bold,italic,bullist,numlist,link,unlink,undo,redo',
+					'toolbar2'            => '',
+					'statusbar'           => false,
+					'branding'            => false,
+					'paste_as_text'       => true,
+					'paste_remove_styles' => true,
+					'paste_webkit_styles' => 'none',
+					'valid_elements'      => \DGL\Content::editor_valid_elements(),
+					'invalid_styles'      => 'color background-color font-family font-size line-height',
 				],
 			]
 		);

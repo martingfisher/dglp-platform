@@ -1,75 +1,18 @@
 /*
  * DGLP Platform dashboard.
  *
- * Every colour here reads from the custom properties Blocksy already emits on
- * the page, with the live palette hex as a fallback. Change the palette in the
- * WordPress customiser and the dashboard follows, with no code edit. The
- * fallbacks cover the two surfaces that render outside theme context: the
- * standalone auth screens and the email templates.
+ * The tokens (palette, type, geometry, rhythm) live in tokens.css, which
+ * Assets::style() loads before this file and before public.css. They used to
+ * be declared here as well, and this copy loaded second, so a token changed in
+ * tokens.css changed the public pages and left the member area exactly as it
+ * was. One definition now, and it is not this one.
  *
- * Source of the fallback values: wp option get theme_mods_blocksy-child.
- * The status chip pairs are asserted against WCAG AA in tests/test-brand.php,
- * and bin/check-contrast.mjs walks the rendered pages to catch the pairs a
- * palette test cannot see.
- *
- * Declared on :root rather than on .dgl-dash. The member area renders its own
- * document now, so the top bar sits outside .dgl-dash — scoped to the old
- * selector it had no background colour at all, because every token it asked
- * for resolved to nothing.
+ * Every colour reads from the custom properties Blocksy already emits on the
+ * page, with the live palette hex as a fallback. Source of the fallback
+ * values: wp option get theme_mods_blocksy-child. The status chip pairs are
+ * asserted against WCAG AA in tests/test-brand.php, and bin/check-contrast.mjs
+ * walks the rendered pages to catch the pairs a palette test cannot see.
  */
-
-:root {
-	/* Palette */
-	--dgl-teal: var(--theme-palette-color-1, #57b0b6);
-	--dgl-teal-solid: var(--theme-palette-color-3, #1d6265);
-	--dgl-ink: var(--theme-palette-color-4, #1e3232);
-	--dgl-page: var(--theme-palette-color-5, #fdf8f0);
-	--dgl-white: var(--theme-palette-color-8, #ffffff);
-	--dgl-navy: var(--theme-palette-color-14, #2d3b6b);
-	--dgl-purple: var(--theme-palette-color-15, #5b6bae);
-	--dgl-surface: var(--theme-palette-color-18, #f4f6fb);
-	--dgl-danger: var(--theme-palette-color-10, #cc0053);
-
-	/*
-	 * Semantic roles. The teal is absent from every one of these on purpose:
-	 * at 2.53:1 on white it cannot carry text. It appears below as borders and
-	 * rails only.
-	 */
-	--dgl-primary: var(--dgl-navy);
-	--dgl-primary-text: var(--dgl-white);
-	--dgl-link: var(--dgl-purple);
-	--dgl-text: var(--dgl-ink);
-	--dgl-text-muted: color-mix(in srgb, var(--dgl-ink) 68%, var(--dgl-page));
-	--dgl-border: color-mix(in srgb, var(--dgl-ink) 14%, transparent);
-	--dgl-border-strong: color-mix(in srgb, var(--dgl-navy) 28%, transparent);
-	--dgl-focus: var(--dgl-purple);
-
-	/* Type */
-	--dgl-font: var(--theme-font-family, "Montserrat", system-ui, sans-serif);
-	--dgl-size: 18px;
-	--dgl-line: 1.65;
-	--dgl-weight-body: 400;
-	--dgl-weight-heading: 700;
-	--dgl-weight-button: 500;
-
-	/* Geometry */
-	--dgl-radius-button: 8px;
-	--dgl-radius-card: 20px;
-	--dgl-radius-field: 10px;
-	--dgl-field-border: 2px;
-	--dgl-field-height: 45px;
-
-	/* Rhythm */
-	--dgl-gap: 16px;
-	--dgl-gap-lg: 24px;
-	--dgl-pad-card: 24px;
-
-	font-family: var(--dgl-font);
-	font-size: var(--dgl-size);
-	line-height: var(--dgl-line);
-	color: var(--dgl-text);
-	background: var(--dgl-page);
-}
 
 /* ---- Status chips -------------------------------------------------------
  * Backgrounds are the source palette colour mixed 88% into white; text is that
@@ -317,8 +260,8 @@ body.dgl-body {
 	flex-direction: column;
 	gap: var(--dgl-gap-lg);
 	padding: var(--dgl-gap-lg);
-	background: var(--dgl-navy);
-	color: var(--dgl-white);
+	background: var(--dgl-sidebar);
+	color: var(--dgl-on-dark);
 }
 
 /*
@@ -340,12 +283,12 @@ body.dgl-body {
 }
 
 .dgl-nav__heading {
-	margin: var(--dgl-gap-lg) 0 6px;
-	font-size: 0.66em;
+	margin: var(--dgl-gap-lg) 0 8px;
+	font-size: 0.7em;
 	font-weight: 700;
 	letter-spacing: 0.09em;
 	text-transform: uppercase;
-	color: rgba(255, 255, 255, 0.62);
+	color: var(--dgl-on-dark-muted);
 }
 
 .dgl-nav__list {
@@ -359,42 +302,68 @@ body.dgl-body {
 	align-items: center;
 	justify-content: space-between;
 	gap: 8px;
-	padding: 8px 12px;
+	padding: 9px 12px;
 	border-inline-start: 3px solid transparent;
 	border-radius: 0 var(--dgl-radius-button) var(--dgl-radius-button) 0;
-	font-size: 0.82em;
-	color: rgba(255, 255, 255, 0.86);
+	font-size: 0.88em;
+	font-weight: 500;
+	color: var(--dgl-on-dark-body);
 	text-decoration: none;
 }
 
 .dgl-nav__item:hover {
-	background: rgba(255, 255, 255, 0.08);
-	color: var(--dgl-white);
+	background: var(--dgl-on-dark-fill);
+	color: var(--dgl-on-dark);
 }
 
 /* The one place the teal earns its keep: a rail, carrying no text. */
 .dgl-nav__item--active {
 	border-inline-start-color: var(--dgl-teal);
-	background: rgba(255, 255, 255, 0.12);
-	color: var(--dgl-white);
+	background: rgba(255, 255, 255, 0.14);
+	color: var(--dgl-on-dark);
 	font-weight: 600;
 }
 
 .dgl-nav__count {
 	font-size: 0.86em;
-	color: rgba(255, 255, 255, 0.7);
+	font-weight: 600;
+	color: var(--dgl-on-dark-muted);
 }
 
 .dgl-dash__account {
 	margin-top: auto;
 	padding-top: var(--dgl-gap);
-	border-top: 1px solid rgba(255, 255, 255, 0.18);
-	font-size: 0.8em;
+	border-top: 1px solid var(--dgl-on-dark-line);
+	font-size: 0.84em;
 }
 
-.dgl-dash__account-name { margin: 0; font-weight: 600; }
-.dgl-dash__account-org  { margin: 2px 0 10px; color: rgba(255, 255, 255, 0.66); }
-.dgl-dash__signout      { color: rgba(255, 255, 255, 0.86); }
+.dgl-dash__account-name { margin: 0; font-weight: 600; color: var(--dgl-on-dark); }
+.dgl-dash__account-org  { margin: 2px 0 14px; color: var(--dgl-on-dark-muted); }
+
+/*
+ * A button, because it does something. As a bare link it sat under the name
+ * looking like a caption, and the person who wanted to leave had to guess
+ * that it was the way out.
+ */
+.dgl-dash__signout {
+	display: inline-flex;
+	align-items: center;
+	box-sizing: border-box;
+	min-height: 44px;
+	padding: 6px 16px;
+	border: 2px solid var(--dgl-on-dark-muted);
+	border-radius: var(--dgl-radius-button);
+	color: var(--dgl-on-dark);
+	font-weight: var(--dgl-weight-button);
+	text-decoration: none;
+}
+
+.dgl-dash__signout:hover,
+.dgl-dash__signout:focus-visible {
+	background: var(--dgl-white);
+	border-color: var(--dgl-white);
+	color: var(--dgl-sidebar);
+}
 
 .dgl-dash__main {
 	padding: var(--dgl-gap-lg) clamp(16px, 4vw, 40px) 48px;
@@ -865,7 +834,7 @@ body.dgl-body {
 
 .dgl-help {
 	margin: 6px 0 0;
-	font-size: 0.76em;
+	font-size: 0.8em;
 	color: var(--dgl-text-muted);
 }
 
@@ -1010,6 +979,18 @@ body.dgl-body {
 }
 
 .dgl-card .dgl-section__title { margin-bottom: 14px; }
+
+/*
+ * Cards stacked down a page get air between them. Scoped to <main>'s own
+ * children: inside a grid the gap does that job, and a margin on top of it
+ * would put the review screen's side column out of step.
+ */
+.dgl-dash__main > .dgl-card + .dgl-card { margin-top: var(--dgl-gap-lg); }
+
+/* A card that introduces a form and then shows it: the form is a box of its
+ * own, and the sentence above it was touching its top edge. */
+.dgl-card > .dgl-form { margin-top: var(--dgl-gap); }
+.dgl-card > .dgl-table + .dgl-help { margin-top: 12px; }
 
 .dgl-timeline {
 	margin: 0;
@@ -1267,8 +1248,8 @@ body.dgl-body {
 	padding: 2px 7px;
 	border-radius: 999px;
 	background: #fff7e8;
-	color: #8f6c26;
-	font-size: 0.74em;
+	color: #7a5a1c; /* 6.0:1. Was #8f6c26 at 4.54:1, AA by a hair at 11px. */
+	font-size: 0.78em;
 	font-weight: 600;
 	letter-spacing: 0.02em;
 	vertical-align: middle;

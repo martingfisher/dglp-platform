@@ -77,7 +77,7 @@ Harness::assert_same( 'grants', PostTypes::definitions()[ PostTypes::GRANT ]['sl
 
 Harness::assert_true( in_array( PostTypes::GRANT, PostTypes::submittable(), true ), 'and stays submittable, so permissions and the index still work for anything already stored' );
 
-Harness::assert_same( [ PostTypes::EVENT, PostTypes::NEWS, PostTypes::TRAINING ], PostTypes::enabled_keys(), 'enabled types keep their display order, events first' );
+Harness::assert_same( [ PostTypes::NEWS, PostTypes::EVENT, PostTypes::TRAINING ], PostTypes::enabled_keys(), 'enabled types keep their display order: news, events, training' );
 
 Harness::group( 'Switching one back on is deleting a string' );
 

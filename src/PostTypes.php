@@ -76,8 +76,8 @@ final class PostTypes {
 	public static function definitions(): array {
 		/*
 		 * Order is the order members see everywhere: the sidebar, the submit
-		 * tiles, the filters. Events lead because events are what members post
-		 * most, which is what the wireframes show. Alphabetical or
+		 * tiles, the filters. News, events, training is DGLP's order, set on
+		 * the 16 September walkthrough. Alphabetical or
 		 * whatever-order-the-constants-happen-to-be-in is not a decision.
 		 *
 		 * The keys and the slugs are separate from the labels on purpose. A
@@ -85,15 +85,15 @@ final class PostTypes {
 		 * stored data and published URLs and must not.
 		 */
 		return [
-			self::EVENT        => [
-				'singular' => __( 'Event', 'dgl-platform' ),
-				'plural'   => __( 'Events', 'dgl-platform' ),
-				'slug'     => 'events',
-			],
 			self::NEWS         => [
 				'singular' => __( 'News item', 'dgl-platform' ),
 				'plural'   => __( 'News', 'dgl-platform' ),
 				'slug'     => 'news',
+			],
+			self::EVENT        => [
+				'singular' => __( 'Event', 'dgl-platform' ),
+				'plural'   => __( 'Events', 'dgl-platform' ),
+				'slug'     => 'events',
 			],
 			self::TRAINING     => [
 				'singular' => __( 'Training opportunity', 'dgl-platform' ),

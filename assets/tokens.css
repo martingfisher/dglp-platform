@@ -31,7 +31,12 @@
 	--dgl-primary-text: var(--dgl-white);
 	--dgl-link: var(--dgl-purple);
 	--dgl-text: var(--dgl-ink);
-	--dgl-text-muted: color-mix(in srgb, var(--dgl-ink) 68%, var(--dgl-page));
+	/*
+	 * Secondary text. Ink at 68% measured 5.1:1 on white, which passes AA and
+	 * still read as faint at the 14px it is mostly set in. At 78% it is 6.8:1,
+	 * past AAA, and the help lines under fields stop looking like watermarks.
+	 */
+	--dgl-text-muted: color-mix(in srgb, var(--dgl-ink) 78%, var(--dgl-page));
 	--dgl-border: color-mix(in srgb, var(--dgl-ink) 14%, transparent);
 	--dgl-border-strong: color-mix(in srgb, var(--dgl-navy) 28%, transparent);
 	/*
@@ -43,6 +48,20 @@
 	 */
 	--dgl-field-outline: color-mix(in srgb, var(--dgl-ink) 60%, transparent);
 	--dgl-focus: var(--dgl-purple);
+
+	/*
+	 * The sidebar. Deep navy from the palette, taken darker so white type on
+	 * it sits above 12:1 rather than the 10:1 the palette colour gives, and so
+	 * the active item's lighter fill has room to show. Type on it uses the
+	 * on-dark scale below and nothing fainter: the old sidebar set its
+	 * headings at 62% white, which measured 5.2:1 and looked like 3.
+	 */
+	--dgl-sidebar: color-mix(in srgb, var(--dgl-navy) 82%, #000000);
+	--dgl-on-dark: var(--dgl-white);
+	--dgl-on-dark-body: rgba(255, 255, 255, 0.92);
+	--dgl-on-dark-muted: rgba(255, 255, 255, 0.8);
+	--dgl-on-dark-line: rgba(255, 255, 255, 0.2);
+	--dgl-on-dark-fill: rgba(255, 255, 255, 0.1);
 
 	/* Type */
 	--dgl-font: var(--theme-font-family, "Montserrat", system-ui, sans-serif);

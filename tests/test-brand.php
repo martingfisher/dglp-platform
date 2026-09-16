@@ -106,13 +106,25 @@ foreach ( $chips as $status => $pair ) {
 	);
 }
 
+/*
+ * The tokens live in tokens.css and nowhere else. dashboard.css carried a
+ * second copy that loaded later and won, so a token changed in tokens.css
+ * changed nothing in the member area. A :root block reappearing here is
+ * that bug coming back.
+ */
+Harness::assert_false( str_contains( $css, ':root' ), 'dashboard.css declares no tokens of its own' );
+
+$tokens = (string) file_get_contents( dirname( __DIR__ ) . '/assets/tokens.css' );
+
+Harness::assert_true( '' !== $tokens, 'tokens.css is readable' );
+
 // The fallbacks in the stylesheet must be the real palette, not a stale copy.
 foreach ( [ 1, 3, 4, 5, 8, 10, 14, 15, 18 ] as $slot ) {
 	Harness::assert_true(
-		str_contains( $css, 'var(--theme-palette-color-' . $slot . ', ' . $palette[ $slot ] . ')' ),
+		str_contains( $tokens, 'var(--theme-palette-color-' . $slot . ', ' . $palette[ $slot ] . ')' ),
 		'palette slot ' . $slot . ' reads from Blocksy with the live hex as fallback'
 	);
 }
 
-Harness::assert_true( str_contains( $css, '--dgl-primary: var(--dgl-navy);' ), 'the primary action colour is deep navy, not teal' );
-Harness::assert_false( str_contains( $css, '--dgl-primary: var(--dgl-teal)' ), 'the teal is never the primary action colour' );
+Harness::assert_true( str_contains( $tokens, '--dgl-primary: var(--dgl-navy);' ), 'the primary action colour is deep navy, not teal' );
+Harness::assert_false( str_contains( $tokens, '--dgl-primary: var(--dgl-teal)' ), 'the teal is never the primary action colour' );

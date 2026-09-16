@@ -43,8 +43,11 @@ function luminance( colour ) {
 		return null;
 	}
 
+	// `color(srgb r g b)` carries 0 to 1 channels; `rgb()` carries 0 to 255.
+	const scale = colour.startsWith( 'color(' ) ? 1 : 255;
+
 	const [ r, g, b ] = parts.slice( 0, 3 ).map( Number ).map( ( v ) => {
-		const c = v / 255;
+		const c = v / scale;
 		return c <= 0.03928 ? c / 12.92 : Math.pow( ( c + 0.055 ) / 1.055, 2.4 );
 	} );
 
@@ -71,6 +74,7 @@ await page.fill( '#user_pass', pass );
 await Promise.all( [ page.waitForNavigation(), page.click( '#wp-submit' ) ] );
 
 const failures = [];
+const lowest = [];
 let checked = 0;
 
 for ( const route of ROUTES ) {
@@ -82,15 +86,26 @@ for ( const route of ROUTES ) {
 	 * against "rgba(0, 0, 0, 0)" would pass everything.
 	 */
 	const samples = await page.evaluate( () => {
+		/*
+		 * Chromium serialises a color-mix() result as `color(srgb r g b / a)`
+		 * with channels from 0 to 1, not `rgb()` with channels to 255. Read
+		 * as rgb, `color(srgb 0.4 0.44 0.43)` is rgb(0.4, 0.44, 0.43): near
+		 * black, 20:1 on anything pale, a pass for every token built with
+		 * color-mix. The muted text and the field outline are both built
+		 * with it, and both were being waved through unmeasured.
+		 */
 		const parse = ( c ) => {
-			const n = ( c || '' ).match( /[\d.]+/g );
+			const str = c || '';
+			const n = str.match( /[\d.]+/g );
 			if ( ! n || n.length < 3 ) {
 				return null;
 			}
+			const unit = str.startsWith( 'color(' );
+			const scale = unit ? 255 : 1;
 			return {
-				r: +n[ 0 ],
-				g: +n[ 1 ],
-				b: +n[ 2 ],
+				r: +n[ 0 ] * scale,
+				g: +n[ 1 ] * scale,
+				b: +n[ 2 ] * scale,
 				a: undefined === n[ 3 ] ? 1 : +n[ 3 ],
 			};
 		};
@@ -230,6 +245,10 @@ for ( const route of ROUTES ) {
 		const large = s.size >= 24 || ( s.size >= 18.66 && s.weight >= 700 );
 		const floor = s.control ? 3 : ( large ? 3 : 4.5 );
 
+		if ( ! s.control ) {
+			lowest.push( { route, text: s.text, ratio: value, size: s.size, weight: s.weight, colour: s.colour, background: s.background } );
+		}
+
 		if ( value < floor ) {
 			failures.push( {
 				route,
@@ -244,6 +263,25 @@ for ( const route of ROUTES ) {
 }
 
 await browser.close();
+
+/*
+ * REPORT=1 also prints the faintest text on each route, passing or not. AA
+ * is a floor, and a page can clear it everywhere and still look washed out;
+ * this is how the sidebar was found at 5.2:1 and 12px.
+ */
+if ( process.env.REPORT ) {
+	console.log( 'Faintest text per route (ratio, size, weight):' );
+
+	for ( const r of ROUTES ) {
+		const rows = lowest.filter( ( l ) => l.route === r ).sort( ( a, b ) => a.ratio - b.ratio ).slice( 0, 3 );
+
+		for ( const l of rows ) {
+			console.log( `  ${ l.ratio.toFixed( 2 ) }  ${ l.size }px/${ l.weight }  ${ r }  "${ l.text }"  ${ l.colour } on ${ l.background }` );
+		}
+	}
+
+	console.log( '' );
+}
 
 console.log( `${ checked } text and control-border pairs checked across ${ ROUTES.length } routes` );
 

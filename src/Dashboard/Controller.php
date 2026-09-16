@@ -837,7 +837,7 @@ final class Controller {
 			];
 		}
 
-		$result = \DGL\Org\Profile::save( $org_id, $input, $user->user_id );
+		$result = \DGL\Org\Profile::save( $org_id, $input, $user->user_id, $_FILES );
 
 		return [ $result['errors'], '' ];
 	}

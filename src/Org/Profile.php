@@ -13,6 +13,7 @@ use DGL\Audit\Log;
 use DGL\Meta;
 use DGL\Schema\Field;
 use DGL\Schema\Validator;
+use DGL\Uploads;
 use WP_Post;
 
 defined( 'ABSPATH' ) || exit;
@@ -166,11 +167,20 @@ final class Profile {
 	 * @return array{errors: array<string, string>, held: string[]} Field errors,
 	 *         and the keys that are now waiting on the team.
 	 */
-	public static function save( int $org_id, array $input, int $actor_id ): array {
+	public static function save( int $org_id, array $input, int $actor_id, array $files = [] ): array {
 		$result = Validator::validate( Schema::fields(), $input );
 
-		if ( ! empty( $result['errors'] ) ) {
-			return [ 'errors' => $result['errors'], 'held' => [] ];
+		/*
+		 * The logo is a file, and a file is not in $input. Without this the
+		 * form offered a logo control that did nothing: the chosen file was
+		 * never looked at, and the hidden attachment id posted alongside it
+		 * quietly kept whatever was there before.
+		 */
+		$upload_errors = Uploads::handle( $org_id, Schema::fields(), $files, $input, $result['values'] );
+		$errors        = array_merge( $result['errors'], $upload_errors );
+
+		if ( ! empty( $errors ) ) {
+			return [ 'errors' => $errors, 'held' => [] ];
 		}
 
 		$values  = $result['values'];

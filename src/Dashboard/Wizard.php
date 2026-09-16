@@ -122,7 +122,7 @@ final class Wizard {
 
 		// Uploads are handled before bailing on other errors, so a member does
 		// not lose their file to an unrelated validation failure.
-		$upload_errors = self::handle_uploads( $post_id, $fields, $files, $input, $result['values'] );
+		$upload_errors = Uploads::handle( $post_id, $fields, $files, $input, $result['values'] );
 
 		$errors = array_merge( $result['errors'], $upload_errors );
 
@@ -174,115 +174,6 @@ final class Wizard {
 		Store::write( $post_id, $post_type, $values, $skip );
 	}
 
-
-	/**
-	 * Handle any file uploads on this step.
-	 *
-	 * @param Field[]              $fields Fields on this step.
-	 * @param array<string, mixed> $files  $_FILES.
-	 * @param array<string, mixed> $input  Raw POST, for the remove checkbox.
-	 * @param array<string, mixed> $values Validated values, updated by reference.
-	 * @return array<string, string> Field key => error.
-	 */
-	private static function handle_uploads( int $post_id, array $fields, array $files, array $input, array &$values ): array {
-		$errors = [];
-
-		foreach ( $fields as $field ) {
-			if ( Field::IMAGE !== $field->type ) {
-				continue;
-			}
-
-			$remove_key = FieldRenderer::INPUT_NAME . '_remove_' . $field->key;
-
-			if ( ! empty( $input[ $remove_key ] ) || ! empty( $_POST[ $remove_key ] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing -- caller verifies.
-				$values[ $field->key ] = 0;
-				continue;
-			}
-
-			$file_key = FieldRenderer::INPUT_NAME . '_file_' . $field->key;
-			$file     = $files[ $file_key ] ?? null;
-
-			if ( ! is_array( $file ) || empty( $file['name'] ) || UPLOAD_ERR_NO_FILE === ( $file['error'] ?? UPLOAD_ERR_NO_FILE ) ) {
-				continue; // Nothing uploaded, keep whatever is already there.
-			}
-
-			$attachment_id = self::store_upload( $post_id, $file_key );
-
-			if ( is_wp_error( $attachment_id ) ) {
-				$errors[ $field->key ] = $attachment_id->get_error_message();
-				continue;
-			}
-
-			$values[ $field->key ] = $attachment_id;
-		}
-
-		return $errors;
-	}
-
-	/**
-	 * Validate and store one uploaded image.
-	 *
-	 * @return int|WP_Error Attachment ID.
-	 */
-	private static function store_upload( int $post_id, string $file_key ) {
-		require_once ABSPATH . 'wp-admin/includes/file.php';
-		require_once ABSPATH . 'wp-admin/includes/media.php';
-		require_once ABSPATH . 'wp-admin/includes/image.php';
-
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- caller verifies.
-		$file = $_FILES[ $file_key ] ?? null;
-
-		if ( ! is_array( $file ) ) {
-			return new WP_Error( 'dgl_no_file', __( 'No file arrived. Try again.', 'dgl-platform' ) );
-		}
-
-		if ( (int) ( $file['size'] ?? 0 ) > Uploads::MAX_BYTES ) {
-			return new WP_Error(
-				'dgl_too_big',
-				sprintf(
-					/* translators: %s: maximum size, already formatted. */
-					__( 'That image is too large. The limit is %s.', 'dgl-platform' ),
-					size_format( Uploads::MAX_BYTES )
-				)
-			);
-		}
-
-		/*
-		 * Check the real type from the file's contents, not the name or the
-		 * browser-supplied type. Both are attacker controlled.
-		 */
-		$check = wp_check_filetype_and_ext( $file['tmp_name'] ?? '', $file['name'] ?? '' );
-
-		if ( empty( $check['type'] ) || ! Uploads::is_allowed_mime( (string) $check['type'] ) ) {
-			return new WP_Error(
-				'dgl_bad_type',
-				__( 'That file type is not allowed. Use a JPEG, PNG or WebP image.', 'dgl-platform' )
-			);
-		}
-
-		$attachment_id = media_handle_upload(
-			$file_key,
-			$post_id,
-			[],
-			[
-				'test_form' => false,
-				'mimes'     => Uploads::allowed_mimes(),
-			]
-		);
-
-		if ( is_wp_error( $attachment_id ) ) {
-			return $attachment_id;
-		}
-
-		// Stamp the organisation so attachment access can be scoped like items.
-		$org_id = Org::for_item( $post_id );
-
-		if ( $org_id > 0 ) {
-			update_post_meta( $attachment_id, Meta::ITEM_ORG, $org_id );
-		}
-
-		return (int) $attachment_id;
-	}
 
 	/**
 	 * Save the topic terms chosen on the contact step.
