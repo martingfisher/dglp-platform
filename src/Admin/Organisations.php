@@ -186,7 +186,22 @@ final class Organisations {
 			echo esc_html( implode( ', ', $names ) );
 		}
 
-		echo '</td></tr></tbody></table>';
+		echo '</td></tr>';
+
+		/*
+		 * Editable here and nowhere else. Whoever signs up with an address on
+		 * one of these domains is offered this organisation, so the list is
+		 * the team's to keep, not the member's.
+		 */
+		echo '<tr><th><label for="dgl-org-domains">' . esc_html__( 'Email domains', 'dgl-platform' ) . '</label></th><td>'
+			. '<textarea id="dgl-org-domains" name="dgl_org_domains" rows="3" class="large-text code">'
+			. esc_textarea( implode( "\n", Org::domains( $org_id ) ) )
+			. '</textarea>'
+			. '<p class="description">'
+			. esc_html__( 'One per line, for example leedsmind.org.uk. Somebody who signs up with an email address on one of these is offered this organisation. Public providers such as gmail.com are ignored even if listed.', 'dgl-platform' )
+			. '</p></td></tr>';
+
+		echo '</tbody></table>';
 
 		echo '<p class="description">'
 			. esc_html__( 'The organisation edits these themselves in the member area. Changes to the name and the logo come to you first.', 'dgl-platform' )
@@ -286,6 +301,18 @@ final class Organisations {
 		}
 
 		self::decide( $post_id );
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing
+		if ( isset( $_POST['dgl_org_domains'] ) ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing
+			$domains = \DGL\Joining\Domains::list( sanitize_textarea_field( wp_unslash( $_POST['dgl_org_domains'] ) ) );
+			$before  = Org::domains( $post_id );
+
+			if ( $domains !== $before ) {
+				Org::set_domains( $post_id, $domains );
+				\DGL\Audit\Log::record( 'org_domains_changed', 'org', $post_id, $post_id, '', [ 'domains' => [ implode( ', ', $before ), implode( ', ', $domains ) ] ] );
+			}
+		}
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$status = isset( $_POST['dgl_org_status'] ) ? sanitize_key( wp_unslash( $_POST['dgl_org_status'] ) ) : '';

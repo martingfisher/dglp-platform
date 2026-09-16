@@ -52,6 +52,9 @@ final class Plugin {
 		add_action( 'init', [ FieldRegistry::class, 'register_meta' ], 6 );
 		add_action( 'init', [ self::class, 'load_textdomain' ] );
 		add_action( 'admin_init', [ Install::class, 'maybe_migrate' ] );
+		// And on the front end: joining creates rows before anybody has opened
+		// wp-admin on a fresh install. The check is one option read.
+		add_action( 'init', [ Install::class, 'maybe_migrate' ], 3 );
 
 		/*
 		 * On `init`, not `admin_init`. Cron fires on the front end, and a site

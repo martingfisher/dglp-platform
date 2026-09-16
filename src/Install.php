@@ -14,6 +14,7 @@ use DGL\Dashboard\Router;
 use DGL\Index\ItemsTable;
 use DGL\Invites\Store as InviteStore;
 use DGL\Email\Digest\Store as DigestStore;
+use DGL\Joining\Store as SignupStore;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -133,6 +134,7 @@ final class Install {
 		AuditTable::create();
 		InviteStore::create();
 		DigestStore::create();
+		SignupStore::create();
 
 		update_option( self::DB_VERSION_OPTION, DB_VERSION, false );
 	}

@@ -20,5 +20,6 @@ require __DIR__ . '/test-email.php';
 require __DIR__ . '/test-invites.php';
 require __DIR__ . '/test-content.php';
 require __DIR__ . '/test-uploads.php';
+require __DIR__ . '/test-joining.php';
 
 Harness::finish();

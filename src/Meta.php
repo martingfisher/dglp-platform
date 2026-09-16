@@ -36,6 +36,9 @@ final class Meta {
 	/** One of Org\Trust::*. */
 	public const ORG_TRUST = 'dgl_trust_level';
 
+	/** One row per email domain an organisation uses. Lower-case, exact. */
+	public const ORG_DOMAIN = 'dgl_org_domain';
+
 	/* Submission post meta. */
 
 	/** Owning organisation post ID. Mirrored into the items index. */

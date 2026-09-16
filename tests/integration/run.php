@@ -2358,6 +2358,113 @@ $ok( 'Org A' === get_the_title( $org_a ), 'the live name never changed' );
 
 update_option( \DGL\Email\Routing::OPTION_ENABLED, $mail_was_on );
 
+$group( 'Joining: email first, domain decides, the team verify what the list does not know' );
+
+use DGL\Joining\Joining;
+use DGL\Joining\Signup;
+use DGL\Joining\Store as SignupStore;
+
+$mail_was_on = get_option( \DGL\Email\Routing::OPTION_ENABLED, false );
+update_option( \DGL\Email\Routing::OPTION_ENABLED, 1 );
+add_filter( 'pre_wp_mail', '__return_true' );
+$sent_to = []; $sent_links = []; $sent_bodies = [];
+
+foreach ( [ 'newbie@orga.test', 'first@emptyorg.test', 'founder@brandnew.test', 'gmailer@gmail.com', 'refused@nowhere.test' ] as $addr ) {
+	$u = get_user_by( 'email', $addr ); if ( $u ) { wp_delete_user( $u->ID ); }
+}
+$ok( SignupStore::exists(), 'the sign-ups table exists after migration' );
+
+\DGL\Org\Org::set_domains( $org_a, [ 'orga.test', 'www.OrgA.test/' ] );
+$ok( [ 'orga.test' ] === \DGL\Org\Org::domains( $org_a ), 'recorded domains are normalised and unique: ' . implode( ',', \DGL\Org\Org::domains( $org_a ) ) );
+$ok( [ $org_a ] === \DGL\Org\Org::by_domain( 'orga.test' ), 'an address on orga.test finds Org A' );
+$ok( [] === \DGL\Org\Org::by_domain( 'gmail.com' ), 'a public provider finds nothing even if somebody recorded it' );
+
+// A listed organisation with nobody in it: the first arrival by domain runs it.
+$empty_org = $make_org( 'Empty Org From The List' );
+\DGL\Org\Org::set_domains( $empty_org, [ 'emptyorg.test' ] );
+
+$r = Joining::start( 'not an address' );
+$ok( ! $r['ok'], 'a non-address is refused' );
+$r = Joining::start( 'dgl_alice@example.test' );
+$ok( ! $r['ok'] && str_contains( $r['error'], 'already an account' ), 'an address with an account is sent to sign in' );
+
+$r = Joining::start( 'Newbie@OrgA.test' );
+$ok( $r['ok'], 'a new address starts a sign-up' );
+$ok( 1 === count( $sent_links ) && [ 'newbie@orga.test' ] === array_map( 'strtolower', explode( ',', $sent_to[0] ) ), 'the verification email goes to that address alone' );
+$ok( null === get_user_by( 'email', 'newbie@orga.test' ) || false === get_user_by( 'email', 'newbie@orga.test' ), 'and no user exists yet' );
+$token = (string) substr( $sent_links[0], strrpos( rtrim( $sent_links[0], '/' ), '/' ) + 1 );
+$token = trim( $token, '/' );
+
+$v = Joining::verify( 'nonsense' );
+$ok( null === $v['signup'] && '' !== $v['error'], 'a made-up token is refused' );
+$v = Joining::verify( $token );
+$ok( null !== $v['signup'] && Signup::VERIFIED === $v['signup']->state, 'the real link proves the address' );
+$ok( \DGL\Joining\Rules::OUTCOME_MATCH === $v['outcome'] && [ $org_a ] === $v['orgs'], 'and Org A is offered, because the domain matches' );
+
+$uid = Joining::join( $v['signup'], $org_b, 'Newbie', 'a-fine-password' );
+$ok( is_wp_error( $uid ), 'joining an organisation the domain did not match is refused' );
+$sent_to = [];
+$uid = Joining::join( $v['signup'], $org_a, 'Newbie', 'a-fine-password' );
+$ok( ! is_wp_error( $uid ) && (int) \DGL\Org\Org::for_user( $uid ) === $org_a, 'joining the offered one creates a linked account' );
+$ok( \DGL\Access\UserContext::ORG_CONTRIBUTOR === \DGL\Org\Org::role_for_user( $uid ), 'as a contributor, because Org A already has people' );
+$ok( \DGL\Access\UserContext::ACCOUNT_APPROVED === get_user_meta( $uid, Meta::USER_ACCOUNT_STATUS, true ), 'approved straight away: the domain was the check' );
+$ok( [] !== $sent_to && str_contains( implode( ',', $sent_to ), 'dgl_alice@example.test' ), 'the owner is told (' . implode( ' | ', $sent_to ) . ')' );
+$ok( wp_check_password( 'a-fine-password', get_userdata( $uid )->user_pass ), 'and the password they chose works' );
+$v2 = Joining::verify( $token );
+$ok( '' !== $v2['error'], 'the link is dead afterwards' );
+
+$r = Joining::start( 'first@emptyorg.test' );
+$ok( $r['ok'], 'a second address starts a sign-up (' . $r['error'] . ')' );
+$token = trim( (string) substr( end( $sent_links ), strrpos( rtrim( end( $sent_links ), '/' ), '/' ) + 1 ), '/' );
+$v = Joining::verify( $token );
+$uid2 = Joining::join( $v['signup'], $empty_org, 'First Person', 'another-password' );
+$ok( ! is_wp_error( $uid2 ) && \DGL\Access\UserContext::ORG_OWNER === \DGL\Org\Org::role_for_user( $uid2 ), 'the first person into a listed organisation becomes its owner' );
+
+$sent_to = []; $sent_links = [];
+$r = Joining::start( 'founder@brandnew.test' ); $token = trim( (string) substr( end( $sent_links ), strrpos( rtrim( end( $sent_links ), '/' ), '/' ) + 1 ), '/' );
+$v = Joining::verify( $token );
+$ok( \DGL\Joining\Rules::OUTCOME_NEW === $v['outcome'], 'an unknown domain means a new organisation' );
+$uid3 = Joining::register( $v['signup'], 'Org A', [ 'org_email' => 'founder@brandnew.test' ], 'Founder', 'yet-another-pw' );
+$ok( is_wp_error( $uid3 ) && 'dgl_org_name' === $uid3->get_error_code(), 'a name already on the list is refused' );
+$sent_to = [];
+$uid3 = Joining::register( $v['signup'], 'Brand New CIC', [ 'org_email' => 'founder@brandnew.test', 'org_website' => 'https://brandnew.test' ], 'Founder', 'yet-another-pw' );
+$ok( ! is_wp_error( $uid3 ), 'a new organisation is registered' );
+$new_org = (int) \DGL\Org\Org::for_user( $uid3 );
+update_post_meta( $new_org, DGL_FIXTURE_FLAG, '1' );
+$ok( Meta::ORG_PENDING === \DGL\Org\Org::status( $new_org ) && \DGL\Access\UserContext::ORG_OWNER === \DGL\Org\Org::role_for_user( $uid3 ) && \DGL\Access\UserContext::ACCOUNT_PENDING === get_user_meta( $uid3, Meta::USER_ACCOUNT_STATUS, true ), 'pending organisation, pending owner' );
+$ok( [ 'brandnew.test' ] === \DGL\Org\Org::domains( $new_org ), 'its domain is recorded for the next colleague' );
+$ok( str_contains( implode( ',', $sent_to ), 'mod@example.test' ) && str_contains( end( $sent_links ), '/review/join/' ), 'the team are emailed with a link to decide' );
+$ok( 1 === count( array_filter( SignupStore::awaiting(), static fn( $s ) => $s->org_id === $new_org ) ), 'and it is in the waiting list' );
+$ok( ! Access::can( $uid3, Policy::SUBMIT_ITEM, $make_item( $new_org, $uid3, Statuses::DRAFT ) ), 'the pending owner can draft but not submit' );
+
+$signup_id = array_values( array_filter( SignupStore::awaiting(), static fn( $s ) => $s->org_id === $new_org ) )[0]->id;
+$ok( is_wp_error( Joining::approve( $signup_id, $alice ) ), 'a member cannot verify an organisation' );
+$sent_to = [];
+$ok( true === Joining::approve( $signup_id, $mod ), 'the team can' );
+$ok( Meta::ORG_APPROVED === \DGL\Org\Org::status( $new_org ) && \DGL\Access\UserContext::ACCOUNT_APPROVED === get_user_meta( $uid3, Meta::USER_ACCOUNT_STATUS, true ), 'organisation and owner both approved' );
+$ok( str_contains( implode( ',', $sent_to ), 'founder@brandnew.test' ), 'and the founder is told' );
+
+$sent_links = [];
+$r = Joining::start( 'refused@nowhere.test' ); $token = trim( (string) substr( end( $sent_links ), strrpos( rtrim( end( $sent_links ), '/' ), '/' ) + 1 ), '/' );
+$v = Joining::verify( $token );
+$uid4 = Joining::register( $v['signup'], 'Nowhere Collective', [ 'org_email' => 'refused@nowhere.test' ], 'Nobody', 'password-eight' );
+$bad_org = (int) \DGL\Org\Org::for_user( $uid4 ); update_post_meta( $bad_org, DGL_FIXTURE_FLAG, '1' );
+$sid = array_values( array_filter( SignupStore::awaiting(), static fn( $s ) => $s->org_id === $bad_org ) )[0]->id;
+$ok( is_wp_error( Joining::refuse( $sid, $mod, '' ) ), 'refusing needs a reason' );
+$sent_to = [];
+$ok( true === Joining::refuse( $sid, $mod, 'Not a Leeds organisation.' ), 'refused with one' );
+$ok( 'trash' === get_post_status( $bad_org ) && \DGL\Access\UserContext::ACCOUNT_CLOSED === get_user_meta( $uid4, Meta::USER_ACCOUNT_STATUS, true ) && null === \DGL\Org\Org::for_user( $uid4 ), 'the organisation is binned, the account closed and unlinked' );
+$ok( str_contains( implode( ',', $sent_to ), 'refused@nowhere.test' ), 'and the person is told why' );
+
+$r = Joining::start( 'gmailer@gmail.com' ); $token = trim( (string) substr( end( $sent_links ), strrpos( rtrim( end( $sent_links ), '/' ), '/' ) + 1 ), '/' );
+\DGL\Org\Org::set_domains( $org_b, [ 'gmail.com' ] );
+$v = Joining::verify( $token );
+$ok( \DGL\Joining\Rules::OUTCOME_NEW === $v['outcome'] && [] === $v['orgs'], 'a Gmail address is never offered an organisation, even one that recorded gmail.com' );
+\DGL\Org\Org::set_domains( $org_b, [] );
+
+remove_filter( 'pre_wp_mail', '__return_true' );
+update_option( \DGL\Email\Routing::OPTION_ENABLED, $mail_was_on );
+
 /* ----------------------------------------------------------------- report */
 
 echo "\n" . str_repeat( '-', 60 ) . "\n";

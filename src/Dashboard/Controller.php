@@ -58,6 +58,12 @@ final class Controller {
 			return;
 		}
 
+		// Joining starts logged out, by definition.
+		if ( 'join' === ( $segments[0] ?? '' ) ) {
+			self::join( (string) ( $segments[1] ?? '' ) );
+			return;
+		}
+
 		/*
 		 * Unsubscribing must work from the link in the email, with no sign-in
 		 * and no hunting for a setting. An opt-out that asks somebody to log in
@@ -237,6 +243,11 @@ final class Controller {
 			return;
 		}
 
+		if ( 'join' === ( $segments[1] ?? '' ) ) {
+			self::review_join( (int) ( $segments[2] ?? 0 ), $user );
+			return;
+		}
+
 		$post_id = (int) ( $segments[1] ?? 0 );
 
 		if ( $post_id > 0 ) {
@@ -266,6 +277,7 @@ final class Controller {
 				// Organisations asking to change their name or logo. Same queue,
 				// same people, so the same screen.
 				'org_changes' => self::org_change_rows(),
+				'joins'       => self::join_rows(),
 				'total' => $total,
 				'page'  => $page,
 				'pages' => $pages,
@@ -298,6 +310,195 @@ final class Controller {
 		}
 
 		return $rows;
+	}
+
+	/**
+	 * New organisations registered by somebody whose address matched nothing.
+	 *
+	 * @return array<int, array{id:int, org:string, who:string, email:string, since:string, url:string}>
+	 */
+	private static function join_rows(): array {
+		$rows = [];
+
+		foreach ( \DGL\Joining\Store::awaiting() as $signup ) {
+			$person = get_userdata( $signup->user_id );
+
+			$rows[] = [
+				'id'    => $signup->id,
+				'org'   => $signup->new_org_name,
+				'who'   => $person ? (string) $person->display_name : '',
+				'email' => $signup->email,
+				'since' => Invites::readable_date( (string) $signup->completed_at ),
+				'url'   => Router::url( 'review', 'join', (string) $signup->id ),
+			];
+		}
+
+		return $rows;
+	}
+
+	/**
+	 * A registered organisation and its first person, read and decided.
+	 */
+	private static function review_join( int $signup_id, UserContext $user ): void {
+		$signup = \DGL\Joining\Store::find( $signup_id );
+
+		if ( null === $signup ) {
+			self::not_found( $user );
+			return;
+		}
+
+		$error = '';
+
+		if ( 'POST' === ( $_SERVER['REQUEST_METHOD'] ?? 'GET' ) ) {
+			check_admin_referer( Wizard::NONCE );
+
+			$intent = isset( $_POST['dgl_intent'] ) ? sanitize_key( wp_unslash( $_POST['dgl_intent'] ) ) : '';
+			$note   = isset( $_POST['dgl_note'] ) ? sanitize_textarea_field( wp_unslash( $_POST['dgl_note'] ) ) : '';
+
+			$result = match ( $intent ) {
+				'approve' => \DGL\Joining\Joining::approve( $signup_id, $user->user_id ),
+				'refuse'  => \DGL\Joining\Joining::refuse( $signup_id, $user->user_id, $note ),
+				default   => null,
+			};
+
+			if ( is_wp_error( $result ) ) {
+				$error = $result->get_error_message();
+			} elseif ( null !== $result ) {
+				wp_safe_redirect( add_query_arg( 'decided', 'join_' . $intent, Router::url( 'review' ) ) );
+				exit;
+			}
+		}
+
+		$person = get_userdata( $signup->user_id );
+		$labels = [];
+
+		foreach ( \DGL\Org\Schema::fields() as $field ) {
+			$value = (string) ( $signup->new_org_details[ $field->key ] ?? '' );
+
+			if ( 'org_name' !== $field->key && '' !== trim( $value ) ) {
+				$labels[ $field->label ] = $value;
+			}
+		}
+
+		self::screen(
+			'review-join',
+			[
+				'user'    => $user,
+				'signup'  => $signup,
+				'org'     => $signup->new_org_name,
+				'domains' => \DGL\Org\Org::domains( $signup->org_id ),
+				'details' => $labels,
+				'who'     => $person ? (string) $person->display_name : '',
+				'since'   => Invites::readable_date( (string) $signup->completed_at ),
+				'error'   => $error,
+			],
+			$signup->new_org_name,
+			$user
+		);
+	}
+
+	/**
+	 * Joining, logged out: an address, a link, then an account.
+	 *
+	 * Wireframes 1a to 1c. Nothing exists until the address is proven; the
+	 * domain then decides between an organisation on the list and a new one
+	 * for the team to verify. Somebody at a listed organisation with a Gmail
+	 * address cannot join it here; they need an invitation from an owner.
+	 */
+	private static function join( string $token ): void {
+		$title = __( 'Join the member area', 'dgl-platform' );
+		$data  = [ 'stage' => 'email', 'email' => '', 'error' => '', 'token' => $token, 'orgs' => [], 'values' => [] ];
+
+		if ( is_user_logged_in() ) {
+			wp_safe_redirect( Router::url() );
+			exit;
+		}
+
+		if ( 'sent' === $token ) {
+			$data['stage'] = 'sent';
+			self::screen( 'join', $data, $title );
+			return;
+		}
+
+		if ( '' === $token ) {
+			if ( 'POST' === ( $_SERVER['REQUEST_METHOD'] ?? 'GET' ) ) {
+				check_admin_referer( Wizard::NONCE );
+				$email  = isset( $_POST['dgl_email'] ) ? sanitize_email( wp_unslash( $_POST['dgl_email'] ) ) : '';
+				$result = \DGL\Joining\Joining::start( $email );
+
+				if ( $result['ok'] ) {
+					wp_safe_redirect( Router::url( 'join', 'sent' ) );
+					exit;
+				}
+
+				$data['error'] = $result['error'];
+				$data['email'] = $email;
+			}
+
+			self::screen( 'join', $data, $title );
+			return;
+		}
+
+		$verified = \DGL\Joining\Joining::verify( $token );
+
+		if ( '' !== $verified['error'] || null === $verified['signup'] ) {
+			$data['stage'] = 'dead';
+			$data['error'] = $verified['error'];
+			self::screen( 'join', $data, $title );
+			return;
+		}
+
+		$signup        = $verified['signup'];
+		$data['email'] = $signup->email;
+		$data['stage'] = $verified['outcome'];
+		$data['orgs']  = array_map( static fn( int $id ): array => [ 'id' => $id, 'name' => (string) get_the_title( $id ) ], $verified['orgs'] );
+
+		if ( 'POST' === ( $_SERVER['REQUEST_METHOD'] ?? 'GET' ) ) {
+			check_admin_referer( Wizard::NONCE );
+
+			$post = wp_unslash( $_POST ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- each field is handled below.
+			$name     = sanitize_text_field( (string) ( $post['dgl_name'] ?? '' ) );
+			$password = (string) ( $post['dgl_password'] ?? '' );
+			$confirm  = (string) ( $post['dgl_password_confirm'] ?? '' );
+			$intent   = sanitize_key( (string) ( $post['dgl_intent'] ?? '' ) );
+
+			$data['values'] = [
+				'name'            => $name,
+				'org_name'        => sanitize_text_field( (string) ( $post['dgl_org_name'] ?? '' ) ),
+				'org_website'     => esc_url_raw( (string) ( $post['dgl_org_website'] ?? '' ) ),
+				'org_email'       => sanitize_email( (string) ( $post['dgl_org_email'] ?? '' ) ),
+				'org_phone'       => sanitize_text_field( (string) ( $post['dgl_org_phone'] ?? '' ) ),
+				'org_number'      => sanitize_text_field( (string) ( $post['dgl_org_number'] ?? '' ) ),
+				'org_description' => sanitize_textarea_field( (string) ( $post['dgl_org_description'] ?? '' ) ),
+			];
+
+			$problem = InviteRules::password_problem( $password, $confirm );
+
+			if ( '' !== $problem ) {
+				$data['error'] = $problem;
+			} elseif ( 'join' === $intent ) {
+				$result = \DGL\Joining\Joining::join( $signup, (int) ( $post['dgl_org_id'] ?? 0 ), $name, $password );
+			} elseif ( 'register' === $intent ) {
+				$details = $data['values'];
+				unset( $details['name'] );
+				$result = \DGL\Joining\Joining::register( $signup, $details['org_name'], $details, $name, $password );
+			} else {
+				$data['error'] = __( 'Choose what to do.', 'dgl-platform' );
+			}
+
+			if ( isset( $result ) ) {
+				if ( is_wp_error( $result ) ) {
+					$data['error'] = $result->get_error_message();
+				} else {
+					wp_set_current_user( $result );
+					wp_set_auth_cookie( $result, false, is_ssl() );
+					wp_safe_redirect( Router::url() );
+					exit;
+				}
+			}
+		}
+
+		self::screen( 'join', $data, $title );
 	}
 
 	/**

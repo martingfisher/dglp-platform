@@ -643,6 +643,9 @@ body.dgl-body {
 
 /* ---- Standalone notice pages --------------------------------------------- */
 
+/* Group headings inside the join form: air above, a little below. */
+.dgl-signin .dgl-form .dgl-section__title { margin: var(--dgl-gap-lg) 0 12px; }
+
 .dgl-notice-page__ways {
 	display: flex;
 	flex-wrap: wrap;

@@ -159,6 +159,72 @@ final class Org {
 		return true;
 	}
 
+	/**
+	 * The email domains an organisation has recorded.
+	 *
+	 * @return string[]
+	 */
+	public static function domains( int $org_id ): array {
+		$rows = get_post_meta( $org_id, Meta::ORG_DOMAIN );
+
+		return array_values( array_filter( array_map( 'strval', is_array( $rows ) ? $rows : [] ) ) );
+	}
+
+	/**
+	 * Replace an organisation's recorded domains.
+	 *
+	 * @param string[] $domains Already normalised; see Joining\Domains::list().
+	 */
+	public static function set_domains( int $org_id, array $domains ): void {
+		delete_post_meta( $org_id, Meta::ORG_DOMAIN );
+
+		$clean = [];
+
+		foreach ( $domains as $domain ) {
+			$domain = \DGL\Joining\Domains::normalise( (string) $domain );
+
+			if ( '' !== $domain && ! in_array( $domain, $clean, true ) ) {
+				$clean[] = $domain;
+				add_post_meta( $org_id, Meta::ORG_DOMAIN, $domain );
+			}
+		}
+	}
+
+	/**
+	 * Organisations that have recorded a domain. Exact match, suspended ones
+	 * left out: a suspended organisation does not take on new people.
+	 *
+	 * @return int[]
+	 */
+	public static function by_domain( string $domain ): array {
+		$domain = \DGL\Joining\Domains::normalise( $domain );
+
+		if ( '' === $domain || \DGL\Joining\Domains::is_public( $domain ) ) {
+			return [];
+		}
+
+		$found = get_posts(
+			[
+				'post_type'      => PostTypes::ORG,
+				'post_status'    => 'publish',
+				'posts_per_page' => 20,
+				'fields'         => 'ids',
+				'meta_key'       => Meta::ORG_DOMAIN,
+				'meta_value'     => $domain,
+				'orderby'        => 'title',
+				'order'          => 'ASC',
+				'no_found_rows'  => true,
+			]
+		);
+
+		return array_values(
+			array_filter(
+				array_map( 'intval', $found ),
+				static fn( int $id ): bool => Meta::ORG_SUSPENDED !== self::status( $id )
+			)
+		);
+	}
+
 	public static function exists( int $org_id ): bool {
 		return $org_id > 0 && PostTypes::ORG === get_post_type( $org_id );
 	}

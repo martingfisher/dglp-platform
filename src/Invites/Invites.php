@@ -313,7 +313,7 @@ final class Invites {
 	 *
 	 * @return int|\WP_Error
 	 */
-	private static function create_account( string $email, string $name, string $password ) {
+	public static function create_account( string $email, string $name, string $password ) {
 		$password = '' !== $password ? $password : wp_generate_password( 24, true, true );
 
 		$user_id = wp_insert_user(

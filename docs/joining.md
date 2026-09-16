@@ -104,7 +104,40 @@ would otherwise walk in. The blocklist is a hard rule, not a warning.
 | 8 | **Archive, restore, take down.** Built 16 September (0.7.1): archive and restore on the item screen for members, take down with a reason on the review screen for staff. | done |
 | 9 | **Removing a member.** Built 16 September (0.7.1): an owner removes anybody in their organisation except themselves; access ends immediately, the work stays, the person is emailed. | done |
 
-## Decisions still needed
+## Decisions taken, 16 September 2026
+
+Martin took the recommended answers, with one rule stated more firmly by
+DGLP: **a person can only join a listed organisation if their email domain
+matches it.** There is no "pick an organisation from the list" without a
+match. Somebody at a listed organisation with a Gmail address needs an
+invitation from an owner.
+
+1. **Later joiners by domain are contributors.** The first person into an
+   organisation with nobody in it, including one loaded from DGLP's list,
+   becomes its owner.
+2. **Owners are emailed when somebody joins by domain**, with a line saying
+   the domain was the check and how to remove them if unrecognised.
+3. **Exact domain match only.** `mail.charity.org.uk` is not
+   `charity.org.uk`; the team record every domain an organisation uses, in
+   the Organisations screen in wp-admin.
+4. **A refused registration removes the organisation and closes the
+   account**, with the reason emailed. Trying again means talking to the
+   team. Self-retry was pointless once the must-match rule was in.
+
+## Built in 0.8.0
+
+Items 1, 3, 4, 5, 6, 7 and 9 above. Item 2, the CSV import, waits for the
+real list; the domains field it would fill is there. The flow:
+
+`/dashboard/join` asks for an address and sends a two-day, single-use link.
+The link proves the address and looks up its domain. A match offers the
+organisation: name, password, in. No match shows the register-an-organisation
+form: the organisation is created pending with the address's domain recorded,
+the person is its pending owner, they can draft, and the team are emailed. The
+review queue lists new organisations to verify; `/dashboard/review/join/<id>`
+verifies or refuses with a reason. Public providers never match.
+
+## Decisions that were open
 
 Each of these changes what gets built. Recommendations given.
 

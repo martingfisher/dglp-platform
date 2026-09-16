@@ -41,4 +41,8 @@ $wanted  = isset( $_GET['redirect_to'] ) ? (string) wp_unslash( $_GET['redirect_
 		<p class="dgl-signin__foot">
 			<a href="<?php echo esc_url( wp_lostpassword_url() ); ?>"><?php esc_html_e( 'Forgotten your password?', 'dgl-platform' ); ?></a>
 		</p>
+		<p class="dgl-signin__foot">
+			<?php esc_html_e( 'Not a member yet?', 'dgl-platform' ); ?>
+			<a href="<?php echo esc_url( \DGL\Dashboard\Router::url( 'join' ) ); ?>"><?php esc_html_e( 'Join the member area', 'dgl-platform' ); ?></a>
+		</p>
 	</div>
