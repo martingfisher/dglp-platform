@@ -228,3 +228,12 @@ clean. They are the only DGLP content on staging.
 - **0.7.10 deployed**: upload ceiling 20MB (was 8MB, which refused the
   phone photos the shrink is for); the 1536 and 2048 sizes are no longer
   made from a 1600px master. Pinned to commit `58f5443`.
+- **0.8.0 deployed**: the joining flow. `/dashboard/join` (email, link,
+  domain match or register a new organisation), the team's decision at
+  `/dashboard/review/join/<id>`, the queue section, the sign-in link, and
+  the Email domains box on the wp-admin Organisations screen. DB version 4
+  adds `dgl_signups`; the migration now runs on the front end too. Pinned
+  to commit `bf2582b`. Demo org 8438 given the domain
+  `resultsyoucanmeasure.com` so any address on it can walk the match path.
+  A sign-in template bug found on the way (blank screen below the top bar,
+  from an unqualified class) never reached staging.
