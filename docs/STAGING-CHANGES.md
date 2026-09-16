@@ -134,4 +134,8 @@ clean. They are the only DGLP content on staging.
 - Our public breadcrumb is now off by default; Blocksy renders its own.
 - Deploys: 0.6.1 then 0.6.2, both from commit-pinned URLs. Version confirmed
   from the server each time.
+- Invited `martingfisher@gmail.com` into `Demo: Armley Community Hub` as owner
+  via `wp dgl invite send`, so the member area can be walked with a real,
+  member-only account. Accepting creates the account; nothing exists until then.
+  Withdraw from the Members tab or with `wp dgl invite list` to find it.
 
