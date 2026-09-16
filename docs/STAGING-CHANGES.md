@@ -252,3 +252,8 @@ clean. They are the only DGLP content on staging.
   shell now strips any `<footer>` element from wp_footer's output and keeps
   the scripts; public pages keep their footer. The background pins in 0.8.2
   and 0.8.3 were aimed at the wrong thing. Pinned to commit `602f3c2`.
+- **0.8.5 deployed**: the sent screen and the verification email say what
+  happens after the two days (start again, request another; only the
+  newest link works). Pinned to commit `8f92ed1`. The theme footer is
+  still showing under the member area on staging after 0.8.4; the markup
+  is being requested from Martin before another attempt.
