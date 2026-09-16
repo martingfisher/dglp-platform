@@ -243,3 +243,7 @@ clean. They are the only DGLP content on staging.
   button variant pinned against Blocksy's element rules (the join page's
   button was teal on staging); the shell fills the viewport so the sidebar
   reaches the bottom of a short page. Pinned to commit `d64c445`.
+- **0.8.3 deployed**: a join link opened while signed in shows "you are
+  already signed in" with a sign-out that returns to the link; the html and
+  body backgrounds are forced cream (the sky blue band was still showing
+  under short pages). Pinned to commit `1e7b8a9`.
