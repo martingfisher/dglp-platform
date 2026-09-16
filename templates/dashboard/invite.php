@@ -76,8 +76,11 @@ $signin_url  = (string) ( $data['signin_url'] ?? wp_login_url() );
 		</p>
 
 		<dl class="dgl-review__list">
-			<dt><?php esc_html_e( 'Your email', 'dgl-platform' ); ?></dt>
-			<dd><?php echo esc_html( $invite->email ); ?></dd>
+			<dt><?php esc_html_e( 'You will sign in with', 'dgl-platform' ); ?></dt>
+			<dd>
+				<strong><?php echo esc_html( $invite->email ); ?></strong>
+				<span class="dgl-help"><?php esc_html_e( 'This is your username. Not your name.', 'dgl-platform' ); ?></span>
+			</dd>
 			<dt><?php esc_html_e( 'You would be', 'dgl-platform' ); ?></dt>
 			<dd><?php echo esc_html( $role_name ); ?></dd>
 			<?php if ( '' !== $expires_on ) : ?>
@@ -115,7 +118,7 @@ $signin_url  = (string) ( $data['signin_url'] ?? wp_login_url() );
 				<div class="dgl-field-row">
 					<label class="dgl-label" for="dgl_name"><?php esc_html_e( 'Your name', 'dgl-platform' ); ?></label>
 					<input type="text" id="dgl_name" name="dgl_name" class="dgl-field" autocomplete="name">
-					<p class="dgl-help"><?php esc_html_e( 'How your colleagues and the partnership team will see you.', 'dgl-platform' ); ?></p>
+					<p class="dgl-help"><?php esc_html_e( 'How your colleagues and the partnership team will see you. You do not sign in with this.', 'dgl-platform' ); ?></p>
 				</div>
 
 				<div class="dgl-field-row">

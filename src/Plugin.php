@@ -13,6 +13,7 @@ use DGL\Access\Access;
 use DGL\Admin\Admin;
 use DGL\Admin\Guard;
 use DGL\Dashboard\AdminLockout;
+use DGL\Dashboard\SignIn;
 use DGL\Dashboard\Router;
 use DGL\Email\Command as MailCommand;
 use DGL\Email\Mailer;
@@ -70,6 +71,7 @@ final class Plugin {
 		Sync::init();
 		Router::init();
 		AdminLockout::init();
+		SignIn::init();
 		Admin::init();
 		Frontend::init();
 
