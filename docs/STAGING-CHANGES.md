@@ -158,4 +158,8 @@ clean. They are the only DGLP content on staging.
   serving the block page with the plugin inactive. Staging now has no
   Wordfence at all. **Before the client uses the site: reactivate the plugin
   and let it re-enable Extended Protection.**
+- **0.6.5 deployed**: a failed sign-in from the member area comes back to the
+  member area with a reason, instead of WordPress's own error page; the accept
+  screen says what you will sign in with. Martin's username is
+  `martingfisher@gmail.com`, not his name.
 
