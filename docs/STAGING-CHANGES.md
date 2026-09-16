@@ -188,3 +188,7 @@ clean. They are the only DGLP content on staging.
   their box on phones and the page no longer scrolls sideways. Pinned to
   commit `28d2a29`. The Impeccable skill is committed under
   `.claude/skills/impeccable/` and export-ignored from the zip.
+- **0.7.1 deployed**: archive and restore on the item screen; take down
+  with a reason on the review screen, and the queue names the decision just
+  made; owners can remove a member from the Members tab. Pinned to commit
+  `1e9b13c`. Nothing else on staging changed.
