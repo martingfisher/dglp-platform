@@ -26,15 +26,7 @@ $wanted  = isset( $_GET['redirect_to'] ) ? (string) wp_unslash( $_GET['redirect_
 		<?php if ( '' !== $message ) : ?>
 			<div class="dgl-alert" role="alert"><p><?php echo esc_html( $message ); ?></p></div>
 		<?php endif; ?>
-		<p class="dgl-page-head__lede">
-			<?php
-			printf(
-				/* translators: %s: list of content types, e.g. "events, news and training". */
-				esc_html__( 'Post %s to the site.', 'dgl-platform' ),
-				esc_html( \DGL\Invites\Invites::can_post_sentence() )
-			);
-			?>
-		</p>
+		<p class="dgl-page-head__lede"><?php esc_html_e( 'Sign in to your admin dashboard.', 'dgl-platform' ); ?></p>
 
 		<?php
 		wp_login_form(
