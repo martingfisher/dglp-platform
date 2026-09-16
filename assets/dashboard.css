@@ -155,6 +155,11 @@ html:has( body.dgl-body ) { background: var(--dgl-page) !important; }
  */
 body.dgl-body { min-height: 100vh !important; background: var(--dgl-page) !important; }
 
+/* Belt to the shell's braces: a theme footer that arrives some other way is not shown. */
+body.dgl-body > footer,
+body.dgl-body .ct-footer,
+body.dgl-body footer#footer { display: none !important; }
+
 body.dgl-body {
 	display: flex;
 	flex-direction: column;

@@ -161,6 +161,19 @@ $alerts = (int) ( $data['alerts'] ?? 0 );
 	</div>
 </div>
 
-<?php wp_footer(); ?>
+<?php
+/*
+ * wp_footer() stays, for the scripts and anything a plugin hooks there. But
+ * on staging the theme hooks its entire site footer there too, and the
+ * member area ended with the public footer under it: logo, policies, the
+ * copyright line, in sky blue. So the output is captured and any <footer>
+ * element in it is removed. Scripts, styles and the admin bar pass through
+ * untouched.
+ */
+ob_start();
+wp_footer();
+$footer_output = (string) ob_get_clean();
+echo preg_replace( '#<footer\b[^>]*>.*?</footer>#si', '', $footer_output ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- WordPress's own footer output, minus the theme's footer element.
+?>
 </body>
 </html>
