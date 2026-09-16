@@ -186,3 +186,24 @@ to match against.
   must reach no organisation content.
 - A dry-run import of a sample of DGLP's list before the real one, with the
   duplicate report read by a person.
+
+## Next: a public directory of organisations
+
+Asked for on 16 September 2026, for "at some point", not this release.
+
+- A searchable directory of member organisations on the public site: name,
+  description, website, logo, contact details, the things already held on
+  the Organisation tab. Search by name and description; probably filter by
+  the topic terms the site already has.
+- **Visibility is the organisation's choice.** A toggle on the Organisation
+  tab, "Show us in the directory", that any member of that dashboard can
+  change, owner or contributor, with immediate effect and no review. Off by
+  default until DGLP say otherwise, so nobody appears without choosing to.
+- Only approved organisations can appear, whatever the toggle says. Pending
+  and suspended ones never do.
+- Rendered the way the event listing is: the plugin's own template inside
+  the theme's header and footer, sharing `tokens.css`.
+
+Not started. Nothing in the data model blocks it: the organisation is
+already a post type with the fields, so the work is one meta flag, one
+listing template with a search box, and a line on the Organisation tab.
