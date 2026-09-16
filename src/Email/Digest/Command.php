@@ -150,6 +150,100 @@ final class Command {
 	}
 
 	/**
+	 * Put somebody on the digest, or take them off.
+	 *
+	 * For the support call: a member rings up and asks to be added, or asks to
+	 * stop and cannot find the link. Doing it by hand otherwise means a direct
+	 * database write, and a consent record written by hand is not a consent
+	 * record.
+	 *
+	 * ## OPTIONS
+	 *
+	 * <user>
+	 * : User ID, login or email.
+	 *
+	 * [--types=<types>]
+	 * : Comma-separated content types, or "all". Default: all.
+	 *
+	 * [--frequency=<frequency>]
+	 * : daily, weekly or monthly. Default: weekly.
+	 *
+	 * [--own-org]
+	 * : Include their own organisation's items. Off by default.
+	 *
+	 * [--off]
+	 * : Take them off instead. Keeps the row, clears consent.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp dgl digest subscribe jo@charity.org --frequency=weekly
+	 *     wp dgl digest subscribe jo@charity.org --types=dgl_event,dgl_grant
+	 *     wp dgl digest subscribe jo@charity.org --off
+	 *
+	 * @when after_wp_load
+	 *
+	 * @param string[]              $args
+	 * @param array<string, string> $assoc
+	 */
+	public function subscribe( array $args, array $assoc ): void {
+		$user = get_user_by( 'id', (int) $args[0] )
+			?: get_user_by( 'login', (string) $args[0] )
+			?: get_user_by( 'email', (string) $args[0] );
+
+		if ( ! $user instanceof \WP_User ) {
+			WP_CLI::error( sprintf( 'No account matches "%s".', (string) $args[0] ) );
+		}
+
+		if ( isset( $assoc['off'] ) ) {
+			Store::unsubscribe( (int) $user->ID );
+			WP_CLI::success( sprintf( '%s will not get digests. The record of their opt-out is kept.', $user->user_email ) );
+			return;
+		}
+
+		$requested = (string) ( $assoc['types'] ?? 'all' );
+
+		$types = 'all' === $requested
+			? array_values( \DGL\PostTypes::submittable() )
+			: array_values( array_filter(
+				array_map( 'trim', explode( ',', $requested ) ),
+				static fn( string $t ): bool => in_array( $t, \DGL\PostTypes::submittable(), true )
+			) );
+
+		if ( [] === $types ) {
+			WP_CLI::error( sprintf( 'None of "%s" is a content type. Known types: %s', $requested, implode( ', ', \DGL\PostTypes::submittable() ) ) );
+		}
+
+		$frequency = (string) ( $assoc['frequency'] ?? Frequency::WEEKLY );
+
+		if ( ! Frequency::is_valid( $frequency ) ) {
+			WP_CLI::error( sprintf( '"%s" is not a cadence. Use daily, weekly or monthly.', $frequency ) );
+		}
+
+		$saved = Store::save(
+			(int) $user->ID,
+			$types,
+			[],
+			$frequency,
+			isset( $assoc['own-org'] ),
+			'wp-cli'
+		);
+
+		if ( ! $saved ) {
+			WP_CLI::error( 'Could not save those preferences.' );
+		}
+
+		$sub = Store::for_user( (int) $user->ID );
+
+		WP_CLI::success( sprintf(
+			'%s is subscribed: %s, %s. Consent recorded %s via wp-cli.',
+			$user->user_email,
+			implode( ', ', $types ),
+			Frequency::label( $frequency ),
+			(string) ( $sub?->consent_at ?? 'now' )
+		) );
+	}
+
+	/**
 	 * Show what one subscriber's next digest would contain.
 	 *
 	 * ## OPTIONS
