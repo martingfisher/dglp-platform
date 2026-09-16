@@ -99,21 +99,6 @@
 	background: var(--dgl-surface);
 }
 
-.dgl-field {
-	width: 100%;
-	min-height: var(--dgl-field-height);
-	padding: 0 12px;
-	border: var(--dgl-field-border) solid var(--dgl-field-outline);
-	border-radius: var(--dgl-radius-field);
-	background: var(--dgl-white);
-	color: var(--dgl-text);
-	font: var(--dgl-weight-body) 15px / var(--dgl-line) var(--dgl-font);
-}
-
-.dgl-field:focus {
-	border-color: var(--dgl-focus);
-}
-
 /* The one place the teal earns its keep: a non-text-bearing rail. */
 .dgl-nav__item--active {
 	border-inline-start: 3px solid var(--dgl-teal);
@@ -803,13 +788,23 @@ body.dgl-body {
 
 .dgl-req { color: var(--dgl-danger); }
 
-.dgl-field {
+/*
+ * The border is !important on purpose. The member area renders inside the
+ * theme's stylesheet, and Blocksy styles every input by element and
+ * attribute, which outranks a class however the cascade is ordered. On
+ * staging that left the field edge at the theme's hairline grey, near
+ * invisible, while every local check measured the token at 3.8:1 because the
+ * test theme has no form styles of its own. The edge of a control is the
+ * one thing here a theme is not allowed to decide.
+ */
+.dgl-dash .dgl-field {
 	width: 100%;
 	min-height: var(--dgl-field-height);
 	padding: 0 12px;
-	border: var(--dgl-field-border) solid var(--dgl-field-outline);
+	border: var(--dgl-field-border) solid var(--dgl-field-outline) !important;
 	border-radius: var(--dgl-radius-field);
 	background: var(--dgl-white);
+	box-shadow: none !important;
 	color: var(--dgl-text);
 	font: var(--dgl-weight-body) 15px / var(--dgl-line) var(--dgl-font);
 }
@@ -825,12 +820,21 @@ body.dgl-body {
 	min-height: 0;
 }
 
-.dgl-field:focus {
-	border-color: var(--dgl-focus);
-	outline: 2px solid transparent;
+/*
+ * One ring on focus, not two. The border turns purple and the outline sits
+ * flush against it with no offset, so they read as a single 4px ring. With
+ * the general focus rule's 2px offset the field showed border, gap, outline:
+ * a double border, which is what a person sees when a focus style and a
+ * border style are written by different rules and nobody looked.
+ */
+.dgl-dash .dgl-field:focus,
+.dgl-dash .dgl-field:focus-visible {
+	border-color: var(--dgl-focus) !important;
+	outline: 2px solid var(--dgl-focus);
+	outline-offset: 0;
 }
 
-.dgl-field-row--error .dgl-field { border-color: var(--dgl-danger); }
+.dgl-dash .dgl-field-row--error .dgl-field { border-color: var(--dgl-danger) !important; }
 
 .dgl-help {
 	margin: 6px 0 0;
