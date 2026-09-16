@@ -118,7 +118,7 @@ foreach ( [ 'dgl_alice', 'dgl_aaron', 'dgl_bella', 'dgl_mod', 'dgl_pending', 'dg
 }
 
 // Accounts the invitation tests create are named after the address invited.
-foreach ( [ 'newcomer@example.test', 'loose@example.test', 'toolate@example.test', 'withdrawme@example.test' ] as $address ) {
+foreach ( [ 'newcomer@example.test', 'loose@example.test', 'toolate@example.test', 'withdrawme@example.test', 'awkward@example.test' ] as $address ) {
 	$existing = get_user_by( 'email', $address );
 	if ( $existing ) {
 		wp_delete_user( $existing->ID );
@@ -1494,14 +1494,16 @@ $group( 'Invitations: the whole round trip' );
 $mail_was = get_option( \DGL\Email\Routing::OPTION_ENABLED, false );
 update_option( \DGL\Email\Routing::OPTION_ENABLED, 1 );
 
-$sent_links = [];
-$sent_to    = [];
+$sent_links  = [];
+$sent_to     = [];
+$sent_bodies = [];
 
 add_action(
 	'dgl_mail_sent',
-	static function ( $sent, $message, $to ) use ( &$sent_links, &$sent_to ): void {
-		$sent_links[] = (string) $message->cta_url;
-		$sent_to[]    = implode( ',', (array) $to );
+	static function ( $sent, $message, $to ) use ( &$sent_links, &$sent_to, &$sent_bodies ): void {
+		$sent_links[]  = (string) $message->cta_url;
+		$sent_to[]     = implode( ',', (array) $to );
+		$sent_bodies[] = implode( ' ', $message->paragraphs );
 	},
 	10,
 	3
@@ -1529,6 +1531,16 @@ $ok( 64 === strlen( (string) $stored['token_hash'] ), 'what is stored is a 64-ch
 
 $link = end( $sent_links );
 $ok( '' !== $link, 'an email went out with a link in it' );
+
+/*
+ * The email once listed all five content types. Two are switched off for
+ * this release, and the wording is now built from the enabled set, so an
+ * invitee is not promised something the site will not let them do.
+ */
+$invite_body = implode( ' ', $sent_bodies );
+$ok( str_contains( $invite_body, 'events, news and training' ), 'the email names exactly the enabled types' );
+$ok( ! str_contains( strtolower( $invite_body ), 'volunteering' ), 'and not volunteering' );
+$ok( ! str_contains( strtolower( $invite_body ), 'grant' ), 'nor grants' );
 $ok( str_contains( (string) end( $sent_to ), 'newcomer@example.test' ) || '' !== (string) end( $sent_to ), 'addressed to somebody' );
 
 $token = trim( (string) wp_parse_url( $link, PHP_URL_PATH ), '/' );
@@ -1637,6 +1649,32 @@ $ok( str_contains( $late['error'], 'expired' ), 'and says it expired' );
 
 $ok( ! InviteStore::has_open_for( 'toolate@example.test', $org_a ), 'an expired invitation no longer counts as open' );
 $ok( InviteRules::SEND_OK === Invites::send( $alice_ctx, $org_a, 'toolate@example.test', 'contributor' )['reason'], 'so the address can be invited again' );
+
+$group( 'Invitations: a password with awkward characters still works' );
+
+/*
+ * A member on staging was told their password was wrong on their second
+ * visit. The plain-password round trip above proves nothing about quotes and
+ * backslashes, which pass through wp_unslash on the way in and are hashed
+ * as-is by wp_insert_user. This proves the whole path for the characters
+ * most likely to be mangled.
+ */
+$awkward = Invites::send( $alice_ctx, $org_a, 'awkward@example.test', 'contributor' );
+$aw_link  = end( $sent_links );
+$aw_path  = trim( (string) wp_parse_url( $aw_link, PHP_URL_PATH ), '/' );
+$aw_token = (string) substr( strrchr( $aw_path, '/' ), 1 );
+$aw_pass  = "it's a \\ \"tricky\" one";
+
+$aw = Invites::accept( $aw_token, 'Awk Ward', $aw_pass );
+$ok( true === $aw['ok'], 'an invitation is accepted with a password full of quotes and a backslash' );
+
+if ( $aw['user_id'] > 0 ) {
+	update_user_meta( $aw['user_id'], DGL_FIXTURE_FLAG, '1' );
+	$aw_user = get_userdata( $aw['user_id'] );
+	$ok( wp_check_password( $aw_pass, $aw_user->user_pass, $aw['user_id'] ), 'and that exact password is the one that signs them in' );
+	$ok( ! wp_check_password( stripslashes( $aw_pass ), $aw_user->user_pass, $aw['user_id'] ), 'not a version with the backslash stripped' );
+	$ok( ! wp_check_password( addslashes( $aw_pass ), $aw_user->user_pass, $aw['user_id'] ), 'and not a version with slashes added' );
+}
 
 $group( 'Invitations: linking an account that already exists' );
 

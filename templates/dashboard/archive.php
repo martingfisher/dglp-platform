@@ -15,7 +15,7 @@ defined( 'ABSPATH' ) || exit;
 <header class="dgl-page-head">
 	<div>
 		<h1 class="dgl-page-head__title"><?php esc_html_e( 'Archive', 'dgl-platform' ); ?></h1>
-		<p class="dgl-page-head__lede"><?php esc_html_e( 'Items no longer on the site. Events and grants come off automatically on their end date. Anything else you archive yourself.', 'dgl-platform' ); ?></p>
+		<p class="dgl-page-head__lede"><?php esc_html_e( 'Items no longer on the site. Anything with an end date comes off automatically when it passes. Anything else you archive yourself.', 'dgl-platform' ); ?></p>
 	</div>
 </header>
 

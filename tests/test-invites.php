@@ -142,3 +142,14 @@ Harness::assert_true( str_contains( Rules::accept_error( Rules::ACCEPT_OTHER_ORG
 Harness::group( 'Addresses are compared the way people use them' );
 
 Harness::assert_same( 'jo@charity.test', Rules::normalise_email( '  Jo@Charity.Test ' ), 'case and whitespace are not two different people' );
+
+Harness::group( 'Passwords: eight characters, typed twice' );
+
+Harness::assert_same( '', Rules::password_problem( 'eightchr', 'eightchr' ), 'eight characters that match are fine' );
+Harness::assert_true( '' !== Rules::password_problem( 'seven77', 'seven77' ), 'seven are not' );
+Harness::assert_true( str_contains( Rules::password_problem( 'short', 'short' ), '8' ), 'and the message says how many are needed' );
+Harness::assert_true( str_contains( Rules::password_problem( 'eightchr', 'eightchx' ), 'match' ), 'a mismatch is named as a mismatch' );
+Harness::assert_same( '', Rules::password_problem( 'caf\u{e9}caf\u{e9}', 'caf\u{e9}caf\u{e9}' ), 'eight accented letters are eight characters, whatever strlen thinks' );
+Harness::assert_same( '', Rules::password_problem( "it's \\ fine!", "it's \\ fine!" ), 'quotes and backslashes are just characters' );
+Harness::assert_true( '' !== Rules::password_problem( 'short', 'different' ), 'too short is reported before a mismatch, so the first thing fixed is the one that matters' );
+

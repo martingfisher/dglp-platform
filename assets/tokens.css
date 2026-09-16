@@ -34,6 +34,14 @@
 	--dgl-text-muted: color-mix(in srgb, var(--dgl-ink) 68%, var(--dgl-page));
 	--dgl-border: color-mix(in srgb, var(--dgl-ink) 14%, transparent);
 	--dgl-border-strong: color-mix(in srgb, var(--dgl-navy) 28%, transparent);
+	/*
+	 * The boundary of a form control. WCAG 1.4.11 wants 3:1 against what it
+	 * sits on; ink at 60% measures 3.8:1 on white and on the page colour.
+	 * The inputs used --dgl-border, which is 1.4:1, a line most monitors
+	 * cannot show and a person with low vision cannot find. Card edges and
+	 * dividers keep the faint one: they are decoration, and a control is not.
+	 */
+	--dgl-field-outline: color-mix(in srgb, var(--dgl-ink) 60%, transparent);
 	--dgl-focus: var(--dgl-purple);
 
 	/* Type */

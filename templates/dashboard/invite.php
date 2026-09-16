@@ -107,8 +107,22 @@ $token       = (string) ( $data['token'] ?? '' );
 
 				<div class="dgl-field-row">
 					<label class="dgl-label" for="dgl_password"><?php esc_html_e( 'Choose a password', 'dgl-platform' ); ?> <span class="dgl-req" aria-hidden="true">*</span></label>
-					<input type="password" id="dgl_password" name="dgl_password" class="dgl-field" required minlength="12" autocomplete="new-password">
-					<p class="dgl-help"><?php esc_html_e( 'At least 12 characters. A few words you will remember beats something short and clever.', 'dgl-platform' ); ?></p>
+					<input type="password" id="dgl_password" name="dgl_password" class="dgl-field" required minlength="<?php echo (int) \DGL\Invites\Rules::PASSWORD_MIN; ?>" autocomplete="new-password">
+					<p class="dgl-help">
+						<?php
+						printf(
+							/* translators: %d: minimum length. */
+							esc_html__( 'At least %d characters. A few words you will remember beats something short and clever.', 'dgl-platform' ),
+							(int) \DGL\Invites\Rules::PASSWORD_MIN
+						);
+						?>
+					</p>
+				</div>
+
+				<div class="dgl-field-row">
+					<label class="dgl-label" for="dgl_password_confirm"><?php esc_html_e( 'Type it again', 'dgl-platform' ); ?> <span class="dgl-req" aria-hidden="true">*</span></label>
+					<input type="password" id="dgl_password_confirm" name="dgl_password_confirm" class="dgl-field" required minlength="<?php echo (int) \DGL\Invites\Rules::PASSWORD_MIN; ?>" autocomplete="new-password">
+					<p class="dgl-help"><?php esc_html_e( 'So a slip of the finger does not lock you out on your next visit.', 'dgl-platform' ); ?></p>
 				</div>
 
 			<?php endif; ?>

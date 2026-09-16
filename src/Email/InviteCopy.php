@@ -41,6 +41,10 @@ final class InviteCopy {
 	 * @param string $accept_url  The link.
 	 * @param string $expires_on  When it dies, formatted for reading.
 	 * @param string $site_name   The site.
+	 * @param string $can_post    What the account lets them post, as a lower-case
+	 *                            list: "events, news and training". Built by the
+	 *                            caller from the enabled types, so a type switched
+	 *                            off for a release cannot be promised in an email.
 	 */
 	public static function invited(
 		string $org_name,
@@ -48,7 +52,8 @@ final class InviteCopy {
 		string $role_label,
 		string $accept_url,
 		string $expires_on,
-		string $site_name
+		string $site_name,
+		string $can_post = ''
 	): Message {
 		$org  = '' !== trim( $org_name ) ? $org_name : __( 'a partnership member', 'dgl-platform' );
 		$site = '' !== trim( $site_name ) ? $site_name : __( 'the partnership site', 'dgl-platform' );
@@ -94,7 +99,13 @@ final class InviteCopy {
 			),
 			paragraphs: [
 				$opening,
-				__( 'The account lets you post events, news, training, volunteering and grants on the organisation\'s behalf. What you post goes to the partnership team before it appears on the site.', 'dgl-platform' ),
+				'' !== trim( $can_post )
+					? sprintf(
+						/* translators: %s: list of content types, e.g. "events, news and training". */
+						__( 'The account lets you post %s on the organisation\'s behalf. What you post goes to the partnership team before it appears on the site.', 'dgl-platform' ),
+						$can_post
+					)
+					: __( 'The account lets you post on the organisation\'s behalf. What you post goes to the partnership team before it appears on the site.', 'dgl-platform' ),
 				__( 'Accepting takes a minute: choose a password and you are in. There is nothing to pay and no other sign-up.', 'dgl-platform' ),
 			],
 			facts: $facts,

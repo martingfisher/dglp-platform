@@ -134,7 +134,51 @@ for ( const route of ROUTES ) {
 			return `rgb(${ Math.round( out.r ) }, ${ Math.round( out.g ) }, ${ Math.round( out.b ) })`;
 		};
 
-		return [ ...document.querySelectorAll( '.dgl-dash, .dgl-topbar' ) ]
+		/*
+		 * Form controls are judged on their boundary, not their words. WCAG
+		 * 1.4.11 wants 3:1 between a control's border and what it sits on.
+		 * The member area's inputs spent months at 1.30:1, a border most
+		 * monitors cannot show, and this file never noticed because it only
+		 * measured text. A person noticed.
+		 */
+		const controls = [ ...document.querySelectorAll( '.dgl-dash input, .dgl-dash select, .dgl-dash textarea, .dgl-pub input, .dgl-pub select, .dgl-pub textarea' ) ]
+			.filter( ( el ) => ! [ 'hidden', 'checkbox', 'radio', 'submit', 'button' ].includes( el.type ) )
+			.filter( ( el ) => {
+				const box = el.getBoundingClientRect();
+				return box.width > 0 && box.height > 0;
+			} )
+			.map( ( el ) => {
+				const cs = getComputedStyle( el );
+				const own = parse( cs.backgroundColor );
+				// The boundary is seen against the control's own fill when it
+				// has one, otherwise against whatever is behind it.
+				const behind = own && own.a >= 1 ? cs.backgroundColor : backdrop( el );
+
+				/*
+				 * A border is very often translucent: color-mix() against
+				 * transparent yields ink at 14% alpha, and read as its RGB alone
+				 * that is solid ink at 12:1. The person sees it blended into
+				 * the fill, at 1.3:1. So it is blended here, the same way the
+				 * backdrop is, before it is measured. The first version of this
+				 * check skipped that step and passed the very fault it was
+				 * written for.
+				 */
+				const border = parse( cs.borderTopColor );
+				const under = parse( behind ) || { r: 255, g: 255, b: 255, a: 1 };
+				const seen = border
+					? `rgb(${ Math.round( border.r * border.a + under.r * ( 1 - border.a ) ) }, ${ Math.round( border.g * border.a + under.g * ( 1 - border.a ) ) }, ${ Math.round( border.b * border.a + under.b * ( 1 - border.a ) ) })`
+					: cs.borderTopColor;
+
+				return {
+					control: true,
+					text: ( el.id || el.name || el.tagName.toLowerCase() ),
+					colour: seen,
+					width: parseFloat( cs.borderTopWidth ) || 0,
+					background: behind,
+				};
+			} );
+
+		const words = [ ...document.querySelectorAll( '.dgl-dash, .dgl-topbar' ) ]
 			.flatMap( ( root ) => [ ...root.querySelectorAll( '*' ) ] )
 			.filter( ( el ) => {
 				// Only elements that actually paint their own words.
@@ -160,9 +204,19 @@ for ( const route of ROUTES ) {
 					weight: parseInt( cs.fontWeight, 10 ) || 400,
 				};
 			} );
+
+		return [ ...controls, ...words ];
 	} );
 
 	for ( const s of samples ) {
+		// A control with no visible border has no boundary to measure, and
+		// that is a failure in itself rather than a pass by default.
+		if ( s.control && s.width < 1 ) {
+			++checked;
+			failures.push( { route, text: s.text + ' (no border)', ratio: '0.00', needs: 3, colour: s.colour, background: s.background } );
+			continue;
+		}
+
 		const value = ratio( s.colour, s.background );
 
 		if ( null === value ) {
@@ -171,9 +225,10 @@ for ( const route of ROUTES ) {
 
 		++checked;
 
-		// WCAG's large-text allowance: 18.66px bold, or 24px at any weight.
+		// Controls: 3:1 for the boundary (1.4.11). Text: WCAG's large-text
+		// allowance is 18.66px bold, or 24px at any weight.
 		const large = s.size >= 24 || ( s.size >= 18.66 && s.weight >= 700 );
-		const floor = large ? 3 : 4.5;
+		const floor = s.control ? 3 : ( large ? 3 : 4.5 );
 
 		if ( value < floor ) {
 			failures.push( {
@@ -190,7 +245,7 @@ for ( const route of ROUTES ) {
 
 await browser.close();
 
-console.log( `${ checked } text/background pairs checked across ${ ROUTES.length } routes` );
+console.log( `${ checked } text and control-border pairs checked across ${ ROUTES.length } routes` );
 
 if ( 0 === failures.length ) {
 	console.log( 'All clear. Nothing below WCAG AA.' );

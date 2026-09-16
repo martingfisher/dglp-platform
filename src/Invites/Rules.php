@@ -328,6 +328,45 @@ final class Rules {
 	}
 
 	/* ---------------------------------------------------------------------
+	 * Passwords
+	 * ------------------------------------------------------------------ */
+
+	/**
+	 * The shortest password the site accepts.
+	 *
+	 * Eight, not twelve. Twelve was the first figure and it was wrong for
+	 * these members: a volunteer coordinator who signs in monthly does not
+	 * use a password manager, does not remember twelve characters, and resets
+	 * it every time, which is worse for everybody than a shorter one they keep.
+	 */
+	public const PASSWORD_MIN = 8;
+
+	/**
+	 * What is wrong with a chosen password, or nothing.
+	 *
+	 * Pure, so the rule is tested rather than assumed. Length is measured in
+	 * characters, not bytes: a password of eight accented letters is eight
+	 * characters long whatever PHP's strlen() thinks of it.
+	 *
+	 * @return string An empty string when it is fine.
+	 */
+	public static function password_problem( string $password, string $confirm ): string {
+		if ( mb_strlen( $password ) < self::PASSWORD_MIN ) {
+			return sprintf(
+				/* translators: %d: minimum length. */
+				__( 'Choose a password of at least %d characters.', 'dgl-platform' ),
+				self::PASSWORD_MIN
+			);
+		}
+
+		if ( $password !== $confirm ) {
+			return __( 'The two passwords do not match. Type the same one in both boxes.', 'dgl-platform' );
+		}
+
+		return '';
+	}
+
+	/* ---------------------------------------------------------------------
 	 * Addresses
 	 * ------------------------------------------------------------------ */
 

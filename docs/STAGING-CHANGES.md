@@ -138,4 +138,8 @@ clean. They are the only DGLP content on staging.
   via `wp dgl invite send`, so the member area can be walked with a real,
   member-only account. Accepting creates the account; nothing exists until then.
   Withdraw from the Members tab or with `wp dgl invite list` to find it.
+- **Wordfence deactivated by Martin** after its brute-force lockout caught his
+  own sign-in during the walkthrough. Staging only. **Reactivate before the
+  client uses the site.** The lockout is per IP, so it also blocks wp-admin for
+  the same connection until it expires.
 

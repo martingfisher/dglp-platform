@@ -1044,15 +1044,21 @@ final class Controller {
 		} elseif ( 'POST' === ( $_SERVER['REQUEST_METHOD'] ?? 'GET' ) ) {
 			check_admin_referer( Wizard::NONCE );
 
-			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- passwords must not be sanitised, only length-checked.
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- passwords must not be sanitised, only checked.
 			$password = isset( $_POST['dgl_password'] ) ? (string) wp_unslash( $_POST['dgl_password'] ) : '';
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- as above.
+			$confirm  = isset( $_POST['dgl_password_confirm'] ) ? (string) wp_unslash( $_POST['dgl_password_confirm'] ) : '';
 			$name     = isset( $_POST['dgl_name'] ) ? sanitize_text_field( wp_unslash( $_POST['dgl_name'] ) ) : '';
 
 			$existing = get_user_by( 'email', $invite->email );
 			$needs_pw = ! $existing instanceof \WP_User;
 
-			if ( $needs_pw && strlen( $password ) < 12 ) {
-				$error = __( 'Choose a password of at least 12 characters.', 'dgl-platform' );
+			// Typed twice. A password nobody can see, mistyped once, is an
+			// account its owner is locked out of on their second visit.
+			$problem = $needs_pw ? InviteRules::password_problem( $password, $confirm ) : '';
+
+			if ( '' !== $problem ) {
+				$error = $problem;
 			} else {
 				$result = Invites::accept( $token, $name, $password );
 

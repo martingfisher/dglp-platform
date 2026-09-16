@@ -145,7 +145,8 @@ final class Invites {
 			role_label: self::role_label( $invite->org_role ),
 			accept_url: self::accept_url( $token ),
 			expires_on: self::readable_date( $invite->expires_at ),
-			site_name: (string) get_bloginfo( 'name' )
+			site_name: (string) get_bloginfo( 'name' ),
+			can_post: self::can_post_sentence()
 		);
 
 		return Mailer::send( $message->for_recipients( [ $invite->email ] ) );
@@ -433,6 +434,32 @@ final class Invites {
 	/* ---------------------------------------------------------------------
 	 * Odds and ends
 	 * ------------------------------------------------------------------ */
+
+	/**
+	 * "events, news and training": the enabled types, as a list for a sentence.
+	 *
+	 * From the enabled set, never the full one. The invitation email used to
+	 * name all five types, and two of them were switched off for this release.
+	 */
+	public static function can_post_sentence(): string {
+		$labels = array_map(
+			static fn( array $def ): string => strtolower( (string) $def['plural'] ),
+			array_values( \DGL\PostTypes::enabled() )
+		);
+
+		if ( [] === $labels ) {
+			return '';
+		}
+
+		if ( 1 === count( $labels ) ) {
+			return $labels[0];
+		}
+
+		$last = array_pop( $labels );
+
+		/* translators: 1: comma-separated list, 2: final item. */
+		return sprintf( __( '%1$s and %2$s', 'dgl-platform' ), implode( ', ', $labels ), $last );
+	}
 
 	public static function accept_url( string $token ): string {
 		return Router::url( 'invite', $token );

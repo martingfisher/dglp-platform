@@ -16,7 +16,15 @@ defined( 'ABSPATH' ) || exit;
 <div class="dgl-dash">
 	<div class="dgl-signin">
 		<h1 class="dgl-page-head__title"><?php esc_html_e( 'Sign in', 'dgl-platform' ); ?></h1>
-		<p class="dgl-page-head__lede"><?php esc_html_e( 'Post events, news, training, grants and volunteering opportunities to the site.', 'dgl-platform' ); ?></p>
+		<p class="dgl-page-head__lede">
+			<?php
+			printf(
+				/* translators: %s: list of content types, e.g. "events, news and training". */
+				esc_html__( 'Post %s to the site.', 'dgl-platform' ),
+				esc_html( \DGL\Invites\Invites::can_post_sentence() )
+			);
+			?>
+		</p>
 
 		<?php
 		wp_login_form(

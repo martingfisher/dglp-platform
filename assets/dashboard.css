@@ -160,7 +160,7 @@
 	width: 100%;
 	min-height: var(--dgl-field-height);
 	padding: 0 12px;
-	border: var(--dgl-field-border) solid var(--dgl-border);
+	border: var(--dgl-field-border) solid var(--dgl-field-outline);
 	border-radius: var(--dgl-radius-field);
 	background: var(--dgl-white);
 	color: var(--dgl-text);
@@ -648,7 +648,7 @@ body.dgl-body {
 	width: 100%;
 	min-height: var(--dgl-field-height);
 	padding: 0 12px;
-	border: var(--dgl-field-border) solid var(--dgl-border);
+	border: var(--dgl-field-border) solid var(--dgl-field-outline);
 	border-radius: var(--dgl-radius-field);
 	font: var(--dgl-weight-body) 15px / var(--dgl-line) var(--dgl-font);
 }
@@ -838,7 +838,7 @@ body.dgl-body {
 	width: 100%;
 	min-height: var(--dgl-field-height);
 	padding: 0 12px;
-	border: var(--dgl-field-border) solid var(--dgl-border);
+	border: var(--dgl-field-border) solid var(--dgl-field-outline);
 	border-radius: var(--dgl-radius-field);
 	background: var(--dgl-white);
 	color: var(--dgl-text);
@@ -1063,7 +1063,7 @@ body.dgl-body {
 
 /* The editor is WordPress's own, so it only needs boxing in to match. */
 .dgl-editor .wp-editor-container {
-	border: var(--dgl-field-border) solid var(--dgl-border);
+	border: var(--dgl-field-border) solid var(--dgl-field-outline);
 	border-radius: var(--dgl-radius-field);
 	overflow: hidden;
 }
