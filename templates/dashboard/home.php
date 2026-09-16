@@ -47,7 +47,9 @@ $tiles = [
 	</div>
 
 	<?php /* Straight to the forms, per the wireframe. An anchor, so it works with no JavaScript. */ ?>
-	<a class="dgl-button" href="#dgl-submit-heading"><?php esc_html_e( 'New submission', 'dgl-platform' ); ?></a>
+	<?php if ( null !== $org ) : ?>
+		<a class="dgl-button" href="#dgl-submit-heading"><?php esc_html_e( 'New submission', 'dgl-platform' ); ?></a>
+	<?php endif; ?>
 </header>
 
 <?php
@@ -113,6 +115,18 @@ $tiles = [
 	</ul>
 <?php endif; ?>
 
+<?php if ( null === $org ) : ?>
+	<?php
+	/*
+	 * No organisation, no tiles. They led to a wizard that could only end in
+	 * "your account is not linked to an organisation yet", four screens later.
+	 */
+	?>
+	<section class="dgl-card dgl-section" aria-labelledby="dgl-noorg-heading">
+		<h2 class="dgl-section__title" id="dgl-noorg-heading"><?php esc_html_e( 'Your account is not linked to an organisation yet', 'dgl-platform' ); ?></h2>
+		<p><?php esc_html_e( 'Submissions are made on behalf of an organisation, so there is nothing to start until you are part of one. If somebody at your organisation already uses the member area, ask them to invite you from their Members page. Otherwise the DGLP team can link you.', 'dgl-platform' ); ?></p>
+	</section>
+<?php else : ?>
 <section class="dgl-section" aria-labelledby="dgl-submit-heading">
 	<div class="dgl-section__head">
 		<h2 class="dgl-section__title" id="dgl-submit-heading"><?php esc_html_e( 'Submit something', 'dgl-platform' ); ?></h2>
@@ -131,6 +145,7 @@ $tiles = [
 		<?php endforeach; ?>
 	</ul>
 </section>
+<?php endif; ?>
 
 <section class="dgl-section" aria-labelledby="dgl-recent-heading">
 	<div class="dgl-section__head">

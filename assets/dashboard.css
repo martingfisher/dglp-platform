@@ -614,6 +614,13 @@ body.dgl-body {
 
 /* ---- Standalone notice pages --------------------------------------------- */
 
+.dgl-notice-page__ways {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+	margin: var(--dgl-gap-lg) 0 var(--dgl-gap);
+}
+
 .dgl-notice-page,
 .dgl-signin {
 	max-width: 460px;

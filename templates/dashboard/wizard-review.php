@@ -145,7 +145,18 @@ $ready = empty( $all_errors ) && ( ! $is_edit || ! empty( $changes ) );
 				</a>
 
 				<div class="dgl-form__actions-end">
-					<?php if ( $ready ) : ?>
+					<?php if ( $ready && isset( $data['user'] ) && ! $data['user']->is_fully_approved() ) : ?>
+						<?php
+						/*
+						 * A pending member can write everything and send nothing.
+						 * Wireframe 1c promised "you can write now and submit once
+						 * approved"; the button used to be there anyway, and the
+						 * last click of a four-step form said "You cannot do that
+						 * to this item."
+						 */
+						?>
+						<p class="dgl-help"><?php esc_html_e( 'Saved as a draft. You can send it for review as soon as the team approves your account; nothing you have written is lost.', 'dgl-platform' ); ?></p>
+					<?php elseif ( $ready ) : ?>
 						<button class="dgl-button" type="submit" name="dgl_intent" value="submit">
 							<?php esc_html_e( 'Send for review', 'dgl-platform' ); ?>
 						</button>

@@ -110,7 +110,9 @@ $is_owner = $user instanceof UserContext && $user->is_org_owner();
 			<div class="dgl-form__actions">
 				<div class="dgl-form__actions-end">
 					<button class="dgl-button" type="submit"><?php esc_html_e( 'Save changes', 'dgl-platform' ); ?></button>
-			<?php endif; ?>
+				</div>
+			</div>
+		<?php endif; ?>
 	</form>
 
 <?php elseif ( 'you' === $tab ) : ?>
@@ -141,6 +143,7 @@ $is_owner = $user instanceof UserContext && $user->is_org_owner();
 		<div class="dgl-form__actions">
 			<div class="dgl-form__actions-end">
 				<button class="dgl-button" type="submit"><?php esc_html_e( 'Save changes', 'dgl-platform' ); ?></button>
+			</div>
 		</div>
 	</form>
 

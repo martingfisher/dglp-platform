@@ -129,12 +129,11 @@ Each of these changes what gets built. Recommendations given.
 staging and invite Martin into it with `wp dgl invite`. Data, not code. Ten
 minutes.
 
-**Then the dead ends the audit found**, because a walkthrough that ends on
-error screens teaches nothing: unbalanced markup on two profile tabs, the
-no-access and suspended screens with no way out, a pending member walking the
-whole wizard and dying on the last click with "You cannot do that to this
-item", submit tiles shown to accounts with no organisation, and archiving (#8
-above).
+**The dead ends the audit found** were closed in 0.7.3: the two profile tabs
+balance, the no-access and suspended screens have a way out, a pending member
+sees "saved as a draft" instead of a submit button and a refusal, accounts
+with no organisation see why there are no tiles, and an empty facts list says
+so. Archiving (#8) landed in 0.7.1.
 
 **Then joining**, items 1 to 7 and 9, in that order. Domains and the import
 first, because everything else needs an organisation list with domains on it

@@ -637,6 +637,22 @@ final class Controller {
 			return;
 		}
 
+		if ( ! $user->is_fully_approved() ) {
+			self::screen(
+				'error',
+				[
+					'user'    => $user,
+					'title'   => __( 'Saved, not sent', 'dgl-platform' ),
+					'message' => UserContext::ACCOUNT_PENDING === $user->account_status
+						? __( 'Your draft is saved. It can be sent for review once the team has approved your account, which usually takes a working day.', 'dgl-platform' )
+						: __( 'Your draft is saved, but your organisation is not yet verified, so nothing can be sent for review. The team will be in touch.', 'dgl-platform' ),
+				],
+				__( 'Saved, not sent', 'dgl-platform' ),
+				$user
+			);
+			return;
+		}
+
 		$result = Transition::apply( $post_id, StateMachine::SUBMIT, $user->user_id );
 
 		if ( is_wp_error( $result ) ) {

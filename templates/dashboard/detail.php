@@ -177,23 +177,26 @@ if ( $revision instanceof WP_Post ) {
 				? esc_html__( 'What is on the site now', 'dgl-platform' )
 				: esc_html__( 'What you submitted', 'dgl-platform' ); ?>
 		</h2>
-		<dl class="dgl-review__list">
-			<?php foreach ( $data['fields'] as $field ) : ?>
-				<?php
-				$value = $values[ $field->key ] ?? '';
-
-				if ( '' === (string) $value && Field::CHECKBOX !== $field->type ) {
-					continue;
-				}
-				?>
-				<dt><?php echo esc_html( $field->label ); ?></dt>
-				<dd>
-					<?php
-					echo View::field_value( $field, $value ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside.
-					?>
-				</dd>
-			<?php endforeach; ?>
-		</dl>
+		<?php
+		$filled = array_filter(
+			$data['fields'],
+			static fn( $field ): bool => '' !== (string) ( $values[ $field->key ] ?? '' ) || Field::CHECKBOX === $field->type
+		);
+		?>
+		<?php if ( [] === $filled ) : ?>
+			<p class="dgl-help"><?php esc_html_e( 'Nothing filled in yet. Open it to carry on.', 'dgl-platform' ); ?></p>
+		<?php else : ?>
+			<dl class="dgl-review__list">
+				<?php foreach ( $filled as $field ) : ?>
+					<dt><?php echo esc_html( $field->label ); ?></dt>
+					<dd>
+						<?php
+						echo View::field_value( $field, $values[ $field->key ] ?? '' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside.
+						?>
+					</dd>
+				<?php endforeach; ?>
+			</dl>
+		<?php endif; ?>
 	</section>
 
 	<aside class="dgl-card">
