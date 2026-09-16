@@ -225,3 +225,6 @@ clean. They are the only DGLP content on staging.
   `e02ce4e`. Demo event 8439 given a venue, address and postcode
   (`dgl_venue_name`, `dgl_address`, `dgl_postcode`) so the page has facts
   to show. Cache cleared.
+- **0.7.10 deployed**: upload ceiling 20MB (was 8MB, which refused the
+  phone photos the shrink is for); the 1536 and 2048 sizes are no longer
+  made from a 1600px master. Pinned to commit `58f5443`.
