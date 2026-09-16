@@ -162,4 +162,5 @@ clean. They are the only DGLP content on staging.
   member area with a reason, instead of WordPress's own error page; the accept
   screen says what you will sign in with. Martin's username is
   `martingfisher@gmail.com`, not his name.
+- **0.6.6 deployed**: sign-in lede is now "Sign in to your admin dashboard."
 
