@@ -84,33 +84,46 @@
 }
 
 .dgl-button {
+	/*
+	 * Every background, border and colour below is !important on purpose.
+	 * Blocksy styles <button> by element, and on staging every real button
+	 * in the member area, the sign-in, the join form, every decision, came
+	 * out teal with white text at 2.5:1 while the links styled as buttons
+	 * stayed navy. A control's colour is not the theme's to decide.
+	 */
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
+	box-sizing: border-box;
 	min-height: var(--dgl-field-height);
-	padding: 0 20px;
-	border: 0;
-	border-radius: var(--dgl-radius-button);
-	background: var(--dgl-primary);
-	color: var(--dgl-primary-text);
-	font: var(--dgl-weight-button) 15px / 1 var(--dgl-font);
+	padding: 0 20px !important;
+	border: 0 !important;
+	border-radius: var(--dgl-radius-button) !important;
+	background: var(--dgl-primary) !important;
+	color: var(--dgl-primary-text) !important;
+	font: var(--dgl-weight-button) 15px / 1 var(--dgl-font) !important;
+	letter-spacing: 0 !important;
+	text-transform: none !important;
 	text-decoration: none;
+	box-shadow: none !important;
 	cursor: pointer;
 	transition: background-color var(--dgl-motion), border-color var(--dgl-motion), color var(--dgl-motion);
 }
 
 .dgl-button:hover {
-	background: color-mix(in srgb, var(--dgl-primary) 88%, #000);
+	background: color-mix(in srgb, var(--dgl-primary) 82%, #000000) !important;
+	color: var(--dgl-primary-text) !important;
 }
 
 .dgl-button--secondary {
-	background: transparent;
-	border: var(--dgl-field-border) solid var(--dgl-field-outline);
-	color: var(--dgl-primary);
+	background: transparent !important;
+	border: var(--dgl-field-border) solid var(--dgl-field-outline) !important;
+	color: var(--dgl-primary) !important;
 }
 
 .dgl-button--secondary:hover {
-	background: var(--dgl-surface);
+	background: var(--dgl-surface) !important;
+	color: var(--dgl-primary) !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -136,6 +149,8 @@
 html:has( body.dgl-body ) { background: var(--dgl-page); }
 
 body.dgl-body {
+	display: flex;
+	flex-direction: column;
 	margin: 0;
 	min-height: 100vh;
 	background: var(--dgl-page);
@@ -240,9 +255,21 @@ body.dgl-body {
 	display: grid;
 	grid-template-columns: 260px minmax(0, 1fr);
 	gap: 0;
-	min-height: 70vh;
+	/*
+	 * The shell fills the window. The layout is the body's flexible child,
+	 * so on a short page the sidebar runs to the bottom of the viewport
+	 * rather than stopping where the content did, with cream underneath.
+	 */
+	flex: 1 0 auto;
+	width: 100%;
 	max-width: 1400px;
 	margin: 0 auto;
+	box-sizing: border-box;
+}
+
+.dgl-dash {
+	display: flex;
+	flex: 1 0 auto;
 }
 
 /*
@@ -1006,13 +1033,17 @@ body.dgl-body {
 	display: inline-flex;
 	align-items: center;
 	min-height: 24px; /* WCAG 2.5.8: a target is at least 24px, even a text-shaped one. */
-	border: 0;
-	background: none;
-	padding: 2px 0;
-	font: 500 0.86em var(--dgl-font);
-	color: var(--dgl-link);
+	border: 0 !important;
+	background: none !important;
+	padding: 2px 0 !important;
+	font: 500 0.86em var(--dgl-font) !important;
+	color: var(--dgl-link) !important;
+	border-radius: 0 !important;
+	text-transform: none !important;
+	letter-spacing: 0 !important;
 	text-decoration: underline;
 	cursor: pointer;
+	box-shadow: none !important;
 }
 
 /* ---- Alerts -------------------------------------------------------------- */
@@ -1287,14 +1318,14 @@ body.dgl-body {
 .dgl-decision__actions .dgl-button { width: 100%; }
 
 .dgl-button--danger {
-	background: transparent;
-	border: var(--dgl-field-border) solid var(--dgl-danger);
-	color: var(--dgl-danger);
+	background: transparent !important;
+	border: var(--dgl-field-border) solid var(--dgl-danger) !important;
+	color: var(--dgl-danger) !important;
 }
 
 .dgl-button--danger:hover {
-	background: var(--dgl-danger);
-	color: var(--dgl-white);
+	background: var(--dgl-danger) !important;
+	color: var(--dgl-white) !important;
 }
 
 /* A definition list in the narrow review sidebar wants stacking, not columns. */
@@ -1341,19 +1372,19 @@ body.dgl-body {
 .dgl-inline-form { display: inline; margin: 0; }
 
 .dgl-button--small {
-	padding: 7px 14px;
-	font-size: 0.82em;
+	padding: 7px 14px !important;
+	font-size: 0.82em !important;
 }
 
 .dgl-button--quiet {
-	background: transparent;
-	border: 1px solid currentColor;
-	color: inherit;
+	background: transparent !important;
+	border: 1px solid currentColor !important;
+	color: inherit !important;
 }
 
 .dgl-button--quiet:hover {
-	background: rgb(0 0 0 / 6%);
-	color: inherit;
+	background: rgb(0 0 0 / 6%) !important;
+	color: inherit !important;
 }
 
 /* The "Edit" marker beside a type in a list. */
