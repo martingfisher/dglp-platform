@@ -23,6 +23,9 @@ colors:
   status-expired-bg: "#e6e7ed"
   status-archived-bg: "#ebedf5"
   status-archived-fg: "#5767a7"
+  status-rejected-bg: "#ffede7"
+  status-rejected-fg: "#b84925"
+  status-live-text-deep: "#2f6a1d"
 typography:
   display:
     fontFamily: "Montserrat, system-ui, sans-serif"
@@ -189,7 +192,10 @@ reaches the member area without a code edit.
 - Status tints, each the source colour mixed 88% into white with the text
   darkened until it clears 4.5:1: Live (#eaf4e6 / #387923), Awaiting review
   (#fff7e8 / #7a5a1c), Changes requested (#f9e0ea / #cc0053), Draft (#e4e6e6 /
-  ink), Expired (#e6e7ed / navy), Archived (#ebedf5 / #5767a7).
+  ink), Expired (#e6e7ed / navy), Archived (#ebedf5 / #5767a7), Not approved
+  (#ffede7 / #b84925). The success alert uses a deeper green for its prose
+  (#2f6a1d on #eaf4e6, 6.4:1) because a sentence is not a stamp. The amber
+  alert border is the pending text colour, #7a5a1c.
 
 ### Named Rules
 **The One Action Colour Rule.** Council Navy is the only colour that means

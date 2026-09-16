@@ -87,7 +87,7 @@
 	padding: 12px var(--dgl-gap);
 	border-radius: var(--dgl-radius-button);
 	background: var(--dgl-surface);
-	border-left: 4px solid var(--dgl-teal);
+	border-left: 2px solid var(--dgl-teal-solid);
 	font-size: 0.95em;
 }
 

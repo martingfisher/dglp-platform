@@ -29,7 +29,13 @@
 	 */
 	--dgl-primary: var(--dgl-navy);
 	--dgl-primary-text: var(--dgl-white);
-	--dgl-link: var(--dgl-purple);
+	/*
+	 * Links and focus are Council Navy, not Partnership Purple. Purple is
+	 * 5.05:1 on white, the ceiling of that hue, and the member area is held
+	 * to AAA where the palette allows; navy is 10.8:1 and is already the one
+	 * action colour, so a link, a pressed thing and a focused thing agree.
+	 */
+	--dgl-link: var(--dgl-navy);
 	--dgl-text: var(--dgl-ink);
 	/*
 	 * Secondary text. Ink at 68% measured 5.1:1 on white, which passes AA and
@@ -47,7 +53,7 @@
 	 * dividers keep the faint one: they are decoration, and a control is not.
 	 */
 	--dgl-field-outline: color-mix(in srgb, var(--dgl-ink) 60%, transparent);
-	--dgl-focus: var(--dgl-purple);
+	--dgl-focus: var(--dgl-navy);
 
 	/*
 	 * The sidebar. Deep navy from the palette, taken darker so white type on
@@ -77,6 +83,17 @@
 	--dgl-radius-field: 10px;
 	--dgl-field-border: 2px;
 	--dgl-field-height: 45px;
+
+	/*
+	 * Depth. Cards, tiles and stats sit gently lifted off the cream, papers on
+	 * a desk; fields, tables and chips stay flat and rely on their border.
+	 * Every shadow has an offset and a blur: a zero-offset halo is decoration.
+	 */
+	--dgl-shadow-rest: 0 1px 2px rgb(30 50 50 / 4%), 0 4px 16px rgb(30 50 50 / 6%);
+	--dgl-shadow-raise: 0 2px 4px rgb(30 50 50 / 5%), 0 10px 28px rgb(30 50 50 / 9%);
+
+	/* Motion: state changes on controls, and nothing else. */
+	--dgl-motion: 150ms ease-out;
 
 	/* Rhythm */
 	--dgl-gap: 16px;
