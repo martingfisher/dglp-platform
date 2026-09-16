@@ -21,6 +21,7 @@ use DGL\Email\Digest\Frequency;
 use DGL\Email\Digest\Runner as DigestRunner;
 use DGL\Email\Digest\Command as DigestCommand;
 use DGL\Index\Sync;
+use DGL\Index\Command as IndexCommand;
 use DGL\Workflow\Revisions;
 use DGL\Workflow\Transition;
 use DGL\Schema\FieldRegistry;
@@ -83,6 +84,7 @@ final class Plugin {
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			MailCommand::register();
 			DigestCommand::register();
+			IndexCommand::register();
 		}
 
 		add_action( self::EXPIRY_HOOK, [ Transition::class, 'run_expiry_sweep' ] );
