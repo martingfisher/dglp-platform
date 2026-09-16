@@ -78,7 +78,8 @@ constant rather than an option.
 
 **2. Cron.** The expiry sweep and the digests need real cron. Enable system cron
 in Wordify and set `define( 'DISABLE_WP_CRON', true );`. Staging currently has
-system cron **off**.
+system cron **off**, so digests will not send there until it is on. Check with
+`wp dgl digest status`, which prints the next scheduled run or NOT SCHEDULED.
 
 **3. SmartCache exclusions.** A page cache that serves one member's dashboard to
 another is a privacy bug, not a tuning problem. Staging now excludes
@@ -111,12 +112,13 @@ requires a database push in either direction.
 
 ## What is not built yet
 
-Listed so nobody deploys expecting it: SSO, digest sending, member invites,
-email preferences, CSV export, the privacy exporters, the public templates,
-closing an account, email on an organisation-change decision (the
-`dgl_org_change_approved` and `dgl_org_change_rejected` actions fire but nothing
-listens), and a read/unread store behind the notifications screen.
+Listed so nobody deploys expecting it: SSO, CSV export, the privacy exporters,
+the public templates, closing an account, removing a colleague, email on an
+organisation-change decision (the `dgl_org_change_approved` and
+`dgl_org_change_rejected` actions fire but nothing listens), and a read/unread
+store behind the notifications screen.
 
-What works today is accounts, submissions, the wizard, moderation, pending
-edits, transactional email, the member-area shell, the notifications screen, the
-organisation and profile screens, and the wp-admin moderation screens.
+What works today is accounts, invitations, submissions, the wizard, moderation,
+pending edits, transactional email, digests and their preferences, the
+member-area shell, the notifications screen, the organisation and profile
+screens, and the wp-admin moderation screens.
