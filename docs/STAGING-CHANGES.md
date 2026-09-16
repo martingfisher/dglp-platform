@@ -153,4 +153,9 @@ clean. They are the only DGLP content on staging.
   is the firewall file (`wordfence-waf.php` via `auto_prepend_file`) enforcing
   a stored IP block on its own. Not touched from here. Clears by waiting, a
   different IP, or removing the `auto_prepend_file` line in `.user.ini`.
+- **Wordfence Extended Protection removed by Martin**: the `auto_prepend_file`
+  line taken out of `.htaccess` and `.user.ini`, which is what was still
+  serving the block page with the plugin inactive. Staging now has no
+  Wordfence at all. **Before the client uses the site: reactivate the plugin
+  and let it re-enable Extended Protection.**
 
