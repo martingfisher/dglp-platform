@@ -74,3 +74,38 @@ plugin-provided command.
 Not checked by me: how `/dashboard/` renders in a browser. This sandbox's proxy
 refuses that host (`CONNECT tunnel failed, 403`), so that confirmation is
 Martin's.
+
+## 16 September, afternoon
+
+Deploys now run from here. The route is `wp plugin install <url> --force
+--activate` through the Wordify console, pointed at a zip committed to the repo
+at `dist/dgl-platform.zip`, which unlike a GitHub archive has `dgl-platform/` as
+its top-level folder.
+
+**Pin the URL to a commit, not to `main`.** `raw.githubusercontent.com` caches
+per CDN edge. A deploy from the `main` URL installed a build from before the
+last commit, reported "Plugin updated successfully", and the missing command was
+only found by running it. The version number had not moved between those builds,
+which is why it was invisible. Both are fixed: the version moves per build and
+`dist/README.md` says to pin.
+
+Changes made:
+
+| Change | Why |
+|---|---|
+| `dgl_mail_redirect` = `martingfisher@gmail.com` | so nothing can reach the real accounts in the user table |
+| `dgl_mail_enabled` = `1` | set **after** the redirect, in that order |
+| Plugin 0.2.0 to 0.4.1 | invitations, digests, index commands |
+| Subscribed `martin@resultsyoucanmeasure.com` to the weekly digest | to test delivery. Remove with `wp dgl digest subscribe <user> --off` |
+| Created `Demo: Armley Community Hub` (post 8438) and `Demo: Coffee morning at Armley Library` (post 8439) | the site had no DGLP content at all, so a digest had nothing to carry. Both are prefixed "Demo:" and can be deleted |
+| `wp dgl reindex` run once | the index had drifted and there was no command to rebuild it until today |
+
+Staging still has **system cron off**, so digests will not send unattended.
+`wp dgl digest status` prints the next scheduled run.
+
+The From address is still `wordpress@partnership-doinggoodleeds-org-uk-stg.wordifysites.com`.
+Set `dgl_mail_from` before launch: mail from a `wordpress@` address on a
+hosting subdomain is mail that trains a spam filter against the domain.
+
+`smtp2go` is installed but **inactive**, so everything goes out through PHP
+`mail()`.
