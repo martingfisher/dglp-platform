@@ -216,3 +216,7 @@ clean. They are the only DGLP content on staging.
   a live event. Pinned to commit `1fbaf59`. Demo event 8439 given a start
   date (`dgl_start_datetime` 2026-09-22 10:00:00) since it was created
   without one. Site cache cleared so the listing rebuilds.
+- **0.7.8 deployed**: public pages read the stored meta keys, so a real
+  event shows its date, venue, summary and facts. Pinned to commit
+  `ffca915`. Demo event 8439 given `dgl_summary`; its bare `summary` key is
+  an orphan (deleting it is blocked in safe mode, harmless). Cache cleared.
