@@ -158,3 +158,20 @@ Harness::assert_false( $hold( '', false ), 'nor is WP-CLI, so a broken item can 
 Harness::assert_false( $hold( 'post.php', true, false, true ), 'nor is cron, which runs the expiry sweep' );
 Harness::assert_false( $hold( '', true, true, false, 'heartbeat' ), 'and another ajax action is not Quick Edit' );
 Harness::assert_false( $hold( 'upload.php', true ), 'nor is an unrelated admin screen' );
+
+Harness::group( 'Removing a member: an owner, in their own organisation, never themselves' );
+
+$owner_a       = member_a( UserContext::ORG_OWNER );
+$contrib_a     = member_a( UserContext::ORG_CONTRIBUTOR );
+$pending_owner = member_a( UserContext::ORG_OWNER, UserContext::ACCOUNT_PENDING );
+
+Harness::assert_true( Policy::can_remove_member( $owner_a, 999, ORG_A ), 'an owner can remove a colleague in their organisation' );
+Harness::assert_false( Policy::can_remove_member( $contrib_a, 999, ORG_A ), 'a contributor cannot remove anybody' );
+Harness::assert_false( Policy::can_remove_member( $owner_a, $owner_a->user_id, ORG_A ), 'an owner cannot remove themselves' );
+Harness::assert_false( Policy::can_remove_member( $owner_a, 999, ORG_B ), 'an owner cannot remove somebody from another organisation' );
+Harness::assert_false( Policy::can_remove_member( $owner_a, 999, null ), 'nobody can remove a person with no organisation' );
+Harness::assert_false( Policy::can_remove_member( $owner_a, 0, ORG_A ), 'a missing target is refused' );
+Harness::assert_false( Policy::can_remove_member( $pending_owner, 999, ORG_A ), 'an owner whose own account is still pending cannot remove anybody' );
+Harness::assert_true( Policy::can_remove_member( administrator(), 999, ORG_B ), 'an administrator can remove anybody from any organisation' );
+Harness::assert_false( Policy::can_remove_member( administrator(), administrator()->user_id, ORG_B ), 'even an administrator cannot remove themselves this way' );
+Harness::assert_false( Policy::can_remove_member( moderator(), 999, ORG_A ), 'a moderator is not an owner and cannot remove members' );

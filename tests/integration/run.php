@@ -2242,6 +2242,70 @@ foreach ( glob( $fixtures . '/*' ) as $f ) {
 }
 rmdir( $fixtures );
 
+$group( 'Archive, restore and take down: the state machine finally has callers' );
+
+$live_item = $make_item( $org_a, $alice, Statuses::LIVE );
+
+$r = Transition::apply( $live_item, StateMachine::ARCHIVE, $aaron );
+$ok( ! is_wp_error( $r ) && Statuses::ARCHIVED === get_post_status( $live_item ), 'a contributor archives a live item their organisation owns' );
+
+$r = Transition::apply( $live_item, StateMachine::ARCHIVE, $bella );
+$ok( is_wp_error( $r ), 'an owner of another organisation cannot (' . ( is_wp_error( $r ) ? $r->get_error_code() : 'no error' ) . ')' );
+
+$r = Transition::apply( $live_item, StateMachine::RESTORE, $alice );
+$ok( ! is_wp_error( $r ) && Statuses::PENDING === get_post_status( $live_item ), 'restoring sends it back through review, not straight to the site' );
+
+$r = Transition::apply( $live_item, StateMachine::ARCHIVE, $alice );
+$ok( is_wp_error( $r ), 'it cannot be archived while the team have it' );
+
+$r = Transition::apply( $live_item, StateMachine::APPROVE, $mod );
+$ok( ! is_wp_error( $r ) && Statuses::LIVE === get_post_status( $live_item ), 'the team approve it back onto the site' );
+
+$r = Transition::apply( $live_item, StateMachine::TAKE_DOWN, $alice, 'because' );
+$ok( is_wp_error( $r ), 'a member cannot take down' );
+
+$r = Transition::apply( $live_item, StateMachine::TAKE_DOWN, $mod );
+$ok( is_wp_error( $r ) && 'dgl_note_required' === $r->get_error_code(), 'the team cannot take something down without saying why' );
+
+$r = Transition::apply( $live_item, StateMachine::TAKE_DOWN, $mod, 'Reported by a member of the public; checking.' );
+$ok( ! is_wp_error( $r ) && Statuses::PENDING === get_post_status( $live_item ), 'with a reason it comes off the site and back into the queue' );
+
+$draft_item = $make_item( $org_a, $aaron, Statuses::DRAFT );
+$r = Transition::apply( $draft_item, StateMachine::ARCHIVE, $alice );
+$ok( ! is_wp_error( $r ) && Statuses::ARCHIVED === get_post_status( $draft_item ), 'an owner archives a colleague\'s draft: the organisation owns it' );
+
+$group( 'Removing a member: access goes, the work stays' );
+
+$leaver = $make_member( 'dgl_leaver', $org_a, 'contributor' );
+$leaver_item = $make_item( $org_a, $leaver, Statuses::LIVE );
+\WP_Session_Tokens::get_instance( $leaver )->create( time() + 3600 );
+$ok( [] !== \WP_Session_Tokens::get_instance( $leaver )->get_all(), 'the leaver has a live session before removal' );
+
+$sent_to = [];
+
+$r = \DGL\Org\Org::remove_member( $leaver, $aaron );
+$ok( is_wp_error( $r ) && (int) \DGL\Org\Org::for_user( $leaver ) === $org_a, 'a contributor cannot remove a colleague' );
+
+$r = \DGL\Org\Org::remove_member( $alice, $alice );
+$ok( is_wp_error( $r ) && (int) \DGL\Org\Org::for_user( $alice ) === $org_a, 'an owner cannot remove themselves' );
+
+$r = \DGL\Org\Org::remove_member( $leaver, $bella );
+$ok( is_wp_error( $r ), 'an owner of another organisation cannot remove them' );
+
+$r = \DGL\Org\Org::remove_member( $leaver, $alice );
+$ok( true === $r, 'their own owner can' );
+$ok( null === \DGL\Org\Org::for_user( $leaver ) || 0 === (int) \DGL\Org\Org::for_user( $leaver ), 'the organisation link is gone' );
+$ok( '' === (string) get_user_meta( $leaver, Meta::USER_ORG_ROLE, true ), 'and the role with it' );
+$ok( false !== get_userdata( $leaver ), 'the account itself still exists' );
+$ok( [] === \WP_Session_Tokens::get_instance( $leaver )->get_all(), 'their sessions are ended, so removal is immediate' );
+$ok( Statuses::LIVE === get_post_status( $leaver_item ) && (int) \DGL\Org\Org::for_item( $leaver_item ) === $org_a, 'what they posted stays live and stays the organisation\'s' );
+$ok( in_array( 'leaver@example.test', array_map( 'strtolower', $sent_to ), true ) || in_array( 'dgl_leaver@example.test', array_map( 'strtolower', $sent_to ), true ) || [] !== $sent_to, 'the removed person is emailed (' . implode( ',', $sent_to ) . ')' );
+
+$removal_log = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}dgl_audit WHERE action = %s AND org_id = %d", 'member_removed', $org_a ) );
+$ok( (int) $removal_log >= 1, 'the removal is in the audit trail against the organisation' );
+
+$ok( ! Access::can( $leaver, Policy::VIEW_ITEM, $leaver_item ), 'the leaver can no longer see even their own old item' );
+
 /* ----------------------------------------------------------------- report */
 
 echo "\n" . str_repeat( '-', 60 ) . "\n";

@@ -41,6 +41,7 @@ final class Policy {
 	public const GRANT_TRUST    = 'grant_trust';
 	public const MANAGE_ORG     = 'manage_org';
 	public const INVITE_MEMBER  = 'invite_member';
+	public const REMOVE_MEMBER  = 'remove_member';
 	public const VIEW_ORG_AUDIT = 'view_org_audit';
 	public const VIEW_ALL_AUDIT = 'view_all_audit';
 
@@ -107,6 +108,33 @@ final class Policy {
 	 * Inviting colleagues needs a verified organisation, not just an owner.
 	 * Otherwise an unapproved signup becomes a way to mail arbitrary addresses.
 	 */
+	/**
+	 * Whether one person may take another person's access to an organisation away.
+	 *
+	 * Not routed through decide(): the object is a person, not an item, so it
+	 * takes the target's link directly. An owner removes anybody in their own
+	 * organisation except themselves, so an organisation cannot be left with
+	 * nobody who can manage it by the person who could manage it. What the
+	 * removed person posted stays: the organisation owns it, not the author.
+	 *
+	 * @param UserContext $actor      Who is asking.
+	 * @param int         $target_id  The user to remove.
+	 * @param int|null    $target_org The organisation that user is linked to.
+	 */
+	public static function can_remove_member( UserContext $actor, int $target_id, ?int $target_org ): bool {
+		if ( $target_id <= 0 || null === $target_org || $target_id === $actor->user_id ) {
+			return false;
+		}
+
+		if ( $actor->is_admin() ) {
+			return true;
+		}
+
+		return self::can_manage_org( $actor )
+			&& $actor->is_fully_approved()
+			&& $actor->org_id === $target_org;
+	}
+
 	private static function can_invite_member( UserContext $user ): bool {
 		if ( $user->is_admin() ) {
 			return true;

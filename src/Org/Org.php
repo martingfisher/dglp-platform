@@ -110,6 +110,55 @@ final class Org {
 	/**
 	 * Whether a post ID is actually an organisation.
 	 */
+	/**
+	 * Take a person's access to their organisation away.
+	 *
+	 * The link and the role go; the account stays, so the same address can be
+	 * invited again or join another organisation later. Their sessions are
+	 * ended, because a removal that waits for them to sign out is not one.
+	 * Everything they posted stays with the organisation.
+	 *
+	 * @return true|\WP_Error
+	 */
+	public static function remove_member( int $user_id, int $actor_id ) {
+		$actor  = \DGL\Access\Access::user_context( $actor_id );
+		$org_id = self::for_user( $user_id );
+
+		if ( ! \DGL\Access\Policy::can_remove_member( $actor, $user_id, $org_id ) ) {
+			return new \WP_Error( 'dgl_not_allowed', __( 'You cannot remove that person.', 'dgl-platform' ) );
+		}
+
+		$person = get_userdata( $user_id );
+
+		if ( ! $person ) {
+			return new \WP_Error( 'dgl_no_user', __( 'That account no longer exists.', 'dgl-platform' ) );
+		}
+
+		delete_user_meta( $user_id, Meta::USER_ORG );
+		delete_user_meta( $user_id, Meta::USER_ORG_ROLE );
+		\WP_Session_Tokens::get_instance( $user_id )->destroy_all();
+
+		\DGL\Audit\Log::record(
+			'member_removed',
+			'org',
+			(int) $org_id,
+			(int) $org_id,
+			sprintf(
+				/* translators: 1: name, 2: email address. */
+				__( '%1$s (%2$s) no longer posts for this organisation.', 'dgl-platform' ),
+				$person->display_name,
+				$person->user_email
+			),
+			[],
+			$actor_id
+		);
+
+		$message = \DGL\Email\InviteCopy::removed( get_the_title( (int) $org_id ) );
+		\DGL\Email\Mailer::send( $message->for_recipients( [ (string) $person->user_email ] ) );
+
+		return true;
+	}
+
 	public static function exists( int $org_id ): bool {
 		return $org_id > 0 && PostTypes::ORG === get_post_type( $org_id );
 	}

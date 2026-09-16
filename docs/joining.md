@@ -46,11 +46,11 @@ no screen where staff approve a pending person. The dashboard banner promises
 ## What DGLP are assuming exists, and does not
 
 **Archiving.** Decision 1 says members can archive the organisation's content.
-`Workflow\StateMachine` defines ARCHIVE, RESTORE and TAKE_DOWN and
-`Workflow\Transition` wires them, and **nothing calls them**: not the item
-screen, not the list, not wp-admin, not the CLI. The only ways an item reaches
-the Archive today are the hourly expiry sweep and a refusal. This has to be
-built before the walkthrough matches what DGLP were told.
+Until 0.7.1 nothing called the state machine's ARCHIVE, RESTORE or TAKE_DOWN.
+Now the item screen offers "Take off the site" (live) or "Archive" (anything
+else not with the team) and "Restore" (which goes back through review), and
+the review screen offers "Take it down" with a required reason. wp-admin and
+the CLI still do not.
 
 ## The joining flow, step by step
 
@@ -101,8 +101,8 @@ would otherwise walk in. The blocklist is a hard rule, not a warning.
 | 5 | **The screens.** `/dashboard/join`, the "check your email" holding screen, the verification landing with the match outcome, the organisation search, the create-organisation form, the "we have your details" pending screen from wireframe 1c. | `Dashboard\Controller`, `templates/dashboard/` |
 | 6 | **Approval queue.** People who claimed an organisation without a domain match, and new organisations. On the front-end review area, with approve and refuse and a reason. wp-admin gets the same list. | `Dashboard\Controller`, `Admin\` |
 | 7 | **Emails.** Verify your address. You are in. Your request was approved. Your request was refused, with the reason. "Somebody has joined your organisation", to the owner. | `Email\` |
-| 8 | **Archive, restore, take down.** On the item screen for members, on the review screen for staff. The state machine already knows the rules. | `Dashboard\Controller`, `templates/dashboard/detail.php` |
-| 9 | **Removing a member.** The Members tab says "not built yet". An owner needs it once several people share a dashboard. | `Dashboard\Controller`, `profile.php` |
+| 8 | **Archive, restore, take down.** Built 16 September (0.7.1): archive and restore on the item screen for members, take down with a reason on the review screen for staff. | done |
+| 9 | **Removing a member.** Built 16 September (0.7.1): an owner removes anybody in their organisation except themselves; access ends immediately, the work stays, the person is emailed. | done |
 
 ## Decisions still needed
 

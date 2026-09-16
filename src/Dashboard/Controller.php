@@ -253,6 +253,9 @@ final class Controller {
 		self::screen(
 			'review-queue',
 			[
+				// What just happened, named. A decision that lands on a silent list
+				// reads as a decision that did not happen.
+				'decided' => isset( $_GET['decided'] ) ? sanitize_key( wp_unslash( $_GET['decided'] ) ) : '', // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 				'user'  => $user,
 				'items' => array_map( static fn( int $id ): array => self::row( $id, true ), $ids ),
 				'total' => $total,
@@ -306,10 +309,11 @@ final class Controller {
 			}
 
 			$action = match ( $intent ) {
-				'approve' => StateMachine::APPROVE,
-				'changes' => StateMachine::REQUEST_CHANGES,
-				'reject'  => StateMachine::REJECT,
-				default   => '',
+				'approve'   => StateMachine::APPROVE,
+				'changes'   => StateMachine::REQUEST_CHANGES,
+				'reject'    => StateMachine::REJECT,
+				'take_down' => StateMachine::TAKE_DOWN,
+				default     => '',
 			};
 
 			if ( '' !== $action ) {
@@ -360,6 +364,9 @@ final class Controller {
 				'prev'      => false !== $position && $position > 0 ? $queue[ $position - 1 ] : null,
 				'next'      => false !== $position && isset( $queue[ $position + 1 ] ) ? $queue[ $position + 1 ] : null,
 				'decidable' => Access::can( $user->user_id, Policy::MODERATE_ITEM, $post_id ),
+				// A live item can be pulled while the team look at it. It goes
+				// back to pending, so it comes down now and gets decided later.
+				'can_take_down' => Access::can( $user->user_id, Policy::TAKE_DOWN_ITEM, $post_id ),
 			],
 			$post->post_title !== '' ? $post->post_title : __( 'Review', 'dgl-platform' ),
 			$user
@@ -666,6 +673,36 @@ final class Controller {
 			return;
 		}
 
+		$action_error = '';
+
+		/*
+		 * Archive and restore post back to this screen. The state machine
+		 * already knew both moves and nothing anywhere called them: the client
+		 * were told members could archive, and the only way anything reached
+		 * the Archive was an expiry date or a refusal.
+		 */
+		if ( 'POST' === ( $_SERVER['REQUEST_METHOD'] ?? 'GET' ) ) {
+			check_admin_referer( Wizard::NONCE );
+
+			$intent = isset( $_POST['dgl_intent'] ) ? sanitize_key( wp_unslash( $_POST['dgl_intent'] ) ) : '';
+			$action = match ( $intent ) {
+				'archive' => StateMachine::ARCHIVE,
+				'restore' => StateMachine::RESTORE,
+				default   => '',
+			};
+
+			if ( '' !== $action ) {
+				$result = Transition::apply( $post_id, $action, $user->user_id );
+
+				if ( is_wp_error( $result ) ) {
+					$action_error = $result->get_error_message();
+				} else {
+					wp_safe_redirect( add_query_arg( $intent . 'd', '1', Router::url( 'item', (string) $post_id ) ) );
+					exit;
+				}
+			}
+		}
+
 		$def      = PostTypes::definitions()[ $post->post_type ];
 		$revision = Revisions::open_for( $post_id );
 
@@ -682,8 +719,13 @@ final class Controller {
 				// is an accurate model and a confusing screen.
 				'history'    => Revisions::history_for( $post_id ),
 				'can_edit'   => Access::can( $user->user_id, Policy::EDIT_ITEM, $post_id ),
+				'can_archive' => null === $revision && Access::can( $user->user_id, Policy::ARCHIVE_ITEM, $post_id ),
+				'can_restore' => Access::can( $user->user_id, Policy::RESTORE_ITEM, $post_id ),
+				'action_error' => $action_error,
 				'submitted'  => isset( $_GET['submitted'] ), // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 				'discarded'  => isset( $_GET['discarded'] ), // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+				'archived'   => isset( $_GET['archived'] ), // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+				'restored'   => isset( $_GET['restored'] ), // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 				/*
 				 * What is shown below is the published version, always. The
 				 * pending edit is announced in a banner rather than rendered in
@@ -858,12 +900,13 @@ final class Controller {
 			}
 
 			$rows[] = [
-				'id'      => $user_id,
-				'name'    => (string) $person->display_name,
-				'email'   => (string) $person->user_email,
-				'role'    => Org::role_for_user( $user_id ),
-				'status'  => (string) get_user_meta( $user_id, \DGL\Meta::USER_ACCOUNT_STATUS, true ),
-				'is_you'  => $user_id === get_current_user_id(),
+				'id'         => $user_id,
+				'name'       => (string) $person->display_name,
+				'email'      => (string) $person->user_email,
+				'role'       => Org::role_for_user( $user_id ),
+				'status'     => (string) get_user_meta( $user_id, \DGL\Meta::USER_ACCOUNT_STATUS, true ),
+				'is_you'     => $user_id === get_current_user_id(),
+				'can_remove' => Policy::can_remove_member( Access::user_context( get_current_user_id() ), $user_id, $org_id ),
 			];
 		}
 
@@ -1140,6 +1183,24 @@ final class Controller {
 			} else {
 				self::flash( '', $result['error'] );
 			}
+
+			wp_safe_redirect( $back );
+			exit;
+		}
+
+		if ( 'remove' === $action ) {
+			$member_id = isset( $post['dgl_member_id'] ) ? (int) $post['dgl_member_id'] : 0;
+			$person    = get_userdata( $member_id );
+			$result    = \DGL\Org\Org::remove_member( $member_id, $user->user_id );
+
+			self::flash(
+				is_wp_error( $result ) ? '' : sprintf(
+					/* translators: %s: person's name. */
+					__( '%s no longer has access. Anything they posted stays with the organisation.', 'dgl-platform' ),
+					$person ? $person->display_name : __( 'That person', 'dgl-platform' )
+				),
+				is_wp_error( $result ) ? $result->get_error_message() : ''
+			);
 
 			wp_safe_redirect( $back );
 			exit;

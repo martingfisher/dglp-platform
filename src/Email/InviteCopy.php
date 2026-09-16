@@ -157,4 +157,34 @@ final class InviteCopy {
 			]
 		);
 	}
+
+	/**
+	 * To the person whose access was taken away. Says what happened and what
+	 * did not: their account still exists, their listings stay with the
+	 * organisation, and if this is wrong the organisation is who to ask.
+	 */
+	public static function removed( string $org_name ): Message {
+		return new Message(
+			key: 'member_removed',
+			audience: 'removed',
+			subject: sprintf(
+				/* translators: %s: organisation. */
+				__( 'You no longer post for %s', 'dgl-platform' ),
+				$org_name
+			),
+			preheader: __( 'Your access to the member area has been removed.', 'dgl-platform' ),
+			heading: __( 'Your access has been removed', 'dgl-platform' ),
+			paragraphs: [
+				sprintf(
+					/* translators: %s: organisation. */
+					__( 'An owner at %s has removed you from their member area. You can no longer submit or edit listings for them.', 'dgl-platform' ),
+					$org_name
+				),
+				__( 'Anything you posted stays on the site under the organisation, as it always did. Your account has not been deleted, so you can be invited again or join a different organisation.', 'dgl-platform' ),
+			],
+			footnotes: [
+				__( 'If you think this is a mistake, ask the organisation. The DGLP team cannot see why an owner removed somebody.', 'dgl-platform' ),
+			]
+		);
+	}
 }

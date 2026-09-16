@@ -206,6 +206,29 @@ $check_word = static fn( string $status ): string => match ( $status ) {
 			</form>
 		</section>
 
+		<?php if ( ! empty( $data['can_take_down'] ) ) : ?>
+			<section class="dgl-card dgl-decision">
+				<h2 class="dgl-section__title"><?php esc_html_e( 'Take it off the site', 'dgl-platform' ); ?></h2>
+				<p class="dgl-help"><?php esc_html_e( 'This is live. Taking it down puts it back in the queue: it comes off the site now and gets decided again. The member is told, with your reason.', 'dgl-platform' ); ?></p>
+
+				<form method="post" class="dgl-form dgl-form--bare">
+					<?php wp_nonce_field( Wizard::NONCE ); ?>
+
+					<div class="dgl-field-row">
+						<label class="dgl-label" for="dgl-note"><?php esc_html_e( 'Why', 'dgl-platform' ); ?> <span class="dgl-req" aria-hidden="true">*</span></label>
+						<textarea class="dgl-field dgl-field--area" id="dgl-note" name="dgl_note" rows="4" required></textarea>
+					</div>
+
+					<div class="dgl-decision__actions">
+						<button class="dgl-button dgl-button--danger" type="submit" name="dgl_intent" value="take_down"
+							data-dgl-confirm="<?php esc_attr_e( 'Take this off the site now?', 'dgl-platform' ); ?>">
+							<?php esc_html_e( 'Take it down', 'dgl-platform' ); ?>
+						</button>
+					</div>
+				</form>
+			</section>
+		<?php endif; ?>
+
 		<?php if ( $decidable ) : ?>
 			<section class="dgl-card dgl-decision">
 				<h2 class="dgl-section__title"><?php esc_html_e( 'Decision', 'dgl-platform' ); ?></h2>

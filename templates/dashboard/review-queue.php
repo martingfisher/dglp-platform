@@ -12,6 +12,19 @@ use DGL\Dashboard\View;
 
 defined( 'ABSPATH' ) || exit;
 ?>
+<?php
+$decided_copy = [
+	'approve'   => __( 'Approved and published. The member has been told.', 'dgl-platform' ),
+	'changes'   => __( 'Sent back with your note. The member has been told.', 'dgl-platform' ),
+	'reject'    => __( 'Refused. The member has been told, with your reason.', 'dgl-platform' ),
+	'take_down' => __( 'Taken off the site. It is back in this queue, and the member has been told why.', 'dgl-platform' ),
+];
+$decided = (string) ( $data['decided'] ?? '' );
+?>
+<?php if ( isset( $decided_copy[ $decided ] ) ) : ?>
+	<div class="dgl-alert dgl-alert--good" role="status"><p><?php echo esc_html( $decided_copy[ $decided ] ); ?></p></div>
+<?php endif; ?>
+
 <header class="dgl-page-head">
 	<div>
 		<h1 class="dgl-page-head__title"><?php esc_html_e( 'Review queue', 'dgl-platform' ); ?></h1>

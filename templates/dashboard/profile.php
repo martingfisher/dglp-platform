@@ -164,6 +164,9 @@ $is_owner = $user instanceof UserContext && $user->is_org_owner();
 					<th scope="col"><?php esc_html_e( 'Name', 'dgl-platform' ); ?></th>
 					<th scope="col"><?php esc_html_e( 'Email', 'dgl-platform' ); ?></th>
 					<th scope="col"><?php esc_html_e( 'Can do', 'dgl-platform' ); ?></th>
+					<?php if ( ! empty( $data['can_invite'] ) ) : ?>
+						<th scope="col"><span class="screen-reader-text"><?php esc_html_e( 'Actions', 'dgl-platform' ); ?></span></th>
+					<?php endif; ?>
 				</tr>
 			</thead>
 			<tbody>
@@ -184,13 +187,32 @@ $is_owner = $user instanceof UserContext && $user->is_org_owner();
 								<span class="dgl-edit-flag"><?php echo esc_html( ucfirst( (string) $row['status'] ) ); ?></span>
 							<?php endif; ?>
 						</td>
+						<?php if ( ! empty( $data['can_invite'] ) ) : ?>
+							<td class="dgl-row-actions">
+								<?php if ( ! empty( $row['can_remove'] ) ) : ?>
+									<form method="post" class="dgl-inline-form">
+										<?php wp_nonce_field( \DGL\Dashboard\Wizard::NONCE ); ?>
+										<input type="hidden" name="dgl_invite_action" value="remove">
+										<input type="hidden" name="dgl_member_id" value="<?php echo esc_attr( (string) $row['id'] ); ?>">
+										<button type="submit" class="dgl-button dgl-button--quiet"
+											data-dgl-confirm="<?php echo esc_attr( sprintf(
+												/* translators: %s: person's name. */
+												__( 'Remove %s? They lose access straight away. Anything they posted stays with the organisation.', 'dgl-platform' ),
+												$row['name']
+											) ); ?>">
+											<?php esc_html_e( 'Remove', 'dgl-platform' ); ?>
+										</button>
+									</form>
+								<?php endif; ?>
+							</td>
+						<?php endif; ?>
 					</tr>
 				<?php endforeach; ?>
 			</tbody>
 		</table>
 
 		<p class="dgl-help">
-			<?php esc_html_e( 'Removing somebody is not built yet. Ask the DGLP team and they will do it for you.', 'dgl-platform' ); ?>
+			<?php esc_html_e( 'Removing somebody takes their access away straight away. What they posted stays with the organisation. You cannot remove yourself.', 'dgl-platform' ); ?>
 		</p>
 	</section>
 
