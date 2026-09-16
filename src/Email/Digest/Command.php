@@ -150,6 +150,85 @@ final class Command {
 	}
 
 	/**
+	 * Send one person their digest now, whatever the schedule says.
+	 *
+	 * A new subscriber is not owed a digest until the next send hour, which is
+	 * correct and also means there is no way to answer "does this actually
+	 * arrive" without waiting until morning. This skips the cadence check and
+	 * nothing else: consent is still required and an empty digest is still not
+	 * sent.
+	 *
+	 * ## OPTIONS
+	 *
+	 * <user>
+	 * : User ID, login or email.
+	 *
+	 * [--dry-run]
+	 * : Build it and send nothing.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp dgl digest send jo@charity.org --dry-run
+	 *     wp dgl digest send jo@charity.org
+	 *
+	 * @when after_wp_load
+	 *
+	 * @param string[]              $args
+	 * @param array<string, string> $assoc
+	 */
+	public function send( array $args, array $assoc ): void {
+		$user = get_user_by( 'id', (int) $args[0] )
+			?: get_user_by( 'login', (string) $args[0] )
+			?: get_user_by( 'email', (string) $args[0] );
+
+		if ( ! $user instanceof \WP_User ) {
+			WP_CLI::error( sprintf( 'No account matches "%s".', (string) $args[0] ) );
+		}
+
+		$subscription = Store::for_user( (int) $user->ID );
+
+		if ( null === $subscription ) {
+			WP_CLI::error( 'That account has never set digest preferences.' );
+		}
+
+		if ( ! $subscription->has_consent() ) {
+			WP_CLI::error( 'That account has no recorded consent, so nothing may be sent to it. Use `wp dgl digest subscribe` first.' );
+		}
+
+		$dry = isset( $assoc['dry-run'] );
+
+		if ( ! $dry && ! Routing::is_enabled() ) {
+			WP_CLI::error( 'Sending is off. Turn it on, or use --dry-run.' );
+		}
+
+		$result = Runner::send_one(
+			$subscription,
+			new DateTimeImmutable( 'now', new DateTimeZone( 'UTC' ) ),
+			$dry
+		);
+
+		if ( 'skipped_empty' === $result['outcome'] ) {
+			WP_CLI::success( 'Nothing matches, so nothing was sent and the last-sent date did not move.' );
+			return;
+		}
+
+		if ( 'failed' === $result['outcome'] ) {
+			WP_CLI::error( 'WordPress refused the message. The last-sent date was not moved, so this can be retried.' );
+		}
+
+		if ( $dry ) {
+			WP_CLI::success( sprintf( '%d item(s) would have gone to %s. Nothing was sent.', $result['items'], $subscription->email ) );
+			return;
+		}
+
+		WP_CLI::success( sprintf(
+			'%d item(s) handed to WordPress for %s. That is not proof it arrived, so check the inbox.',
+			$result['items'],
+			$subscription->email
+		) );
+	}
+
+	/**
 	 * Put somebody on the digest, or take them off.
 	 *
 	 * For the support call: a member rings up and asks to be added, or asks to
