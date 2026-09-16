@@ -181,3 +181,10 @@ clean. They are the only DGLP content on staging.
   Blocksy interaction is NOT VERIFIED from the sandbox (wordpress.org and its
   mirrors are blocked); the fix was proved locally against an injected
   element-level rule, and Martin confirms on staging.
+- **0.7.0 deployed** (Impeccable pass): `PRODUCT.md` and `DESIGN.md` now
+  record the product and the design system ("The Community Office"). Links
+  and focus are Council Navy; cards gently lifted; rails removed except the
+  sidebar's teal mark; pending amber unified at 5.96:1; tables scroll inside
+  their box on phones and the page no longer scrolls sideways. Pinned to
+  commit `28d2a29`. The Impeccable skill is committed under
+  `.claude/skills/impeccable/` and export-ignored from the zip.
