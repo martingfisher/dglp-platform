@@ -913,6 +913,24 @@ body.dgl-body {
 	cursor: pointer;
 }
 
+/*
+ * The box sits on the label's first line, not above it. A native checkbox is
+ * 13px with its own font and margin, so in a flex row it floated up to the
+ * top of a 25px line box. It is given a size, the label's font so the em is
+ * the label's, and a top margin that centres it on that first line; a label
+ * that wraps or carries a help line keeps the box on its first line rather
+ * than drifting to the middle. accent-color keeps it Council Navy rather
+ * than the browser's blue, which is the one colour that means "chosen" here.
+ */
+.dgl-check > input {
+	flex: none;
+	width: 18px;
+	height: 18px;
+	margin: calc( ( 1em * var(--dgl-line) - 18px ) / 2 ) 0 0;
+	font-size: inherit;
+	accent-color: var(--dgl-primary);
+}
+
 .dgl-checks {
 	display: flex;
 	flex-wrap: wrap;
