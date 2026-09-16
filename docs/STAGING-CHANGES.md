@@ -192,3 +192,6 @@ clean. They are the only DGLP content on staging.
   with a reason on the review screen, and the queue names the decision just
   made; owners can remove a member from the Members tab. Pinned to commit
   `1e9b13c`. Nothing else on staging changed.
+- **0.7.2 deployed**: field edges are 1px at 4.9:1 (were 2px); the file
+  control is centred in its box with its button restyled. Pinned to commit
+  `2475cb3`.
