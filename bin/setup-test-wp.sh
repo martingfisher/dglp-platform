@@ -11,7 +11,7 @@
 set -euo pipefail
 
 TARGET="${1:-${TMPDIR:-/tmp}/dgl-test-wp}"
-WP_VERSION="${WP_VERSION:-6.7.1}"
+WP_VERSION="${WP_VERSION:-7.1}"
 PLUGIN_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 echo "Target:  $TARGET"

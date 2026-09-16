@@ -172,10 +172,10 @@ final class Command {
 			WP_CLI::error( 'Give the organisation a name.' );
 		}
 
-		$existing = get_page_by_title( $name, OBJECT, PostTypes::ORG );
+		$existing = self::org_by_name( $name );
 
-		if ( $existing instanceof \WP_Post ) {
-			WP_CLI::error( sprintf( '"%s" already exists, as post %d.', $name, $existing->ID ) );
+		if ( null !== $existing ) {
+			WP_CLI::error( sprintf( '"%s" already exists, as post %d.', $name, $existing ) );
 		}
 
 		$id = wp_insert_post(
@@ -214,13 +214,36 @@ final class Command {
 			return (int) $given;
 		}
 
-		$post = get_page_by_title( $given, OBJECT, PostTypes::ORG );
+		$id = self::org_by_name( $given );
 
-		if ( ! $post instanceof \WP_Post ) {
+		if ( null === $id ) {
 			WP_CLI::error( sprintf( 'No organisation matches "%s". Create one with `wp dgl invite org "<name>" --approved`.', $given ) );
 		}
 
-		return (int) $post->ID;
+		return $id;
+	}
+
+	/**
+	 * An organisation by its exact title, or null.
+	 *
+	 * Not get_page_by_title(): that has lived in deprecated.php since
+	 * WordPress 6.2 and this plugin runs on 7.1. WP_Query's `title`
+	 * argument is the replacement core recommends, and it is an exact
+	 * match, which is what a command-line lookup should be.
+	 */
+	private static function org_by_name( string $name ): ?int {
+		$found = get_posts(
+			[
+				'post_type'      => PostTypes::ORG,
+				'post_status'    => [ 'publish', 'draft', 'pending', 'private' ],
+				'title'          => $name,
+				'posts_per_page' => 1,
+				'fields'         => 'ids',
+				'no_found_rows'  => true,
+			]
+		);
+
+		return [] === $found ? null : (int) $found[0];
 	}
 
 	private static function resolve_actor( ?string $given ): int {
