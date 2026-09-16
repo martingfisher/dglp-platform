@@ -58,6 +58,18 @@
 	color: var(--dgl-link);
 }
 
+/*
+ * The rule above scores 0,0,1 and the theme's own `a` rule scores the same
+ * and loads later, so on staging every bare link in the content column was
+ * the theme's purple. This one scores 0,1,1 for bare links only, classed
+ * components keep their own colours, and the hover is pinned too because
+ * the theme sets that as well.
+ */
+.dgl-dash__main a:where( :not( [class] ) ),
+.dgl-dash__main a:where( :not( [class] ) ):hover {
+	color: var(--dgl-link);
+}
+
 .dgl-dash :is(a, button, input, select, textarea, [tabindex]):focus-visible {
 	outline: 2px solid var(--dgl-focus);
 	outline-offset: 2px;
@@ -117,8 +129,15 @@
  * stylesheet still loads through wp_head, which is why everything here is
  * scoped and why the body rules are stated rather than inherited. */
 
+/*
+ * The theme paints <html> too (Blocksy's is sky blue on this site), and it
+ * showed as a band under the shell on a short page. Both roots are ours.
+ */
+html:has( body.dgl-body ) { background: var(--dgl-page); }
+
 body.dgl-body {
 	margin: 0;
+	min-height: 100vh;
 	background: var(--dgl-page);
 	color: var(--dgl-text);
 	font-family: var(--dgl-font);
@@ -577,6 +596,16 @@ body.dgl-body {
 	border-radius: var(--dgl-radius-card);
 	overflow: hidden;
 	font-size: 0.84em;
+}
+
+/*
+ * Borders and backgrounds are stated in full on cells, not just the bottom
+ * edge, because the theme gives every th and td a border of its own and it
+ * showed as a faint column line through the header on staging.
+ */
+.dgl-dash__main .dgl-table :is( th, td ) {
+	border: 0;
+	border-bottom: 1px solid var(--dgl-border);
 }
 
 .dgl-table th {
