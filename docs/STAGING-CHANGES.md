@@ -237,3 +237,9 @@ clean. They are the only DGLP content on staging.
   `resultsyoucanmeasure.com` so any address on it can walk the match path.
   A sign-in template bug found on the way (blank screen below the top bar,
   from an unqualified class) never reached staging.
+- **0.8.1 and 0.8.2 deployed**: sign-out button gets its air from its own
+  margin; review-team accounts with no organisation get a "you are on the
+  review team" card instead of "not linked to an organisation"; every
+  button variant pinned against Blocksy's element rules (the join page's
+  button was teal on staging); the shell fills the viewport so the sidebar
+  reaches the bottom of a short page. Pinned to commit `d64c445`.
