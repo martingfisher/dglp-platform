@@ -109,3 +109,14 @@ hosting subdomain is mail that trains a spam filter against the domain.
 
 `smtp2go` is installed but **inactive**, so everything goes out through PHP
 `mail()`.
+
+### Public pages, 0.6.0
+
+Published items now have public pages. On staging the demo event is at
+`/events/demo-coffee-morning-at-armley-library/` and the listing at `/events/`.
+Rewrite rules were flushed after the deploy, because archives changed.
+
+`/grants/` and `/volunteering/` return 404, as intended for this release.
+
+The two `Demo:` posts (8438, 8439) can be deleted whenever DGLP want the site
+clean. They are the only DGLP content on staging.
