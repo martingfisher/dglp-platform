@@ -2055,11 +2055,14 @@ $group( 'Public pages: what gets published' );
 
 $pub_item = $make_item( $org_a, $alice, Statuses::LIVE );
 wp_update_post( [ 'ID' => $pub_item, 'post_title' => 'A public event' ] );
-update_post_meta( $pub_item, 'summary', 'The standfirst.' );
-update_post_meta( $pub_item, 'venue_name', 'Armley Library' );
-update_post_meta( $pub_item, 'start_datetime', '2026-11-04 18:30:00' );
-update_post_meta( $pub_item, 'capacity', '40' );
-update_post_meta( $pub_item, 'booking_url', 'https://example.test/book' );
+// Stored the way the wizard stores them, under the meta key. The fixtures
+// used the bare field key, which is how the public pages passed every test
+// while showing a real event with no date, venue or summary.
+foreach ( [ 'summary' => 'The standfirst.', 'venue_name' => 'Armley Library', 'start_datetime' => '2026-11-04 18:30:00', 'capacity' => '40', 'booking_url' => 'https://example.test/book' ] as $k => $v ) {
+	update_post_meta( $pub_item, \DGL\Schema\FieldRegistry::find( PostTypes::EVENT, $k )->meta_key(), $v );
+}
+$ok( 'dgl_summary' === \DGL\Schema\FieldRegistry::find( PostTypes::EVENT, 'summary' )->meta_key(), 'the stored key is the prefixed one' );
+$ok( 'The standfirst.' === (string) \DGL\Frontend\Frontend::value( get_post( $pub_item ), 'summary' ), 'and the public side reads it' );
 
 $pub_post = get_post( $pub_item );
 $facts    = \DGL\Frontend\Frontend::facts( $pub_post );

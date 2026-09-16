@@ -38,8 +38,8 @@ $label = Frontend::type_label( $type, true );
 				$item     = get_post();
 				$meta     = Frontend::meta_line( $item );
 				$org      = Frontend::organisation( $item );
-				$summary  = (string) get_post_meta( (int) $item->ID, 'summary', true );
-				$image_id = (int) get_post_meta( (int) $item->ID, 'image', true );
+				$summary  = (string) Frontend::value( $item, 'summary' );
+				$image_id = (int) Frontend::value( $item, 'image' );
 				?>
 				<li class="dgl-pub__row">
 					<?php if ( $image_id > 0 ) : ?>

@@ -182,6 +182,21 @@ final class Frontend {
 	 *
 	 * @return array<int, array{label:string, value:string, key:string}>
 	 */
+	/**
+	 * A field's stored value for a public page.
+	 *
+	 * The wizard stores every field under its meta key, 'dgl_' plus the field
+	 * key. The public side read the bare key, so a real event showed no date,
+	 * no venue and no summary, and only ever looked right on items somebody
+	 * had created by hand with the wrong keys, including the demo on staging
+	 * and every fixture in the tests.
+	 */
+	public static function value( WP_Post $post, string $key ): mixed {
+		$field = FieldRegistry::find( (string) $post->post_type, $key );
+
+		return get_post_meta( (int) $post->ID, null === $field ? 'dgl_' . $key : $field->meta_key(), true );
+	}
+
 	public static function facts( WP_Post $post ): array {
 		$out = [];
 
@@ -192,7 +207,7 @@ final class Frontend {
 				continue;
 			}
 
-			$value = get_post_meta( (int) $post->ID, $field->key, true );
+			$value = get_post_meta( (int) $post->ID, $field->meta_key(), true );
 
 			if ( self::is_blank( $value ) ) {
 				continue;
@@ -226,21 +241,21 @@ final class Frontend {
 	public static function meta_line( WP_Post $post ): string {
 		$parts = [];
 
-		$when = (string) get_post_meta( (int) $post->ID, 'start_datetime', true );
+		$when = (string) self::value( $post, 'start_datetime' );
 
 		if ( '' === $when ) {
-			$when = (string) get_post_meta( (int) $post->ID, 'start_date', true );
+			$when = (string) self::value( $post, 'start_date' );
 		}
 
 		if ( '' === $when ) {
-			$when = (string) get_post_meta( (int) $post->ID, 'deadline', true );
+			$when = (string) self::value( $post, 'deadline' );
 		}
 
 		if ( '' !== $when ) {
 			$parts[] = View::date( $when, str_contains( $when, ':' ) );
 		}
 
-		$venue = (string) get_post_meta( (int) $post->ID, 'venue_name', true );
+		$venue = (string) self::value( $post, 'venue_name' );
 
 		if ( '' !== $venue ) {
 			$parts[] = $venue;
@@ -268,7 +283,7 @@ final class Frontend {
 	 */
 	public static function booking_url( WP_Post $post ): string {
 		foreach ( [ 'booking_url', 'apply_url', 'link' ] as $key ) {
-			$url = (string) get_post_meta( (int) $post->ID, $key, true );
+			$url = (string) self::value( $post, $key );
 
 			if ( '' !== $url ) {
 				return $url;
