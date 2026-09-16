@@ -93,7 +93,7 @@
 
 .dgl-button--secondary {
 	background: transparent;
-	border: var(--dgl-field-border) solid var(--dgl-border-strong);
+	border: var(--dgl-field-border) solid var(--dgl-field-outline);
 	color: var(--dgl-primary);
 }
 
@@ -841,10 +841,33 @@ body.dgl-body {
 	resize: vertical;
 }
 
+/*
+ * The file control is the browser's own button and a line of text. A file
+ * input ignores flex and gap, so the line-height centres it in the same 45px
+ * box as every other field and the button's own margin makes the gap. The
+ * button is restyled to match the secondary button so it does not look
+ * borrowed.
+ */
 .dgl-field--file {
-	padding: 10px 12px;
-	min-height: 0;
+	padding: 0 12px 0 6px;
+	min-height: var(--dgl-field-height);
+	line-height: calc(var(--dgl-field-height) - 2 * var(--dgl-field-border));
+	font-size: 14px;
+	color: var(--dgl-text-muted);
 }
+
+.dgl-field--file::file-selector-button {
+	margin: 0 12px 0 0;
+	padding: 5px 12px;
+	border: var(--dgl-field-border) solid var(--dgl-field-outline);
+	border-radius: var(--dgl-radius-button);
+	background: var(--dgl-surface);
+	color: var(--dgl-primary);
+	font: var(--dgl-weight-button) 14px / 1.4 var(--dgl-font);
+	cursor: pointer;
+}
+
+.dgl-field--file:hover::file-selector-button { background: var(--dgl-white); }
 
 /*
  * One ring on focus, not two. The border turns purple and the outline sits

@@ -48,15 +48,15 @@
       "refersTo": "button-secondary",
       "description": "Back, cancel, and the quieter of two choices.",
       "html": "<button class=\"ds-btn-secondary\">Back</button>",
-      "css": ".ds-btn-secondary { display: inline-flex; align-items: center; justify-content: center; min-height: 45px; padding: 0 20px; border: 2px solid rgb(45 59 107 / 28%); border-radius: 8px; background: transparent; color: #2d3b6b; font: 500 15px/1 Montserrat, system-ui, sans-serif; cursor: pointer; transition: background 150ms ease-out; } .ds-btn-secondary:hover { background: #f4f6fb; } .ds-btn-secondary:focus-visible { outline: 2px solid #2d3b6b; outline-offset: 2px; }"
+      "css": ".ds-btn-secondary { display: inline-flex; align-items: center; justify-content: center; min-height: 45px; padding: 0 20px; border: 1px solid rgb(30 50 50 / 68%); border-radius: 8px; background: transparent; color: #2d3b6b; font: 500 15px/1 Montserrat, system-ui, sans-serif; cursor: pointer; transition: background 150ms ease-out; } .ds-btn-secondary:hover { background: #f4f6fb; } .ds-btn-secondary:focus-visible { outline: 2px solid #2d3b6b; outline-offset: 2px; }"
     },
     {
       "name": "Text Field",
       "kind": "input",
       "refersTo": "input",
-      "description": "Every text control: 2px edge at 3.8:1, one navy ring on focus.",
+      "description": "Every text control: a 1px edge at 4.9:1, one navy ring on focus.",
       "html": "<label class=\"ds-label\" for=\"ds-f\">Headline <span class=\"ds-req\">*</span></label><input class=\"ds-field\" id=\"ds-f\" type=\"text\" placeholder=\"\"><p class=\"ds-help\">Say what it is, plainly.</p>",
-      "css": ".ds-label { display: block; margin-bottom: 6px; font: 600 14px/1.4 Montserrat, system-ui, sans-serif; letter-spacing: 0.03em; text-transform: uppercase; color: #4f5e5c; } .ds-req { color: #cc0053; } .ds-field { width: 100%; box-sizing: border-box; min-height: 45px; padding: 0 12px; border: 2px solid rgb(30 50 50 / 60%); border-radius: 10px; background: #fff; color: #1e3232; font: 400 15px/1.65 Montserrat, system-ui, sans-serif; } .ds-field:focus-visible { border-color: #2d3b6b; outline: 2px solid #2d3b6b; outline-offset: 0; } .ds-help { margin: 6px 0 0; font: 400 14.4px/1.5 Montserrat, system-ui, sans-serif; color: #4f5e5c; }"
+      "css": ".ds-label { display: block; margin-bottom: 6px; font: 600 14px/1.4 Montserrat, system-ui, sans-serif; letter-spacing: 0.03em; text-transform: uppercase; color: #4f5e5c; } .ds-req { color: #cc0053; } .ds-field { width: 100%; box-sizing: border-box; min-height: 45px; padding: 0 12px; border: 1px solid rgb(30 50 50 / 68%); border-radius: 10px; background: #fff; color: #1e3232; font: 400 15px/1.65 Montserrat, system-ui, sans-serif; } .ds-field:focus-visible { border-color: #2d3b6b; outline: 2px solid #2d3b6b; outline-offset: 0; } .ds-help { margin: 6px 0 0; font: 400 14.4px/1.5 Montserrat, system-ui, sans-serif; color: #4f5e5c; }"
     },
     {
       "name": "Sidebar Navigation",

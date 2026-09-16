@@ -146,8 +146,8 @@ wireframes' placeholder red and not RYCM's.
 **Key Characteristics:**
 - Navy desk, cream room, white paper: three surfaces and no more.
 - Montserrat only, 18px body, a tight scale, weight doing the hierarchy.
-- Refined and restrained components: thin lines where a line is decoration, a
-  full-strength edge where a line is a control.
+- Refined and restrained components: a faint line where a line is decoration,
+  a dark hairline where a line is a control.
 - Status is a stamp: a tinted pill with dark text, never a bare colour.
 - Held to WCAG 2.2 AA everywhere and AAA wherever the palette allows.
 
@@ -278,8 +278,8 @@ fields 10px; cards, tiles, stats and tables 20px; chips and badges a full
 pill. Nothing is square-cornered and nothing is a circle except a count badge.
 
 Lines are 1px where they are decoration (card edges, dividers, table rules)
-and drawn at 14% ink, faint on purpose. Lines are 2px and at least 3:1 where
-they are the boundary of a control (fields, secondary buttons). A refined
+and drawn at 14% ink, faint on purpose. Lines are 1px at 4.9:1 where they are the
+boundary of a control (fields, secondary buttons): a hairline, but a dark one. A refined
 system is allowed thin decorative lines; it is not allowed a faint control.
 
 ## Components
@@ -289,7 +289,7 @@ Refined and restrained: a solid navy primary, an outlined secondary, no
 shadows, no gradients, no icons unless the label needs one.
 - **Shape:** rounded (8px), 45px tall, 15px medium-weight label, padding 0 20px.
 - **Primary:** Council Navy fill, white text. Hover: Navy Deep.
-- **Secondary:** transparent, 2px border in navy at 28%, navy text. Hover: Desk Grey fill.
+- **Secondary:** transparent, 1px border in ink at 68%, navy text. Hover: Desk Grey fill.
 - **Danger:** transparent with a 2px Accent Danger border and text; hover fills.
 - **Quiet:** 1px border in the current text colour, for actions inside a table row.
 - **Focus:** a 2px Council Navy ring with 2px offset on every button.
@@ -306,8 +306,8 @@ shadows, no gradients, no icons unless the label needs one.
 - **Internal Padding:** 24px (20px 22px on detail and review cards).
 
 ### Inputs / Fields
-- **Style:** Paper White, 2px border in ink at 60% (3.8:1), 10px radius, 45px tall, 15px text. Marked `!important` because the theme's element-level rules outrank the class.
-- **Focus:** the border and a flush 2px outline both turn Council Navy, reading as one 4px ring. Never a border in one colour and a ring in another.
+- **Style:** Paper White, 1px border in ink at 68% (4.9:1), 10px radius, 45px tall, 15px text. Marked `!important` because the theme's element-level rules outrank the class.
+- **Focus:** the border and a flush 2px outline both turn Council Navy, reading as one 3px ring. Never a border in one colour and a ring in another.
 - **Error:** border Accent Danger; the message below in the same colour at 600.
 - **Label:** above the field, uppercase label style in Slate Muted, with a red asterisk for required.
 - **Help:** below, 0.8em Slate Muted.
