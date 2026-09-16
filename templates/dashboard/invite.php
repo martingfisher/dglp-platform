@@ -23,6 +23,8 @@ $role_name   = (string) ( $data['role_name'] ?? '' );
 $has_account = (bool) ( $data['has_account'] ?? false );
 $expires_on  = (string) ( $data['expires_on'] ?? '' );
 $token       = (string) ( $data['token'] ?? '' );
+$open        = (bool) ( $data['open'] ?? false );
+$signin_url  = (string) ( $data['signin_url'] ?? wp_login_url() );
 ?>
 <header class="dgl-page-head">
 	<div>
@@ -85,8 +87,19 @@ $token       = (string) ( $data['token'] ?? '' );
 		</dl>
 
 		<?php if ( '' !== $error ) : ?>
-			<p class="dgl-alert"><?php echo esc_html( $error ); ?></p>
+			<div class="dgl-alert"><p><?php echo esc_html( $error ); ?></p></div>
 		<?php endif; ?>
+
+		<?php if ( ! $open ) : ?>
+
+			<?php /* Used, withdrawn or expired: nothing to fill in. The way out is a link, not a button that reloads. */ ?>
+			<p>
+				<a class="dgl-button dgl-button--primary" href="<?php echo esc_url( $signin_url ); ?>">
+					<?php esc_html_e( 'Sign in', 'dgl-platform' ); ?>
+				</a>
+			</p>
+
+		<?php else : ?>
 
 		<form method="post" class="dgl-form">
 			<?php wp_nonce_field( Wizard::NONCE ); ?>
@@ -129,6 +142,8 @@ $token       = (string) ( $data['token'] ?? '' );
 
 			<button type="submit" class="dgl-button dgl-button--primary"><?php esc_html_e( 'Accept and sign in', 'dgl-platform' ); ?></button>
 		</form>
+
+		<?php endif; ?>
 
 		<p class="dgl-help">
 			<?php esc_html_e( 'If you were not expecting this, close the page. Nothing has been created in your name and the invitation expires on its own.', 'dgl-platform' ); ?>

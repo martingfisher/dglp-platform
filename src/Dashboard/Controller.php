@@ -1095,6 +1095,12 @@ final class Controller {
 				'expires_on'  => Invites::readable_date( $invite->expires_at ),
 				'error'     => $error,
 				'done'      => $done,
+				// A closed invitation gets no form. The first version showed
+				// the "already used" message and the form together, so the
+				// button posted, was refused, and drew the same page again:
+				// a loop with nothing to say about how to get out of it.
+				'open'      => InviteRules::OPEN === $state,
+				'signin_url' => wp_login_url( Router::url() ),
 			],
 			$title
 		);
