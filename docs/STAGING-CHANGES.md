@@ -147,4 +147,10 @@ clean. They are the only DGLP content on staging.
   longer name switched-off types; passwords are eight characters typed twice.
 - Martin accepted the invitation: user 11, `dgl_member`, the first member
   account on staging.
+- **0.6.4 deployed**: a used invitation link showed a form that looped; it now
+  shows a sign-in link and no form.
+- Wordfence is **inactive** and its block page is still served, so the block
+  is the firewall file (`wordfence-waf.php` via `auto_prepend_file`) enforcing
+  a stored IP block on its own. Not touched from here. Clears by waiting, a
+  different IP, or removing the `auto_prepend_file` line in `.user.ini`.
 
