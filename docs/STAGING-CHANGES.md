@@ -120,3 +120,18 @@ Rewrite rules were flushed after the deploy, because archives changed.
 
 The two `Demo:` posts (8438, 8439) can be deleted whenever DGLP want the site
 clean. They are the only DGLP content on staging.
+
+### 16 September, late afternoon: 0.6.1 and 0.6.2
+
+- **Every check before this ran on WordPress 6.7.1.** Staging runs **7.1**.
+  `bin/setup-test-wp.sh` had pinned 6.7.1 when it was written and nobody moved
+  it. The local install is now on the 7.1 tag with its schema upgraded, the pin
+  matches, and the full set was re-run there: unit 1189, integration 430,
+  contrast 451 pairs, every browser walk, the six-status leak test. All clean,
+  zero PHP notices in the server log.
+- `wp dgl invite` used `get_page_by_title()`, deprecated since 6.2. Replaced.
+  Verified on staging by looking an organisation up by name.
+- Our public breadcrumb is now off by default; Blocksy renders its own.
+- Deploys: 0.6.1 then 0.6.2, both from commit-pinned URLs. Version confirmed
+  from the server each time.
+
