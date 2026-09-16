@@ -265,3 +265,10 @@ clean. They are the only DGLP content on staging.
   image/png. The alt-text box Martin saw in one email is therefore the
   mail client not loading images, not the site. `docs/team-guide.md`
   added for the review team. Pinned to commit `ce9e88f`.
+- **0.8.7 deployed**: the plugin registers with WordPress's privacy tools.
+  Tools > Export Personal Data and Tools > Erase Personal Data now cover
+  membership, digest preferences, invitations, joining requests, audit
+  activity and authored listings; the policy guide gets a suggested
+  paragraph. `wp dgl privacy export <email>` prints the same data and was
+  run on staging against a joined address: membership, activity and the
+  joining request came back. Pinned to commit `c831d0c`. No data changed.
