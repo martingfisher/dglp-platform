@@ -164,3 +164,11 @@ clean. They are the only DGLP content on staging.
   `martingfisher@gmail.com`, not his name.
 - **0.6.6 deployed**: sign-in lede is now "Sign in to your admin dashboard."
 
+- **0.6.7 deployed** (16 September, after Martin's first walkthrough): editor
+  has no code view and both editor and storage allow only what the toolbar
+  makes; every member image is cut to 1600px and stored without metadata;
+  the organisation logo upload works (it never had); sidebar darker with
+  larger type and a Sign out button; muted text darker; cards spaced;
+  types ordered news, events, training. Pinned to commit `e0bcabb`.
+  The dashboard.css duplicate token block is gone, so tokens.css changes
+  now reach the member area. `check-contrast.mjs` reads `color(srgb)`.
