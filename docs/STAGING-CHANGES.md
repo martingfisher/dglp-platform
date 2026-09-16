@@ -199,3 +199,8 @@ clean. They are the only DGLP content on staging.
   and suspended screens have a way out; a pending member gets "saved as a
   draft" not a refusal; org-less accounts see why there are no tiles; an
   empty facts list says so. Pinned to commit `52c3af7`.
+- **0.7.4 deployed**: a name or logo change emails the review team once and
+  lists on the front-end queue; `/dashboard/review/org/<id>` decides it
+  (accept, or refuse with a note); the sidebar badge counts it. Pinned to
+  commit `85c283d`. With `dgl_mail_redirect` set, those team emails land at
+  martingfisher@gmail.com like everything else.
