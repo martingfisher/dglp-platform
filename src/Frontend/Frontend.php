@@ -123,30 +123,36 @@ final class Frontend {
 			return;
 		}
 
-		$date_key = self::sort_key( $type );
+		$sort_field = self::sort_key( $type );
+		$field      = null === $sort_field ? null : \DGL\Schema\FieldRegistry::find( $type, $sort_field );
 
-		if ( null === $date_key ) {
+		if ( null === $field ) {
 			return;
 		}
 
-		$query->set( 'meta_key', $date_key );
-		$query->set( 'orderby', 'meta_value' );
-		$query->set( 'order', 'ASC' );
+		// The stored key, not the field key: 'dgl_start_datetime', not
+		// 'start_datetime'. The listing had been sorting on a key that no
+		// row has ever carried.
+		$date_key = $field->meta_key();
 
 		/*
-		 * Items with no date still have to appear. A meta_key orderby with no
-		 * fallback silently drops every row that has no such row in postmeta,
-		 * so an event saved before the field existed would vanish from the
-		 * listing rather than sort oddly.
+		 * Items with no date still have to appear. Setting `meta_key` makes
+		 * WordPress inner-join postmeta on that key, whatever the meta_query
+		 * says, so every row without the key vanished: the client's demo
+		 * event, saved without a start date, made the public listing say
+		 * "no events" while the member area said "live on site". Ordering by
+		 * a named clause needs no `meta_key`; a row with no date sorts as
+		 * null, first, rather than not at all.
 		 */
 		$query->set(
 			'meta_query',
 			[
-				'relation' => 'OR',
-				[ 'key' => $date_key, 'compare' => 'EXISTS' ],
-				[ 'key' => $date_key, 'compare' => 'NOT EXISTS' ],
+				'relation'    => 'OR',
+				'dgl_when'    => [ 'key' => $date_key, 'compare' => 'EXISTS' ],
+				'dgl_undated' => [ 'key' => $date_key, 'compare' => 'NOT EXISTS' ],
 			]
 		);
+		$query->set( 'orderby', [ 'dgl_when' => 'ASC', 'date' => 'DESC' ] );
 	}
 
 	/**

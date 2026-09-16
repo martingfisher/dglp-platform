@@ -2107,6 +2107,27 @@ $group( 'Public listings are ordered by when the thing happens' );
 $ok( 'start_datetime' === \DGL\Frontend\Frontend::sort_key( PostTypes::EVENT ), 'events sort by their start date' );
 $ok( null === \DGL\Frontend\Frontend::sort_key( PostTypes::NEWS ), 'news has no date of its own, so it keeps newest first' );
 
+/*
+ * The real query, as the front page runs it: the main query, with the
+ * archive's pre_get_posts applied. The listing had been sorting on a key no
+ * row carries ('start_datetime', not 'dgl_start_datetime') and setting
+ * `meta_key`, which inner-joins postmeta and drops every row without it. On
+ * staging that read "There are no events listed" above a live event.
+ */
+$ev_late  = $make_item( $org_a, $alice, Statuses::LIVE );
+$ev_soon  = $make_item( $org_a, $alice, Statuses::LIVE );
+$ev_never = $make_item( $org_a, $alice, Statuses::LIVE );
+update_post_meta( $ev_late, 'dgl_start_datetime', '2031-12-01 10:00:00' );
+update_post_meta( $ev_soon, 'dgl_start_datetime', '2031-01-01 10:00:00' );
+
+$archive_query = new WP_Query();
+$GLOBALS['wp_the_query'] = $archive_query;
+$archive_ids = array_map( 'intval', (array) $archive_query->query( [ 'post_type' => PostTypes::EVENT, 'post_status' => Statuses::LIVE, 'posts_per_page' => 500, 'fields' => 'ids' ] ) );
+
+$ok( in_array( $ev_never, $archive_ids, true ), 'a live event with no start date is still listed' );
+$ok( in_array( $ev_soon, $archive_ids, true ) && in_array( $ev_late, $archive_ids, true ), 'dated events are listed' );
+$ok( array_search( $ev_soon, $archive_ids, true ) < array_search( $ev_late, $archive_ids, true ), 'and the sooner one comes first' );
+
 $group( 'Rich text: a pasted document loses its formatting and keeps its words' );
 
 $pasted = '<style>.MsoNormal{mso-style:1}</style>'
