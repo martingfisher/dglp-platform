@@ -58,6 +58,22 @@ $v      = static fn( string $k ): string => (string) ( $values[ $k ] ?? '' );
 			<p class="dgl-help"><?php esc_html_e( 'Nothing arrived? Check your junk folder, then start again and a fresh link will be sent.', 'dgl-platform' ); ?></p>
 		</div>
 
+	<?php elseif ( 'signed-in' === $stage ) : ?>
+		<div class="dgl-card">
+			<h2 class="dgl-section__title"><?php esc_html_e( 'You are already signed in', 'dgl-platform' ); ?></h2>
+			<p>
+				<?php
+				printf(
+					/* translators: %s: name of the signed-in account. */
+					esc_html__( 'You are signed in as %s. Joining creates a new account, so sign out first and the link will carry on where it left off.', 'dgl-platform' ),
+					'<strong>' . esc_html( (string) ( $data['signed_in'] ?? '' ) ) . '</strong>'
+				);
+				?>
+			</p>
+			<p><a class="dgl-button" href="<?php echo esc_url( (string) ( $data['logout_url'] ?? '' ) ); ?>"><?php esc_html_e( 'Sign out and carry on joining', 'dgl-platform' ); ?></a></p>
+			<p class="dgl-help"><?php esc_html_e( 'If you meant to use this account, ignore the link and go back to your dashboard.', 'dgl-platform' ); ?></p>
+		</div>
+
 	<?php elseif ( 'dead' === $stage ) : ?>
 		<p><a class="dgl-button dgl-button--secondary" href="<?php echo esc_url( Router::url( 'join' ) ); ?>"><?php esc_html_e( 'Start again', 'dgl-platform' ); ?></a></p>
 

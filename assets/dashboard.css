@@ -146,7 +146,14 @@
  * The theme paints <html> too (Blocksy's is sky blue on this site), and it
  * showed as a band under the shell on a short page. Both roots are ours.
  */
-html:has( body.dgl-body ) { background: var(--dgl-page); }
+html:has( body.dgl-body ) { background: var(--dgl-page) !important; }
+
+/*
+ * Stated with force, because on staging the theme still painted sky blue
+ * beneath a short page after the rule above. Whatever the theme gives the
+ * canvas, the member area's floor is cream to the bottom of the window.
+ */
+body.dgl-body { min-height: 100vh !important; background: var(--dgl-page) !important; }
 
 body.dgl-body {
 	display: flex;

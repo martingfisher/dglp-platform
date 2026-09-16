@@ -410,6 +410,20 @@ final class Controller {
 		$data  = [ 'stage' => 'email', 'email' => '', 'error' => '', 'token' => $token, 'orgs' => [], 'values' => [] ];
 
 		if ( is_user_logged_in() ) {
+			/*
+			 * A join link opened while signed in as somebody else, which is
+			 * what happens when one person tests with two addresses, or a
+			 * shared computer. Say so and offer the way through; the link is
+			 * untouched, so it still works after signing out.
+			 */
+			if ( '' !== $token && 'sent' !== $token ) {
+				$data['stage']      = 'signed-in';
+				$data['signed_in']  = wp_get_current_user()->display_name;
+				$data['logout_url'] = wp_logout_url( Router::url( 'join', $token ) );
+				self::screen( 'join', $data, $title );
+				return;
+			}
+
 			wp_safe_redirect( Router::url() );
 			exit;
 		}
