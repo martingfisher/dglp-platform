@@ -247,3 +247,8 @@ clean. They are the only DGLP content on staging.
   already signed in" with a sign-out that returns to the link; the html and
   body backgrounds are forced cream (the sky blue band was still showing
   under short pages). Pinned to commit `1e7b8a9`.
+- **0.8.4 deployed**: the "sky blue band" under short member-area pages
+  was the theme's site footer, hooked into `wp_footer` on staging. The
+  shell now strips any `<footer>` element from wp_footer's output and keeps
+  the scripts; public pages keep their footer. The background pins in 0.8.2
+  and 0.8.3 were aimed at the wrong thing. Pinned to commit `602f3c2`.
