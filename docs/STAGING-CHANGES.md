@@ -174,3 +174,10 @@ clean. They are the only DGLP content on staging.
   now reach the member area. `check-contrast.mjs` reads `color(srgb)`.
 - **0.6.8 deployed**: the open profile tab is a filled navy block with white
   text, not a 3px underline. Pinned to commit `7b8d41e`.
+- **0.6.9 deployed**: every text control has the same 2px outline, marked
+  `!important` because Blocksy's element-level input rules were beating the
+  class (input faint, textarea dark, on the same form). Focus is one purple
+  ring, not border plus offset outline. Pinned to commit `d4cbbd5`. The
+  Blocksy interaction is NOT VERIFIED from the sandbox (wordpress.org and its
+  mirrors are blocked); the fix was proved locally against an injected
+  element-level rule, and Martin confirms on staging.
