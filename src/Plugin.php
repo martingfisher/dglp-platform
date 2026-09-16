@@ -17,6 +17,7 @@ use DGL\Dashboard\Router;
 use DGL\Email\Command as MailCommand;
 use DGL\Email\Mailer;
 use DGL\Invites\Invites;
+use DGL\Invites\Command as InviteCommand;
 use DGL\Email\Digest\Frequency;
 use DGL\Email\Digest\Runner as DigestRunner;
 use DGL\Email\Digest\Command as DigestCommand;
@@ -87,6 +88,7 @@ final class Plugin {
 			MailCommand::register();
 			DigestCommand::register();
 			IndexCommand::register();
+			InviteCommand::register();
 		}
 
 		add_action( self::EXPIRY_HOOK, [ Transition::class, 'run_expiry_sweep' ] );

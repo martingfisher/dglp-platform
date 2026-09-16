@@ -114,6 +114,16 @@
 	align-items: start;
 }
 
+/*
+ * An item with no description gets one column. The facts card stranded beside
+ * an empty half-page looks like the page failed to load.
+ */
+.dgl-pub__layout--nobody {
+	grid-template-columns: minmax(0, 520px);
+}
+
+.dgl-pub__layout--nobody .dgl-pub__aside { position: static; }
+
 .dgl-pub__body { max-width: 66ch; }
 
 .dgl-pub__body > *:first-child { margin-top: 0; }

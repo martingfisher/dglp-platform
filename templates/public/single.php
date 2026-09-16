@@ -31,10 +31,26 @@ $body      = (string) get_post_meta( (int) $post->ID, 'body', true );
 $image_id  = (int) get_post_meta( (int) $post->ID, 'image', true );
 $archive   = Frontend::archive_url( $type );
 $passed    = Frontend::has_passed( $post );
+$has_body  = '' !== trim( wp_strip_all_tags( $body ) );
+
+/**
+ * Whether to render the plugin's own breadcrumb.
+ *
+ * Off by default. Most themes worth using already output one, and Blocksy -
+ * the theme this is built for - certainly does, so rendering ours as well
+ * gives the visitor the same trail twice in two different styles. The
+ * "See all" link at the foot of the page is the navigation that is actually
+ * ours to provide.
+ *
+ * @param bool   $show Whether to render it.
+ * @param string $type The content type being viewed.
+ */
+$show_crumbs = (bool) apply_filters( 'dgl_public_breadcrumb', false, $type );
 ?>
 <div class="dgl-pub">
 	<article class="dgl-pub__item">
 
+		<?php if ( $show_crumbs ) : ?>
 		<nav class="dgl-pub__crumbs" aria-label="<?php esc_attr_e( 'Breadcrumb', 'dgl-platform' ); ?>">
 			<a href="<?php echo esc_url( home_url( '/' ) ); ?>"><?php esc_html_e( 'Home', 'dgl-platform' ); ?></a>
 			<?php if ( '' !== $archive ) : ?>
@@ -42,6 +58,7 @@ $passed    = Frontend::has_passed( $post );
 				<a href="<?php echo esc_url( $archive ); ?>"><?php echo esc_html( Frontend::type_label( $type, true ) ); ?></a>
 			<?php endif; ?>
 		</nav>
+		<?php endif; ?>
 
 		<p class="dgl-pub__kicker">
 			<?php echo esc_html( Frontend::type_label( $type ) ); ?>
@@ -76,12 +93,13 @@ $passed    = Frontend::has_passed( $post );
 			</div>
 		<?php endif; ?>
 
-		<div class="dgl-pub__layout">
-			<div class="dgl-pub__body">
-				<?php if ( '' !== trim( wp_strip_all_tags( $body ) ) ) : ?>
+		<?php /* No description means no left column, or the facts sit beside an empty half-page. */ ?>
+		<div class="dgl-pub__layout<?php echo $has_body ? '' : ' dgl-pub__layout--nobody'; ?>">
+			<?php if ( $has_body ) : ?>
+				<div class="dgl-pub__body">
 					<?php echo wp_kses_post( wpautop( $body ) ); ?>
-				<?php endif; ?>
-			</div>
+				</div>
+			<?php endif; ?>
 
 			<aside class="dgl-pub__aside">
 				<?php if ( [] !== $facts ) : ?>
