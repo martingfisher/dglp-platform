@@ -204,3 +204,5 @@ clean. They are the only DGLP content on staging.
   (accept, or refuse with a note); the sidebar badge counts it. Pinned to
   commit `85c283d`. With `dgl_mail_redirect` set, those team emails land at
   martingfisher@gmail.com like everything else.
+- **0.7.5 deployed**: checkboxes and radios sit on their label's first
+  line and use Council Navy. Pinned to commit `c8d05f0`.
