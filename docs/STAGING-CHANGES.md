@@ -220,3 +220,8 @@ clean. They are the only DGLP content on staging.
   event shows its date, venue, summary and facts. Pinned to commit
   `ffca915`. Demo event 8439 given `dgl_summary`; its bare `summary` key is
   an orphan (deleting it is blocked in safe mode, harmless). Cache cleared.
+- **0.7.9 deployed**: public cards lifted, fact labels in label style with
+  the date leading, "See all events" as a button. Pinned to commit
+  `e02ce4e`. Demo event 8439 given a venue, address and postcode
+  (`dgl_venue_name`, `dgl_address`, `dgl_postcode`) so the page has facts
+  to show. Cache cleared.
