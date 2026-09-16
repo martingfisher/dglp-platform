@@ -302,6 +302,16 @@ body.dgl-body {
 	margin: 0 auto;
 }
 
+/*
+ * One column when there is no navigation to put in the other one. Without
+ * this, <main> takes the sidebar's 260px and the content column stands empty.
+ */
+.dgl-dash__layout--solo {
+	grid-template-columns: minmax(0, 1fr);
+	max-width: 760px;
+	padding: 0 var(--dgl-gap);
+}
+
 .dgl-dash__sidebar {
 	display: flex;
 	flex-direction: column;
@@ -1465,3 +1475,29 @@ body.dgl-body {
 	color: var(--dgl-text-muted);
 	font-size: 0.8em;
 }
+
+/*
+ * A group of radios inside the field-row convention. The row's own border and
+ * height are for a single control, so a fieldset holding two choices needs
+ * neither.
+ */
+.dgl-field-row--group {
+	border: 0;
+	padding: 0;
+	margin: 0 0 var(--dgl-gap);
+	min-height: 0;
+}
+
+.dgl-field-row--group .dgl-check + .dgl-check { margin-top: 10px; }
+
+.dgl-field-row--group .dgl-check .dgl-help { margin: 2px 0 0; }
+
+/* Buttons sitting side by side in a table cell, each in its own form. */
+.dgl-row-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	align-items: center;
+}
+
+.dgl-row-actions form { margin: 0; }

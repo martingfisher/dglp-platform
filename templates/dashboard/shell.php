@@ -83,7 +83,18 @@ $alerts = (int) ( $data['alerts'] ?? 0 );
 </header>
 
 <div class="dgl-dash">
-	<div class="dgl-dash__layout">
+	<?php
+	/*
+	 * The layout is a two-column grid with the sidebar first. On a screen that
+	 * has no sidebar - signing in, no access, accepting an invitation - <main>
+	 * became the first grid item and inherited the 260px navigation column,
+	 * with the wide column left empty beside it. Every word wrapped. It looked
+	 * like a broken stylesheet and had been doing it on the sign-in screen from
+	 * the start, because nothing renders those pages except a browser.
+	 */
+	$layout_class = [] !== $sections ? 'dgl-dash__layout' : 'dgl-dash__layout dgl-dash__layout--solo';
+	?>
+	<div class="<?php echo esc_attr( $layout_class ); ?>">
 		<?php if ( [] !== $sections ) : ?>
 			<?php
 			/*

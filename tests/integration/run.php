@@ -69,6 +69,8 @@ const DGL_FIXTURE_FLAG = '_dgl_test_fixture';
 
 $group( 'Fixtures' );
 
+global $wpdb;
+
 /*
  * Remove only what previous runs of this suite created. An earlier version
  * deleted every dgl_org and every item on the site, which wiped the demo
@@ -78,18 +80,64 @@ $group( 'Fixtures' );
  * Fixtures are also cleared before each run rather than after, because a run
  * that fails half way through still has to leave the next one a clean start.
  */
-foreach ( [ 'dgl_alice', 'dgl_aaron', 'dgl_bella', 'dgl_mod', 'dgl_pending', 'dgl_susp', 'dgl_carl', 'dgl_tina', 'dgl_owen' ] as $login ) {
+require_once ABSPATH . 'wp-admin/includes/user.php';
+
+/*
+ * Accounts are cleared by a flag rather than by a list of logins. The list
+ * came first and drifted the moment a test created an account the list did
+ * not know about: the invitation tests create accounts named after the
+ * address invited, the leftovers survived into the next run, and that run
+ * failed against state its own previous run had left behind. A suite that
+ * only passes on a clean database is a suite that lies to whoever runs it
+ * second.
+ *
+ * The list is kept alongside the flag for accounts created before the flag
+ * existed, and for the run that dies before it gets round to flagging.
+ */
+$fixture_users = get_users(
+	[
+		'meta_key'   => DGL_FIXTURE_FLAG,
+		'meta_value' => '1',
+		'fields'     => 'ID',
+		'number'     => 200,
+	]
+);
+
+foreach ( $fixture_users as $stale_user ) {
+	wp_delete_user( (int) $stale_user );
+}
+
+foreach ( [ 'dgl_alice', 'dgl_aaron', 'dgl_bella', 'dgl_mod', 'dgl_pending', 'dgl_susp', 'dgl_carl', 'dgl_tina', 'dgl_owen', 'dgl_pendowner', 'dgl_loose' ] as $login ) {
 	$existing = get_user_by( 'login', $login );
 	if ( $existing ) {
-		require_once ABSPATH . 'wp-admin/includes/user.php';
 		wp_delete_user( $existing->ID );
 	}
 }
 
+// Accounts the invitation tests create are named after the address invited.
+foreach ( [ 'newcomer@example.test', 'loose@example.test', 'toolate@example.test', 'withdrawme@example.test' ] as $address ) {
+	$existing = get_user_by( 'email', $address );
+	if ( $existing ) {
+		wp_delete_user( $existing->ID );
+	}
+}
+
+/*
+ * Statuses are named rather than asked for as 'any'. WP_Query reads 'any' as
+ * every status that is not excluded from search, and this plugin's custom
+ * statuses are excluded from search, so 'any' quietly skipped every pending,
+ * expired, archived and rejected fixture. They were flagged for deletion and
+ * never deleted: 228 pending events had accumulated across runs, enough to
+ * push a genuinely new item past the 200-row limit of the moderation queue and
+ * fail an assertion that had nothing to do with any of it.
+ *
+ * The same mistake, with the same cause, was fixed once already in
+ * Workflow\Revisions. It is worth naming every time it appears.
+ */
 $stale = get_posts(
 	[
 		'post_type'      => array_merge( PostTypes::submittable(), [ PostTypes::ORG, PostTypes::REVISION ] ),
-		'post_status'    => 'any',
+		'post_status'    => array_merge( Statuses::all(), [ 'publish', 'draft', 'pending', 'private', 'trash', 'auto-draft', 'inherit' ] ),
 		'numberposts'    => -1,
 		'fields'         => 'ids',
 		'meta_key'       => DGL_FIXTURE_FLAG,
@@ -97,17 +145,34 @@ $stale = get_posts(
 	]
 );
 
+/*
+ * Revisions are created by the plugin rather than by a fixture maker, so they
+ * never carry the flag. One whose parent has just been deleted is rubbish by
+ * definition.
+ */
+$orphan_revisions = $wpdb->get_col(
+	"SELECT r.ID FROM {$wpdb->posts} r
+	LEFT JOIN {$wpdb->posts} p ON p.ID = r.post_parent
+	WHERE r.post_type = '" . PostTypes::REVISION . "'
+	AND ( r.post_parent = 0 OR p.ID IS NULL )"
+);
+
+$stale = array_values( array_unique( array_merge( array_map( 'intval', $stale ), array_map( 'intval', $orphan_revisions ) ) ) );
+
 foreach ( $stale as $stale_id ) {
 	wp_delete_post( $stale_id, true );
 }
-
-global $wpdb;
 
 // The index and audit rows for anything that just went, and nothing else.
 if ( ! empty( $stale ) ) {
 	$in = implode( ',', array_map( 'intval', $stale ) );
 	$wpdb->query( 'DELETE FROM ' . ItemsTable::name() . " WHERE post_id IN ({$in})" );
 	$wpdb->query( 'DELETE FROM ' . \DGL\Audit\Table::name() . " WHERE object_id IN ({$in})" );
+
+	// Invitations belong to an organisation that has just been deleted.
+	if ( \DGL\Invites\Store::exists() ) {
+		$wpdb->query( 'DELETE FROM ' . \DGL\Invites\Store::name() . " WHERE org_id IN ({$in})" );
+	}
 }
 
 Access::flush_cache();
@@ -146,6 +211,7 @@ $make_member = static function ( string $login, int $org_id, string $org_role, s
 		return 0;
 	}
 
+	update_user_meta( $id, DGL_FIXTURE_FLAG, '1' );
 	update_user_meta( $id, Meta::USER_ORG, $org_id );
 	update_user_meta( $id, Meta::USER_ORG_ROLE, $org_role );
 	update_user_meta( $id, Meta::USER_ACCOUNT_STATUS, $account );
@@ -1624,6 +1690,65 @@ foreach ( $trail as $row ) {
 $ok( ! $leaked, 'and no working token was ever written into the trail' );
 
 update_option( \DGL\Email\Routing::OPTION_ENABLED, $mail_was );
+
+$group( 'Members are sent to the member area, not into WordPress' );
+
+/*
+ * wp-login.php sends any account without edit_posts to wp-admin/profile.php.
+ * Every member therefore landed in the WordPress admin the moment they signed
+ * in, which is the one thing the member area exists to avoid. Found in a
+ * browser, not by any test, so here is the test.
+ */
+$member_user = get_userdata( $alice );
+$mod_user    = get_userdata( $mod );
+$dash        = \DGL\Dashboard\Router::url();
+
+$ok( \DGL\Dashboard\AdminLockout::is_member_only( $alice ), 'a member with no staff capability is member-only' );
+$ok( ! \DGL\Dashboard\AdminLockout::is_member_only( $mod ), 'a moderator is not, and keeps wp-admin' );
+
+$ok(
+	$dash === \DGL\Dashboard\AdminLockout::after_login( admin_url( 'profile.php' ), '', $member_user ),
+	'WordPress default of profile.php is replaced with the member area'
+);
+$ok(
+	$dash === \DGL\Dashboard\AdminLockout::after_login( admin_url(), admin_url(), $member_user ),
+	'and so is a bare wp-admin'
+);
+$ok(
+	$dash === \DGL\Dashboard\AdminLockout::after_login( admin_url( 'profile.php' ), admin_url( 'profile.php' ), $member_user ),
+	'including when profile.php was the requested destination, because it is the default WordPress put there'
+);
+
+$wanted = home_url( '/dashboard/events/' );
+$ok(
+	$wanted === \DGL\Dashboard\AdminLockout::after_login( $wanted, $wanted, $member_user ),
+	'a member who asked for a particular page still gets it'
+);
+$ok(
+	admin_url( 'profile.php' ) === \DGL\Dashboard\AdminLockout::after_login( admin_url( 'profile.php' ), '', $mod_user ),
+	'a moderator is left exactly where WordPress was sending them'
+);
+
+/*
+ * The allow list is private, so it is exercised rather than read. Setting
+ * $pagenow is what wp-admin itself does, so this asks the real question:
+ * would a member on this screen be let through?
+ */
+$allowed = static function ( string $pagenow ): bool {
+	$was                  = $GLOBALS['pagenow'] ?? null;
+	$GLOBALS['pagenow']   = $pagenow;
+	$method               = new ReflectionMethod( \DGL\Dashboard\AdminLockout::class, 'is_allowed_request' );
+	$method->setAccessible( true );
+	$result = (bool) $method->invoke( null );
+	$GLOBALS['pagenow'] = $was;
+
+	return $result;
+};
+
+$ok( ! $allowed( 'profile.php' ), 'profile.php is no longer held open, so a member is not shown wp-admin' );
+$ok( ! $allowed( 'edit.php' ), 'nor is the post list' );
+$ok( $allowed( 'admin-post.php' ), 'but form endpoints still go through, or submitting would silently break' );
+$ok( $allowed( 'async-upload.php' ), 'and so do media uploads' );
 
 /* ----------------------------------------------------------------- report */
 

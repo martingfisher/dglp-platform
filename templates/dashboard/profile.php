@@ -146,6 +146,15 @@ $is_owner = $user instanceof UserContext && $user->is_org_owner();
 
 <?php elseif ( 'members' === $tab ) : ?>
 
+	<?php /* Ahead of the cards. An outcome the member has to scroll to find is an outcome they miss. */ ?>
+	<?php if ( '' !== (string) ( $data['invite_notice'] ?? '' ) ) : ?>
+		<div class="dgl-alert dgl-alert--good"><p><?php echo esc_html( (string) $data['invite_notice'] ); ?></p></div>
+	<?php endif; ?>
+
+	<?php if ( '' !== (string) ( $data['invite_error'] ?? '' ) ) : ?>
+		<div class="dgl-alert"><p><?php echo esc_html( (string) $data['invite_error'] ); ?></p></div>
+	<?php endif; ?>
+
 	<section class="dgl-card">
 		<h2 class="dgl-section__title"><?php esc_html_e( 'Who can post for us', 'dgl-platform' ); ?></h2>
 
@@ -185,14 +194,6 @@ $is_owner = $user instanceof UserContext && $user->is_org_owner();
 		</p>
 	</section>
 
-	<?php if ( '' !== (string) ( $data['invite_notice'] ?? '' ) ) : ?>
-		<p class="dgl-notice dgl-notice--good"><?php echo esc_html( (string) $data['invite_notice'] ); ?></p>
-	<?php endif; ?>
-
-	<?php if ( '' !== (string) ( $data['invite_error'] ?? '' ) ) : ?>
-		<p class="dgl-notice dgl-notice--bad"><?php echo esc_html( (string) $data['invite_error'] ); ?></p>
-	<?php endif; ?>
-
 	<?php if ( ! empty( $data['invites'] ) ) : ?>
 		<section class="dgl-card">
 			<h2 class="dgl-section__title"><?php esc_html_e( 'Invitations', 'dgl-platform' ); ?></h2>
@@ -228,7 +229,7 @@ $is_owner = $user instanceof UserContext && $user->is_org_owner();
 								<?php endif; ?>
 							</td>
 							<?php if ( ! empty( $data['can_invite'] ) ) : ?>
-								<td class="dgl-table__actions">
+								<td class="dgl-row-actions">
 									<?php if ( 'open' === $row['state'] ) : ?>
 										<form method="post" class="dgl-inline-form">
 											<?php wp_nonce_field( \DGL\Dashboard\Wizard::NONCE ); ?>
@@ -264,15 +265,15 @@ $is_owner = $user instanceof UserContext && $user->is_org_owner();
 				<?php wp_nonce_field( \DGL\Dashboard\Wizard::NONCE ); ?>
 				<input type="hidden" name="dgl_invite_action" value="send">
 
-				<div class="dgl-field">
-					<label class="dgl-field__label" for="dgl_invite_email"><?php esc_html_e( 'Their email address', 'dgl-platform' ); ?></label>
-					<input type="email" id="dgl_invite_email" name="dgl_invite_email" class="dgl-input" required autocomplete="off">
+				<div class="dgl-field-row">
+					<label class="dgl-label" for="dgl_invite_email"><?php esc_html_e( 'Their email address', 'dgl-platform' ); ?> <span class="dgl-req" aria-hidden="true">*</span></label>
+					<input type="email" id="dgl_invite_email" name="dgl_invite_email" class="dgl-field" required autocomplete="off">
 				</div>
 
-				<fieldset class="dgl-field">
-					<legend class="dgl-field__label"><?php esc_html_e( 'What they can do', 'dgl-platform' ); ?></legend>
+				<fieldset class="dgl-field-row dgl-field-row--group">
+					<legend class="dgl-label"><?php esc_html_e( 'What they can do', 'dgl-platform' ); ?></legend>
 
-					<label class="dgl-choice">
+					<label class="dgl-check">
 						<input type="radio" name="dgl_invite_role" value="<?php echo esc_attr( UserContext::ORG_CONTRIBUTOR ); ?>" checked>
 						<span>
 							<strong><?php esc_html_e( 'Contributor', 'dgl-platform' ); ?></strong>
@@ -280,7 +281,7 @@ $is_owner = $user instanceof UserContext && $user->is_org_owner();
 						</span>
 					</label>
 
-					<label class="dgl-choice">
+					<label class="dgl-check">
 						<input type="radio" name="dgl_invite_role" value="<?php echo esc_attr( UserContext::ORG_OWNER ); ?>">
 						<span>
 							<strong><?php esc_html_e( 'Owner', 'dgl-platform' ); ?></strong>

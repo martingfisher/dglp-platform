@@ -33,7 +33,7 @@ $token       = (string) ( $data['token'] ?? '' );
 <?php if ( null === $invite || ( '' !== $error && '' === $token ) ) : ?>
 
 	<section class="dgl-card">
-		<p class="dgl-notice dgl-notice--bad"><?php echo esc_html( '' !== $error ? $error : __( 'That invitation link is not valid.', 'dgl-platform' ) ); ?></p>
+		<p class="dgl-alert"><?php echo esc_html( '' !== $error ? $error : __( 'That invitation link is not valid.', 'dgl-platform' ) ); ?></p>
 		<p>
 			<a class="dgl-button" href="<?php echo esc_url( home_url( '/' ) ); ?>">
 				<?php esc_html_e( 'Go to the website', 'dgl-platform' ); ?>
@@ -73,7 +73,7 @@ $token       = (string) ( $data['token'] ?? '' );
 			?>
 		</p>
 
-		<dl class="dgl-facts">
+		<dl class="dgl-review__list">
 			<dt><?php esc_html_e( 'Your email', 'dgl-platform' ); ?></dt>
 			<dd><?php echo esc_html( $invite->email ); ?></dd>
 			<dt><?php esc_html_e( 'You would be', 'dgl-platform' ); ?></dt>
@@ -85,7 +85,7 @@ $token       = (string) ( $data['token'] ?? '' );
 		</dl>
 
 		<?php if ( '' !== $error ) : ?>
-			<p class="dgl-notice dgl-notice--bad"><?php echo esc_html( $error ); ?></p>
+			<p class="dgl-alert"><?php echo esc_html( $error ); ?></p>
 		<?php endif; ?>
 
 		<form method="post" class="dgl-form">
@@ -99,15 +99,15 @@ $token       = (string) ( $data['token'] ?? '' );
 
 			<?php else : ?>
 
-				<div class="dgl-field">
-					<label class="dgl-field__label" for="dgl_name"><?php esc_html_e( 'Your name', 'dgl-platform' ); ?></label>
-					<input type="text" id="dgl_name" name="dgl_name" class="dgl-input" autocomplete="name">
+				<div class="dgl-field-row">
+					<label class="dgl-label" for="dgl_name"><?php esc_html_e( 'Your name', 'dgl-platform' ); ?></label>
+					<input type="text" id="dgl_name" name="dgl_name" class="dgl-field" autocomplete="name">
 					<p class="dgl-help"><?php esc_html_e( 'How your colleagues and the partnership team will see you.', 'dgl-platform' ); ?></p>
 				</div>
 
-				<div class="dgl-field">
-					<label class="dgl-field__label" for="dgl_password"><?php esc_html_e( 'Choose a password', 'dgl-platform' ); ?></label>
-					<input type="password" id="dgl_password" name="dgl_password" class="dgl-input" required minlength="12" autocomplete="new-password">
+				<div class="dgl-field-row">
+					<label class="dgl-label" for="dgl_password"><?php esc_html_e( 'Choose a password', 'dgl-platform' ); ?> <span class="dgl-req" aria-hidden="true">*</span></label>
+					<input type="password" id="dgl_password" name="dgl_password" class="dgl-field" required minlength="12" autocomplete="new-password">
 					<p class="dgl-help"><?php esc_html_e( 'At least 12 characters. A few words you will remember beats something short and clever.', 'dgl-platform' ); ?></p>
 				</div>
 
