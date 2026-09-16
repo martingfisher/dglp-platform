@@ -31,3 +31,8 @@ same version number, which is exactly why nobody could see they were stale.
 `wp plugin list` is the check, and it is only a check if the number moves.
 
 Rebuild it with the recipe in `docs/deployment.md` whenever the version changes.
+
+`.gitattributes` marks `dist/` as `export-ignore`, so `git archive` leaves it
+out. Without that, every build packed the previous build inside itself: the
+0.6.6 zip carried the 0.6.5 zip, which carried the one before, at 344KB of
+dead weight per install.

@@ -1,0 +1,3 @@
+dist/ export-ignore
+.claude/ export-ignore
+docs/wireframes/ export-ignore
