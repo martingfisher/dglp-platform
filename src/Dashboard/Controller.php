@@ -232,6 +232,11 @@ final class Controller {
 			return;
 		}
 
+		if ( 'org' === ( $segments[1] ?? '' ) ) {
+			self::review_org( (int) ( $segments[2] ?? 0 ), $user );
+			return;
+		}
+
 		$post_id = (int) ( $segments[1] ?? 0 );
 
 		if ( $post_id > 0 ) {
@@ -258,6 +263,9 @@ final class Controller {
 				'decided' => isset( $_GET['decided'] ) ? sanitize_key( wp_unslash( $_GET['decided'] ) ) : '', // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 				'user'  => $user,
 				'items' => array_map( static fn( int $id ): array => self::row( $id, true ), $ids ),
+				// Organisations asking to change their name or logo. Same queue,
+				// same people, so the same screen.
+				'org_changes' => self::org_change_rows(),
 				'total' => $total,
 				'page'  => $page,
 				'pages' => $pages,
@@ -265,6 +273,78 @@ final class Controller {
 				'last'  => min( $total, $page * $per_page ),
 			],
 			__( 'Review queue', 'dgl-platform' ),
+			$user
+		);
+	}
+
+	/**
+	 * Organisations with a name or logo change waiting, oldest first.
+	 *
+	 * @return array<int, array{id:int, name:string, what:string, since:string, url:string}>
+	 */
+	private static function org_change_rows(): array {
+		$rows = [];
+
+		foreach ( \DGL\Org\Profile::awaiting_review() as $org_id ) {
+			$labels = array_map( static fn( array $c ): string => (string) $c['label'], \DGL\Org\Profile::pending_changes( $org_id ) );
+
+			$rows[] = [
+				'id'    => $org_id,
+				'name'  => get_the_title( $org_id ),
+				'what'  => implode( ', ', $labels ),
+				'since' => Invites::readable_date( \DGL\Org\Profile::pending_at( $org_id ) ),
+				'url'   => Router::url( 'review', 'org', (string) $org_id ),
+			];
+		}
+
+		return $rows;
+	}
+
+	/**
+	 * A requested name or logo change, read and decided, on the front end.
+	 *
+	 * The same decision the wp-admin Organisations screen offers, where the
+	 * review team already are. The email and the queue both link here.
+	 */
+	private static function review_org( int $org_id, UserContext $user ): void {
+		if ( $org_id <= 0 || PostTypes::ORG !== get_post_type( $org_id ) ) {
+			self::not_found( $user );
+			return;
+		}
+
+		$error = '';
+
+		if ( 'POST' === ( $_SERVER['REQUEST_METHOD'] ?? 'GET' ) ) {
+			check_admin_referer( Wizard::NONCE );
+
+			$intent = isset( $_POST['dgl_intent'] ) ? sanitize_key( wp_unslash( $_POST['dgl_intent'] ) ) : '';
+			$note   = isset( $_POST['dgl_note'] ) ? sanitize_textarea_field( wp_unslash( $_POST['dgl_note'] ) ) : '';
+
+			$result = match ( $intent ) {
+				'approve' => \DGL\Org\Profile::approve_pending( $org_id, $user->user_id ),
+				'refuse'  => \DGL\Org\Profile::reject_pending( $org_id, $user->user_id, $note ),
+				default   => null,
+			};
+
+			if ( is_wp_error( $result ) ) {
+				$error = $result->get_error_message();
+			} elseif ( null !== $result ) {
+				wp_safe_redirect( add_query_arg( 'decided', 'org_' . $intent, Router::url( 'review' ) ) );
+				exit;
+			}
+		}
+
+		self::screen(
+			'review-org',
+			[
+				'user'    => $user,
+				'org_id'  => $org_id,
+				'name'    => get_the_title( $org_id ),
+				'changes' => \DGL\Org\Profile::pending_changes( $org_id ),
+				'since'   => Invites::readable_date( \DGL\Org\Profile::pending_at( $org_id ) ),
+				'error'   => $error,
+			],
+			get_the_title( $org_id ),
 			$user
 		);
 	}

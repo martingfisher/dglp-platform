@@ -2306,6 +2306,34 @@ $ok( (int) $removal_log >= 1, 'the removal is in the audit trail against the org
 
 $ok( ! Access::can( $leaver, Policy::VIEW_ITEM, $leaver_item ), 'the leaver can no longer see even their own old item' );
 
+$group( 'Organisation changes: the team is told once, and can decide on the front end' );
+
+$mail_was_on = get_option( \DGL\Email\Routing::OPTION_ENABLED, false );
+update_option( \DGL\Email\Routing::OPTION_ENABLED, 1 );
+$sent_to = []; $sent_links = []; $sent_bodies = [];
+
+$org_input = \DGL\Org\Profile::form_values( $org_a );
+$org_input['org_email'] = 'orga@example.test';
+$org_input['org_name']  = 'Org A, renamed';
+$saved = \DGL\Org\Profile::save( $org_a, $org_input, $alice, [] );
+$ok( [] === $saved['errors'] && [ 'org_name' ] === $saved['held'], 'a name change is held for the team' );
+$ok( in_array( $org_a, \DGL\Org\Profile::awaiting_review(), true ), 'and the organisation is in the waiting list' );
+$ok( 1 === count( $sent_to ) && str_contains( $sent_to[0], 'mod@example.test' ), 'the review team got one email (' . implode( ' | ', $sent_to ) . ')' );
+$ok( 1 === count( $sent_links ) && str_contains( $sent_links[0], '/review/org/' . $org_a ), 'linking to the front-end decision screen (' . ( $sent_links[0] ?? '' ) . ')' );
+$ok( str_contains( implode( ' ', $sent_bodies ), 'organisation name' ), 'and naming what is being changed' );
+
+$org_input['org_name'] = 'Org A, renamed again';
+$saved = \DGL\Org\Profile::save( $org_a, $org_input, $alice, [] );
+$ok( [] === $saved['errors'] && 1 === count( $sent_to ), 'revising the request while it waits sends no second email' );
+
+$r = \DGL\Org\Profile::reject_pending( $org_a, $mod, '' );
+$ok( is_wp_error( $r ), 'refusing needs a reason' );
+$r = \DGL\Org\Profile::reject_pending( $org_a, $mod, 'Please use the registered charity name.' );
+$ok( true === $r && ! in_array( $org_a, \DGL\Org\Profile::awaiting_review(), true ), 'refused with a reason, and off the waiting list' );
+$ok( 'Org A' === get_the_title( $org_a ), 'the live name never changed' );
+
+update_option( \DGL\Email\Routing::OPTION_ENABLED, $mail_was_on );
+
 /* ----------------------------------------------------------------- report */
 
 echo "\n" . str_repeat( '-', 60 ) . "\n";

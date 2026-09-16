@@ -18,6 +18,8 @@ $decided_copy = [
 	'changes'   => __( 'Sent back with your note. The member has been told.', 'dgl-platform' ),
 	'reject'    => __( 'Refused. The member has been told, with your reason.', 'dgl-platform' ),
 	'take_down' => __( 'Taken off the site. It is back in this queue, and the member has been told why.', 'dgl-platform' ),
+	'org_approve' => __( 'Organisation change accepted. Their listings carry the new details from now.', 'dgl-platform' ),
+	'org_refuse'  => __( 'Organisation change refused. The member has been told, with your reason.', 'dgl-platform' ),
 ];
 $decided = (string) ( $data['decided'] ?? '' );
 ?>
@@ -41,6 +43,34 @@ View::output(
 	]
 );
 ?>
+
+<?php if ( ! empty( $data['org_changes'] ) ) : ?>
+	<section class="dgl-section" aria-labelledby="dgl-orgchanges-heading">
+		<div class="dgl-section__head">
+			<h2 class="dgl-section__title" id="dgl-orgchanges-heading"><?php esc_html_e( 'Organisation changes waiting', 'dgl-platform' ); ?></h2>
+			<p class="dgl-section__note"><?php esc_html_e( 'A name or logo a member has asked to change', 'dgl-platform' ); ?></p>
+		</div>
+
+		<table class="dgl-table">
+			<thead>
+				<tr>
+					<th scope="col"><?php esc_html_e( 'Organisation', 'dgl-platform' ); ?></th>
+					<th scope="col"><?php esc_html_e( 'Wants to change', 'dgl-platform' ); ?></th>
+					<th scope="col"><?php esc_html_e( 'Waiting since', 'dgl-platform' ); ?></th>
+				</tr>
+			</thead>
+			<tbody>
+				<?php foreach ( $data['org_changes'] as $row ) : ?>
+					<tr>
+						<td><a href="<?php echo esc_url( $row['url'] ); ?>"><?php echo esc_html( $row['name'] ); ?></a></td>
+						<td><?php echo esc_html( $row['what'] ); ?></td>
+						<td><?php echo esc_html( $row['since'] ); ?></td>
+					</tr>
+				<?php endforeach; ?>
+			</tbody>
+		</table>
+	</section>
+<?php endif; ?>
 
 <?php if ( (int) ( $data['pages'] ?? 1 ) > 1 ) : ?>
 	<nav class="dgl-pager" aria-label="<?php esc_attr_e( 'Review queue pages', 'dgl-platform' ); ?>">

@@ -223,9 +223,12 @@ final class Profile {
 			update_post_meta( $org_id, self::PENDING, $held );
 
 			// Only stamped when the proposal first appears, so the team's queue
-			// stays in the order things were actually asked for.
+			// stays in the order things were actually asked for. That is also
+			// the one moment the team is emailed: a member revising their
+			// request while it waits does not send a second one.
 			if ( '' === self::pending_at( $org_id ) ) {
 				update_post_meta( $org_id, self::PENDING_AT, current_time( 'mysql', true ) );
+				self::tell_the_team( $org_id, array_keys( $held ), $actor_id );
 			}
 		}
 
@@ -246,6 +249,37 @@ final class Profile {
 		}
 
 		return [ 'errors' => [], 'held' => array_keys( $held ) ];
+	}
+
+	/**
+	 * Email the review team that a change is waiting, with a link to decide.
+	 *
+	 * @param string[] $keys Field keys held for approval.
+	 */
+	private static function tell_the_team( int $org_id, array $keys, int $actor_id ): void {
+		$labels = [];
+
+		foreach ( Schema::fields() as $field ) {
+			if ( in_array( $field->key, $keys, true ) ) {
+				$labels[] = $field->label;
+			}
+		}
+
+		$to = \DGL\Email\Recipients::for_audience( \DGL\Workflow\Plan::NOTIFY_MODERATORS, 0, $actor_id );
+
+		if ( [] === $to || [] === $labels ) {
+			return;
+		}
+
+		$actor   = get_userdata( $actor_id );
+		$message = \DGL\Email\OrgCopy::change_requested(
+			get_the_title( $org_id ),
+			$actor ? (string) $actor->display_name : __( 'A member', 'dgl-platform' ),
+			$labels,
+			\DGL\Dashboard\Router::url( 'review', 'org', (string) $org_id )
+		);
+
+		\DGL\Email\Mailer::send( $message->for_recipients( $to ) );
 	}
 
 	/**

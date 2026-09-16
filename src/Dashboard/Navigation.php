@@ -95,7 +95,7 @@ final class Navigation {
 				'url'     => Router::url( 'review' ),
 				// Counted, not measured off a capped page: a badge that stops at
 				// 500 stops being a number and starts being a guess.
-				'count'   => ItemsTable::queue_count(),
+				'count'   => ItemsTable::queue_count() + count( \DGL\Org\Profile::awaiting_review() ),
 				'section' => __( 'Review team', 'dgl-platform' ),
 				'current' => 'review' === $first,
 			];
