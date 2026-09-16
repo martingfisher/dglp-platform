@@ -115,7 +115,15 @@ $tiles = [
 	</ul>
 <?php endif; ?>
 
-<?php if ( null === $org ) : ?>
+<?php $staff_only = null === $org && isset( $data['user'] ) && $data['user']->is_moderator(); ?>
+<?php if ( $staff_only ) : ?>
+	<?php /* The review team do not submit. Their dashboard is the queue. */ ?>
+	<section class="dgl-card dgl-section" aria-labelledby="dgl-staff-heading">
+		<h2 class="dgl-section__title" id="dgl-staff-heading"><?php esc_html_e( 'You are on the review team', 'dgl-platform' ); ?></h2>
+		<p><?php esc_html_e( 'Member submissions, organisation changes and new organisations all land in the review queue. Nothing waits anywhere else.', 'dgl-platform' ); ?></p>
+		<p><a class="dgl-button" href="<?php echo esc_url( Router::url( 'review' ) ); ?>"><?php esc_html_e( 'Open the review queue', 'dgl-platform' ); ?></a></p>
+	</section>
+<?php elseif ( null === $org ) : ?>
 	<?php
 	/*
 	 * No organisation, no tiles. They led to a wizard that could only end in
@@ -147,6 +155,7 @@ $tiles = [
 </section>
 <?php endif; ?>
 
+<?php if ( ! $staff_only ) : ?>
 <section class="dgl-section" aria-labelledby="dgl-recent-heading">
 	<div class="dgl-section__head">
 		<h2 class="dgl-section__title" id="dgl-recent-heading">
@@ -200,3 +209,4 @@ $tiles = [
 		</table>
 	<?php endif; ?>
 </section>
+<?php endif; ?>

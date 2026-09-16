@@ -339,7 +339,7 @@ body.dgl-body {
 }
 
 .dgl-dash__account-name { margin: 0; font-weight: 600; color: var(--dgl-on-dark); }
-.dgl-dash__account-org  { margin: 2px 0 14px; color: var(--dgl-on-dark-muted); }
+.dgl-dash__account-org  { margin: 2px 0 0; color: var(--dgl-on-dark-muted); }
 
 /*
  * A button, because it does something. As a bare link it sat under the name
@@ -350,6 +350,7 @@ body.dgl-body {
 	display: inline-flex;
 	align-items: center;
 	box-sizing: border-box;
+	margin-top: 16px; /* On the button, not the line above it, so an account with no organisation line gets the same air. */
 	min-height: 44px;
 	padding: 6px 16px;
 	border: 2px solid var(--dgl-on-dark-muted);
