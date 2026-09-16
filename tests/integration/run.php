@@ -18,6 +18,9 @@ use DGL\Access\Access;
 use DGL\Access\Policy;
 use DGL\Audit\Log;
 use DGL\Index\ItemsTable;
+use DGL\Invites\Invites;
+use DGL\Invites\Rules as InviteRules;
+use DGL\Invites\Store as InviteStore;
 use DGL\Meta;
 use DGL\Moderation\Checks;
 use DGL\Org\Trust;
@@ -1408,6 +1411,219 @@ $group( 'Bookkeeping is not read out as news' );
 $readable = array_keys( \DGL\Dashboard\Notifications::readable() );
 $ok( ! in_array( 'status_changed_directly', $readable, true ), 'a workflow bypass is not shown to the member' );
 $ok( in_array( StateMachine::APPROVE, $readable, true ), 'but an approval is' );
+
+/* ------------------------------------------------------- invitations */
+
+$group( 'Invitations: the whole round trip' );
+
+/*
+ * Mail has to be on for any of this to be observable, because the token only
+ * ever exists inside the email. That is the design: Invites::send() does not
+ * hand the token back to its caller, so the only way to get a working link is
+ * to receive one. The test reads it the way an invitee would.
+ */
+$mail_was = get_option( \DGL\Email\Routing::OPTION_ENABLED, false );
+update_option( \DGL\Email\Routing::OPTION_ENABLED, 1 );
+
+$sent_links = [];
+$sent_to    = [];
+
+add_action(
+	'dgl_mail_sent',
+	static function ( $sent, $message, $to ) use ( &$sent_links, &$sent_to ): void {
+		$sent_links[] = (string) $message->cta_url;
+		$sent_to[]    = implode( ',', (array) $to );
+	},
+	10,
+	3
+);
+
+/* Nothing sends unless the table is there. */
+$ok( InviteStore::exists(), 'the invitations table exists after migration' );
+
+$alice_ctx = Access::user_context( $alice );
+$aaron_ctx = Access::user_context( $aaron );
+$bella_ctx = Access::user_context( $bella );
+
+$result = Invites::send( $alice_ctx, $org_a, 'Newcomer@Example.Test', 'contributor' );
+
+$ok( true === $result['ok'], 'an approved owner can invite a colleague' );
+$ok( $result['invite'] instanceof \DGL\Invites\Invite, 'and gets the stored invitation back' );
+$ok( 'newcomer@example.test' === $result['invite']->email, 'the address is stored lower-cased' );
+
+$invite_id = $result['invite']->id;
+
+/* The token must not be recoverable from storage. */
+global $wpdb;
+$stored = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM ' . InviteStore::name() . ' WHERE id = %d', $invite_id ), ARRAY_A );
+$ok( 64 === strlen( (string) $stored['token_hash'] ), 'what is stored is a 64-character hash' );
+
+$link = end( $sent_links );
+$ok( '' !== $link, 'an email went out with a link in it' );
+$ok( str_contains( (string) end( $sent_to ), 'newcomer@example.test' ) || '' !== (string) end( $sent_to ), 'addressed to somebody' );
+
+$token = trim( (string) wp_parse_url( $link, PHP_URL_PATH ), '/' );
+$token = (string) substr( strrchr( $token, '/' ), 1 );
+
+$ok( '' !== $token, 'the link carries a token' );
+$ok( $stored['token_hash'] === InviteStore::hash( $token ), 'and the stored hash is that token hashed, so the link is the only copy' );
+$ok( ! str_contains( (string) $stored['token_hash'], $token ), 'the raw token is nowhere in the row' );
+
+/* Lookup by token works, and by a wrong token does not. */
+$ok( InviteStore::find_by_token( $token ) instanceof \DGL\Invites\Invite, 'the token finds its invitation' );
+$ok( null === InviteStore::find_by_token( $token . 'x' ), 'a tampered token finds nothing' );
+$ok( null === InviteStore::find_by_token( '' ), 'and an empty one finds nothing' );
+
+$group( 'Invitations: refusals' );
+
+$dup = Invites::send( $alice_ctx, $org_a, 'newcomer@example.test', 'contributor' );
+$ok( false === $dup['ok'] && InviteRules::SEND_ALREADY_INVITED === $dup['reason'], 'a second invitation to the same address is refused' );
+
+$poach = Invites::send( $alice_ctx, $org_a, 'dgl_bella@example.test', 'contributor' );
+$ok( false === $poach['ok'] && InviteRules::SEND_OTHER_ORG === $poach['reason'], 'another organisation member cannot be poached' );
+
+$self = Invites::send( $alice_ctx, $org_a, 'dgl_aaron@example.test', 'contributor' );
+$ok( false === $self['ok'] && InviteRules::SEND_ALREADY_MEMBER === $self['reason'], 'an existing colleague is not invited again' );
+
+$by_contrib = Invites::send( $aaron_ctx, $org_a, 'someone@example.test', 'contributor' );
+$ok( false === $by_contrib['ok'] && InviteRules::SEND_DENIED === $by_contrib['reason'], 'a contributor cannot invite' );
+
+$cross = Invites::send( $bella_ctx, $org_a, 'someone@example.test', 'contributor' );
+$ok( false === $cross['ok'] && InviteRules::SEND_DENIED === $cross['reason'], 'and nobody can invite into an organisation that is not theirs' );
+
+$junk = Invites::send( $alice_ctx, $org_a, 'not-an-address', 'contributor' );
+$ok( false === $junk['ok'] && InviteRules::SEND_BAD_EMAIL === $junk['reason'], 'a malformed address is refused' );
+
+$group( 'Invitations: accepting creates exactly one account' );
+
+$before = count_users()['total_users'];
+
+$accept = Invites::accept( $token, 'New Comer', 'a-long-enough-password' );
+
+$ok( true === $accept['ok'], 'the invitation is accepted' );
+$ok( InviteRules::ACCEPT_CREATE === $accept['outcome'], 'and an account is created' );
+$ok( $accept['user_id'] > 0, 'with a real user ID' );
+
+$new_user = get_userdata( $accept['user_id'] );
+update_user_meta( $accept['user_id'], DGL_FIXTURE_FLAG, '1' );
+
+$ok( 'newcomer@example.test' === strtolower( (string) $new_user->user_email ), 'at the invited address' );
+$ok( 'New Comer' === (string) $new_user->display_name, 'with the name they chose' );
+$ok( in_array( Roles::MEMBER, (array) $new_user->roles, true ), 'holding the member role' );
+$ok( $org_a === (int) get_user_meta( $accept['user_id'], Meta::USER_ORG, true ), 'attached to the right organisation' );
+$ok( 'contributor' === (string) get_user_meta( $accept['user_id'], Meta::USER_ORG_ROLE, true ), 'at the invited level' );
+$ok( 'approved' === (string) get_user_meta( $accept['user_id'], Meta::USER_ACCOUNT_STATUS, true ), 'and approved, because the invitation is the approval' );
+
+$ok( wp_check_password( 'a-long-enough-password', $new_user->user_pass, $accept['user_id'] ), 'the password they chose is the password that works' );
+
+$ok( (int) count_users()['total_users'] === $before + 1, 'exactly one account was created' );
+
+/* The policy agrees, which is the thing that actually gates the dashboard. */
+Access::flush_cache( $accept['user_id'] );
+$new_ctx = Access::user_context( $accept['user_id'] );
+$ok( $new_ctx->is_member(), 'the new account reads as a member' );
+$ok( $new_ctx->is_fully_approved(), 'and is fully approved' );
+$ok( ! $new_ctx->is_org_owner(), 'but is not an owner' );
+$ok( Access::can( $accept['user_id'], Policy::CREATE_ITEM ), 'and can submit on the organisation behalf' );
+
+$group( 'Invitations: a used link is dead' );
+
+$replay = Invites::accept( $token, 'Someone Else', 'another-long-password' );
+$ok( false === $replay['ok'], 'the same token cannot be used twice' );
+$ok( (int) count_users()['total_users'] === $before + 1, 'and no second account appeared' );
+$ok( str_contains( $replay['error'], 'already been used' ), 'the second person is told why' );
+
+$group( 'Invitations: withdrawing' );
+
+$to_revoke = Invites::send( $alice_ctx, $org_a, 'withdrawme@example.test', 'contributor' );
+$ok( true === $to_revoke['ok'], 'a second invitation goes out' );
+$revoke_link  = end( $sent_links );
+$revoke_path  = trim( (string) wp_parse_url( $revoke_link, PHP_URL_PATH ), '/' );
+$revoke_token = (string) substr( strrchr( $revoke_path, '/' ), 1 );
+
+$ok( Invites::revoke( $to_revoke['invite']->id, $alice_ctx ), 'an owner can withdraw it' );
+$ok( ! Invites::revoke( $to_revoke['invite']->id, $alice_ctx ), 'withdrawing twice does nothing the second time' );
+
+$dead = Invites::accept( $revoke_token, 'Nope', 'yet-another-password' );
+$ok( false === $dead['ok'], 'a withdrawn invitation cannot be accepted' );
+$ok( str_contains( $dead['error'], 'withdrawn' ), 'and says it was withdrawn' );
+$ok( (int) count_users()['total_users'] === $before + 1, 'still no extra account' );
+
+$group( 'Invitations: expiry needs no cron' );
+
+$expired = Invites::send( $alice_ctx, $org_a, 'toolate@example.test', 'contributor' );
+$exp_link  = end( $sent_links );
+$exp_path  = trim( (string) wp_parse_url( $exp_link, PHP_URL_PATH ), '/' );
+$exp_token = (string) substr( strrchr( $exp_path, '/' ), 1 );
+
+$wpdb->update(
+	InviteStore::name(),
+	[ 'expires_at' => gmdate( 'Y-m-d H:i:s', time() - DAY_IN_SECONDS ) ],
+	[ 'id' => $expired['invite']->id ]
+);
+
+$late = Invites::accept( $exp_token, 'Late', 'a-perfectly-good-password' );
+$ok( false === $late['ok'], 'an invitation past its date cannot be accepted, with nothing having run' );
+$ok( str_contains( $late['error'], 'expired' ), 'and says it expired' );
+
+$ok( ! InviteStore::has_open_for( 'toolate@example.test', $org_a ), 'an expired invitation no longer counts as open' );
+$ok( InviteRules::SEND_OK === Invites::send( $alice_ctx, $org_a, 'toolate@example.test', 'contributor' )['reason'], 'so the address can be invited again' );
+
+$group( 'Invitations: linking an account that already exists' );
+
+$loose = wp_insert_user(
+	[
+		'user_login' => 'dgl_loose',
+		'user_pass'  => wp_generate_password(),
+		'user_email' => 'loose@example.test',
+	]
+);
+update_user_meta( $loose, DGL_FIXTURE_FLAG, '1' );
+
+$link_invite = Invites::send( $alice_ctx, $org_a, 'loose@example.test', 'owner' );
+$ok( true === $link_invite['ok'], 'somebody with an unattached account can be invited' );
+
+$li_link  = end( $sent_links );
+$li_path  = trim( (string) wp_parse_url( $li_link, PHP_URL_PATH ), '/' );
+$li_token = (string) substr( strrchr( $li_path, '/' ), 1 );
+
+$before_link = count_users()['total_users'];
+$linked      = Invites::accept( $li_token );
+
+$ok( true === $linked['ok'], 'and accepting works' );
+$ok( InviteRules::ACCEPT_LINK === $linked['outcome'], 'by linking rather than creating' );
+$ok( (int) $loose === $linked['user_id'], 'the existing account is the one linked' );
+$ok( (int) count_users()['total_users'] === $before_link, 'no duplicate account was made' );
+$ok( $org_a === (int) get_user_meta( $loose, Meta::USER_ORG, true ), 'and it is now in the organisation' );
+$ok( 'owner' === (string) get_user_meta( $loose, Meta::USER_ORG_ROLE, true ), 'as an owner, as invited' );
+
+$group( 'Invitations: an unverified organisation cannot recruit' );
+
+$pending_org   = $make_org( 'Org Pending', Meta::ORG_PENDING );
+$pending_owner = $make_member( 'dgl_pendowner', $pending_org, 'owner' );
+Access::flush_cache( $pending_owner );
+
+$blocked = Invites::send( Access::user_context( $pending_owner ), $pending_org, 'stranger@example.test', 'contributor' );
+$ok( false === $blocked['ok'] && InviteRules::SEND_DENIED === $blocked['reason'], 'an unverified organisation cannot invite in DGLP name' );
+
+$group( 'Invitations: the audit trail records who, not what' );
+
+$trail = Log::for_org( $org_a );
+$actions = array_map( static fn( $r ): string => (string) $r['action'], $trail );
+
+$ok( in_array( 'invite_sent', $actions, true ), 'sending an invitation is recorded' );
+$ok( in_array( 'invite_accepted', $actions, true ), 'so is accepting one' );
+$ok( in_array( 'invite_revoked', $actions, true ), 'and withdrawing one' );
+
+$leaked = false;
+foreach ( $trail as $row ) {
+	if ( '' !== $token && str_contains( (string) $row['note'] . (string) $row['changes'], $token ) ) {
+		$leaked = true;
+	}
+}
+$ok( ! $leaked, 'and no working token was ever written into the trail' );
+
+update_option( \DGL\Email\Routing::OPTION_ENABLED, $mail_was );
 
 /* ----------------------------------------------------------------- report */
 

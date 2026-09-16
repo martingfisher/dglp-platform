@@ -181,9 +181,118 @@ $is_owner = $user instanceof UserContext && $user->is_org_owner();
 		</table>
 
 		<p class="dgl-help">
-			<?php esc_html_e( 'Inviting a colleague and removing somebody are not built yet. Ask the DGLP team and they will do it for you.', 'dgl-platform' ); ?>
+			<?php esc_html_e( 'Removing somebody is not built yet. Ask the DGLP team and they will do it for you.', 'dgl-platform' ); ?>
 		</p>
 	</section>
+
+	<?php if ( '' !== (string) ( $data['invite_notice'] ?? '' ) ) : ?>
+		<p class="dgl-notice dgl-notice--good"><?php echo esc_html( (string) $data['invite_notice'] ); ?></p>
+	<?php endif; ?>
+
+	<?php if ( '' !== (string) ( $data['invite_error'] ?? '' ) ) : ?>
+		<p class="dgl-notice dgl-notice--bad"><?php echo esc_html( (string) $data['invite_error'] ); ?></p>
+	<?php endif; ?>
+
+	<?php if ( ! empty( $data['invites'] ) ) : ?>
+		<section class="dgl-card">
+			<h2 class="dgl-section__title"><?php esc_html_e( 'Invitations', 'dgl-platform' ); ?></h2>
+
+			<table class="dgl-table">
+				<thead>
+					<tr>
+						<th scope="col"><?php esc_html_e( 'Email', 'dgl-platform' ); ?></th>
+						<th scope="col"><?php esc_html_e( 'Invited as', 'dgl-platform' ); ?></th>
+						<th scope="col"><?php esc_html_e( 'State', 'dgl-platform' ); ?></th>
+						<?php if ( ! empty( $data['can_invite'] ) ) : ?>
+							<th scope="col"><span class="screen-reader-text"><?php esc_html_e( 'Actions', 'dgl-platform' ); ?></span></th>
+						<?php endif; ?>
+					</tr>
+				</thead>
+				<tbody>
+					<?php foreach ( $data['invites'] as $row ) : ?>
+						<tr>
+							<td><?php echo esc_html( $row['email'] ); ?></td>
+							<td><?php echo esc_html( $row['role'] ); ?></td>
+							<td>
+								<?php echo esc_html( $row['state_label'] ); ?>
+								<?php if ( 'open' === $row['state'] && '' !== $row['expires'] ) : ?>
+									<span class="dgl-help">
+										<?php
+										printf(
+											/* translators: %s: date. */
+											esc_html__( 'until %s', 'dgl-platform' ),
+											esc_html( $row['expires'] )
+										);
+										?>
+									</span>
+								<?php endif; ?>
+							</td>
+							<?php if ( ! empty( $data['can_invite'] ) ) : ?>
+								<td class="dgl-table__actions">
+									<?php if ( 'open' === $row['state'] ) : ?>
+										<form method="post" class="dgl-inline-form">
+											<?php wp_nonce_field( \DGL\Dashboard\Wizard::NONCE ); ?>
+											<input type="hidden" name="dgl_invite_action" value="revoke">
+											<input type="hidden" name="dgl_invite_id" value="<?php echo esc_attr( (string) $row['id'] ); ?>">
+											<button type="submit" class="dgl-button dgl-button--quiet"><?php esc_html_e( 'Withdraw', 'dgl-platform' ); ?></button>
+										</form>
+										<form method="post" class="dgl-inline-form">
+											<?php wp_nonce_field( \DGL\Dashboard\Wizard::NONCE ); ?>
+											<input type="hidden" name="dgl_invite_action" value="resend">
+											<input type="hidden" name="dgl_invite_id" value="<?php echo esc_attr( (string) $row['id'] ); ?>">
+											<button type="submit" class="dgl-button dgl-button--quiet"><?php esc_html_e( 'Send again', 'dgl-platform' ); ?></button>
+										</form>
+									<?php endif; ?>
+								</td>
+							<?php endif; ?>
+						</tr>
+					<?php endforeach; ?>
+				</tbody>
+			</table>
+		</section>
+	<?php endif; ?>
+
+	<?php if ( ! empty( $data['can_invite'] ) ) : ?>
+		<section class="dgl-card">
+			<h2 class="dgl-section__title"><?php esc_html_e( 'Invite a colleague', 'dgl-platform' ); ?></h2>
+
+			<p class="dgl-help">
+				<?php esc_html_e( 'They get an email with a link. Nothing is created in their name until they use it, and the link stops working after fourteen days.', 'dgl-platform' ); ?>
+			</p>
+
+			<form method="post" class="dgl-form">
+				<?php wp_nonce_field( \DGL\Dashboard\Wizard::NONCE ); ?>
+				<input type="hidden" name="dgl_invite_action" value="send">
+
+				<div class="dgl-field">
+					<label class="dgl-field__label" for="dgl_invite_email"><?php esc_html_e( 'Their email address', 'dgl-platform' ); ?></label>
+					<input type="email" id="dgl_invite_email" name="dgl_invite_email" class="dgl-input" required autocomplete="off">
+				</div>
+
+				<fieldset class="dgl-field">
+					<legend class="dgl-field__label"><?php esc_html_e( 'What they can do', 'dgl-platform' ); ?></legend>
+
+					<label class="dgl-choice">
+						<input type="radio" name="dgl_invite_role" value="<?php echo esc_attr( UserContext::ORG_CONTRIBUTOR ); ?>" checked>
+						<span>
+							<strong><?php esc_html_e( 'Contributor', 'dgl-platform' ); ?></strong>
+							<span class="dgl-help"><?php esc_html_e( 'Submit and edit content for the organisation.', 'dgl-platform' ); ?></span>
+						</span>
+					</label>
+
+					<label class="dgl-choice">
+						<input type="radio" name="dgl_invite_role" value="<?php echo esc_attr( UserContext::ORG_OWNER ); ?>">
+						<span>
+							<strong><?php esc_html_e( 'Owner', 'dgl-platform' ); ?></strong>
+							<span class="dgl-help"><?php esc_html_e( 'Everything a contributor can do, plus editing this page and inviting other people.', 'dgl-platform' ); ?></span>
+						</span>
+					</label>
+				</fieldset>
+
+				<button type="submit" class="dgl-button dgl-button--primary"><?php esc_html_e( 'Send the invitation', 'dgl-platform' ); ?></button>
+			</form>
+		</section>
+	<?php endif; ?>
 
 <?php elseif ( 'signin' === $tab ) : ?>
 

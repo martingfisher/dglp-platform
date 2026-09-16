@@ -17,5 +17,6 @@ require __DIR__ . '/test-schema-fields.php';
 require __DIR__ . '/test-planner.php';
 require __DIR__ . '/test-digest.php';
 require __DIR__ . '/test-email.php';
+require __DIR__ . '/test-invites.php';
 
 Harness::finish();

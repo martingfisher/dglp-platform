@@ -20,7 +20,7 @@ namespace DGL;
 defined( 'ABSPATH' ) || exit;
 
 const VERSION    = '0.2.0';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 define( 'DGL\\PLUGIN_FILE', __FILE__ );
 define( 'DGL\\PLUGIN_DIR', plugin_dir_path( __FILE__ ) );

@@ -12,6 +12,7 @@ namespace DGL;
 use DGL\Audit\Table as AuditTable;
 use DGL\Dashboard\Router;
 use DGL\Index\ItemsTable;
+use DGL\Invites\Store as InviteStore;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -90,6 +91,7 @@ final class Install {
 
 		ItemsTable::create();
 		AuditTable::create();
+		InviteStore::create();
 
 		update_option( self::DB_VERSION_OPTION, DB_VERSION, false );
 	}

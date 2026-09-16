@@ -16,6 +16,7 @@ use DGL\Dashboard\AdminLockout;
 use DGL\Dashboard\Router;
 use DGL\Email\Command as MailCommand;
 use DGL\Email\Mailer;
+use DGL\Invites\Invites;
 use DGL\Index\Sync;
 use DGL\Workflow\Revisions;
 use DGL\Workflow\Transition;
@@ -67,6 +68,7 @@ final class Plugin {
 		Guard::init();
 		Revisions::init();
 		Mailer::init();
+		Invites::init();
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			MailCommand::register();

@@ -13,6 +13,9 @@ use DGL\Access\Access;
 use DGL\Access\Policy;
 use DGL\Access\UserContext;
 use DGL\Index\ItemsTable;
+use DGL\Invites\Invites;
+use DGL\Invites\Rules as InviteRules;
+use DGL\Invites\Store as InviteStore;
 use DGL\Org\Org;
 use DGL\Moderation\Checks;
 use DGL\PostTypes;
@@ -40,6 +43,18 @@ final class Controller {
 	 * @param string[] $segments Path inside the member area.
 	 */
 	public static function handle( array $segments ): void {
+		/*
+		 * Accepting an invitation is the one screen a stranger is supposed to
+		 * reach. It comes before the sign-in gate on purpose: bouncing somebody
+		 * who has never had an account to a login form, with their one-time
+		 * link stuffed into a redirect parameter, is how an invitation gets
+		 * abandoned.
+		 */
+		if ( 'invite' === ( $segments[0] ?? '' ) ) {
+			self::invite( (string) ( $segments[1] ?? '' ) );
+			return;
+		}
+
 		if ( ! is_user_logged_in() ) {
 			self::screen( 'sign-in', [ 'redirect_to' => Router::url( ...$segments ) ], __( 'Sign in', 'dgl-platform' ) );
 			return;
@@ -711,6 +726,21 @@ final class Controller {
 		if ( 'POST' === ( $_SERVER['REQUEST_METHOD'] ?? 'GET' ) ) {
 			check_admin_referer( Wizard::NONCE );
 
+			/*
+			 * The members tab posts to the same URL as the rest of the profile
+			 * but is not a field form: it sends one of three named actions. It
+			 * is handled first and redirects on its own, so the field validator
+			 * never sees a post that has no fields in it and reports every
+			 * required field as missing.
+			 */
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- checked directly above.
+			$invite_action = isset( $_POST['dgl_invite_action'] ) ? sanitize_key( wp_unslash( $_POST['dgl_invite_action'] ) ) : '';
+
+			if ( '' !== $invite_action ) {
+				self::handle_invite_action( $invite_action, $org_id, $user );
+				exit;
+			}
+
 			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- the validator sanitises every declared field.
 			$input = isset( $_POST[ FieldRenderer::INPUT_NAME ] ) ? (array) wp_unslash( $_POST[ FieldRenderer::INPUT_NAME ] ) : [];
 
@@ -741,6 +771,10 @@ final class Controller {
 				'person'     => \DGL\Org\Profile::person_values( $user->user_id ),
 				'account'    => get_userdata( $user->user_id ),
 				'colleagues' => $org_id > 0 ? self::colleagues( $org_id ) : [],
+				'invites'    => $org_id > 0 ? self::invite_rows( $org_id ) : [],
+				'can_invite' => $org_id > 0 && [] !== InviteRules::grantable_roles( $user, $org_id ),
+				'invite_notice' => self::flash_notice(),
+				'invite_error'  => self::flash_error(),
 				'errors'     => $errors,
 				'notice'     => $notice,
 				'saved'      => isset( $_GET['saved'] ), // phpcs:ignore WordPress.Security.NonceVerification.Recommended
@@ -941,5 +975,231 @@ final class Controller {
 				'content' => View::render( 'dashboard/' . $template, $data ),
 			]
 		);
+	}
+
+	/* ---------------------------------------------------------------------
+	 * Invitations
+	 * ------------------------------------------------------------------ */
+
+	/**
+	 * The accept-an-invitation screen.
+	 *
+	 * Reachable by anybody holding the link, including somebody with no account
+	 * and nobody at all. It renders in the member-area shell but never assumes
+	 * a member is looking at it.
+	 */
+	private static function invite( string $token ): void {
+		$title  = __( 'Your invitation', 'dgl-platform' );
+		$invite = '' !== $token ? InviteStore::find_by_token( $token ) : null;
+
+		if ( null === $invite ) {
+			self::screen(
+				'invite',
+				[
+					'token'  => '',
+					'invite' => null,
+					'error'  => __( 'That invitation link is not valid. Ask whoever invited you to send a new one.', 'dgl-platform' ),
+					'done'   => false,
+				],
+				$title
+			);
+
+			return;
+		}
+
+		$now    = new \DateTimeImmutable( 'now', new \DateTimeZone( 'UTC' ) );
+		$state  = InviteRules::state( $invite, $now );
+		$error  = '';
+		$done   = false;
+
+		if ( InviteRules::OPEN !== $state ) {
+			$error = InviteRules::accept_error( InviteRules::ACCEPT_CLOSED, $state );
+		} elseif ( 'POST' === ( $_SERVER['REQUEST_METHOD'] ?? 'GET' ) ) {
+			check_admin_referer( Wizard::NONCE );
+
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- passwords must not be sanitised, only length-checked.
+			$password = isset( $_POST['dgl_password'] ) ? (string) wp_unslash( $_POST['dgl_password'] ) : '';
+			$name     = isset( $_POST['dgl_name'] ) ? sanitize_text_field( wp_unslash( $_POST['dgl_name'] ) ) : '';
+
+			$existing = get_user_by( 'email', $invite->email );
+			$needs_pw = ! $existing instanceof \WP_User;
+
+			if ( $needs_pw && strlen( $password ) < 12 ) {
+				$error = __( 'Choose a password of at least 12 characters.', 'dgl-platform' );
+			} else {
+				$result = Invites::accept( $token, $name, $password );
+
+				if ( $result['ok'] ) {
+					/*
+					 * Signed in straight away. An invitation that ends at a
+					 * login form is an invitation that ends, and the member has
+					 * just proved who they are by holding a link sent to their
+					 * own address.
+					 */
+					if ( ! is_user_logged_in() && $result['user_id'] > 0 ) {
+						wp_set_current_user( $result['user_id'] );
+						wp_set_auth_cookie( $result['user_id'], false, is_ssl() );
+					}
+
+					wp_safe_redirect( Router::url() );
+					exit;
+				}
+
+				$error = $result['error'];
+				$done  = false;
+			}
+		}
+
+		self::screen(
+			'invite',
+			[
+				'token'     => $token,
+				'invite'    => $invite,
+				'org_name'  => (string) get_the_title( $invite->org_id ),
+				'inviter'   => Invites::person( $invite->invited_by ),
+				'role_name' => Invites::role_name( $invite->org_role ),
+				'has_account' => get_user_by( 'email', $invite->email ) instanceof \WP_User,
+				'expires_on'  => Invites::readable_date( $invite->expires_at ),
+				'error'     => $error,
+				'done'      => $done,
+			],
+			$title
+		);
+	}
+
+	/**
+	 * Send, withdraw or resend an invitation, then redirect.
+	 *
+	 * Always redirects, so a refresh cannot send a second invitation. The
+	 * outcome is carried in a one-shot transient rather than a query string:
+	 * an error message in a URL is a message somebody can paste to a colleague
+	 * and have them see "already a member" about an address they never typed.
+	 */
+	private static function handle_invite_action( string $action, int $org_id, UserContext $user ): void {
+		$back = Router::url( 'profile', 'members' );
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- the caller checked the nonce.
+		$post = wp_unslash( $_POST );
+
+		if ( 'send' === $action ) {
+			$result = Invites::send(
+				$user,
+				$org_id,
+				isset( $post['dgl_invite_email'] ) ? sanitize_email( (string) $post['dgl_invite_email'] ) : '',
+				isset( $post['dgl_invite_role'] ) ? sanitize_key( (string) $post['dgl_invite_role'] ) : UserContext::ORG_CONTRIBUTOR
+			);
+
+			if ( $result['ok'] ) {
+				self::flash(
+					sprintf(
+						/* translators: %s: email address. */
+						__( 'Invitation sent to %s.', 'dgl-platform' ),
+						$result['invite']->email
+					),
+					''
+				);
+			} else {
+				self::flash( '', $result['error'] );
+			}
+
+			wp_safe_redirect( $back );
+			exit;
+		}
+
+		$id = isset( $post['dgl_invite_id'] ) ? (int) $post['dgl_invite_id'] : 0;
+
+		if ( 'revoke' === $action ) {
+			$ok = Invites::revoke( $id, $user );
+
+			self::flash(
+				$ok ? __( 'Invitation withdrawn.', 'dgl-platform' ) : '',
+				$ok ? '' : __( 'That invitation could not be withdrawn. It may already have been used.', 'dgl-platform' )
+			);
+		}
+
+		if ( 'resend' === $action ) {
+			$ok = Invites::resend( $id, $user );
+
+			self::flash(
+				$ok ? __( 'Invitation sent again. The previous link no longer works.', 'dgl-platform' ) : '',
+				$ok ? '' : __( 'That invitation could not be sent again. Withdraw it and send a new one.', 'dgl-platform' )
+			);
+		}
+
+		wp_safe_redirect( $back );
+		exit;
+	}
+
+	/**
+	 * Invitations for the members tab, newest first, with their state resolved.
+	 *
+	 * @return array<int, array{id:int, email:string, role:string, state:string, state_label:string, expires:string, invited_by:string}>
+	 */
+	private static function invite_rows( int $org_id ): array {
+		$now  = new \DateTimeImmutable( 'now', new \DateTimeZone( 'UTC' ) );
+		$rows = [];
+
+		foreach ( InviteStore::for_org( $org_id, 50 ) as $invite ) {
+			$state = InviteRules::state( $invite, $now );
+
+			// An accepted invitation is a person in the list above. Showing it
+			// here as well makes one colleague look like two.
+			if ( InviteRules::ACCEPTED === $state ) {
+				continue;
+			}
+
+			$rows[] = [
+				'id'          => $invite->id,
+				'email'       => $invite->email,
+				'role'        => Invites::role_name( $invite->org_role ),
+				'state'       => $state,
+				'state_label' => InviteRules::label( $state ),
+				'expires'     => Invites::readable_date( $invite->expires_at ),
+				'invited_by'  => Invites::person( $invite->invited_by ),
+			];
+		}
+
+		return $rows;
+	}
+
+	/**
+	 * Hold a message across the redirect that follows a write.
+	 */
+	private static function flash( string $notice, string $error ): void {
+		set_transient( self::flash_key(), [ 'notice' => $notice, 'error' => $error ], 60 );
+	}
+
+	private static function flash_key(): string {
+		return 'dgl_flash_' . get_current_user_id();
+	}
+
+	private static function flash_notice(): string {
+		return (string) ( self::flash_read()['notice'] ?? '' );
+	}
+
+	private static function flash_error(): string {
+		return (string) ( self::flash_read()['error'] ?? '' );
+	}
+
+	/** @var array<string,string>|null */
+	private static ?array $flash = null;
+
+	/**
+	 * Read the one-shot message and delete it, so a refresh does not repeat it.
+	 *
+	 * @return array<string, string>
+	 */
+	private static function flash_read(): array {
+		if ( null !== self::$flash ) {
+			return self::$flash;
+		}
+
+		$stored = get_transient( self::flash_key() );
+
+		if ( is_array( $stored ) ) {
+			delete_transient( self::flash_key() );
+		}
+
+		return self::$flash = is_array( $stored ) ? $stored : [];
 	}
 }
