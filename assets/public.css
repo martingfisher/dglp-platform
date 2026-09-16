@@ -41,7 +41,7 @@
 	font-weight: 600;
 	letter-spacing: 0.08em;
 	text-transform: uppercase;
-	color: var(--dgl-teal-solid);
+	color: var(--dgl-teal-text);
 }
 
 .dgl-pub__org {
@@ -302,7 +302,7 @@
 .dgl-pub__rowmeta {
 	margin: 0 0 8px;
 	font-size: 0.9em;
-	color: var(--dgl-teal-solid);
+	color: var(--dgl-teal-text);
 	font-weight: 500;
 }
 

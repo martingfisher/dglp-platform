@@ -32,12 +32,12 @@
 }
 
 .dgl-chip--draft    { background: #e4e6e6; color: #1e3232; } /* 10.76:1 */
-.dgl-chip--pending  { background: #fff7e8; color: #7a5a1c; } /*  5.96:1 */
-.dgl-chip--live     { background: #eaf4e6; color: #387923; } /*  4.73:1 */
-.dgl-chip--changes  { background: #f9e0ea; color: #cc0053; } /*  4.57:1 */
+.dgl-chip--pending  { background: #fff7e8; color: #6b4f18; } /*  7.1:1 */
+.dgl-chip--live     { background: #eaf4e6; color: #2a5a1a; } /*  7.2:1 */
+.dgl-chip--changes  { background: #f9e0ea; color: #94003c; } /*  7.3:1 */
 .dgl-chip--expired  { background: #e6e7ed; color: #2d3b6b; } /*  8.73:1 */
-.dgl-chip--archived { background: #ebedf5; color: #5767a7; } /*  4.60:1 */
-.dgl-chip--rejected { background: #ffede7; color: #b84925; } /*  4.61:1 */
+.dgl-chip--archived { background: #ebedf5; color: #3f4b7a; } /*  7.2:1 */
+.dgl-chip--rejected { background: #ffede7; color: #88361b; } /*  7.1:1 */
 
 /* ---- Primitives --------------------------------------------------------- */
 
@@ -838,8 +838,8 @@ body.dgl-body {
 .dgl-progress__step--done a { color: var(--dgl-link); }
 
 .dgl-progress__step--current .dgl-progress__num {
-	background: var(--dgl-purple);
-	border-color: var(--dgl-purple);
+	background: var(--dgl-navy);
+	border-color: var(--dgl-navy);
 	color: var(--dgl-white);
 }
 
@@ -1249,7 +1249,7 @@ body.dgl-body {
 	font-size: 0.7em;
 	font-weight: 700;
 	letter-spacing: 0.08em;
-	color: var(--dgl-purple);
+	color: var(--dgl-navy);
 }
 
 .dgl-preview__title {
@@ -1309,9 +1309,9 @@ body.dgl-body {
 }
 
 /* The same measured pairs as the status chips, reused rather than reinvented. */
-.dgl-check-row--pass    .dgl-check-row__verdict { background: #eaf4e6; color: #387923; }
-.dgl-check-row--warn    .dgl-check-row__verdict { background: #fff7e8; color: #7a5a1c; }
-.dgl-check-row--fail    .dgl-check-row__verdict { background: #f9e0ea; color: #cc0053; }
+.dgl-check-row--pass    .dgl-check-row__verdict { background: #eaf4e6; color: #2a5a1a; }
+.dgl-check-row--warn    .dgl-check-row__verdict { background: #fff7e8; color: #6b4f18; }
+.dgl-check-row--fail    .dgl-check-row__verdict { background: #f9e0ea; color: #94003c; }
 .dgl-check-row--unknown .dgl-check-row__verdict { background: #e4e6e6; color: #1e3232; }
 
 .dgl-form--bare {
@@ -1362,13 +1362,13 @@ body.dgl-body {
 .dgl-alert--edit {
 	border-color: #7a5a1c;
 	background: #fff7e8;
-	color: #7a5a1c;
+	color: #6b4f18;
 }
 
 .dgl-alert--warn {
 	border-color: #7a5a1c;
 	background: #fff7e8;
-	color: #7a5a1c;
+	color: #6b4f18;
 }
 
 .dgl-alert__actions {
@@ -1406,7 +1406,7 @@ body.dgl-body {
 	padding: 2px 7px;
 	border-radius: 999px;
 	background: #fff7e8;
-	color: #7a5a1c; /* 6.0:1. Was #8f6c26 at 4.54:1, AA by a hair at 11px. */
+	color: #6b4f18; /* 7.1:1 on the amber tint. Was #7a5a1c at 6.0:1, AA but short of AAA. */
 	font-size: 0.78em;
 	font-weight: 600;
 	letter-spacing: 0.02em;

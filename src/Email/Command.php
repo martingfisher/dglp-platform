@@ -70,7 +70,61 @@ final class Command {
 			],
 		];
 
+		/*
+		 * A logo URL that resolves is not a logo that shows. One owner email
+		 * rendered the header as an alt-text box, and nothing here could say
+		 * whether the file was missing, the server refused the request, or the
+		 * mail client simply had images off. These two rows answer the first
+		 * two from the server's own point of view.
+		 */
+		$logo_id = Logo::email_id();
+
+		if ( $logo_id > 0 ) {
+			$path = (string) get_attached_file( $logo_id );
+
+			$rows[] = [
+				'setting' => 'Email logo file',
+				'value'   => '' !== $path && file_exists( $path )
+					? 'present, ' . size_format( (int) filesize( $path ) )
+					: 'MISSING on disk: ' . ( $path ?: '(no path recorded)' ),
+			];
+
+			$rows[] = [
+				'setting' => 'Email logo fetch',
+				'value'   => self::describe_fetch( (string) Logo::email_url() ),
+			];
+		}
+
 		WP_CLI\Utils\format_items( 'table', $rows, [ 'setting', 'value' ] );
+	}
+
+	/**
+	 * What a mail client would get if it asked for the logo.
+	 *
+	 * A HEAD request from the server to its own public URL. It cannot see a
+	 * client that blocks remote images, but it does catch a missing file, a
+	 * firewall rule or a redirect to a login page, which are the faults that
+	 * can be fixed from here.
+	 */
+	private static function describe_fetch( string $url ): string {
+		if ( '' === $url ) {
+			return 'no URL';
+		}
+
+		$response = wp_remote_head( $url, [ 'timeout' => 10, 'redirection' => 0 ] );
+
+		if ( is_wp_error( $response ) ) {
+			return 'FAILED: ' . $response->get_error_message();
+		}
+
+		$code = (int) wp_remote_retrieve_response_code( $response );
+		$type = (string) wp_remote_retrieve_header( $response, 'content-type' );
+
+		if ( 200 === $code && str_starts_with( $type, 'image/' ) ) {
+			return 'HTTP 200, ' . $type;
+		}
+
+		return 'PROBLEM: HTTP ' . $code . ( '' !== $type ? ', ' . $type : '' );
 	}
 
 	/**

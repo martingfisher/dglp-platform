@@ -66,19 +66,23 @@ resubmitting it is a stateful document, not a form entry.
 - Built: invitations, sign-in, the submission wizard, revisions, review queue,
   notifications, organisation profile with name and logo changes held for
   approval, email preferences, digests, public event pages and listings.
-- Not yet built, and known: archive, restore and take-down from any screen;
-  removing a member; self-serve joining with email-domain matching against a
-  supplied organisation list; an approval queue for new organisations; telling
-  the team when an organisation change is waiting.
+- Built since, all in 0.8.x: archive, restore and take-down; removing a
+  member; self-serve joining with email-domain matching; an approval queue for
+  new organisations; the team told when an organisation change is waiting.
+- Not yet built, and known: importing the supplied organisation list; a public
+  searchable directory of organisations with a per-organisation visibility
+  toggle; Microsoft and Google sign-in; CSV export; consent records at
+  registration; Turnstile on the join form; member-initiated account closure.
 - Constraint: the plugin must not depend on the theme's markup. Theme updates
   cannot be allowed to break the member area.
 - Constraint: images members upload are cut to 1600px and stored without
   metadata. Rich text is limited to paragraphs, bold, italic, lists and links.
 - Terminology in use: member, organisation, owner, contributor, review team,
   submission, listing, live on site, awaiting review, needs your attention.
-- Undecided: whether later joiners by email domain are owners or contributors;
-  whether the owner is told when somebody joins by domain; the refusal and
-  retry policy for join requests. Recorded in `docs/joining.md`.
+- Decided 16 September 2026 and recorded in `docs/joining.md`: the first
+  person to join an organisation is its owner and later joiners by domain are
+  contributors; the owner is emailed when somebody joins; a join link lasts 48
+  hours and is single-use; a refused registration removes the organisation.
 
 ## Brand Commitments
 
@@ -123,6 +127,7 @@ Confirmed 16 September 2026: WCAG 2.2 AA is the floor and AAA is the target
 where practical. That means 7:1 for body and secondary text where achievable,
 3:1 for control boundaries and state indicators, state never carried by colour
 alone, visible focus on every control, and keyboard operation throughout. The
-audience is known to include visually impaired users. Current measured state:
-the faintest text in the member area is the Partnership purple link colour at
-5.05:1 on white, which meets AA and not AAA.
+audience is known to include visually impaired users. Measured 17 September
+2026 with `AAA=1 node bin/check-contrast.mjs`: the faintest text across the
+member area and the public event pages is the amber status chip at 7.15:1.
+Nothing rendered is below 7:1.

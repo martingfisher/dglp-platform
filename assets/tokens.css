@@ -20,7 +20,16 @@
 	--dgl-navy: var(--theme-palette-color-14, #2d3b6b);
 	--dgl-purple: var(--theme-palette-color-15, #5b6bae);
 	--dgl-surface: var(--theme-palette-color-18, #f4f6fb);
-	--dgl-danger: var(--theme-palette-color-10, #cc0053);
+	--dgl-danger-palette: var(--theme-palette-color-10, #cc0053);
+	/*
+	 * The palette's accent hover, #cc0053, is 5.7:1 on white either way round.
+	 * Taken 18% darker it is 7.4:1 as text on white and as a fill under white
+	 * text, so a required-field mark, an error line and a danger button all
+	 * clear AAA from the one value.
+	 */
+	--dgl-danger: color-mix(in srgb, var(--dgl-danger-palette) 82%, #000000);
+	/* Teal as words. The solid teal is 7.0:1 on white and 6.7:1 on cream; 10% darker clears both. */
+	--dgl-teal-text: color-mix(in srgb, var(--dgl-teal-solid) 90%, #000000);
 
 	/*
 	 * Semantic roles. The teal is absent from every one of these on purpose:
@@ -39,10 +48,11 @@
 	--dgl-text: var(--dgl-ink);
 	/*
 	 * Secondary text. Ink at 68% measured 5.1:1 on white, which passes AA and
-	 * still read as faint at the 14px it is mostly set in. At 78% it is 6.8:1,
-	 * past AAA, and the help lines under fields stop looking like watermarks.
+	 * still read as faint at the 14px it is mostly set in. 78% was 6.8:1 on
+	 * white but 6.3:1 on the off-white card surface, short of AAA. At 84% it
+	 * measures 7.6:1 on the surface, 7.8:1 on cream and 8.3:1 on white.
 	 */
-	--dgl-text-muted: color-mix(in srgb, var(--dgl-ink) 78%, var(--dgl-page));
+	--dgl-text-muted: color-mix(in srgb, var(--dgl-ink) 84%, var(--dgl-page));
 	--dgl-border: color-mix(in srgb, var(--dgl-ink) 14%, transparent);
 	--dgl-border-strong: color-mix(in srgb, var(--dgl-navy) 28%, transparent);
 	/*

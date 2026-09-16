@@ -10,11 +10,13 @@
  * Usage:
  *   node bin/check-contrast.mjs <base-url> <user> <password>
  *
- * Exits non-zero if anything is below WCAG AA.
+ * Exits non-zero if anything is below WCAG AA. AAA=1 in the environment
+ * raises the text floor to 7:1, the target the member area is held to.
  */
 import { chromium } from '/opt/node22/lib/node_modules/playwright/index.mjs';
 
 const [ base, user, pass ] = process.argv.slice( 2 );
+const AAA = !! process.env.AAA;
 
 if ( ! base || ! user || ! pass ) {
 	console.error( 'usage: node bin/check-contrast.mjs <base-url> <user> <password>' );
@@ -244,7 +246,9 @@ for ( const route of ROUTES ) {
 		// Controls: 3:1 for the boundary (1.4.11). Text: WCAG's large-text
 		// allowance is 18.66px bold, or 24px at any weight.
 		const large = s.size >= 24 || ( s.size >= 18.66 && s.weight >= 700 );
-		const floor = s.control ? 3 : ( large ? 3 : 4.5 );
+		// AAA=1 raises the text floors to 1.4.6 (7:1 normal, 4.5:1 large); the
+		// control boundary stays at 3:1, which is the only figure WCAG gives it.
+		const floor = s.control ? 3 : ( large ? ( AAA ? 4.5 : 3 ) : ( AAA ? 7 : 4.5 ) );
 
 		if ( ! s.control ) {
 			lowest.push( { route, text: s.text, ratio: value, size: s.size, weight: s.weight, colour: s.colour, background: s.background } );
@@ -287,7 +291,7 @@ if ( process.env.REPORT ) {
 console.log( `${ checked } text and control-border pairs checked across ${ ROUTES.length } routes` );
 
 if ( 0 === failures.length ) {
-	console.log( 'All clear. Nothing below WCAG AA.' );
+	console.log( `All clear. Nothing below WCAG ${ AAA ? 'AAA' : 'AA' }.` );
 	process.exit( 0 );
 }
 

@@ -15,9 +15,10 @@ use DGL\Brand;
 use DGL\Statuses;
 
 const AA_NORMAL = 4.5;
+const AAA_NORMAL = 7.0;
 const AA_LARGE  = 3.0;
 
-Harness::group( 'Status chips clear WCAG AA' );
+Harness::group( 'Status chips clear WCAG AAA' );
 
 $chips = Brand::status_colours();
 
@@ -30,8 +31,8 @@ foreach ( Statuses::all() as $status ) {
 foreach ( $chips as $status => $pair ) {
 	$ratio = Brand::contrast( $pair['fg'], $pair['bg'] );
 	Harness::assert_true(
-		$ratio >= AA_NORMAL,
-		sprintf( '%s chip is %.2f:1, needs %.1f:1', Statuses::label( $status ), $ratio, AA_NORMAL )
+		$ratio >= AAA_NORMAL,
+		sprintf( '%s chip is %.2f:1, needs %.1f:1', Statuses::label( $status ), $ratio, AAA_NORMAL )
 	);
 }
 

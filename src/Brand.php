@@ -97,12 +97,12 @@ final class Brand {
 	public static function status_colours(): array {
 		return [
 			Statuses::DRAFT    => [ 'bg' => '#e4e6e6', 'fg' => '#1e3232' ],
-			Statuses::PENDING  => [ 'bg' => '#fff7e8', 'fg' => '#7a5a1c' ],
-			Statuses::LIVE     => [ 'bg' => '#eaf4e6', 'fg' => '#387923' ],
-			Statuses::CHANGES  => [ 'bg' => '#f9e0ea', 'fg' => '#cc0053' ],
+			Statuses::PENDING  => [ 'bg' => '#fff7e8', 'fg' => '#6b4f18' ],
+			Statuses::LIVE     => [ 'bg' => '#eaf4e6', 'fg' => '#2a5a1a' ],
+			Statuses::CHANGES  => [ 'bg' => '#f9e0ea', 'fg' => '#94003c' ],
 			Statuses::EXPIRED  => [ 'bg' => '#e6e7ed', 'fg' => '#2d3b6b' ],
-			Statuses::ARCHIVED => [ 'bg' => '#ebedf5', 'fg' => '#5767a7' ],
-			Statuses::REJECTED => [ 'bg' => '#ffede7', 'fg' => '#b84925' ],
+			Statuses::ARCHIVED => [ 'bg' => '#ebedf5', 'fg' => '#3f4b7a' ],
+			Statuses::REJECTED => [ 'bg' => '#ffede7', 'fg' => '#88361b' ],
 		];
 	}
 
