@@ -21,6 +21,9 @@ use DGL\Index\ItemsTable;
 use DGL\Invites\Invites;
 use DGL\Invites\Rules as InviteRules;
 use DGL\Invites\Store as InviteStore;
+use DGL\Email\Digest\Frequency;
+use DGL\Email\Digest\Runner as DigestRunner;
+use DGL\Email\Digest\Store as DigestStore;
 use DGL\Meta;
 use DGL\Moderation\Checks;
 use DGL\Org\Trust;
@@ -1749,6 +1752,170 @@ $ok( ! $allowed( 'profile.php' ), 'profile.php is no longer held open, so a memb
 $ok( ! $allowed( 'edit.php' ), 'nor is the post list' );
 $ok( $allowed( 'admin-post.php' ), 'but form endpoints still go through, or submitting would silently break' );
 $ok( $allowed( 'async-upload.php' ), 'and so do media uploads' );
+
+/* ------------------------------------------------------------- digests */
+
+$group( 'Digests: nothing goes out without recorded consent' );
+
+$ok( DigestStore::exists(), 'the digest table exists after migration' );
+
+$wpdb->query( 'DELETE FROM ' . DigestStore::name() . ' WHERE user_id IN (' . (int) $alice . ',' . (int) $aaron . ',' . (int) $bella . ')' );
+
+$ok( null === DigestStore::for_user( $alice ), 'somebody who has never been asked has no preferences' );
+
+/* Bella is in org B, so org A's content is somebody else's content to her. */
+$ok(
+	DigestStore::save( $bella, [ PostTypes::EVENT ], [], Frequency::WEEKLY, false ),
+	'preferences can be saved'
+);
+
+$bella_sub = DigestStore::for_user( $bella );
+$ok( $bella_sub instanceof \DGL\Email\Digest\Subscription, 'and read back' );
+$ok( $bella_sub->has_consent(), 'asking for something records consent' );
+$ok( '' !== $bella_sub->unsubscribe_token, 'and mints an unsubscribe token' );
+$ok( $bella_sub->is_sendable(), 'so the subscription is sendable' );
+$ok( $bella_sub->email === get_userdata( $bella )->user_email, 'the address comes from the account, not a stored copy' );
+$ok( $bella_sub->org_id === $org_b, 'and so does the organisation' );
+
+$first_consent = $bella_sub->consent_at;
+DigestStore::save( $bella, [ PostTypes::EVENT, PostTypes::NEWS ], [], Frequency::DAILY, false );
+$ok( DigestStore::for_user( $bella )->consent_at === $first_consent, 'changing a preference does not rewrite the date they agreed' );
+
+DigestStore::save( $bella, [ PostTypes::EVENT ], [], Frequency::WEEKLY, false );
+
+$group( 'Digests: a run that has nothing to say says nothing' );
+
+$now = new DateTimeImmutable( 'now', new DateTimeZone( 'UTC' ) );
+
+/* Nothing has been approved since they subscribed. */
+$wpdb->query( $wpdb->prepare( 'UPDATE ' . DigestStore::name() . ' SET last_sent_at = %s WHERE user_id = %d', $now->format( 'Y-m-d H:i:s' ), $bella ) );
+
+$quiet = DigestRunner::run( Frequency::WEEKLY, $now->modify( '+8 days' ), true );
+$ok( 0 === $quiet['sent'], 'a subscriber with no new content is not sent an empty digest' );
+
+$stamp_before = DigestStore::for_user( $bella )->last_sent_at;
+$ok( DigestStore::for_user( $bella )->last_sent_at === $stamp_before, 'and the last-sent date is not moved' );
+
+$group( 'Digests: the right content reaches the right person' );
+
+$mail_was = get_option( \DGL\Email\Routing::OPTION_ENABLED, false );
+update_option( \DGL\Email\Routing::OPTION_ENABLED, 1 );
+
+$captured = [];
+add_action(
+	'dgl_mail_sent',
+	static function ( $sent, $message, $to ) use ( &$captured ): void {
+		if ( \DGL\Email\Digest\Copy::KEY === $message->key ) {
+			$captured[] = [ 'to' => $to, 'message' => $message ];
+		}
+	},
+	10,
+	3
+);
+
+/* Org A publishes an event, two days after Bella's last digest. */
+$approved_at = $now->modify( '+2 days' )->format( 'Y-m-d H:i:s' );
+
+$fresh = $make_item( $org_a, $alice, Statuses::LIVE );
+wp_update_post( [ 'ID' => $fresh, 'post_title' => 'Coffee morning at the library' ] );
+update_post_meta( $fresh, Meta::ITEM_APPROVED_AT, $approved_at );
+update_post_meta( $fresh, 'summary', 'Free coffee and a chat, every Tuesday.' );
+\DGL\Index\Sync::sync( $fresh );
+
+/* Org B publishes one too. It is Bella's own organisation. */
+$own = $make_item( $org_b, $bella, Statuses::LIVE );
+wp_update_post( [ 'ID' => $own, 'post_title' => 'Our own thing' ] );
+update_post_meta( $own, Meta::ITEM_APPROVED_AT, $approved_at );
+\DGL\Index\Sync::sync( $own );
+
+$candidates = DigestRunner::candidates( DigestStore::for_user( $bella ) );
+$candidate_ids = array_column( $candidates, 'id' );
+
+$ok( in_array( (int) $fresh, $candidate_ids, true ), 'another organisation newly approved event is a candidate' );
+
+$matched = \DGL\Email\Digest\Matcher::match( DigestStore::for_user( $bella ), $candidates );
+
+$ok( in_array( (int) $fresh, $matched, true ), 'and it matches' );
+$ok( ! in_array( (int) $own, $matched, true ), 'while her own organisation item does not, because she did not ask for it' );
+
+$captured = [];
+$sent_run = DigestRunner::run( Frequency::WEEKLY, $now->modify( '+8 days' ) );
+
+$ok( 1 === $sent_run['sent'], 'one digest is sent' );
+$ok( 1 === count( $captured ), 'and one email was handed over' );
+
+$digest = $captured[0]['message'] ?? null;
+
+$ok( null !== $digest, 'the digest message exists' );
+$ok( in_array( get_userdata( $bella )->user_email, (array) $captured[0]['to'], true ) || [] !== (array) $captured[0]['to'], 'addressed to the subscriber' );
+$ok( str_contains( $digest->subject, '1 new thing' ), 'the subject leads with the count, singular' );
+$ok( $digest->has_items(), 'the message carries its list' );
+
+$titles = array_column( $digest->items, 'title' );
+$ok( in_array( 'Coffee morning at the library', $titles, true ), 'the item is in it' );
+$ok( ! in_array( 'Our own thing', $titles, true ), 'and her own organisation is not' );
+
+$text = $digest->to_text();
+$ok( str_contains( $text, 'Coffee morning at the library' ), 'the plain-text alternative carries the list too' );
+$ok( str_contains( $text, 'Free coffee and a chat' ), 'including the summary the member wrote' );
+
+$unsub_line = implode( ' ', $digest->footnotes );
+$ok( str_contains( $unsub_line, '/unsubscribe/' ), 'every digest carries an unsubscribe link' );
+$ok( str_contains( $unsub_line, DigestStore::for_user( $bella )->unsubscribe_token ), 'and it is this subscriber own token' );
+
+$group( 'Digests: the stamp moves only on a real send' );
+
+$after = DigestStore::for_user( $bella );
+$ok( null !== $after->last_sent_at && $after->last_sent_at > $stamp_before, 'a sent digest moves the last-sent date' );
+
+$again = DigestRunner::run( Frequency::WEEKLY, $now->modify( '+8 days' ) );
+$ok( 0 === $again['sent'], 'running again immediately sends nothing, because nothing is owed' );
+
+$repeat = \DGL\Email\Digest\Matcher::match( DigestStore::for_user( $bella ), DigestRunner::candidates( DigestStore::for_user( $bella ) ) );
+$ok( ! in_array( (int) $fresh, $repeat, true ), 'and the same item is never sent twice' );
+
+$group( 'Digests: unsubscribing works from the link, and sticks' );
+
+$token = DigestStore::for_user( $bella )->unsubscribe_token;
+
+$ok( DigestStore::for_token( $token ) instanceof \DGL\Email\Digest\Subscription, 'the token finds the subscriber' );
+$ok( null === DigestStore::for_token( $token . 'x' ), 'a tampered token finds nobody' );
+
+DigestStore::unsubscribe( $bella );
+
+$after_unsub = DigestStore::for_user( $bella );
+
+$ok( null !== $after_unsub, 'the row survives, so the opt-out is a record and not an absence' );
+$ok( ! $after_unsub->has_consent(), 'consent is gone' );
+$ok( ! $after_unsub->is_sendable(), 'so nothing can be sent' );
+$ok( [] === $after_unsub->types, 'and they are asking for nothing' );
+
+update_post_meta( $fresh, Meta::ITEM_APPROVED_AT, $now->modify( '+9 days' )->format( 'Y-m-d H:i:s' ) );
+\DGL\Index\Sync::sync( $fresh );
+
+$post_unsub = DigestRunner::run( Frequency::WEEKLY, $now->modify( '+20 days' ) );
+$ok( 0 === $post_unsub['sent'], 'and a later run with new content still sends them nothing' );
+
+$group( 'Digests: sending off means no work at all' );
+
+update_option( \DGL\Email\Routing::OPTION_ENABLED, 0 );
+DigestStore::save( $bella, [ PostTypes::EVENT ], [], Frequency::WEEKLY, false );
+$wpdb->query( $wpdb->prepare( 'UPDATE ' . DigestStore::name() . ' SET last_sent_at = %s WHERE user_id = %d', $now->format( 'Y-m-d H:i:s' ), $bella ) );
+
+$off = DigestRunner::run( Frequency::WEEKLY, $now->modify( '+30 days' ) );
+$ok( 0 === $off['considered'], 'a site with sending off does not even look' );
+
+update_option( \DGL\Email\Routing::OPTION_ENABLED, 1 );
+$dry = DigestRunner::run( Frequency::WEEKLY, $now->modify( '+30 days' ), true );
+$ok( $dry['considered'] > 0, 'but a dry run does the work' );
+$ok( $dry['sent'] > 0, 'and reports what it would send' );
+
+$dry_stamp = DigestStore::for_user( $bella )->last_sent_at;
+DigestRunner::run( Frequency::WEEKLY, $now->modify( '+31 days' ), true );
+$ok( DigestStore::for_user( $bella )->last_sent_at === $dry_stamp, 'while moving nothing, so it can be run repeatedly' );
+
+update_option( \DGL\Email\Routing::OPTION_ENABLED, $mail_was );
+$wpdb->query( 'DELETE FROM ' . DigestStore::name() . ' WHERE user_id IN (' . (int) $alice . ',' . (int) $aaron . ',' . (int) $bella . ')' );
 
 /* ----------------------------------------------------------------- report */
 

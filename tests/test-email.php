@@ -283,3 +283,91 @@ Harness::assert_same(
 	Copy::compose( 'approved', Plan::NOTIFY_MEMBER, $edit() )->cta_url,
 	'while the member is sent to the item, which is the thing that still exists afterwards'
 );
+
+Harness::group( 'Copying a message never loses a property' );
+
+/*
+ * for_recipients() and with_subject() used to list every property by hand, in
+ * two places. Adding one meant remembering both or watching it vanish the
+ * moment the mailer addressed the message - which is after every test that
+ * builds one, and before it goes on the wire. This asserts the invariant
+ * rather than the list, so it holds for properties nobody has thought of yet.
+ */
+$full = new DGL\Email\Message(
+	key: 'k',
+	audience: 'a',
+	subject: 'Subject',
+	preheader: 'Pre',
+	heading: 'Heading',
+	paragraphs: [ 'One', 'Two' ],
+	facts: [ 'Label' => 'Value' ],
+	note: 'A note',
+	note_label: 'Note label',
+	cta_label: 'Do it',
+	cta_url: 'https://example.test/do',
+	footnotes: [ 'Small print' ],
+	items: [ [ 'title' => 'An item', 'meta' => 'Event', 'url' => 'https://example.test/i', 'summary' => 'About it' ] ],
+	to: [ 'first@example.test' ]
+);
+
+$addressed = $full->for_recipients( [ 'second@example.test' ] );
+$retitled  = $full->with_subject( 'Diverted' );
+
+$properties = array_map(
+	static fn( ReflectionProperty $p ): string => $p->getName(),
+	( new ReflectionClass( DGL\Email\Message::class ) )->getProperties()
+);
+
+Harness::assert_true( count( $properties ) > 10, 'the message has the properties this test thinks it has' );
+
+foreach ( $properties as $name ) {
+	if ( 'to' !== $name ) {
+		Harness::assert_same( $full->{$name}, $addressed->{$name}, "addressing a message keeps {$name}" );
+	}
+
+	if ( 'subject' !== $name ) {
+		Harness::assert_same( $full->{$name}, $retitled->{$name}, "changing the subject keeps {$name}" );
+	}
+}
+
+Harness::assert_same( [ 'second@example.test' ], $addressed->to, 'and the new recipients are used' );
+Harness::assert_same( 'Diverted', $retitled->subject, 'and the new subject is used' );
+Harness::assert_same( [ 'first@example.test' ], $retitled->to, 'while the recipients survive a subject change' );
+
+Harness::group( 'A digest list survives into the plain-text alternative' );
+
+$text = $full->to_text();
+
+Harness::assert_true( str_contains( $text, 'An item' ), 'the item title is there' );
+Harness::assert_true( str_contains( $text, 'https://example.test/i' ), 'so is its link, because a text reader has no button to press' );
+Harness::assert_true( str_contains( $text, 'About it' ), 'and its summary' );
+Harness::assert_true( $full->has_items(), 'a message with a list says it has one' );
+Harness::assert_false( $full->for_recipients( [] )->with_subject( 'x' )->has_items() === false, 'and still says so after being copied twice' );
+
+Harness::group( 'The unsubscribe link in the footer is clickable' );
+
+/*
+ * It went out as escaped text. Some clients auto-link a bare URL and some do
+ * not, so for some readers the only way to stop the emails was to copy the
+ * address into a browser. Almost nobody does that; they press the spam button,
+ * and that costs the sending domain far more than an unsubscribe.
+ */
+$footed = new DGL\Email\Message(
+	key: 'digest',
+	audience: 'subscriber',
+	subject: 'S',
+	footnotes: [
+		'Change what you get: https://example.test/dashboard/profile/email/ - Stop these emails: https://example.test/dashboard/unsubscribe/abc123/',
+		'A line with a sentence-ending URL https://example.test/x.',
+		'A line with <script>alert(1)</script> and no link at all.',
+	]
+);
+
+$html = DGL\Email\Template::render( $footed );
+
+Harness::assert_true( str_contains( $html, 'href="https://example.test/dashboard/unsubscribe/abc123/"' ), 'the unsubscribe URL becomes a real link' );
+Harness::assert_true( str_contains( $html, 'href="https://example.test/dashboard/profile/email/"' ), 'and so does the preferences URL' );
+Harness::assert_true( str_contains( $html, 'href="https://example.test/x"' ), 'a trailing full stop is not swallowed into the URL' );
+Harness::assert_true( str_contains( $html, 'x</a>.' ), 'and stays in the sentence where it belongs' );
+Harness::assert_false( str_contains( $html, '<script>' ), 'markup in a footnote is still escaped' );
+Harness::assert_true( str_contains( $html, '&lt;script&gt;' ), 'and shown as text' );

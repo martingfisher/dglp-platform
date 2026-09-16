@@ -13,6 +13,7 @@ use DGL\Audit\Table as AuditTable;
 use DGL\Dashboard\Router;
 use DGL\Index\ItemsTable;
 use DGL\Invites\Store as InviteStore;
+use DGL\Email\Digest\Store as DigestStore;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -33,6 +34,7 @@ final class Install {
 		self::migrate();
 		Roles::install();
 		self::schedule_expiry();
+		self::schedule_digests();
 
 		/*
 		 * Everything that owns a rewrite rule has to be registered before the
@@ -59,6 +61,7 @@ final class Install {
 	 */
 	public static function deactivate(): void {
 		wp_clear_scheduled_hook( Plugin::EXPIRY_HOOK );
+		wp_clear_scheduled_hook( Plugin::DIGEST_HOOK );
 		flush_rewrite_rules();
 	}
 
@@ -80,6 +83,43 @@ final class Install {
 	}
 
 	/**
+	 * Check for owed digests every hour.
+	 *
+	 * Hourly for all three cadences, not daily. Due-ness is worked out from
+	 * each subscriber's own last send rather than from a calendar rule, so an
+	 * hourly check means a run the server missed catches up within the hour
+	 * instead of waiting a whole period. A check that finds nothing owed reads
+	 * one index and stops.
+	 *
+	 * This needs a real system cron behind it. On WordPress's pseudo-cron a
+	 * quiet site will not fire it, and a digest nobody receives looks exactly
+	 * like a digest nobody wanted.
+	 */
+	public static function schedule_digests(): void {
+		if ( ! wp_next_scheduled( Plugin::DIGEST_HOOK ) ) {
+			wp_schedule_event( time() + ( 15 * MINUTE_IN_SECONDS ), 'hourly', Plugin::DIGEST_HOOK );
+		}
+	}
+
+	/**
+	 * Make sure the scheduled work is scheduled.
+	 *
+	 * Uploading a new copy of an already-active plugin does not fire the
+	 * activation hook, so nothing that only happens on activation happens at
+	 * all. That is how the member area's rewrite rules went missing after a
+	 * routine update, and a cron job added in a later version has exactly the
+	 * same hole: it would be scheduled on a fresh install and never on an
+	 * upgrade, so digests would silently not send on the one site that had been
+	 * running longest.
+	 *
+	 * Both checks read the cron option, which WordPress has already loaded.
+	 */
+	public static function maybe_schedule(): void {
+		self::schedule_expiry();
+		self::schedule_digests();
+	}
+
+	/**
 	 * Bring the schema up to date. Idempotent, and cheap when already current.
 	 */
 	public static function migrate(): void {
@@ -92,6 +132,7 @@ final class Install {
 		ItemsTable::create();
 		AuditTable::create();
 		InviteStore::create();
+		DigestStore::create();
 
 		update_option( self::DB_VERSION_OPTION, DB_VERSION, false );
 	}

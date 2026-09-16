@@ -17,6 +17,9 @@ use DGL\Dashboard\Router;
 use DGL\Email\Command as MailCommand;
 use DGL\Email\Mailer;
 use DGL\Invites\Invites;
+use DGL\Email\Digest\Frequency;
+use DGL\Email\Digest\Runner as DigestRunner;
+use DGL\Email\Digest\Command as DigestCommand;
 use DGL\Index\Sync;
 use DGL\Workflow\Revisions;
 use DGL\Workflow\Transition;
@@ -47,6 +50,13 @@ final class Plugin {
 		add_action( 'admin_init', [ Install::class, 'maybe_migrate' ] );
 
 		/*
+		 * On `init`, not `admin_init`. Cron fires on the front end, and a site
+		 * whose administrator has not opened wp-admin since the upgrade would
+		 * otherwise never schedule anything.
+		 */
+		add_action( 'init', [ Install::class, 'maybe_schedule' ], 20 );
+
+		/*
 		 * After the post types and rewrite rules are registered, so the flush
 		 * rebuilds from the complete set. Priority 99 on `init`, not
 		 * `admin_init`: the routes this repairs are on the front end.
@@ -72,9 +82,11 @@ final class Plugin {
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			MailCommand::register();
+			DigestCommand::register();
 		}
 
 		add_action( self::EXPIRY_HOOK, [ Transition::class, 'run_expiry_sweep' ] );
+		add_action( self::DIGEST_HOOK, [ self::class, 'run_digests' ] );
 	}
 
 	/**
@@ -91,7 +103,25 @@ final class Plugin {
 	 */
 	public const EXPIRY_HOOK = 'dgl_run_expiry_sweep';
 
+	/**
+	 * Cron hook name for the digest sweep.
+	 */
+	public const DIGEST_HOOK = 'dgl_send_digests';
+
 	public static function load_textdomain(): void {
 		load_plugin_textdomain( 'dgl-platform', false, dirname( plugin_basename( PLUGIN_FILE ) ) . '/languages' );
+	}
+
+	/**
+	 * Send whatever digests are owed, across all three cadences.
+	 *
+	 * One hook rather than three schedules. Each cadence decides for itself
+	 * whether anybody is owed anything, so a run where nothing is due costs one
+	 * indexed read per cadence.
+	 */
+	public static function run_digests(): void {
+		foreach ( Frequency::all() as $frequency ) {
+			DigestRunner::run( $frequency );
+		}
 	}
 }

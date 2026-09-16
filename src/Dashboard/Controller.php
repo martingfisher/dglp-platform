@@ -16,6 +16,9 @@ use DGL\Index\ItemsTable;
 use DGL\Invites\Invites;
 use DGL\Invites\Rules as InviteRules;
 use DGL\Invites\Store as InviteStore;
+use DGL\Email\Digest\Frequency;
+use DGL\Email\Digest\Store as DigestStore;
+use DGL\Email\Digest\Copy as DigestCopy;
 use DGL\Org\Org;
 use DGL\Moderation\Checks;
 use DGL\PostTypes;
@@ -52,6 +55,16 @@ final class Controller {
 		 */
 		if ( 'invite' === ( $segments[0] ?? '' ) ) {
 			self::invite( (string) ( $segments[1] ?? '' ) );
+			return;
+		}
+
+		/*
+		 * Unsubscribing must work from the link in the email, with no sign-in
+		 * and no hunting for a setting. An opt-out that asks somebody to log in
+		 * first is an opt-out that becomes a spam complaint.
+		 */
+		if ( 'unsubscribe' === ( $segments[0] ?? '' ) ) {
+			self::unsubscribe( (string) ( $segments[1] ?? '' ) );
 			return;
 		}
 
@@ -741,6 +754,19 @@ final class Controller {
 				exit;
 			}
 
+			/*
+			 * The email tab is checkboxes, not schema fields, and it posts to
+			 * the same URL as the rest of the profile. Handled here for the
+			 * same reason the members tab is: the field validator would see a
+			 * post with no fields in it and report every required one missing.
+			 */
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- checked above.
+			if ( isset( $_POST['dgl_digest_save'] ) ) {
+				self::save_email_prefs( $user );
+				wp_safe_redirect( Router::url( 'profile', 'email' ) );
+				exit;
+			}
+
 			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- the validator sanitises every declared field.
 			$input = isset( $_POST[ FieldRenderer::INPUT_NAME ] ) ? (array) wp_unslash( $_POST[ FieldRenderer::INPUT_NAME ] ) : [];
 
@@ -775,6 +801,7 @@ final class Controller {
 				'can_invite' => $org_id > 0 && [] !== InviteRules::grantable_roles( $user, $org_id ),
 				'invite_notice' => self::flash_notice(),
 				'invite_error'  => self::flash_error(),
+				'email_prefs'   => self::email_prefs( $user ),
 				'errors'     => $errors,
 				'notice'     => $notice,
 				'saved'      => isset( $_GET['saved'] ), // phpcs:ignore WordPress.Security.NonceVerification.Recommended
@@ -1201,5 +1228,116 @@ final class Controller {
 		}
 
 		return self::$flash = is_array( $stored ) ? $stored : [];
+	}
+	/* ---------------------------------------------------------------------
+	 * Digest preferences
+	 * ------------------------------------------------------------------ */
+
+	/**
+	 * Stop sending somebody digests, from the link in one.
+	 *
+	 * One click, no confirmation step, no sign-in. The token identifies the
+	 * subscriber, so there is nothing to ask them. A screen that says "are you
+	 * sure" to somebody who has already decided is a screen that gets the
+	 * message marked as spam instead.
+	 */
+	private static function unsubscribe( string $token ): void {
+		$subscription = '' !== $token ? DigestStore::for_token( $token ) : null;
+		$title        = __( 'Email preferences', 'dgl-platform' );
+
+		if ( null === $subscription ) {
+			self::screen(
+				'unsubscribe',
+				[
+					'done'  => false,
+					'error' => __( 'That link is not valid. If you are signed in you can change your email preferences in your profile.', 'dgl-platform' ),
+				],
+				$title
+			);
+
+			return;
+		}
+
+		DigestStore::unsubscribe( $subscription->user_id );
+
+		self::screen(
+			'unsubscribe',
+			[
+				'done'    => true,
+				'error'   => '',
+				'message' => DigestCopy::unsubscribed_message(),
+			],
+			$title
+		);
+	}
+
+	/**
+	 * What the email preferences tab shows.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private static function email_prefs( UserContext $user ): array {
+		$subscription = DigestStore::exists() ? DigestStore::for_user( $user->user_id ) : null;
+
+		$topics = get_terms(
+			[
+				'taxonomy'   => Taxonomies::TOPIC,
+				'hide_empty' => false,
+			]
+		);
+
+		return [
+			'sub'        => $subscription,
+			// Null is not "unsubscribed". Somebody who has never been asked has
+			// no preferences; somebody who has asked to stop has an answer that
+			// has to be respected. The screen says different things for each.
+			'asked'      => null !== $subscription,
+			'types'      => $subscription?->types ?? [],
+			'topic_ids'  => $subscription?->topic_ids ?? [],
+			'frequency'  => $subscription?->frequency ?? Frequency::WEEKLY,
+			'own_org'    => (bool) ( $subscription?->include_own_org ?? false ),
+			'consent_at' => $subscription?->consent_at,
+			'last_sent'  => $subscription?->last_sent_at,
+			'all_topics' => is_array( $topics ) ? $topics : [],
+			'cadences'   => array_combine(
+				Frequency::all(),
+				array_map( [ Frequency::class, 'label' ], Frequency::all() )
+			),
+		];
+	}
+
+	/**
+	 * Save the email preferences tab.
+	 *
+	 * Asking for nothing is a valid answer and is stored as one: the store
+	 * clears consent rather than deleting the row, so the fact that this person
+	 * opted out survives the next bulk change.
+	 */
+	private static function save_email_prefs( UserContext $user ): void {
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- the caller checked the nonce.
+		$post = wp_unslash( $_POST );
+
+		$types = isset( $post['dgl_digest_types'] ) ? (array) $post['dgl_digest_types'] : [];
+		$types = array_values( array_intersect( array_map( 'sanitize_key', $types ), PostTypes::submittable() ) );
+
+		$topics = isset( $post['dgl_digest_topics'] ) ? (array) $post['dgl_digest_topics'] : [];
+		$topics = array_values( array_filter( array_map( 'intval', $topics ), static fn( int $t ): bool => $t > 0 ) );
+
+		$frequency = isset( $post['dgl_digest_frequency'] ) ? sanitize_key( (string) $post['dgl_digest_frequency'] ) : Frequency::WEEKLY;
+
+		DigestStore::save(
+			$user->user_id,
+			$types,
+			$topics,
+			$frequency,
+			! empty( $post['dgl_digest_own_org'] )
+		);
+
+		self::flash(
+			[] === $types
+				? __( 'Saved. You will not get any digests.', 'dgl-platform' )
+				: __( 'Saved. Your digest preferences are up to date.', 'dgl-platform' ),
+			''
+		);
 	}
 }

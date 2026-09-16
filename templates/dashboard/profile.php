@@ -331,11 +331,109 @@ $is_owner = $user instanceof UserContext && $user->is_org_owner();
 
 <?php else : ?>
 
+	<?php $prefs = $data['email_prefs'] ?? []; ?>
+
+	<?php if ( '' !== (string) ( $data['invite_notice'] ?? '' ) ) : ?>
+		<div class="dgl-alert dgl-alert--good"><p><?php echo esc_html( (string) $data['invite_notice'] ); ?></p></div>
+	<?php endif; ?>
+
 	<section class="dgl-card">
-		<h2 class="dgl-section__title"><?php esc_html_e( 'Email preferences', 'dgl-platform' ); ?></h2>
-		<p class="dgl-help">
-			<?php esc_html_e( 'Choosing which listings you hear about, and how often, is not built yet.', 'dgl-platform' ); ?>
+		<h2 class="dgl-section__title"><?php esc_html_e( 'The digest', 'dgl-platform' ); ?></h2>
+
+		<p>
+			<?php esc_html_e( 'A round-up of what other member organisations have posted. Tick what you want to hear about. Tick nothing and we will not send it.', 'dgl-platform' ); ?>
 		</p>
+
+		<form method="post" class="dgl-form">
+			<?php wp_nonce_field( \DGL\Dashboard\Wizard::NONCE ); ?>
+			<input type="hidden" name="dgl_digest_save" value="1">
+
+			<fieldset class="dgl-field-row dgl-field-row--group">
+				<legend class="dgl-label"><?php esc_html_e( 'What to include', 'dgl-platform' ); ?></legend>
+
+				<?php foreach ( \DGL\PostTypes::definitions() as $post_type => $definition ) : ?>
+					<label class="dgl-check">
+						<input
+							type="checkbox"
+							name="dgl_digest_types[]"
+							value="<?php echo esc_attr( $post_type ); ?>"
+							<?php checked( in_array( $post_type, (array) ( $prefs['types'] ?? [] ), true ) ); ?>
+						>
+						<span><?php echo esc_html( (string) ( $definition['plural'] ?? $post_type ) ); ?></span>
+					</label>
+				<?php endforeach; ?>
+			</fieldset>
+
+			<?php if ( ! empty( $prefs['all_topics'] ) ) : ?>
+				<fieldset class="dgl-field-row dgl-field-row--group">
+					<legend class="dgl-label"><?php esc_html_e( 'Topics', 'dgl-platform' ); ?></legend>
+					<p class="dgl-help"><?php esc_html_e( 'Leave all of these unticked to hear about every topic.', 'dgl-platform' ); ?></p>
+
+					<?php foreach ( $prefs['all_topics'] as $topic ) : ?>
+						<label class="dgl-check">
+							<input
+								type="checkbox"
+								name="dgl_digest_topics[]"
+								value="<?php echo esc_attr( (string) $topic->term_id ); ?>"
+								<?php checked( in_array( (int) $topic->term_id, array_map( 'intval', (array) ( $prefs['topic_ids'] ?? [] ) ), true ) ); ?>
+							>
+							<span><?php echo esc_html( $topic->name ); ?></span>
+						</label>
+					<?php endforeach; ?>
+				</fieldset>
+			<?php endif; ?>
+
+			<div class="dgl-field-row">
+				<label class="dgl-label" for="dgl_digest_frequency"><?php esc_html_e( 'How often', 'dgl-platform' ); ?></label>
+				<select id="dgl_digest_frequency" name="dgl_digest_frequency" class="dgl-field">
+					<?php foreach ( (array) ( $prefs['cadences'] ?? [] ) as $value => $label ) : ?>
+						<option value="<?php echo esc_attr( (string) $value ); ?>" <?php selected( (string) $value, (string) ( $prefs['frequency'] ?? '' ) ); ?>>
+							<?php echo esc_html( (string) $label ); ?>
+						</option>
+					<?php endforeach; ?>
+				</select>
+			</div>
+
+			<?php if ( null !== $data['org'] ) : ?>
+				<fieldset class="dgl-field-row dgl-field-row--group">
+					<legend class="dgl-label"><?php esc_html_e( 'Your own organisation', 'dgl-platform' ); ?></legend>
+					<label class="dgl-check">
+						<input type="checkbox" name="dgl_digest_own_org" value="1" <?php checked( ! empty( $prefs['own_org'] ) ); ?>>
+						<span>
+							<?php esc_html_e( 'Include things we posted ourselves', 'dgl-platform' ); ?>
+							<span class="dgl-help"><?php esc_html_e( 'Off by default. Nobody needs an email about the thing they posted this morning.', 'dgl-platform' ); ?></span>
+						</span>
+					</label>
+				</fieldset>
+			<?php endif; ?>
+
+			<button type="submit" class="dgl-button dgl-button--primary"><?php esc_html_e( 'Save preferences', 'dgl-platform' ); ?></button>
+		</form>
+
+		<?php if ( ! empty( $prefs['consent_at'] ) ) : ?>
+			<p class="dgl-help">
+				<?php
+				printf(
+					/* translators: %s: date. */
+					esc_html__( 'You agreed to the digest on %s.', 'dgl-platform' ),
+					esc_html( \DGL\Invites\Invites::readable_date( (string) $prefs['consent_at'] ) )
+				);
+				?>
+				<?php if ( ! empty( $prefs['last_sent'] ) ) : ?>
+					<?php
+					printf(
+						/* translators: %s: date. */
+						esc_html__( 'The last one went out on %s.', 'dgl-platform' ),
+						esc_html( \DGL\Invites\Invites::readable_date( (string) $prefs['last_sent'] ) )
+					);
+					?>
+				<?php endif; ?>
+			</p>
+		<?php endif; ?>
+	</section>
+
+	<section class="dgl-card">
+		<h2 class="dgl-section__title"><?php esc_html_e( 'Email about your own work', 'dgl-platform' ); ?></h2>
 		<p class="dgl-help">
 			<?php esc_html_e( 'You still get email about your own submissions: when one arrives with the team, and when they decide. Those are not a newsletter and will not be switched off here.', 'dgl-platform' ); ?>
 		</p>

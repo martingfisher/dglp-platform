@@ -159,11 +159,68 @@ final class Template {
 			$out .= '<p style="margin:0 0 16px;">' . esc_html( $paragraph ) . '</p>';
 		}
 
+		$out .= self::items( $message, $c );
 		$out .= self::facts( $message, $c );
 		$out .= self::note( $message, $c );
 		$out .= self::button( $message, $c );
 
 		return $out . '</td></tr>';
+	}
+
+	/**
+	 * The list in a digest.
+	 *
+	 * A table of rows rather than a <ul>, because Outlook renders through Word
+	 * and Word's list handling is its own field of study. Each row is a linked
+	 * title, a line of context and a summary; the whole row is not a link,
+	 * because a link that wraps a paragraph reads as a wall of underline in
+	 * clients that do not honour the styling.
+	 *
+	 * @param array<string, string> $c
+	 */
+	private static function items( Message $message, array $c ): string {
+		if ( [] === $message->items ) {
+			return '';
+		}
+
+		$out = '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 24px;">';
+
+		foreach ( $message->items as $index => $item ) {
+			$title   = (string) ( $item['title'] ?? '' );
+			$meta    = (string) ( $item['meta'] ?? '' );
+			$url     = (string) ( $item['url'] ?? '' );
+			$summary = (string) ( $item['summary'] ?? '' );
+
+			if ( '' === $title ) {
+				continue;
+			}
+
+			// A rule between rows, never above the first one.
+			$border = $index > 0 ? 'border-top:1px solid ' . $c['rule'] . ';' : '';
+
+			$out .= '<tr><td style="padding:16px 0;' . $border . '">';
+
+			$heading = '<span style="font-family:' . self::FONT . ';font-size:17px;font-weight:700;line-height:1.35;color:' . $c['primary'] . ';">'
+				. esc_html( $title ) . '</span>';
+
+			$out .= '' !== $url
+				? '<a href="' . esc_url( $url ) . '" style="text-decoration:none;color:' . $c['primary'] . ';">' . $heading . '</a>'
+				: $heading;
+
+			if ( '' !== $meta ) {
+				$out .= '<div style="margin:4px 0 0;font-family:' . self::FONT . ';font-size:13px;color:' . $c['muted'] . ';">'
+					. esc_html( $meta ) . '</div>';
+			}
+
+			if ( '' !== $summary ) {
+				$out .= '<div style="margin:8px 0 0;font-family:' . self::FONT . ';font-size:15px;line-height:1.55;color:' . $c['ink'] . ';">'
+					. esc_html( $summary ) . '</div>';
+			}
+
+			$out .= '</td></tr>';
+		}
+
+		return $out . '</table>';
 	}
 
 	/**
@@ -263,9 +320,41 @@ final class Template {
 
 		foreach ( $message->footnotes as $footnote ) {
 			$out .= '<p style="margin:0 0 8px;font-family:' . self::FONT . ';font-size:13px;line-height:1.5;color:' . $c['muted'] . ';">'
-				. esc_html( $footnote ) . '</p>';
+				. self::linkify( $footnote, $c ) . '</p>';
 		}
 
 		return $out . '</td></tr>';
+	}
+
+	/**
+	 * Make bare URLs in the small print clickable.
+	 *
+	 * The footer is where the unsubscribe link lives, and it was going out as
+	 * escaped text. Some clients auto-link a bare URL and some do not, so for
+	 * some readers the only way to stop the emails was to select the address,
+	 * copy it and paste it into a browser. Almost nobody does that. They press
+	 * the spam button instead, and a spam complaint costs the sending domain
+	 * far more than an unsubscribe does.
+	 *
+	 * Escaping happens first, on the whole string, and the pattern then matches
+	 * only what is left. Nothing user-supplied can reach the href unescaped.
+	 *
+	 * @param array<string, string> $c
+	 */
+	private static function linkify( string $text, array $c ): string {
+		$escaped = esc_html( $text );
+
+		return (string) preg_replace_callback(
+			'#https?://[^\s<>"\']+#i',
+			static function ( array $m ) use ( $c ): string {
+				// A trailing full stop belongs to the sentence, not the URL.
+				$url  = rtrim( $m[0], '.,;:' );
+				$tail = substr( $m[0], strlen( $url ) );
+
+				return '<a href="' . esc_url( html_entity_decode( $url, ENT_QUOTES, 'UTF-8' ) ) . '"'
+					. ' style="color:' . $c['primary'] . ';text-decoration:underline;">' . $url . '</a>' . $tail;
+			},
+			$escaped
+		);
 	}
 }

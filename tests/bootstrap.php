@@ -20,6 +20,52 @@ if ( ! function_exists( '__' ) ) {
 	}
 }
 
+/*
+ * The handful of WordPress escaping and formatting functions the email
+ * template reaches for. Faithful enough to test string assembly against, and
+ * deliberately no more: what these tests check is the template's own logic,
+ * not WordPress's escaping, which is asserted in the integration suite where
+ * the real functions are loaded.
+ */
+if ( ! function_exists( 'esc_html' ) ) {
+	function esc_html( string $text ): string {
+		return htmlspecialchars( $text, ENT_QUOTES, 'UTF-8' );
+	}
+}
+
+if ( ! function_exists( 'esc_attr' ) ) {
+	function esc_attr( string $text ): string {
+		return htmlspecialchars( $text, ENT_QUOTES, 'UTF-8' );
+	}
+}
+
+if ( ! function_exists( 'esc_url' ) ) {
+	function esc_url( string $url ): string {
+		$url = str_replace( [ '"', "'", '<', '>' ], '', trim( $url ) );
+
+		// Only the schemes an email is allowed to link to.
+		return preg_match( '#^(https?:|mailto:|/)#i', $url ) ? $url : '';
+	}
+}
+
+if ( ! function_exists( 'get_bloginfo' ) ) {
+	function get_bloginfo( string $show = '' ): string {
+		return 'Test Site';
+	}
+}
+
+if ( ! function_exists( '_n' ) ) {
+	function _n( string $single, string $plural, int $number, string $domain = 'default' ): string {
+		return 1 === $number ? $single : $plural;
+	}
+}
+
+if ( ! function_exists( 'wp_kses_post' ) ) {
+	function wp_kses_post( string $html ): string {
+		return $html;
+	}
+}
+
 spl_autoload_register(
 	static function ( string $class ): void {
 		if ( ! str_starts_with( $class, 'DGL\\' ) ) {

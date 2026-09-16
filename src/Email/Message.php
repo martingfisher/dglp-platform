@@ -36,6 +36,8 @@ final readonly class Message {
 	 * @param string   $cta_label  Button text. Empty means no button.
 	 * @param string   $cta_url    Where the button goes.
 	 * @param string[] $footnotes  Small print under the body.
+	 * @param array<int, array{title:string, meta:string, url:string, summary:string}> $items
+	 *                             A list, for a digest. Empty for everything else.
 	 * @param string[] $to         Recipient addresses. Filled in by the mailer.
 	 */
 	public function __construct(
@@ -51,6 +53,7 @@ final readonly class Message {
 		public string $cta_label = '',
 		public string $cta_url = '',
 		public array $footnotes = [],
+		public array $items = [],
 		public array $to = [],
 	) {}
 
@@ -60,44 +63,36 @@ final readonly class Message {
 	 * @param string[] $to
 	 */
 	public function for_recipients( array $to ): self {
-		return new self(
-			key: $this->key,
-			audience: $this->audience,
-			subject: $this->subject,
-			preheader: $this->preheader,
-			heading: $this->heading,
-			paragraphs: $this->paragraphs,
-			facts: $this->facts,
-			note: $this->note,
-			note_label: $this->note_label,
-			cta_label: $this->cta_label,
-			cta_url: $this->cta_url,
-			footnotes: $this->footnotes,
-			to: $to,
-		);
+		return $this->with( [ 'to' => $to ] );
 	}
 
 	/**
 	 * The same message with a different subject, for the staging redirect.
 	 */
 	public function with_subject( string $subject ): self {
-		$next = $this->for_recipients( $this->to );
+		return $this->with( [ 'subject' => $subject ] );
+	}
 
-		return new self(
-			key: $next->key,
-			audience: $next->audience,
-			subject: $subject,
-			preheader: $next->preheader,
-			heading: $next->heading,
-			paragraphs: $next->paragraphs,
-			facts: $next->facts,
-			note: $next->note,
-			note_label: $next->note_label,
-			cta_label: $next->cta_label,
-			cta_url: $next->cta_url,
-			footnotes: $next->footnotes,
-			to: $next->to,
-		);
+	/**
+	 * A copy of this message with some properties replaced.
+	 *
+	 * Built by reading the constructor rather than by listing every property
+	 * by hand. Both callers used to list them, and adding a property meant
+	 * remembering to add it in two more places or watching it silently vanish
+	 * the moment a message was addressed. The list of things to keep in step is
+	 * now zero.
+	 *
+	 * @param array<string, mixed> $changes
+	 */
+	private function with( array $changes ): self {
+		$args = [];
+
+		foreach ( ( new \ReflectionClass( self::class ) )->getConstructor()->getParameters() as $parameter ) {
+			$name          = $parameter->getName();
+			$args[ $name ] = array_key_exists( $name, $changes ) ? $changes[ $name ] : $this->{$name};
+		}
+
+		return new self( ...$args );
 	}
 
 	public function has_cta(): bool {
@@ -106,6 +101,10 @@ final readonly class Message {
 
 	public function has_note(): bool {
 		return '' !== trim( $this->note );
+	}
+
+	public function has_items(): bool {
+		return [] !== $this->items;
 	}
 
 	/**
@@ -126,6 +125,24 @@ final readonly class Message {
 
 		foreach ( $this->paragraphs as $paragraph ) {
 			$lines[] = wordwrap( $paragraph, 72 );
+			$lines[] = '';
+		}
+
+		foreach ( $this->items as $item ) {
+			$lines[] = '* ' . (string) ( $item['title'] ?? '' );
+
+			if ( '' !== (string) ( $item['meta'] ?? '' ) ) {
+				$lines[] = '  ' . (string) $item['meta'];
+			}
+
+			if ( '' !== (string) ( $item['summary'] ?? '' ) ) {
+				$lines[] = '  ' . wordwrap( (string) $item['summary'], 70, "\n  " );
+			}
+
+			if ( '' !== (string) ( $item['url'] ?? '' ) ) {
+				$lines[] = '  ' . (string) $item['url'];
+			}
+
 			$lines[] = '';
 		}
 
