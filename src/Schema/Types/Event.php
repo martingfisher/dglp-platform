@@ -97,6 +97,10 @@ final class Event implements TypeDefinition {
 				key: 'capacity',
 				label: __( 'Capacity', 'dgl-platform' ),
 				type: Field::NUMBER,
+				// A planning note for DGLP, not a public fact. Printing
+				// "Capacity: 12" turns it into a scarcity claim the
+				// organiser never made.
+				public: false,
 			),
 			new Field(
 				key: 'booking_url',

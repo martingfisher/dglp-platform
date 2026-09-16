@@ -191,6 +191,30 @@ final class FieldRegistry {
 	}
 
 	/**
+	 * Fields shown on the public page for a type.
+	 *
+	 * The `public` flag on {@see Field} has existed since the registry was
+	 * written and nothing read it, because until now nothing rendered a public
+	 * page. It defaults to true, so a field is published unless somebody says
+	 * otherwise, which is the right default for content a member wrote in order
+	 * to have it published.
+	 *
+	 * `capacity` is the exception. A member records it so DGLP know the scale
+	 * of the thing; printing "Capacity: 12" on a public listing turns a planning
+	 * note into a scarcity claim the organiser never made.
+	 *
+	 * @return Field[]
+	 */
+	public static function public_fields( string $post_type ): array {
+		return array_values(
+			array_filter(
+				self::for_type( $post_type ),
+				static fn( Field $field ): bool => $field->public
+			)
+		);
+	}
+
+	/**
 	 * Fields that may appear in a digest summary line.
 	 *
 	 * @return Field[]

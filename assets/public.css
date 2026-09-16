@@ -1,0 +1,333 @@
+/*
+ * Public pages: one published item, and a listing of them.
+ *
+ * Shares assets/tokens.css with the member area, so the palette, type scale
+ * and radii are the same object rather than a copy. These pages sit inside the
+ * theme's own header and footer, so this styles the content between them and
+ * deliberately sets no page background, no body font and nothing global: a
+ * plugin that restyles a theme's page furniture is a plugin somebody ends up
+ * fighting.
+ *
+ * Layout follows the wireframes: a kicker line, a large heading, the summary
+ * as a standfirst, then the description with the facts beside it.
+ */
+
+.dgl-pub {
+	font-family: var(--dgl-font);
+	font-size: var(--dgl-size);
+	line-height: var(--dgl-line);
+	color: var(--dgl-text);
+	max-width: 1100px;
+	margin: 0 auto;
+	padding: var(--dgl-gap-lg) var(--dgl-gap);
+}
+
+/* ---- Breadcrumb and kicker --------------------------------------------- */
+
+.dgl-pub__crumbs {
+	font-size: 0.82em;
+	color: var(--dgl-text-muted);
+	margin: 0 0 var(--dgl-gap);
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.dgl-pub__crumbs a { color: var(--dgl-link); }
+
+.dgl-pub__kicker {
+	margin: 0 0 8px;
+	font-size: 0.82em;
+	font-weight: 600;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--dgl-teal-solid);
+}
+
+.dgl-pub__org {
+	font-weight: 400;
+	letter-spacing: 0;
+	text-transform: none;
+	color: var(--dgl-text-muted);
+}
+
+/* ---- Headings ---------------------------------------------------------- */
+
+.dgl-pub__title {
+	margin: 0 0 var(--dgl-gap);
+	font-family: var(--dgl-font);
+	font-weight: var(--dgl-weight-heading);
+	line-height: 1.15;
+	font-size: clamp( 1.9rem, 1.3rem + 2.2vw, 3rem );
+	color: var(--dgl-navy);
+}
+
+.dgl-pub__standfirst {
+	margin: 0 0 var(--dgl-gap-lg);
+	font-size: 1.15em;
+	line-height: 1.5;
+	color: var(--dgl-text);
+	max-width: 62ch;
+}
+
+.dgl-pub__lede {
+	margin: 0 0 var(--dgl-gap-lg);
+	color: var(--dgl-text-muted);
+	max-width: 62ch;
+}
+
+/*
+ * An item whose date has gone. The expiry sweep takes these off the listings
+ * on their own schedule, so this is only reachable in the window between the
+ * date passing and the sweep running. Saying so beats a stale listing that
+ * sends somebody to a closed door.
+ */
+.dgl-pub__passed {
+	margin: 0 0 var(--dgl-gap-lg);
+	padding: 12px var(--dgl-gap);
+	border-radius: var(--dgl-radius-button);
+	background: var(--dgl-surface);
+	border-left: 4px solid var(--dgl-teal);
+	font-size: 0.95em;
+}
+
+/* ---- Media ------------------------------------------------------------- */
+
+.dgl-pub__image {
+	margin: 0 0 var(--dgl-gap-lg);
+	border-radius: var(--dgl-radius-card);
+	overflow: hidden;
+}
+
+.dgl-pub__image img {
+	display: block;
+	width: 100%;
+	height: auto;
+}
+
+/* ---- Body and sidebar -------------------------------------------------- */
+
+.dgl-pub__layout {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) 320px;
+	gap: var(--dgl-gap-lg);
+	align-items: start;
+}
+
+.dgl-pub__body { max-width: 66ch; }
+
+.dgl-pub__body > *:first-child { margin-top: 0; }
+
+.dgl-pub__body p { margin: 0 0 var(--dgl-gap); }
+
+.dgl-pub__aside {
+	display: flex;
+	flex-direction: column;
+	gap: var(--dgl-gap);
+	position: sticky;
+	top: var(--dgl-gap-lg);
+}
+
+.dgl-pub__card {
+	background: var(--dgl-white);
+	border: 1px solid var(--dgl-border);
+	border-radius: var(--dgl-radius-card);
+	padding: var(--dgl-gap-lg);
+}
+
+.dgl-pub__card-title {
+	margin: 0 0 var(--dgl-gap);
+	font-size: 1rem;
+	font-weight: var(--dgl-weight-heading);
+	color: var(--dgl-navy);
+}
+
+/* ---- Facts ------------------------------------------------------------- */
+
+.dgl-pub__facts {
+	margin: 0;
+	font-size: 0.95em;
+}
+
+.dgl-pub__facts dt {
+	color: var(--dgl-text-muted);
+	font-size: 0.88em;
+	margin: 0 0 2px;
+}
+
+.dgl-pub__facts dd {
+	margin: 0 0 var(--dgl-gap);
+	font-weight: 500;
+	color: var(--dgl-text);
+	overflow-wrap: anywhere;
+}
+
+.dgl-pub__facts dd:last-child { margin-bottom: 0; }
+
+.dgl-pub__facts a { color: var(--dgl-link); }
+
+/* ---- Action ------------------------------------------------------------ */
+
+.dgl-pub__card--action { text-align: center; }
+
+.dgl-pub__button {
+	display: block;
+	padding: 14px var(--dgl-gap-lg);
+	border-radius: var(--dgl-radius-button);
+	background: var(--dgl-primary);
+	color: var(--dgl-primary-text);
+	font-weight: var(--dgl-weight-button);
+	text-decoration: none;
+	text-align: center;
+}
+
+.dgl-pub__button:hover,
+.dgl-pub__button:focus {
+	background: var(--dgl-purple);
+	color: var(--dgl-primary-text);
+}
+
+.dgl-pub__note {
+	margin: 12px 0 0;
+	font-size: 0.82em;
+	color: var(--dgl-text-muted);
+	line-height: 1.45;
+}
+
+.dgl-pub__orgname {
+	margin: 0;
+	font-weight: 600;
+	color: var(--dgl-text);
+}
+
+.dgl-pub__back {
+	margin: var(--dgl-gap-lg) 0 0;
+	padding-top: var(--dgl-gap);
+	border-top: 1px solid var(--dgl-border);
+}
+
+.dgl-pub__back a { color: var(--dgl-link); }
+
+/* ---- Listing ----------------------------------------------------------- */
+
+.dgl-pub__head { margin-bottom: var(--dgl-gap-lg); }
+
+.dgl-pub__list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: var(--dgl-gap);
+}
+
+.dgl-pub__row {
+	display: grid;
+	grid-template-columns: 160px minmax(0, 1fr);
+	gap: var(--dgl-gap-lg);
+	align-items: start;
+	background: var(--dgl-white);
+	border: 1px solid var(--dgl-border);
+	border-radius: var(--dgl-radius-card);
+	padding: var(--dgl-gap);
+}
+
+/* A row with no picture should not leave a hole where one would be. */
+.dgl-pub__row:not(:has(.dgl-pub__thumb)) { grid-template-columns: minmax(0, 1fr); }
+
+.dgl-pub__thumb img {
+	display: block;
+	width: 100%;
+	height: 120px;
+	object-fit: cover;
+	border-radius: var(--dgl-radius-field);
+}
+
+.dgl-pub__rowtitle {
+	margin: 0 0 4px;
+	font-size: 1.2rem;
+	font-weight: var(--dgl-weight-heading);
+	line-height: 1.3;
+}
+
+.dgl-pub__rowtitle a {
+	color: var(--dgl-navy);
+	text-decoration: none;
+}
+
+.dgl-pub__rowtitle a:hover,
+.dgl-pub__rowtitle a:focus { text-decoration: underline; }
+
+.dgl-pub__rowmeta {
+	margin: 0 0 8px;
+	font-size: 0.9em;
+	color: var(--dgl-teal-solid);
+	font-weight: 500;
+}
+
+.dgl-pub__rowsummary {
+	margin: 0 0 8px;
+	font-size: 0.95em;
+	color: var(--dgl-text);
+	max-width: 70ch;
+}
+
+.dgl-pub__roworg {
+	margin: 0;
+	font-size: 0.85em;
+	color: var(--dgl-text-muted);
+}
+
+.dgl-pub__empty { text-align: center; }
+
+.dgl-pub__empty p { margin: 0; }
+
+/* ---- Pagination -------------------------------------------------------- */
+
+.dgl-pub__pagination { margin-top: var(--dgl-gap-lg); }
+
+.dgl-pub__pagination ul {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.dgl-pub__pagination a,
+.dgl-pub__pagination span {
+	display: block;
+	padding: 8px 14px;
+	border-radius: var(--dgl-radius-button);
+	border: 1px solid var(--dgl-border);
+	text-decoration: none;
+	color: var(--dgl-link);
+	font-size: 0.9em;
+}
+
+.dgl-pub__pagination .current {
+	background: var(--dgl-primary);
+	border-color: var(--dgl-primary);
+	color: var(--dgl-primary-text);
+}
+
+/* ---- Focus ------------------------------------------------------------- */
+
+.dgl-pub a:focus-visible,
+.dgl-pub button:focus-visible {
+	outline: 3px solid var(--dgl-focus);
+	outline-offset: 2px;
+}
+
+/* ---- Narrow ------------------------------------------------------------ */
+
+@media ( max-width: 860px ) {
+	.dgl-pub__layout { grid-template-columns: minmax(0, 1fr); }
+
+	.dgl-pub__aside { position: static; }
+
+	.dgl-pub__row { grid-template-columns: minmax(0, 1fr); }
+
+	.dgl-pub__thumb img { height: 180px; }
+}

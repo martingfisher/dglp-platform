@@ -21,6 +21,7 @@ use DGL\Email\Digest\Frequency;
 use DGL\Email\Digest\Runner as DigestRunner;
 use DGL\Email\Digest\Command as DigestCommand;
 use DGL\Index\Sync;
+use DGL\Frontend\Frontend;
 use DGL\Index\Command as IndexCommand;
 use DGL\Workflow\Revisions;
 use DGL\Workflow\Transition;
@@ -69,6 +70,7 @@ final class Plugin {
 		Router::init();
 		AdminLockout::init();
 		Admin::init();
+		Frontend::init();
 
 		/*
 		 * Not inside Admin::init(). A status can be changed from WP-CLI, from a

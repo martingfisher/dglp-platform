@@ -37,13 +37,26 @@ final class Assets {
 		}
 	}
 
-	private static function style( string $relative, string $handle ): void {
+	/**
+	 * Enqueue one of the plugin's stylesheets, tokens first.
+	 *
+	 * The tokens live in their own file so the member area and the public
+	 * pages share one definition of the palette rather than two that drift.
+	 * Everything else depends on it, so nothing can load a stylesheet whose
+	 * every colour resolves to nothing.
+	 */
+	public static function style( string $relative, string $handle, array $deps = [] ): void {
 		$path = \DGL\PLUGIN_DIR . $relative;
+
+		if ( 'dgl-tokens' !== $handle ) {
+			self::style( 'assets/tokens.css', 'dgl-tokens' );
+			$deps[] = 'dgl-tokens';
+		}
 
 		wp_enqueue_style(
 			$handle,
 			\DGL\PLUGIN_URL . $relative,
-			[],
+			$deps,
 			is_readable( $path ) ? (string) filemtime( $path ) : \DGL\VERSION
 		);
 	}

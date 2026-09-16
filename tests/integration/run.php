@@ -1993,6 +1993,82 @@ $ok(
 	'and somebody who asked only for switched-off types gets nothing rather than everything'
 );
 
+$group( 'Public pages: only live content is reachable' );
+
+/*
+ * The whole moderation workflow is decorative if an unapproved submission can
+ * be read at its own URL. This is the assertion that keeps it honest, and it
+ * is checked at the status registration rather than by fetching pages, because
+ * that is the thing WordPress actually enforces.
+ */
+foreach ( [ Statuses::PENDING, Statuses::CHANGES, Statuses::EXPIRED, Statuses::ARCHIVED, Statuses::REJECTED ] as $hidden ) {
+	$object = get_post_status_object( $hidden );
+
+	$ok( null !== $object, $hidden . ' is a registered status' );
+	$ok( false === $object->public, $hidden . ' is not public, so its page cannot be read by a visitor' );
+	$ok( true === $object->exclude_from_search, $hidden . ' is kept out of search and listings' );
+	$ok( true === $object->protected, $hidden . ' is protected, so its content needs a capability to read' );
+}
+
+$live_status = get_post_status_object( Statuses::LIVE );
+$ok( true === $live_status->public, 'and the live status is public, or nothing would ever appear' );
+
+$group( 'Public pages: what gets published' );
+
+$pub_item = $make_item( $org_a, $alice, Statuses::LIVE );
+wp_update_post( [ 'ID' => $pub_item, 'post_title' => 'A public event' ] );
+update_post_meta( $pub_item, 'summary', 'The standfirst.' );
+update_post_meta( $pub_item, 'venue_name', 'Armley Library' );
+update_post_meta( $pub_item, 'start_datetime', '2026-11-04 18:30:00' );
+update_post_meta( $pub_item, 'capacity', '40' );
+update_post_meta( $pub_item, 'booking_url', 'https://example.test/book' );
+
+$pub_post = get_post( $pub_item );
+$facts    = \DGL\Frontend\Frontend::facts( $pub_post );
+$keys     = array_column( $facts, 'key' );
+
+$ok( in_array( 'venue_name', $keys, true ), 'the venue is published' );
+$ok( in_array( 'start_datetime', $keys, true ), 'so is the date' );
+$ok( in_array( 'booking_url', $keys, true ), 'and the booking link' );
+
+/*
+ * Capacity is a planning note a member records so DGLP know the scale of the
+ * thing. Printed on a public listing it becomes a scarcity claim the organiser
+ * never made.
+ */
+$ok( ! in_array( 'capacity', $keys, true ), 'capacity is not published, because it was never a public fact' );
+
+// The title, summary and body are the page itself, not rows in a fact table.
+$ok( ! in_array( 'title', $keys, true ), 'the headline is not repeated as a fact' );
+$ok( ! in_array( 'summary', $keys, true ), 'nor the summary' );
+$ok( ! in_array( 'body', $keys, true ), 'nor the description' );
+
+$empty_fields = array_filter( $facts, static fn( array $f ): bool => '' === trim( wp_strip_all_tags( $f['value'] ) ) );
+$ok( [] === $empty_fields, 'nothing empty is printed' );
+
+$ok(
+	! str_contains( implode( ' ', array_column( $facts, 'value' ) ), 'Not given' ),
+	'and "Not given" never reaches a public page, because it is a prompt for a member, not a message to a visitor'
+);
+
+$ok( 'https://example.test/book' === \DGL\Frontend\Frontend::booking_url( $pub_post ), 'the booking link is found' );
+$ok( str_contains( \DGL\Frontend\Frontend::meta_line( $pub_post ), 'Armley Library' ), 'the listing line names the venue' );
+$ok( str_contains( \DGL\Frontend\Frontend::meta_line( $pub_post ), '2026' ), 'and when it is' );
+
+$group( 'Public pages: switched-off types have none' );
+
+$ok( null === \DGL\Frontend\Frontend::archive_url( PostTypes::GRANT ) || '' === \DGL\Frontend\Frontend::archive_url( PostTypes::GRANT ), 'a switched-off type has no archive URL' );
+$ok( '' !== \DGL\Frontend\Frontend::archive_url( PostTypes::EVENT ), 'an enabled one does' );
+
+$group( 'Public listings are ordered by when the thing happens' );
+
+/*
+ * Reverse-chronological post order puts next March above this Saturday, which
+ * is the single most common way a community listing becomes useless.
+ */
+$ok( 'start_datetime' === \DGL\Frontend\Frontend::sort_key( PostTypes::EVENT ), 'events sort by their start date' );
+$ok( null === \DGL\Frontend\Frontend::sort_key( PostTypes::NEWS ), 'news has no date of its own, so it keeps newest first' );
+
 /* ----------------------------------------------------------------- report */
 
 echo "\n" . str_repeat( '-', 60 ) . "\n";
