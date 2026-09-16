@@ -9,17 +9,36 @@ activate, configure three things.
 | Route | Works? | Notes |
 |---|---|---|
 | **Upload the zip in wp-admin** | Yes | Plugins → Add New → Upload Plugin. Nothing else needed |
-| **WP-CLI from a public URL** | **Verified on staging, 15 Sep** | `wp plugin install <url> --activate`. Needs the zip at a public URL |
+| **WP-CLI from a public URL** | Yes, but **not from a GitHub archive URL** | `wp plugin install <url> --activate --force`. The zip's top-level folder becomes the plugin folder, so it has to be named `dgl-platform` |
 | Wordify `install_plugin` | No | wp.org slugs only |
 | Wordify git deploy | Does not exist | Not in the hosting API |
 | `wp eval` / `wp config` / SSH | Blocked | Wordify blocks these through the API |
 
-The zip route was tested for real: `wp plugin install <public zip url>` ran
-successfully on staging, so once the plugin zip has a public URL, redeploying is
-a single command and can be repeated on every change.
+The mechanism was tested for real on 15 September: `wp plugin install <public
+zip url>` ran successfully on staging against `hello-dolly`.
 
-**Repeatable deploys need the repo public**, or a public release asset, or
-somebody uploading the zip each time. Nothing in the plugin code is sensitive —
+**But a GitHub archive URL is the wrong zip.** The archive at
+`.../dglp-platform/archive/refs/heads/main.zip` unpacks to a top-level folder
+called `dglp-platform-main/`, and WordPress names the plugin after that folder.
+Installing it would create a second, duplicate plugin directory alongside
+`dgl-platform` rather than upgrading it, and `--force` would not help because the
+two are different plugins as far as WordPress is concerned. Verified 16
+September:
+
+```
+$ unzip -l main.zip | head -5
+        0  2026-09-15 22:02   dglp-platform-main/
+```
+
+So one-command deploys need a **GitHub Release asset**: build the zip with the
+`git archive` recipe below, which sets `--prefix=dgl-platform/`, and attach it to
+a tagged release. That URL is stable, public and correctly named, and
+`wp plugin install <asset url> --activate --force` then upgrades in place.
+
+Version 0.2.0 reached staging on 16 September by Martin uploading the built zip
+through Plugins - Add New - Upload Plugin, not by URL.
+
+Nothing in the plugin code is sensitive -
 no keys, no credentials. `docs/wireframes/design-conversation.md` is the one file
 worth removing first: it carries RYCM design-system detail and names other
 private repositories. It is a handoff artefact, not plugin code.
@@ -92,7 +111,12 @@ requires a database push in either direction.
 
 ## What is not built yet
 
-Listed so nobody deploys expecting it: SSO, digest sending, the notifications
-screen, CSV export, the privacy exporters, the wp-admin screens and the public
-templates. What works today is accounts, submissions, the wizard, moderation,
-pending edits and transactional email.
+Listed so nobody deploys expecting it: SSO, digest sending, member invites,
+email preferences, CSV export, the privacy exporters, the public templates,
+closing an account, email on an organisation-change decision (the
+`dgl_org_change_approved` and `dgl_org_change_rejected` actions fire but nothing
+listens), and a read/unread store behind the notifications screen.
+
+What works today is accounts, submissions, the wizard, moderation, pending
+edits, transactional email, the member-area shell, the notifications screen, the
+organisation and profile screens, and the wp-admin moderation screens.
