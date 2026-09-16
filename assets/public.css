@@ -143,6 +143,7 @@
 	border: 1px solid var(--dgl-border);
 	border-radius: var(--dgl-radius-card);
 	padding: var(--dgl-gap-lg);
+	box-shadow: var(--dgl-shadow-rest);
 }
 
 .dgl-pub__card-title {
@@ -160,9 +161,12 @@
 }
 
 .dgl-pub__facts dt {
-	color: var(--dgl-text-muted);
-	font-size: 0.88em;
 	margin: 0 0 2px;
+	color: var(--dgl-text-muted);
+	font-size: 0.78em;
+	font-weight: 600;
+	letter-spacing: 0.03em;
+	text-transform: uppercase;
 }
 
 .dgl-pub__facts dd {
@@ -170,6 +174,13 @@
 	font-weight: 500;
 	color: var(--dgl-text);
 	overflow-wrap: anywhere;
+}
+
+/* The first fact is when. It is the one a visitor came for, so it leads. */
+.dgl-pub__facts dd:first-of-type {
+	font-size: 1.1em;
+	font-weight: 600;
+	color: var(--dgl-navy);
 }
 
 .dgl-pub__facts dd:last-child { margin-bottom: 0; }
@@ -193,7 +204,7 @@
 
 .dgl-pub__button:hover,
 .dgl-pub__button:focus {
-	background: var(--dgl-purple);
+	background: color-mix(in srgb, var(--dgl-primary) 82%, #000000);
 	color: var(--dgl-primary-text);
 }
 
@@ -216,7 +227,20 @@
 	border-top: 1px solid var(--dgl-border);
 }
 
-.dgl-pub__back a { color: var(--dgl-link); }
+.dgl-pub__back a {
+	display: inline-flex;
+	align-items: center;
+	min-height: 44px;
+	padding: 0 20px;
+	border: var(--dgl-field-border) solid var(--dgl-field-outline);
+	border-radius: var(--dgl-radius-button);
+	color: var(--dgl-link);
+	font-weight: var(--dgl-weight-button);
+	text-decoration: none;
+}
+
+.dgl-pub__back a:hover,
+.dgl-pub__back a:focus { background: var(--dgl-surface); }
 
 /* ---- Listing ----------------------------------------------------------- */
 
@@ -240,6 +264,13 @@
 	border: 1px solid var(--dgl-border);
 	border-radius: var(--dgl-radius-card);
 	padding: var(--dgl-gap);
+	box-shadow: var(--dgl-shadow-rest);
+	transition: box-shadow var(--dgl-motion), border-color var(--dgl-motion);
+}
+
+.dgl-pub__row:hover {
+	border-color: var(--dgl-border-strong);
+	box-shadow: var(--dgl-shadow-raise);
 }
 
 /* A row with no picture should not leave a hole where one would be. */

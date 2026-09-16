@@ -32,6 +32,7 @@ const ROUTES = [
 	'/dashboard/profile/signin',
 	'/dashboard/new/events',
 	'/dashboard/review',
+	'/events/',
 	...process.argv.slice( 5 ),
 ];
 
@@ -193,7 +194,7 @@ for ( const route of ROUTES ) {
 				};
 			} );
 
-		const words = [ ...document.querySelectorAll( '.dgl-dash, .dgl-topbar' ) ]
+		const words = [ ...document.querySelectorAll( '.dgl-dash, .dgl-topbar, .dgl-pub' ) ]
 			.flatMap( ( root ) => [ ...root.querySelectorAll( '*' ) ] )
 			.filter( ( el ) => {
 				// Only elements that actually paint their own words.
