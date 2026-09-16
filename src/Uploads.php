@@ -37,8 +37,13 @@ defined( 'ABSPATH' ) || exit;
  */
 final class Uploads {
 
-	/** 8MB. Comfortable for a phone photograph, hostile to abuse. */
-	public const MAX_BYTES = 8388608;
+	/**
+	 * 20MB. The file is cut to MAX_EDGE and re-encoded before it is kept, so
+	 * the ceiling only has to admit what a phone produces, and a 12MB photo
+	 * straight off one is normal. It was 8MB, which refused exactly the
+	 * uploads the shrink exists for.
+	 */
+	public const MAX_BYTES = 20971520;
 
 	/** Listings want a usable header image, so hold a floor on width. */
 	public const MIN_WIDTH = 1200;
@@ -162,6 +167,7 @@ final class Uploads {
 		 * upload: an administrator's media library is not our business.
 		 */
 		add_filter( 'wp_handle_upload', [ self::class, 'shrink' ] );
+		add_filter( 'intermediate_image_sizes_advanced', [ self::class, 'sizes' ] );
 
 		$attachment_id = media_handle_upload(
 			$file_key,
@@ -174,6 +180,7 @@ final class Uploads {
 		);
 
 		remove_filter( 'wp_handle_upload', [ self::class, 'shrink' ] );
+		remove_filter( 'intermediate_image_sizes_advanced', [ self::class, 'sizes' ] );
 
 		if ( is_wp_error( $attachment_id ) ) {
 			return $attachment_id;
@@ -187,6 +194,27 @@ final class Uploads {
 		}
 
 		return (int) $attachment_id;
+	}
+
+	/**
+	 * The sizes WordPress makes from a member's image.
+	 *
+	 * The master is at most MAX_EDGE, so the 1536 and 2048 sizes are a copy
+	 * of it at 96% and an upscale that never gets made: a third of the disk
+	 * one upload took, for nothing a page ever asks for.
+	 *
+	 * @param array<string, array<string, mixed>> $sizes
+	 * @return array<string, array<string, mixed>>
+	 */
+	public static function sizes( array $sizes ): array {
+		foreach ( $sizes as $name => $size ) {
+			// 1536 is under 1600 and still a copy of the master to the eye.
+			if ( (int) ( $size['width'] ?? 0 ) >= self::MAX_EDGE * 0.9 ) {
+				unset( $sizes[ $name ] );
+			}
+		}
+
+		return $sizes;
 	}
 
 	/**

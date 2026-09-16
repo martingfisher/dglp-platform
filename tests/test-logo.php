@@ -53,6 +53,6 @@ Harness::assert_false(
 
 Harness::group( 'Upload limits are set' );
 
-Harness::assert_same( 8388608, Uploads::MAX_BYTES, 'the size cap is 8MB' );
+Harness::assert_same( 20971520, Uploads::MAX_BYTES, 'the size cap is 20MB, because the file is shrunk on arrival' );
 Harness::assert_true( Uploads::MAX_BYTES < 64 * 1024 * 1024, 'the cap is well inside the 64MB PHP upload limit' );
 Harness::assert_same( 1200, Uploads::MIN_WIDTH, 'listings require at least a 1200px wide image' );
