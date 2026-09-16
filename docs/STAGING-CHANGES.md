@@ -142,4 +142,9 @@ clean. They are the only DGLP content on staging.
   own sign-in during the walkthrough. Staging only. **Reactivate before the
   client uses the site.** The lockout is per IP, so it also blocks wp-admin for
   the same connection until it expires.
+- **0.6.3 deployed** from a commit-pinned URL, version confirmed from the
+  server. Input outlines now 3.8:1; invitation, sign-in and archive wording no
+  longer name switched-off types; passwords are eight characters typed twice.
+- Martin accepted the invitation: user 11, `dgl_member`, the first member
+  account on staging.
 
