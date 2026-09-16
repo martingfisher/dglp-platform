@@ -1357,9 +1357,18 @@ body.dgl-body {
 	background: var(--dgl-surface);
 }
 
-.dgl-tab--on {
+/*
+ * The open tab is a filled navy block, not an underline. A 3px line under
+ * navy text on a cream page was the whole signal, and at a glance there was
+ * no signal: five words in a row, one slightly heavier. Fill plus weight plus
+ * aria-current is the state told three ways, none of them colour alone.
+ */
+.dgl-tab--on,
+.dgl-tab--on:hover {
+	background: var(--dgl-primary);
 	border-bottom-color: var(--dgl-primary);
-	color: var(--dgl-primary);
+	border-radius: var(--dgl-radius-button) var(--dgl-radius-button) 0 0;
+	color: var(--dgl-primary-text);
 	font-weight: 700;
 }
 
@@ -1373,8 +1382,8 @@ body.dgl-body {
 }
 
 .dgl-tab--on .dgl-tab__count {
-	background: var(--dgl-primary);
-	color: var(--dgl-primary-text);
+	background: var(--dgl-white);
+	color: var(--dgl-primary);
 }
 
 /* A field whose change waits for the review team. Sits under the control it
