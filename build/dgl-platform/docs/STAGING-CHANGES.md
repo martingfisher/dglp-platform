@@ -257,11 +257,3 @@ clean. They are the only DGLP content on staging.
   newest link works). Pinned to commit `8f92ed1`. The theme footer is
   still showing under the member area on staging after 0.8.4; the markup
   is being requested from Martin before another attempt.
-- **0.8.6 deployed**: member area held to AAA (muted text, status chips,
-  amber alerts, danger and teal text all at or above 7:1; `AAA=1
-  node bin/check-contrast.mjs` clears 13 routes); `wp dgl mail status`
-  reports whether the email logo file is on disk and whether the server
-  can fetch it. On staging both pass: file present, 34 KB, HTTP 200
-  image/png. The alt-text box Martin saw in one email is therefore the
-  mail client not loading images, not the site. `docs/team-guide.md`
-  added for the review team. Pinned to commit `ce9e88f`.

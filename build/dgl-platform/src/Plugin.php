@@ -18,8 +18,6 @@ use DGL\Dashboard\Router;
 use DGL\Email\Command as MailCommand;
 use DGL\Email\Mailer;
 use DGL\Invites\Invites;
-use DGL\Privacy\Command as PrivacyCommand;
-use DGL\Privacy\Privacy;
 use DGL\Invites\Command as InviteCommand;
 use DGL\Email\Digest\Frequency;
 use DGL\Email\Digest\Runner as DigestRunner;
@@ -90,14 +88,12 @@ final class Plugin {
 		Revisions::init();
 		Mailer::init();
 		Invites::init();
-		Privacy::init();
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			MailCommand::register();
 			DigestCommand::register();
 			IndexCommand::register();
 			InviteCommand::register();
-			PrivacyCommand::register();
 		}
 
 		add_action( self::EXPIRY_HOOK, [ Transition::class, 'run_expiry_sweep' ] );

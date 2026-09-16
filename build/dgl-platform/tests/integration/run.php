@@ -2465,64 +2465,6 @@ $ok( \DGL\Joining\Rules::OUTCOME_NEW === $v['outcome'] && [] === $v['orgs'], 'a 
 remove_filter( 'pre_wp_mail', '__return_true' );
 update_option( \DGL\Email\Routing::OPTION_ENABLED, $mail_was_on );
 
-/* -------------------------------------------------------------- privacy */
-
-$group( 'Privacy tools: export and erase' );
-
-foreach ( [ 'subject@privacy.test', 'nobody@privacy.test' ] as $address ) {
-	$existing = get_user_by( 'email', $address );
-	if ( $existing ) {
-		wp_delete_user( $existing->ID );
-	}
-}
-$wpdb->delete( InviteStore::name(), [ 'email' => 'subject@privacy.test' ] );
-$wpdb->delete( SignupStore::name(), [ 'email' => 'subject@privacy.test' ] );
-
-$priv_org  = $make_org( 'Privacy Org' );
-$priv_user = $make_member( 'dgl_privacy', $priv_org, 'contributor' );
-wp_update_user( [ 'ID' => $priv_user, 'user_email' => 'subject@privacy.test' ] );
-$priv_item = $make_item( $priv_org, $priv_user, Statuses::DRAFT );
-DigestStore::save( $priv_user, [ PostTypes::EVENT ], [], Frequency::WEEKLY, false, 'test' );
-Log::record( 'privacy_test', 'item', $priv_item, $priv_org, 'hello', [], $priv_user );
-$priv_invite_id = InviteStore::insert( new \DGL\Invites\Invite( 0, 'subject@privacy.test', $priv_org, 'contributor', $priv_user, InviteStore::hash( InviteStore::new_token() ), InviteStore::now(), InviteStore::now() ) );
-$priv_signup = SignupStore::start( 'subject@privacy.test', 'privacy.test', SignupStore::now() );
-
-$exporters = apply_filters( 'wp_privacy_personal_data_exporters', [] );
-$erasers   = apply_filters( 'wp_privacy_personal_data_erasers', [] );
-$ok( isset( $exporters['dgl-platform'] ) && is_callable( $exporters['dgl-platform']['callback'] ), 'an exporter is registered with core' );
-$ok( isset( $erasers['dgl-platform'] ) && is_callable( $erasers['dgl-platform']['callback'] ), 'an eraser is registered with core' );
-
-$export = \DGL\Privacy\Privacy::export( 'subject@privacy.test' );
-$groups = array_count_values( array_column( $export['data'], 'group_id' ) );
-$ok( true === $export['done'], 'export finishes in one page' );
-$ok( 1 === ( $groups['dgl-membership'] ?? 0 ), 'membership exported once' );
-$ok( 1 === ( $groups['dgl-digest'] ?? 0 ), 'digest preferences exported' );
-$ok( 1 === ( $groups['dgl-invites'] ?? 0 ), 'the invitation addressed to them exported' );
-$ok( 1 === ( $groups['dgl-signups'] ?? 0 ), 'the joining request exported' );
-$ok( ( $groups['dgl-activity'] ?? 0 ) >= 1, 'their audit activity exported' );
-$ok( 1 === ( $groups['dgl-listings'] ?? 0 ), 'the listing they wrote is listed' );
-$flat = wp_json_encode( $export['data'] );
-$ok( ! str_contains( $flat, 'token' ) && ! str_contains( $flat, 'ip_hash' ), 'no token or IP hash in the export' );
-$ok( str_contains( $flat, 'Privacy Org' ), 'the organisation is named, not numbered' );
-
-$empty = \DGL\Privacy\Privacy::export( 'nobody@privacy.test' );
-$ok( [] === $empty['data'] && true === $empty['done'], 'an unknown address exports nothing and finishes' );
-
-$result = \DGL\Privacy\Privacy::erase( 'subject@privacy.test' );
-$ok( true === $result['items_removed'] && true === $result['done'], 'erase removes things and finishes' );
-$ok( true === $result['items_retained'] && count( $result['messages'] ) === 2, 'and says what it kept: the audit trail and the listing' );
-$ok( null === DigestStore::for_user( $priv_user ), 'digest subscription gone' );
-$ok( 0 === (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM ' . InviteStore::name() . ' WHERE email = %s', 'subject@privacy.test' ) ), 'invitations to the address gone' );
-$ok( 0 === (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM ' . SignupStore::name() . ' WHERE email = %s', 'subject@privacy.test' ) ), 'joining requests gone' );
-$ok( 0 === (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM ' . \DGL\Audit\Table::name() . ' WHERE actor_id = %d', $priv_user ) ), 'audit rows no longer name them' );
-$ok( 1 === (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM ' . \DGL\Audit\Table::name() . ' WHERE object_id = %d AND action = %s', $priv_item, 'privacy_test' ) ), 'but the audit row itself is kept' );
-$ok( null === \DGL\Org\Org::for_user( $priv_user ) && '' === (string) get_user_meta( $priv_user, Meta::USER_ACCOUNT_STATUS, true ), 'organisation link and account status removed' );
-$ok( 'draft' === get_post_status( $priv_item ) || Statuses::DRAFT === get_post_status( $priv_item ), 'the listing is still there for the organisation' );
-$ok( 0 === (int) $wpdb->get_var( $wpdb->prepare( 'SELECT author_id FROM ' . ItemsTable::name() . ' WHERE post_id = %d', $priv_item ) ), 'the index no longer names them as author' );
-
-$again = \DGL\Privacy\Privacy::erase( 'subject@privacy.test' );
-$ok( false === $again['items_removed'] && true === $again['done'], 'erasing twice removes nothing more' );
-
 /* ----------------------------------------------------------------- report */
 
 echo "\n" . str_repeat( '-', 60 ) . "\n";

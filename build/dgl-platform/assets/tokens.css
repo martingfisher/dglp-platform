@@ -1,0 +1,118 @@
+/*
+ * Design tokens, shared by the member area and the public pages.
+ *
+ * Split out of dashboard.css so the public templates get the same palette,
+ * type scale and radii without loading the whole member-area stylesheet, and
+ * so there is one definition rather than two that drift.
+ *
+ * Every colour reads from the custom properties Blocksy already emits, with
+ * the live palette hex as a fallback. Change the palette in the customiser and
+ * both surfaces follow, with no code edit.
+ */
+
+:root {
+	/* Palette */
+	--dgl-teal: var(--theme-palette-color-1, #57b0b6);
+	--dgl-teal-solid: var(--theme-palette-color-3, #1d6265);
+	--dgl-ink: var(--theme-palette-color-4, #1e3232);
+	--dgl-page: var(--theme-palette-color-5, #fdf8f0);
+	--dgl-white: var(--theme-palette-color-8, #ffffff);
+	--dgl-navy: var(--theme-palette-color-14, #2d3b6b);
+	--dgl-purple: var(--theme-palette-color-15, #5b6bae);
+	--dgl-surface: var(--theme-palette-color-18, #f4f6fb);
+	--dgl-danger-palette: var(--theme-palette-color-10, #cc0053);
+	/*
+	 * The palette's accent hover, #cc0053, is 5.7:1 on white either way round.
+	 * Taken 18% darker it is 7.4:1 as text on white and as a fill under white
+	 * text, so a required-field mark, an error line and a danger button all
+	 * clear AAA from the one value.
+	 */
+	--dgl-danger: color-mix(in srgb, var(--dgl-danger-palette) 82%, #000000);
+	/* Teal as words. The solid teal is 7.0:1 on white and 6.7:1 on cream; 10% darker clears both. */
+	--dgl-teal-text: color-mix(in srgb, var(--dgl-teal-solid) 90%, #000000);
+
+	/*
+	 * Semantic roles. The teal is absent from every one of these on purpose:
+	 * at 2.53:1 on white it cannot carry text. It appears below as borders and
+	 * rails only.
+	 */
+	--dgl-primary: var(--dgl-navy);
+	--dgl-primary-text: var(--dgl-white);
+	/*
+	 * Links and focus are Council Navy, not Partnership Purple. Purple is
+	 * 5.05:1 on white, the ceiling of that hue, and the member area is held
+	 * to AAA where the palette allows; navy is 10.8:1 and is already the one
+	 * action colour, so a link, a pressed thing and a focused thing agree.
+	 */
+	--dgl-link: var(--dgl-navy);
+	--dgl-text: var(--dgl-ink);
+	/*
+	 * Secondary text. Ink at 68% measured 5.1:1 on white, which passes AA and
+	 * still read as faint at the 14px it is mostly set in. 78% was 6.8:1 on
+	 * white but 6.3:1 on the off-white card surface, short of AAA. At 84% it
+	 * measures 7.6:1 on the surface, 7.8:1 on cream and 8.3:1 on white.
+	 */
+	--dgl-text-muted: color-mix(in srgb, var(--dgl-ink) 84%, var(--dgl-page));
+	--dgl-border: color-mix(in srgb, var(--dgl-ink) 14%, transparent);
+	--dgl-border-strong: color-mix(in srgb, var(--dgl-navy) 28%, transparent);
+	/*
+	 * The boundary of a form control. WCAG 1.4.11 wants 3:1 against what it
+	 * sits on; ink at 68% measures 4.9:1 on white and 4.6:1 on the page colour.
+	 * The inputs used --dgl-border, which is 1.4:1, a line most monitors
+	 * cannot show and a person with low vision cannot find. Card edges and
+	 * dividers keep the faint one: they are decoration, and a control is not.
+	 */
+	--dgl-field-outline: color-mix(in srgb, var(--dgl-ink) 68%, transparent);
+	--dgl-focus: var(--dgl-navy);
+
+	/*
+	 * The sidebar. Deep navy from the palette, taken darker so white type on
+	 * it sits above 12:1 rather than the 10:1 the palette colour gives, and so
+	 * the active item's lighter fill has room to show. Type on it uses the
+	 * on-dark scale below and nothing fainter: the old sidebar set its
+	 * headings at 62% white, which measured 5.2:1 and looked like 3.
+	 */
+	--dgl-sidebar: color-mix(in srgb, var(--dgl-navy) 82%, #000000);
+	--dgl-on-dark: var(--dgl-white);
+	--dgl-on-dark-body: rgba(255, 255, 255, 0.92);
+	--dgl-on-dark-muted: rgba(255, 255, 255, 0.8);
+	--dgl-on-dark-line: rgba(255, 255, 255, 0.2);
+	--dgl-on-dark-fill: rgba(255, 255, 255, 0.1);
+
+	/* Type */
+	--dgl-font: var(--theme-font-family, "Montserrat", system-ui, sans-serif);
+	--dgl-size: 18px;
+	--dgl-line: 1.65;
+	--dgl-weight-body: 400;
+	--dgl-weight-heading: 700;
+	--dgl-weight-button: 500;
+
+	/* Geometry */
+	--dgl-radius-button: 8px;
+	--dgl-radius-card: 20px;
+	--dgl-radius-field: 10px;
+	--dgl-field-border: 1px; /* One hairline at 4.9:1. Two pixels read as chunky once the colour was right. */
+	--dgl-field-height: 45px;
+
+	/*
+	 * Depth. Cards, tiles and stats sit gently lifted off the cream, papers on
+	 * a desk; fields, tables and chips stay flat and rely on their border.
+	 * Every shadow has an offset and a blur: a zero-offset halo is decoration.
+	 */
+	--dgl-shadow-rest: 0 1px 2px rgb(30 50 50 / 4%), 0 4px 16px rgb(30 50 50 / 6%);
+	--dgl-shadow-raise: 0 2px 4px rgb(30 50 50 / 5%), 0 10px 28px rgb(30 50 50 / 9%);
+
+	/* Motion: state changes on controls, and nothing else. */
+	--dgl-motion: 150ms ease-out;
+
+	/* Rhythm */
+	--dgl-gap: 16px;
+	--dgl-gap-lg: 24px;
+	--dgl-pad-card: 24px;
+
+	font-family: var(--dgl-font);
+	font-size: var(--dgl-size);
+	line-height: var(--dgl-line);
+	color: var(--dgl-text);
+	background: var(--dgl-page);
+}
