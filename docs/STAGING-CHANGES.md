@@ -211,3 +211,8 @@ clean. They are the only DGLP content on staging.
   column line through table headers, sky blue under short pages). Pinned to
   commit `bd42bb4`. Verified locally against injected theme-style rules;
   Martin confirms on staging.
+- **0.7.7 deployed**: the public events listing sorts on the stored date
+  key and no longer drops items without one; it had read "no events" above
+  a live event. Pinned to commit `1fbaf59`. Demo event 8439 given a start
+  date (`dgl_start_datetime` 2026-09-22 10:00:00) since it was created
+  without one. Site cache cleared so the listing rebuilds.
