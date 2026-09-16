@@ -206,3 +206,8 @@ clean. They are the only DGLP content on staging.
   martingfisher@gmail.com like everything else.
 - **0.7.5 deployed**: checkboxes and radios sit on their label's first
   line and use Council Navy. Pinned to commit `c8d05f0`.
+- **0.7.6 deployed**: bare links in the content column, table cell borders
+  and the html background pinned against Blocksy's rules (purple links, a
+  column line through table headers, sky blue under short pages). Pinned to
+  commit `bd42bb4`. Verified locally against injected theme-style rules;
+  Martin confirms on staging.
