@@ -172,3 +172,5 @@ clean. They are the only DGLP content on staging.
   types ordered news, events, training. Pinned to commit `e0bcabb`.
   The dashboard.css duplicate token block is gone, so tokens.css changes
   now reach the member area. `check-contrast.mjs` reads `color(srgb)`.
+- **0.6.8 deployed**: the open profile tab is a filled navy block with white
+  text, not a 3px underline. Pinned to commit `7b8d41e`.
