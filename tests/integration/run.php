@@ -1917,6 +1917,82 @@ $ok( DigestStore::for_user( $bella )->last_sent_at === $dry_stamp, 'while moving
 update_option( \DGL\Email\Routing::OPTION_ENABLED, $mail_was );
 $wpdb->query( 'DELETE FROM ' . DigestStore::name() . ' WHERE user_id IN (' . (int) $alice . ',' . (int) $aaron . ',' . (int) $bella . ')' );
 
+$group( 'Switched-off types are hidden, not deleted' );
+
+/*
+ * DGLP asked for volunteering and grants to be out of this version, with the
+ * possibility of coming back. Hidden means hidden everywhere a person looks,
+ * and still registered everywhere the data lives.
+ */
+$ok( ! PostTypes::is_enabled( PostTypes::GRANT ), 'grants is off' );
+$ok( ! PostTypes::is_enabled( PostTypes::VOLUNTEERING ), 'volunteering is off' );
+
+$grant_object = get_post_type_object( PostTypes::GRANT );
+
+$ok( null !== $grant_object, 'but the post type is still registered, so nothing it owns is orphaned' );
+$ok( false === $grant_object->public, 'it is not public' );
+$ok( false === $grant_object->show_ui, 'it has no admin screens' );
+$ok( false === $grant_object->has_archive, 'and no archive' );
+
+$event_object = get_post_type_object( PostTypes::EVENT );
+$ok( true === $event_object->public, 'events is still public' );
+$ok( 'events' === $event_object->has_archive, 'with its archive intact' );
+
+/* A switched-off type still has a home in the code. */
+$ok( isset( PostTypes::definitions()[ PostTypes::GRANT ] ), 'its definition survives' );
+$ok( in_array( PostTypes::GRANT, PostTypes::submittable(), true ), 'so do its permissions' );
+
+$group( 'A digest cannot deliver a switched-off type' );
+
+/*
+ * Subscriptions saved before a type was switched off still list it. Without
+ * filtering at the query, turning a type off would hide it from every screen
+ * and keep posting it to everybody who had ever ticked it.
+ */
+$stale_sub = new \DGL\Email\Digest\Subscription(
+	user_id: $bella,
+	email: 'stale@example.test',
+	types: [ PostTypes::EVENT, PostTypes::GRANT, PostTypes::VOLUNTEERING ],
+	frequency: \DGL\Email\Digest\Frequency::WEEKLY,
+	last_sent_at: null,
+	unsubscribe_token: 'tok',
+	consent_at: '2026-01-01 00:00:00',
+	org_id: $org_b,
+	include_own_org: false
+);
+
+$grant_item = wp_insert_post(
+	[
+		'post_type'   => PostTypes::GRANT,
+		'post_title'  => 'A grant that should not be posted out',
+		'post_status' => Statuses::LIVE,
+		'post_author' => $alice,
+	]
+);
+update_post_meta( $grant_item, DGL_FIXTURE_FLAG, '1' );
+update_post_meta( $grant_item, Meta::ITEM_ORG, $org_a );
+update_post_meta( $grant_item, Meta::ITEM_APPROVED_AT, gmdate( 'Y-m-d H:i:s' ) );
+\DGL\Index\Sync::sync( $grant_item );
+
+$stale_candidates = \DGL\Email\Digest\Runner::candidates( $stale_sub );
+$stale_ids        = array_column( $stale_candidates, 'id' );
+
+$ok( ! in_array( (int) $grant_item, $stale_ids, true ), 'a switched-off type is not a candidate, even for somebody who asked for it' );
+
+$ok(
+	[] === \DGL\Email\Digest\Runner::candidates(
+		new \DGL\Email\Digest\Subscription(
+			user_id: $bella,
+			email: 'only@example.test',
+			types: [ PostTypes::GRANT ],
+			unsubscribe_token: 'tok2',
+			consent_at: '2026-01-01 00:00:00',
+			org_id: $org_b
+		)
+	),
+	'and somebody who asked only for switched-off types gets nothing rather than everything'
+);
+
 /* ----------------------------------------------------------------- report */
 
 echo "\n" . str_repeat( '-', 60 ) . "\n";

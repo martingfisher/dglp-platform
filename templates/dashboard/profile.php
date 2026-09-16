@@ -351,7 +351,7 @@ $is_owner = $user instanceof UserContext && $user->is_org_owner();
 			<fieldset class="dgl-field-row dgl-field-row--group">
 				<legend class="dgl-label"><?php esc_html_e( 'What to include', 'dgl-platform' ); ?></legend>
 
-				<?php foreach ( \DGL\PostTypes::definitions() as $post_type => $definition ) : ?>
+				<?php foreach ( \DGL\PostTypes::enabled() as $post_type => $definition ) : ?>
 					<label class="dgl-check">
 						<input
 							type="checkbox"

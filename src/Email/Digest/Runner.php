@@ -153,7 +153,20 @@ final class Runner {
 			$since = self::now()->modify( '-1 month' )->format( 'Y-m-d H:i:s' );
 		}
 
-		$ids = ItemsTable::published_since( $subscription->types, $since, self::MAX_ITEMS * 4 );
+		/*
+		 * Switched-off types are filtered here rather than in the Matcher.
+		 * The Matcher is pure and should not know what this release happens to
+		 * have enabled, and a subscription saved before a type was switched off
+		 * still lists it. Without this, turning a type off would hide it from
+		 * every screen and keep posting it to everybody who had ever ticked it.
+		 */
+		$types = array_values( array_intersect( $subscription->types, PostTypes::enabled_keys() ) );
+
+		if ( [] === $types ) {
+			return [];
+		}
+
+		$ids = ItemsTable::published_since( $types, $since, self::MAX_ITEMS * 4 );
 
 		if ( [] === $ids ) {
 			return [];

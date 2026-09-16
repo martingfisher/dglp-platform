@@ -115,7 +115,7 @@ final class Controller {
 	 * Map a URL slug back to a post type.
 	 */
 	public static function type_for( string $slug ): ?string {
-		foreach ( PostTypes::definitions() as $post_type => $def ) {
+		foreach ( PostTypes::enabled() as $post_type => $def ) {
 			if ( $def['slug'] === $slug ) {
 				return $post_type;
 			}
@@ -963,7 +963,7 @@ final class Controller {
 
 		$tiles = [];
 
-		foreach ( PostTypes::definitions() as $post_type => $def ) {
+		foreach ( PostTypes::enabled() as $post_type => $def ) {
 			$tiles[] = [
 				'label' => $def['plural'],
 				'blurb' => $blurbs[ $post_type ] ?? '',
@@ -1318,7 +1318,7 @@ final class Controller {
 		$post = wp_unslash( $_POST );
 
 		$types = isset( $post['dgl_digest_types'] ) ? (array) $post['dgl_digest_types'] : [];
-		$types = array_values( array_intersect( array_map( 'sanitize_key', $types ), PostTypes::submittable() ) );
+		$types = array_values( array_intersect( array_map( 'sanitize_key', $types ), PostTypes::enabled_keys() ) );
 
 		$topics = isset( $post['dgl_digest_topics'] ) ? (array) $post['dgl_digest_topics'] : [];
 		$topics = array_values( array_filter( array_map( 'intval', $topics ), static fn( int $t ): bool => $t > 0 ) );

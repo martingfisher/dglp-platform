@@ -66,6 +66,28 @@ if ( ! function_exists( 'wp_kses_post' ) ) {
 	}
 }
 
+/*
+ * A minimal stand-in for the filter system, so a filterable default can be
+ * tested for being genuinely filterable rather than only for its default.
+ */
+$GLOBALS['dgl_filter_stubs'] = [];
+
+if ( ! function_exists( 'apply_filters' ) ) {
+	function apply_filters( string $hook, mixed $value, mixed ...$args ): mixed {
+		$stub = $GLOBALS['dgl_filter_stubs'][ $hook ] ?? null;
+
+		return null === $stub ? $value : $stub( $value, ...$args );
+	}
+}
+
+function add_filter_stub( string $hook, callable $callback ): void {
+	$GLOBALS['dgl_filter_stubs'][ $hook ] = $callback;
+}
+
+function clear_filter_stubs(): void {
+	$GLOBALS['dgl_filter_stubs'] = [];
+}
+
 spl_autoload_register(
 	static function ( string $class ): void {
 		if ( ! str_starts_with( $class, 'DGL\\' ) ) {

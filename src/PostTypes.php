@@ -126,11 +126,67 @@ final class PostTypes {
 	}
 
 	/**
+	 * Types switched off for this release.
+	 *
+	 * Hidden, not removed. DGLP have said volunteering and grants are not in
+	 * this version and may come back, so the schemas, the labels, the slugs and
+	 * every line of code that handles them stay exactly where they are. Turning
+	 * one back on is deleting a string from this array.
+	 *
+	 * They are still *registered* as post types. Registering them costs
+	 * nothing and means any content that does exist is still addressable,
+	 * still in the index and still recoverable. Unregistering a type does not
+	 * delete its posts, it orphans them, and orphaned content is how a
+	 * temporary decision becomes permanent data loss.
+	 *
+	 * @return string[]
+	 */
+	public static function disabled(): array {
+		/**
+		 * Filters the content types switched off for this release.
+		 *
+		 * @param string[] $disabled Post type keys.
+		 */
+		return (array) apply_filters( 'dgl_disabled_types', [ self::GRANT, self::VOLUNTEERING ] );
+	}
+
+	public static function is_enabled( string $post_type ): bool {
+		return ! in_array( $post_type, self::disabled(), true );
+	}
+
+	/**
+	 * The types members and staff actually see, in display order.
+	 *
+	 * Everything that draws a list, a menu, a tile, a filter or a checkbox asks
+	 * this. `definitions()` stays complete so labels and slugs survive, and
+	 * `submittable()` stays complete so permissions and the index keep working
+	 * for content that already exists.
+	 *
+	 * @return array<string, array{singular:string, plural:string, slug:string}>
+	 */
+	public static function enabled(): array {
+		return array_filter(
+			self::definitions(),
+			static fn( string $post_type ): bool => self::is_enabled( $post_type ),
+			ARRAY_FILTER_USE_KEY
+		);
+	}
+
+	/**
+	 * Enabled type keys only.
+	 *
+	 * @return string[]
+	 */
+	public static function enabled_keys(): array {
+		return array_keys( self::enabled() );
+	}
+
+	/**
 	 * Register every post type. Hooked on `init`.
 	 */
 	public static function register(): void {
 		foreach ( self::definitions() as $post_type => $def ) {
-			register_post_type( $post_type, self::submittable_args( $def ) );
+			register_post_type( $post_type, self::submittable_args( $def, self::is_enabled( $post_type ) ) );
 		}
 
 		register_post_type( self::ORG, self::org_args() );
@@ -147,13 +203,21 @@ final class PostTypes {
 	 * @param array{singular: string, plural: string, slug: string} $def Labels and URL base.
 	 * @return array<string, mixed>
 	 */
-	private static function submittable_args( array $def ): array {
+	private static function submittable_args( array $def, bool $enabled = true ): array {
 		return [
 			'labels'          => self::labels( $def['singular'], $def['plural'] ),
-			'public'          => true,
-			'show_ui'         => true,
-			'show_in_rest'    => true,
-			'has_archive'     => $def['slug'],
+			/*
+			 * A switched-off type is still registered, so nothing it owns is
+			 * orphaned, but it is not public, has no archive and has no admin
+			 * menu. Unregistering it instead would leave its posts addressable
+			 * by nothing, which is how a decision described as temporary turns
+			 * into data nobody can reach.
+			 */
+			'public'          => $enabled,
+			'show_ui'         => $enabled,
+			'show_in_menu'    => $enabled,
+			'show_in_rest'    => $enabled,
+			'has_archive'     => $enabled ? $def['slug'] : false,
 			'rewrite'         => [
 				'slug'       => $def['slug'],
 				'with_front' => false,

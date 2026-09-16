@@ -32,7 +32,7 @@ final class Columns {
 	private const FILTER = 'dgl_org_filter';
 
 	public static function init(): void {
-		foreach ( PostTypes::submittable() as $post_type ) {
+		foreach ( PostTypes::enabled_keys() as $post_type ) {
 			add_filter( "manage_edit-{$post_type}_columns", [ self::class, 'columns' ] );
 			add_action( "manage_{$post_type}_posts_custom_column", [ self::class, 'cell' ], 10, 2 );
 			add_filter( "manage_edit-{$post_type}_sortable_columns", [ self::class, 'sortable' ] );

@@ -50,7 +50,7 @@ final class Navigation {
 		];
 
 		if ( $has_own_work ) {
-			foreach ( PostTypes::definitions() as $post_type => $def ) {
+			foreach ( PostTypes::enabled() as $post_type => $def ) {
 				$items[] = [
 					'label'   => $def['plural'],
 					'url'     => Router::url( $def['slug'] ),
@@ -133,7 +133,7 @@ final class Navigation {
 	private static function counts_by_type( int $org_id ): array {
 		$counts = [];
 
-		foreach ( PostTypes::submittable() as $post_type ) {
+		foreach ( PostTypes::enabled_keys() as $post_type ) {
 			$counts[ $post_type ] = count( ItemsTable::for_org( $org_id, [ $post_type ], null, 500 ) );
 		}
 

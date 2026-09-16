@@ -45,7 +45,7 @@ final class MetaBoxes {
 	}
 
 	public static function register(): void {
-		foreach ( PostTypes::submittable() as $post_type ) {
+		foreach ( PostTypes::enabled_keys() as $post_type ) {
 			$def = PostTypes::definitions()[ $post_type ] ?? null;
 
 			if ( null === $def ) {

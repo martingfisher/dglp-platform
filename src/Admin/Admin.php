@@ -9,6 +9,8 @@ declare( strict_types=1 );
 
 namespace DGL\Admin;
 
+use DGL\PostTypes;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -46,6 +48,41 @@ final class Admin {
 
 		add_action( 'admin_notices', [ MetaBoxes::class, 'notices' ] );
 		add_action( 'admin_head', [ self::class, 'styles' ] );
+
+		/*
+		 * A switched-off type has no admin screens, and wp-admin/edit.php
+		 * answers that with wp_die() and no status, which WordPress serves as
+		 * a 500. Somebody at DGLP with a bookmarked Grants screen would get a
+		 * "WordPress › Error" page and a server error in the logs. Sending them
+		 * somewhere real is both kinder and quieter.
+		 */
+		add_action( 'admin_init', [ self::class, 'redirect_disabled_types' ], 5 );
+	}
+
+	/**
+	 * Send anybody who lands on a switched-off type's screen to the dashboard.
+	 *
+	 * Priority 5, ahead of most things, because this has to happen before the
+	 * screen itself runs. Only the list and add-new screens are checked: the
+	 * post editor is reached by ID and would be a legitimate way to look at
+	 * content of a type that has been parked.
+	 */
+	public static function redirect_disabled_types(): void {
+		$page = isset( $GLOBALS['pagenow'] ) ? (string) $GLOBALS['pagenow'] : '';
+
+		if ( ! in_array( $page, [ 'edit.php', 'post-new.php' ], true ) ) {
+			return;
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- reading which screen was asked for.
+		$type = isset( $_GET['post_type'] ) ? sanitize_key( wp_unslash( $_GET['post_type'] ) ) : '';
+
+		if ( '' === $type || ! PostTypes::is_submittable( $type ) || PostTypes::is_enabled( $type ) ) {
+			return;
+		}
+
+		wp_safe_redirect( admin_url( 'index.php' ) );
+		exit;
 	}
 
 	/**

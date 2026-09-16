@@ -53,3 +53,40 @@ Harness::assert_false( str_contains( $audit, "'0000-00-00" ), 'no audit column d
 
 // The IP is pseudonymised, so the column must be a hash width rather than an address.
 Harness::assert_true( str_contains( $audit, 'actor_ip_hash char(64)' ), 'the actor address is stored as a sha256 hash, not in the clear' );
+
+Harness::group( 'Volunteering and grants are switched off for this release' );
+
+use DGL\PostTypes;
+
+Harness::assert_same( 5, count( PostTypes::definitions() ), 'all five types still exist in the code' );
+Harness::assert_same( 3, count( PostTypes::enabled() ), 'three are enabled' );
+
+Harness::assert_false( PostTypes::is_enabled( PostTypes::VOLUNTEERING ), 'volunteering is off' );
+Harness::assert_false( PostTypes::is_enabled( PostTypes::GRANT ), 'grants is off' );
+Harness::assert_true( PostTypes::is_enabled( PostTypes::EVENT ), 'events is on' );
+Harness::assert_true( PostTypes::is_enabled( PostTypes::NEWS ), 'news is on' );
+Harness::assert_true( PostTypes::is_enabled( PostTypes::TRAINING ), 'training is on' );
+
+/*
+ * The labels and slugs of a switched-off type have to survive, or any content
+ * of that type becomes unlabelled the moment somebody looks at it, and turning
+ * the type back on becomes a rebuild rather than a one-line change.
+ */
+Harness::assert_same( 'Volunteering', PostTypes::definitions()[ PostTypes::VOLUNTEERING ]['plural'], 'a switched-off type keeps its label' );
+Harness::assert_same( 'grants', PostTypes::definitions()[ PostTypes::GRANT ]['slug'], 'and its slug' );
+
+Harness::assert_true( in_array( PostTypes::GRANT, PostTypes::submittable(), true ), 'and stays submittable, so permissions and the index still work for anything already stored' );
+
+Harness::assert_same( [ PostTypes::EVENT, PostTypes::NEWS, PostTypes::TRAINING ], PostTypes::enabled_keys(), 'enabled types keep their display order, events first' );
+
+Harness::group( 'Switching one back on is deleting a string' );
+
+add_filter_stub( 'dgl_disabled_types', static fn(): array => [ PostTypes::VOLUNTEERING ] );
+
+Harness::assert_true( PostTypes::is_enabled( PostTypes::GRANT ), 'grants comes back when it is off the list' );
+Harness::assert_same( 4, count( PostTypes::enabled() ), 'and the enabled set grows' );
+Harness::assert_false( PostTypes::is_enabled( PostTypes::VOLUNTEERING ), 'while volunteering stays off' );
+
+clear_filter_stubs();
+
+Harness::assert_same( 3, count( PostTypes::enabled() ), 'and the default is restored for anything that runs after this' );

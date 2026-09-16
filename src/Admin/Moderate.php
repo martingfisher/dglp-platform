@@ -49,7 +49,7 @@ final class Moderate {
 	}
 
 	public static function register(): void {
-		foreach ( PostTypes::submittable() as $post_type ) {
+		foreach ( PostTypes::enabled_keys() as $post_type ) {
 			add_meta_box(
 				'dgl-decide-' . $post_type,
 				__( 'Review decision', 'dgl-platform' ),
