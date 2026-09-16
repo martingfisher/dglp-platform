@@ -195,3 +195,7 @@ clean. They are the only DGLP content on staging.
 - **0.7.2 deployed**: field edges are 1px at 4.9:1 (were 2px); the file
   control is centred in its box with its button restyled. Pinned to commit
   `2475cb3`.
+- **0.7.3 deployed**: the dead ends closed. Profile tabs balance; no-access
+  and suspended screens have a way out; a pending member gets "saved as a
+  draft" not a refusal; org-less accounts see why there are no tiles; an
+  empty facts list says so. Pinned to commit `52c3af7`.
