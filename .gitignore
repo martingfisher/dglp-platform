@@ -5,3 +5,9 @@
 
 # RYCM handoff notes: kept out of a public client repository.
 docs/wireframes/design-conversation.md
+
+# Impeccable working files. design.json, surfaces and critiques are shared and tracked.
+.impeccable/*
+!.impeccable/design.json
+!.impeccable/surfaces/
+!.impeccable/critique/

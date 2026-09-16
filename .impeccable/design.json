@@ -1,0 +1,126 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-16T17:30:00Z",
+  "title": "Design System: DGLP Member Area",
+  "extensions": {
+    "colorMeta": {
+      "council-navy": { "role": "primary", "displayName": "Council Navy", "canonical": "#2d3b6b", "tonalRamp": ["#0f1526", "#1a2340", "#253057", "#2d3b6b", "#4a5a8e", "#7383b0", "#a3add0", "#e6e7ed"] },
+      "navy-deep": { "role": "primary", "displayName": "Navy Deep", "canonical": "#253057", "tonalRamp": ["#0b0f1c", "#151c33", "#1d2745", "#253057", "#3f4c78", "#6a769d", "#9ea7c3", "#e2e5ee"] },
+      "partnership-purple": { "role": "secondary", "displayName": "Partnership Purple", "canonical": "#5b6bae", "tonalRamp": ["#1c2140", "#2f3868", "#454f8c", "#5b6bae", "#7b89c1", "#9ca7d3", "#c3cae5", "#ebedf5"] },
+      "leeds-teal": { "role": "tertiary", "displayName": "Leeds Teal", "canonical": "#57b0b6", "tonalRamp": ["#12393c", "#1d6265", "#2f8a90", "#57b0b6", "#7cc3c7", "#a3d5d8", "#c9e7e9", "#e3fffe"] },
+      "accent-danger": { "role": "tertiary", "displayName": "Accent Danger", "canonical": "#cc0053", "tonalRamp": ["#3d0019", "#6b002b", "#8a0038", "#cc0053", "#e0407f", "#ec80aa", "#f4b8d0", "#f9e0ea"] },
+      "slate-ink": { "role": "neutral", "displayName": "Slate Ink", "canonical": "#1e3232", "tonalRamp": ["#0c1414", "#1e3232", "#2f4747", "#4f5e5c", "#6f817f", "#98a6a4", "#c4cccb", "#e4e6e6"] },
+      "notice-cream": { "role": "neutral", "displayName": "Notice Cream", "canonical": "#fdf8f0", "tonalRamp": ["#3d3320", "#7a6640", "#b39a66", "#d9c7a0", "#ecdfc4", "#f5ecda", "#faf3e6", "#fdf8f0"] },
+      "desk-grey": { "role": "neutral", "displayName": "Desk Grey", "canonical": "#f4f6fb", "tonalRamp": ["#2a3040", "#535c73", "#7d879e", "#a8b0c3", "#c9cfdd", "#dfe3ed", "#eceff6", "#f4f6fb"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "The page title, one per screen." },
+      "headline": { "displayName": "Headline", "purpose": "Section and card titles." },
+      "body": { "displayName": "Body", "purpose": "Prose, ledes, table cells." },
+      "control": { "displayName": "Control", "purpose": "Buttons, tabs, sidebar items, field text." },
+      "label": { "displayName": "Label", "purpose": "Field labels, table headers, section headings. Uppercase." },
+      "help": { "displayName": "Help", "purpose": "The line under a field." }
+    },
+    "shadows": [
+      { "name": "resting-card", "value": "0 1px 2px rgb(30 50 50 / 4%), 0 4px 16px rgb(30 50 50 / 6%)", "purpose": "Cards, tiles and stats at rest." },
+      { "name": "raised-card", "value": "0 2px 4px rgb(30 50 50 / 5%), 0 10px 28px rgb(30 50 50 / 9%)", "purpose": "The same surfaces on hover when they are links." }
+    ],
+    "motion": [
+      { "name": "state", "value": "150ms ease-out", "purpose": "Hover and focus changes on controls. Nothing else animates." }
+    ],
+    "breakpoints": [
+      { "name": "sidebar-collapse", "value": "782px" },
+      { "name": "detail-stack", "value": "860px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one action on a screen: send for review, save changes, send the invitation.",
+      "html": "<button class=\"ds-btn-primary\">Send for review</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; min-height: 45px; padding: 0 20px; border: 0; border-radius: 8px; background: #2d3b6b; color: #fff; font: 500 15px/1 Montserrat, system-ui, sans-serif; cursor: pointer; transition: background 150ms ease-out; } .ds-btn-primary:hover { background: #253057; } .ds-btn-primary:focus-visible { outline: 2px solid #2d3b6b; outline-offset: 2px; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Back, cancel, and the quieter of two choices.",
+      "html": "<button class=\"ds-btn-secondary\">Back</button>",
+      "css": ".ds-btn-secondary { display: inline-flex; align-items: center; justify-content: center; min-height: 45px; padding: 0 20px; border: 2px solid rgb(45 59 107 / 28%); border-radius: 8px; background: transparent; color: #2d3b6b; font: 500 15px/1 Montserrat, system-ui, sans-serif; cursor: pointer; transition: background 150ms ease-out; } .ds-btn-secondary:hover { background: #f4f6fb; } .ds-btn-secondary:focus-visible { outline: 2px solid #2d3b6b; outline-offset: 2px; }"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Every text control: 2px edge at 3.8:1, one navy ring on focus.",
+      "html": "<label class=\"ds-label\" for=\"ds-f\">Headline <span class=\"ds-req\">*</span></label><input class=\"ds-field\" id=\"ds-f\" type=\"text\" placeholder=\"\"><p class=\"ds-help\">Say what it is, plainly.</p>",
+      "css": ".ds-label { display: block; margin-bottom: 6px; font: 600 14px/1.4 Montserrat, system-ui, sans-serif; letter-spacing: 0.03em; text-transform: uppercase; color: #4f5e5c; } .ds-req { color: #cc0053; } .ds-field { width: 100%; box-sizing: border-box; min-height: 45px; padding: 0 12px; border: 2px solid rgb(30 50 50 / 60%); border-radius: 10px; background: #fff; color: #1e3232; font: 400 15px/1.65 Montserrat, system-ui, sans-serif; } .ds-field:focus-visible { border-color: #2d3b6b; outline: 2px solid #2d3b6b; outline-offset: 0; } .ds-help { margin: 6px 0 0; font: 400 14.4px/1.5 Montserrat, system-ui, sans-serif; color: #4f5e5c; }"
+    },
+    {
+      "name": "Sidebar Navigation",
+      "kind": "nav",
+      "refersTo": "nav-item",
+      "description": "The reception desk: Navy Deep, sectioned, with the current item marked by a fill and a teal rail.",
+      "html": "<nav class=\"ds-nav\"><p class=\"ds-nav-h\">Your submissions</p><a class=\"ds-nav-i ds-nav-i--on\" href=\"#\" aria-current=\"page\"><span>News</span><span class=\"ds-nav-c\">3</span></a><a class=\"ds-nav-i\" href=\"#\"><span>Events</span><span class=\"ds-nav-c\">22</span></a><a class=\"ds-nav-i\" href=\"#\"><span>Training</span><span class=\"ds-nav-c\">0</span></a></nav>",
+      "css": ".ds-nav { width: 260px; padding: 24px; background: #253057; color: #fff; font-family: Montserrat, system-ui, sans-serif; } .ds-nav-h { margin: 0 0 8px; font-size: 12.6px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: rgb(255 255 255 / 80%); } .ds-nav-i { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 9px 12px; border-left: 3px solid transparent; border-radius: 0 8px 8px 0; font-size: 15.8px; font-weight: 500; color: rgb(255 255 255 / 92%); text-decoration: none; transition: background 150ms ease-out; } .ds-nav-i:hover { background: rgb(255 255 255 / 10%); color: #fff; } .ds-nav-i--on { border-left-color: #57b0b6; background: rgb(255 255 255 / 14%); color: #fff; font-weight: 600; } .ds-nav-i:focus-visible { outline: 2px solid #fff; outline-offset: 2px; } .ds-nav-c { font-size: 13.6px; font-weight: 600; color: rgb(255 255 255 / 80%); }"
+    },
+    {
+      "name": "Status Chip",
+      "kind": "chip",
+      "refersTo": "chip-status",
+      "description": "The system's signature: six words in six tints, the same everywhere.",
+      "html": "<span class=\"ds-chip ds-chip--live\">Live on site</span> <span class=\"ds-chip ds-chip--pending\">Awaiting review</span> <span class=\"ds-chip ds-chip--changes\">Changes requested</span>",
+      "css": ".ds-chip { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 999px; font: 600 13px/1.5 Montserrat, system-ui, sans-serif; white-space: nowrap; } .ds-chip--live { background: #eaf4e6; color: #387923; } .ds-chip--pending { background: #fff7e8; color: #7a5a1c; } .ds-chip--changes { background: #f9e0ea; color: #cc0053; }"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Paper on the desk: white, 20px corners, a faint edge, gently lifted.",
+      "html": "<section class=\"ds-card\"><h2 class=\"ds-card-t\">Who can post for us</h2><p class=\"ds-card-p\">Two people. Removing somebody is not built yet.</p></section>",
+      "css": ".ds-card { padding: 24px; border: 1px solid rgb(30 50 50 / 14%); border-radius: 20px; background: #fff; box-shadow: 0 1px 2px rgb(30 50 50 / 4%), 0 4px 16px rgb(30 50 50 / 6%); font-family: Montserrat, system-ui, sans-serif; color: #1e3232; } .ds-card-t { margin: 0 0 14px; font-size: 19px; font-weight: 700; color: #2d3b6b; } .ds-card-p { margin: 0; font-size: 16px; line-height: 1.65; }"
+    },
+    {
+      "name": "Profile Tabs",
+      "kind": "nav",
+      "refersTo": "tab-active",
+      "description": "Text tabs on a rule; the open one is a filled navy block.",
+      "html": "<nav class=\"ds-tabs\"><a class=\"ds-tab\" href=\"#\">Organisation</a><a class=\"ds-tab ds-tab--on\" href=\"#\" aria-current=\"page\">Members <span class=\"ds-tab-c\">2</span></a><a class=\"ds-tab\" href=\"#\">Email preferences</a></nav>",
+      "css": ".ds-tabs { display: flex; gap: 4px; border-bottom: 1px solid rgb(30 50 50 / 14%); font-family: Montserrat, system-ui, sans-serif; } .ds-tab { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; margin-bottom: -1px; border-bottom: 3px solid transparent; color: #4f5e5c; font-size: 16px; font-weight: 500; text-decoration: none; } .ds-tab:hover { color: #1e3232; background: #f4f6fb; } .ds-tab--on, .ds-tab--on:hover { background: #2d3b6b; border-bottom-color: #2d3b6b; border-radius: 8px 8px 0 0; color: #fff; font-weight: 700; } .ds-tab-c { padding: 1px 8px; border-radius: 999px; background: #fff; color: #2d3b6b; font-size: 13px; font-weight: 600; } .ds-tab:focus-visible { outline: 2px solid #2d3b6b; outline-offset: 2px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Community Office",
+    "overview": "A well-run local office. The reception desk is dark navy and always in the same place (the sidebar); the paperwork is white on a cream desk; what is waiting for you sits in a clear tray at the top; the forms are obvious and the person behind the desk tells you plainly what happens next. Nothing performs. The member who comes in twice a year on a phone is served exactly as well as the comms officer who comes in every week.\n\nThe system is calm, plain and dependable. One typeface at a tight scale, one action colour, one shape vocabulary, status carried by a small labelled stamp. Depth is gentle: cards lift a little off the cream so the page reads as papers on a desk rather than lines on a grid. The visual rejections are confirmed: no SaaS-dashboard gloss (gradients, glass, sparklines, hero metrics), and nothing that looks like WordPress admin. It is DGLP's, in DGLP's colours, not the wireframes' placeholder red and not RYCM's.",
+    "keyCharacteristics": [
+      "Navy desk, cream room, white paper: three surfaces and no more.",
+      "Montserrat only, 18px body, a tight scale, weight doing the hierarchy.",
+      "Refined and restrained components: thin lines where a line is decoration, a full-strength edge where a line is a control.",
+      "Status is a stamp: a tinted pill with dark text, never a bare colour.",
+      "Held to WCAG 2.2 AA everywhere and AAA wherever the palette allows."
+    ],
+    "rules": [
+      { "name": "The One Action Colour Rule", "body": "Council Navy is the only colour that means \"you can press this\" or \"this is where you are\". Purple links, teal rails and danger red never compete with it.", "section": "colors" },
+      { "name": "The Teal Is Not Text Rule", "body": "Leeds Teal appears only as a mark that carries no words. Its ratio on white is 2.5:1 and no size or weight rescues that.", "section": "colors" },
+      { "name": "The Stamp Rule", "body": "Status is a tinted pill with dark text and a word in it. Colour alone never carries state, and every pill pair is asserted at 4.5:1 in the test suite.", "section": "colors" },
+      { "name": "The Weight Floor Rule", "body": "Small text is never lighter than 500. Montserrat 400 at 14px on cream is where \"the outline colour is too feint\" came from.", "section": "typography" },
+      { "name": "The Offset Rule", "body": "Every shadow has a y-offset and a blur. A zero-offset halo is decoration and does not appear.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do read every colour from --theme-palette-color-N with the live hex as fallback, and define it once, in assets/tokens.css.",
+      "Do keep control boundaries at 3:1 or better and text at 4.5:1, aiming for 7:1; measure with bin/check-contrast.mjs, which now reads color(srgb) values.",
+      "Do carry state with a word: a chip, a label, aria-current, never colour alone.",
+      "Do keep one focus treatment, Council Navy, on every interactive element.",
+      "Do put 24px between stacked cards and 40px between page sections."
+    ],
+    "donts": [
+      "Don't use Leeds Teal for text at any size.",
+      "Don't set text smaller than body below weight 500.",
+      "Don't declare tokens in dashboard.css; the duplicate block there overrode tokens.css for weeks.",
+      "Don't let a theme rule decide a control's edge; the field border is !important for that reason and nothing else is.",
+      "Don't add gradients, glass, sparklines or a hero metric; the surface is an office, not a launch page."
+    ]
+  }
+}
