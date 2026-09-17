@@ -60,6 +60,7 @@ final class Sync {
 			Meta::ITEM_SUBMITTED_AT,
 			Meta::ITEM_APPROVED_AT,
 			Meta::ITEM_EXPIRES_AT,
+			Meta::ITEM_NEXT_AT,
 		];
 	}
 
@@ -140,6 +141,7 @@ final class Sync {
 				'submitted_at'         => self::meta_or_null( $post_id, Meta::ITEM_SUBMITTED_AT ),
 				'approved_at'          => self::meta_or_null( $post_id, Meta::ITEM_APPROVED_AT ),
 				'expires_at'           => self::meta_or_null( $post_id, Meta::ITEM_EXPIRES_AT ),
+				'next_at'              => self::meta_or_null( $post_id, Meta::ITEM_NEXT_AT ),
 				'updated_at'           => get_post_modified_time( 'Y-m-d H:i:s', true, $post ) ?: current_time( 'mysql', true ),
 			]
 		);

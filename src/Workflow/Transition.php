@@ -240,20 +240,8 @@ final class Transition {
 	 * Rebuild the expiry stamp from whichever date the type expires on.
 	 */
 	private static function recompute_expiry( int $post_id, string $post_type ): void {
-		$values = [];
-
-		foreach ( FieldRegistry::for_type( $post_type ) as $field ) {
-			$values[ $field->key ] = get_post_meta( $post_id, $field->meta_key(), true );
-		}
-
-		$expires = FieldRegistry::expiry_for( $post_type, $values );
-
-		if ( null === $expires ) {
-			delete_post_meta( $post_id, Meta::ITEM_EXPIRES_AT );
-			return;
-		}
-
-		update_post_meta( $post_id, Meta::ITEM_EXPIRES_AT, $expires );
+		// Series is the one writer of the expiry and next-occurrence stamps.
+		\DGL\Events\Series::stamp( $post_id, $post_type );
 	}
 
 	/**
@@ -266,7 +254,8 @@ final class Transition {
 	 * @return int How many were expired.
 	 */
 	public static function run_expiry_sweep( int $limit = 100 ): int {
-		$due  = \DGL\Index\ItemsTable::due_for_expiry( current_time( 'mysql', true ), $limit );
+		// Stored expiries are the site's wall clock, so they are compared with the site's wall clock, not UTC.
+		$due  = \DGL\Index\ItemsTable::due_for_expiry( current_time( 'mysql' ), $limit );
 		$done = 0;
 
 		foreach ( $due as $post_id ) {

@@ -36,6 +36,9 @@ final class Meta {
 	/** One of Org\Trust::*. */
 	public const ORG_TRUST = 'dgl_trust_level';
 
+	/** Wall-clock datetime of the next occurrence that has not finished; a one-off's start. Mirrored into the index. */
+	public const ITEM_NEXT_AT = 'dgl_next_at';
+
 	/** One row per email domain an organisation uses. Lower-case, exact. */
 	public const ORG_DOMAIN = 'dgl_org_domain';
 

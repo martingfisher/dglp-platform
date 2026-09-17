@@ -202,13 +202,13 @@ final class Mailer {
 			return '';
 		}
 
-		$time = strtotime( $stamp . ' UTC' );
-
-		if ( false === $time ) {
+		try {
+			$at = new \DateTimeImmutable( $stamp, wp_timezone() );
+		} catch ( \Exception $e ) {
 			return '';
 		}
 
-		return (string) wp_date( (string) get_option( 'date_format', 'j F Y' ), $time );
+		return (string) wp_date( (string) get_option( 'date_format', 'j F Y' ), $at->getTimestamp() );
 	}
 
 	/**

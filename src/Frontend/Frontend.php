@@ -343,7 +343,7 @@ final class Frontend {
 		}
 
 		if ( '' !== $when ) {
-			$parts[] = View::date( $when, str_contains( $when, ':' ) );
+			$parts[] = View::wall_date( $when, str_contains( $when, ':' ) );
 		}
 
 		$venue = (string) self::value( $post, 'venue_name' );
@@ -398,7 +398,8 @@ final class Frontend {
 			return false;
 		}
 
-		return strtotime( $expires . ' UTC' ) < time();
+		// Wall clock against wall clock: the stored stamp is in the site's own timezone.
+		return $expires < current_time( 'mysql' );
 	}
 
 	public static function type_label( string $post_type, bool $plural = false ): string {

@@ -59,12 +59,14 @@ final class ItemsTable {
 	approved_at datetime default NULL,
 	updated_at datetime NOT NULL default '1970-01-01 00:00:00',
 	expires_at datetime default NULL,
+	next_at datetime default NULL,
 	PRIMARY KEY  (post_id),
 	KEY org_status (org_id,status,updated_at),
 	KEY queue (status,submitted_at),
 	KEY digest (post_type,status,approved_at),
 	KEY expiry (expires_at,status),
-	KEY author (author_id,updated_at)
+	KEY author (author_id,updated_at),
+	KEY next_up (post_type,status,next_at)
 ) {$collate};";
 	}
 
@@ -112,6 +114,7 @@ final class ItemsTable {
 			'approved_at'          => $row['approved_at'] ?? null,
 			'updated_at'           => $row['updated_at'] ?? current_time( 'mysql', true ),
 			'expires_at'           => $row['expires_at'] ?? null,
+			'next_at'              => $row['next_at'] ?? null,
 		];
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -237,6 +240,63 @@ final class ItemsTable {
 	 *
 	 * @return int[] Post IDs.
 	 */
+	/**
+	 * Live events that could have a date inside a window: next date before
+	 * the window ends and expiry after it starts. A superset, expanded in
+	 * PHP by the calendar; one-offs carry their start as next_at so they are
+	 * found the same way. Wall-clock strings, like the columns.
+	 *
+	 * @return int[]
+	 */
+	public static function events_between( string $from_wall, string $to_wall, int $limit = 500 ): array {
+		global $wpdb;
+
+		$sql = 'SELECT post_id FROM ' . self::name()
+			. ' WHERE post_type = %s AND status = %s AND next_at IS NOT NULL AND next_at <= %s'
+			. ' AND (expires_at IS NULL OR expires_at >= %s)'
+			. self::content_only()
+			. ' ORDER BY next_at ASC LIMIT %d';
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery
+		return array_map( 'intval', (array) $wpdb->get_col( $wpdb->prepare( $sql, PostTypes::EVENT, Statuses::LIVE, $to_wall, $from_wall, $limit ) ) );
+	}
+
+	/**
+	 * Live events whose next stamp is missing or has passed: the roll-forward's
+	 * work list. A one-off that has started is in it too; restamping one is a
+	 * meta read and an equal write, cheap noise.
+	 *
+	 * @return int[]
+	 */
+	public static function events_to_roll( string $now_wall, int $limit = 200 ): array {
+		global $wpdb;
+
+		$sql = 'SELECT post_id FROM ' . self::name()
+			. ' WHERE post_type = %s AND status = %s AND (next_at IS NULL OR next_at < %s)'
+			. self::content_only()
+			. ' ORDER BY next_at ASC LIMIT %d';
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery
+		return array_map( 'intval', (array) $wpdb->get_col( $wpdb->prepare( $sql, PostTypes::EVENT, Statuses::LIVE, $now_wall, $limit ) ) );
+	}
+
+	/**
+	 * Live events expiring inside a window, for the "still running?" reminder.
+	 *
+	 * @return int[]
+	 */
+	public static function expiring_between( string $from_wall, string $to_wall, int $limit = 100 ): array {
+		global $wpdb;
+
+		$sql = 'SELECT post_id FROM ' . self::name()
+			. ' WHERE post_type = %s AND status = %s AND expires_at IS NOT NULL AND expires_at BETWEEN %s AND %s'
+			. self::content_only()
+			. ' ORDER BY expires_at ASC LIMIT %d';
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery
+		return array_map( 'intval', (array) $wpdb->get_col( $wpdb->prepare( $sql, PostTypes::EVENT, Statuses::LIVE, $from_wall, $to_wall, $limit ) ) );
+	}
+
 	public static function due_for_expiry( string $now_utc, int $limit = 100 ): array {
 		global $wpdb;
 
