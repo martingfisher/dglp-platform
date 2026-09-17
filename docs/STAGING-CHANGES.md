@@ -305,3 +305,12 @@ clean. They are the only DGLP content on staging.
   field. The CSV sits in the Media Library at
   `wp-content/uploads/2026/09/FC-Member-Orgs-for-DGLP-directory.csv`;
   delete it once no longer needed.
+- **0.9.3 deployed**: submission wizard pass. Starting a submission
+  reuses an empty draft rather than adding another; Cancel on an
+  untouched draft deletes it; empty drafts untouched for seven days are
+  purged on the daily sweep (which needs system cron on). Text inputs
+  were 24px wider than their card; fixed with border-box. On phones the
+  progress list is one row and the callout waits for the review step.
+  Staging had three empty drafts from yesterday's walk (8441 to 8443,
+  author 11); left alone, they are reused or purged. Pinned to commit
+  `6d50c35`.
