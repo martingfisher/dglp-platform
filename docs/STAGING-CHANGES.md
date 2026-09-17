@@ -333,3 +333,14 @@ clean. They are the only DGLP content on staging.
   not sent on staging yet, since that needs a real change to decide. To
   see one: as an owner, change the organisation name, then decide it from
   the queue; mail goes to the redirect address. Pinned to commit `aab52dc`.
+- **0.9.6 to 0.9.8 deployed**: probe-only builds, no member-facing change.
+  `wp dgl probe page --post` (urlencoded), `--multipart` and
+  `--file=png|text|blob:N` exist to chase Martin's nginx 403 on POST to
+  `/dashboard/edit/8442/1/`. From the server every variant reached
+  WordPress with HTTP 200: plain fields, an HTML paragraph, a link, a
+  `<script>` tag, an empty file part, a real PNG, 2, 10 and 16MB blobs,
+  and the wizard's exact field set. So the block is not on the body's
+  content or size as seen from the server. Caveat: a firewall may trust
+  the server's own address, so this does not prove the firewall never
+  inspects bodies. Waiting on the exact submission and the response
+  headers from the browser. Pinned to commit `cd5e1ae`.
