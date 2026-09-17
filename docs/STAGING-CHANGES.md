@@ -442,3 +442,12 @@ clean. They are the only DGLP content on staging.
   egress proxy blocks the browser), so the theme-framed result is NOT
   VERIFIED visually; the markup is confirmed served. Pinned to commit
   `8e2ccdd`.
+- **Header sign-in connected** (17 September, theme setting, no plugin
+  change): Blocksy's header Account element read "Register/Login" and linked
+  to `#`. Set in `theme_mods_blocksy-child` (header_placements, item
+  `account`): logged-out label "Sign in" linking to `/dashboard/`, logged-in
+  label "Member area" linking to `/dashboard/`, and the item added to the
+  mobile off-canvas menu, which had no sign-in at all. Relative URLs so the
+  same setting works on production. Production needs the same five values
+  set by hand in the Customizer (Header > Account), or via `wp option patch`
+  as recorded here, because the plugin deploy does not carry theme settings.
