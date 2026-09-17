@@ -47,7 +47,7 @@ final class Frontend {
 		add_filter( 'query_vars', [ self::class, 'add_query_var' ] );
 		add_filter( 'pre_get_document_title', [ self::class, 'directory_title' ] );
 		add_action( 'template_redirect', [ self::class, 'directory_status' ] );
-		add_filter( 'blocksy:breadcrumbs:items:array', [ self::class, 'breadcrumbs' ] );
+		add_filter( 'blocksy:breadcrumbs:items-array', [ self::class, 'breadcrumbs' ] );
 		add_filter( 'template_include', [ self::class, 'template' ] );
 		add_action( 'wp_enqueue_scripts', [ self::class, 'assets' ] );
 		add_action( 'pre_get_posts', [ self::class, 'order_archive' ] );

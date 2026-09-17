@@ -91,9 +91,10 @@ final class ProbeCommand {
 		$needle   = (string) ( $args[1] ?? '' );
 		$context  = max( 0, (int) ( $assoc['around'] ?? 2 ) );
 		$root     = rtrim( str_replace( '\\', '/', (string) WP_CONTENT_DIR ), '/' );
-		$path     = realpath( $root . '/' . $relative );
+		// No climbing out; a symlinked plugin directory is fine.
+		$path     = str_contains( $relative, '..' ) ? '' : $root . '/' . $relative;
 
-		if ( '' === $needle || false === $path || ! str_starts_with( $path, $root . '/' ) || ! is_file( $path ) ) {
+		if ( '' === $needle || '' === $path || ! is_file( $path ) ) {
 			WP_CLI::error( 'No such file under wp-content, or no phrase given.' );
 		}
 
@@ -139,9 +140,9 @@ final class ProbeCommand {
 		$relative = ltrim( str_replace( '\\', '/', (string) ( $args[0] ?? '' ) ), '/' );
 		$needle   = (string) ( $args[1] ?? '' );
 		$root     = rtrim( str_replace( '\\', '/', (string) WP_CONTENT_DIR ), '/' );
-		$dir      = realpath( $root . '/' . $relative );
+		$dir      = str_contains( $relative, '..' ) ? '' : $root . '/' . $relative;
 
-		if ( '' === $needle || false === $dir || ! str_starts_with( $dir, $root ) || ! is_dir( $dir ) ) {
+		if ( '' === $needle || '' === $dir || ! is_dir( $dir ) ) {
 			WP_CLI::error( 'No such directory under wp-content, or no phrase given.' );
 		}
 
