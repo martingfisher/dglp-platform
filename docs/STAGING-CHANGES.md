@@ -451,3 +451,10 @@ clean. They are the only DGLP content on staging.
   same setting works on production. Production needs the same five values
   set by hand in the Customizer (Header > Account), or via `wp option patch`
   as recorded here, because the plugin deploy does not carry theme settings.
+- **Join button in the header** (17 September, theme setting): a Blocksy
+  header button item `button~dglp-join`, text "Join", linking to
+  `/dashboard/join/` in the same tab, rounded like the other header
+  buttons, placed after Sign in in the desktop top row and at the end of the
+  mobile off-canvas menu. Set with `wp option patch insert` on
+  `theme_mods_blocksy-child`; production needs the same item added in the
+  Customizer.
