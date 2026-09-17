@@ -51,6 +51,8 @@ final class Notifications {
 			StateMachine::EXPIRE          => [ 'title' => __( 'Came off the site on its date', 'dgl-platform' ), 'tone' => 'quiet' ],
 			StateMachine::ARCHIVE         => [ 'title' => __( 'Archived', 'dgl-platform' ), 'tone' => 'quiet' ],
 			StateMachine::RESTORE         => [ 'title' => __( 'Restored from the archive', 'dgl-platform' ), 'tone' => 'quiet' ],
+			'series_extended'             => [ 'title' => __( 'Kept on the site for another six months', 'dgl-platform' ), 'tone' => 'good' ],
+			'schedule_changed'            => [ 'title' => __( 'Dates and times changed', 'dgl-platform' ), 'tone' => 'quiet' ],
 			'org_change_approved'         => [ 'title' => __( 'Your organisation details were accepted', 'dgl-platform' ), 'tone' => 'good' ],
 			'org_change_rejected'         => [ 'title' => __( 'Your organisation details were not accepted', 'dgl-platform' ), 'tone' => 'bad' ],
 			'org_status_changed'          => [ 'title' => __( 'Your organisation\'s status changed', 'dgl-platform' ), 'tone' => 'quiet' ],

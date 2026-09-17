@@ -9,6 +9,7 @@ declare( strict_types=1 );
 
 namespace DGL\Access;
 
+use DGL\PostTypes;
 use DGL\Statuses;
 
 /**
@@ -44,6 +45,7 @@ final class Policy {
 	public const REMOVE_MEMBER  = 'remove_member';
 	public const VIEW_ORG_AUDIT = 'view_org_audit';
 	public const VIEW_ALL_AUDIT = 'view_all_audit';
+	public const CHANGE_SCHEDULE = 'change_schedule';
 
 	/**
 	 * Decide whether an actor may perform an action, optionally on an item.
@@ -73,6 +75,7 @@ final class Policy {
 			self::DELETE_ITEM    => self::can_delete_item( $user, $item ),
 			self::MODERATE_ITEM  => self::can_moderate_item( $user, $item ),
 			self::TAKE_DOWN_ITEM => self::can_take_down_item( $user, $item ),
+			self::CHANGE_SCHEDULE => self::can_change_schedule( $user, $item ),
 			default              => false,
 		};
 	}
@@ -210,6 +213,29 @@ final class Policy {
 			[ Statuses::DRAFT, Statuses::CHANGES, Statuses::LIVE, Statuses::EXPIRED ],
 			true
 		);
+	}
+
+	/**
+	 * Dates and times on a live event change without review.
+	 *
+	 * A schedule is a fact about the world, not copy: the coffee morning
+	 * moved to Wednesdays whether or not a moderator has read about it, and
+	 * a listing that says Tuesday for a week while the edit waits is wrong
+	 * for a week. Words and pictures still go through review. Only the
+	 * owning organisation (or an administrator), and only while the event is
+	 * on the site; a draft carries its dates through the wizard as before.
+	 */
+	private static function can_change_schedule( UserContext $user, ?ItemContext $item ): bool {
+		if ( null === $item || ! $user->can_write() ) {
+			return false;
+		}
+
+		if ( PostTypes::EVENT !== $item->post_type || Statuses::LIVE !== $item->status ) {
+			return false;
+		}
+
+		// The same gate as submitting: changing what is on the site is publishing.
+		return $user->is_admin() || ( self::owns( $user, $item ) && $user->is_fully_approved() );
 	}
 
 	/**

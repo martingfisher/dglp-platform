@@ -278,23 +278,7 @@ final class Profile {
 	 * pending or suspended: a decision email is not an invitation back in.
 	 */
 	private static function tell_the_owners( int $org_id, \DGL\Email\Message $message ): void {
-		$to = [];
-
-		foreach ( Org::members( $org_id ) as $user_id ) {
-			if ( UserContextRole::ORG_OWNER !== Org::role_for_user( $user_id ) ) {
-				continue;
-			}
-
-			if ( UserContextRole::ACCOUNT_APPROVED !== (string) get_user_meta( $user_id, Meta::USER_ACCOUNT_STATUS, true ) ) {
-				continue;
-			}
-
-			$user = get_userdata( $user_id );
-
-			if ( $user && '' !== (string) $user->user_email ) {
-				$to[] = (string) $user->user_email;
-			}
-		}
+		$to = Org::owner_emails( $org_id );
 
 		if ( [] === $to ) {
 			return;

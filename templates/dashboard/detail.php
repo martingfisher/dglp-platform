@@ -34,6 +34,26 @@ $pending  = $revision instanceof WP_Post && Statuses::PENDING === $revision->pos
 	</div>
 <?php endif; ?>
 
+<?php if ( ! empty( $data['scheduled'] ) ) : ?>
+	<div class="dgl-alert dgl-alert--good" role="status">
+		<p><strong><?php esc_html_e( 'Dates and times saved.', 'dgl-platform' ); ?></strong>
+		<?php esc_html_e( 'The listing already shows them. Nothing went through review.', 'dgl-platform' ); ?></p>
+	</div>
+<?php endif; ?>
+
+<?php if ( ! empty( $data['extended'] ) ) : ?>
+	<div class="dgl-alert dgl-alert--good" role="status">
+		<p><strong><?php esc_html_e( 'Kept on the site.', 'dgl-platform' ); ?></strong>
+		<?php
+		printf(
+			/* translators: %s: a date. */
+			esc_html__( 'It is listed until %s. We will ask again two weeks before then.', 'dgl-platform' ),
+			esc_html( (string) ( $data['series_until'] ?? '' ) )
+		);
+		?></p>
+	</div>
+<?php endif; ?>
+
 <?php if ( '' !== (string) ( $data['action_error'] ?? '' ) ) : ?>
 	<div class="dgl-alert" role="alert"><p><?php echo esc_html( (string) $data['action_error'] ); ?></p></div>
 <?php endif; ?>
@@ -169,6 +189,66 @@ if ( $revision instanceof WP_Post ) {
 	);
 }
 ?>
+
+<?php if ( ! empty( $data['can_schedule'] ) ) : ?>
+	<section class="dgl-card dgl-schedule" aria-labelledby="dgl-schedule-title">
+		<h2 class="dgl-section__title" id="dgl-schedule-title"><?php esc_html_e( 'Dates and times', 'dgl-platform' ); ?></h2>
+
+		<?php if ( ! empty( $data['schedule_locked'] ) ) : ?>
+			<p class="dgl-help"><?php esc_html_e( 'Finish or discard your open edit first. It carries the dates too, and two versions of the same schedule is a question with no good answer.', 'dgl-platform' ); ?></p>
+		<?php else : ?>
+			<p class="dgl-help"><?php esc_html_e( 'These apply as soon as you save them. Nothing goes through review, because a date is a fact and a wrong one for a week is worse than an unread one.', 'dgl-platform' ); ?></p>
+
+			<?php if ( ! empty( $data['can_extend'] ) ) : ?>
+				<form method="post" class="dgl-schedule__extend" action="<?php echo esc_url( Router::url( 'item', (string) $post->ID ) ); ?>">
+					<?php wp_nonce_field( \DGL\Dashboard\Wizard::NONCE ); ?>
+					<p>
+						<?php
+						printf(
+							/* translators: %s: a date. */
+							esc_html__( 'Listed until %s. Still running after that?', 'dgl-platform' ),
+							'<strong>' . esc_html( (string) ( $data['series_until'] ?? '' ) ) . '</strong>'
+						);
+						?>
+					</p>
+					<button type="submit" class="dgl-button" name="dgl_intent" value="extend">
+						<?php esc_html_e( 'Keep it listed for another 6 months', 'dgl-platform' ); ?>
+					</button>
+				</form>
+			<?php endif; ?>
+
+			<?php $schedule_errors = (array) ( $data['schedule_errors'] ?? [] ); ?>
+			<?php if ( [] !== $schedule_errors ) : ?>
+				<div class="dgl-alert" role="alert">
+					<p><strong><?php esc_html_e( 'Not saved yet.', 'dgl-platform' ); ?></strong></p>
+					<ul>
+						<?php foreach ( $schedule_errors as $key => $message ) : ?>
+							<li><a href="#dgl-<?php echo esc_attr( (string) $key ); ?>"><?php echo esc_html( (string) $message ); ?></a></li>
+						<?php endforeach; ?>
+					</ul>
+				</div>
+			<?php endif; ?>
+
+			<form class="dgl-form dgl-schedule__form" method="post" novalidate action="<?php echo esc_url( Router::url( 'item', (string) $post->ID ) ); ?>">
+				<?php wp_nonce_field( \DGL\Dashboard\Wizard::NONCE ); ?>
+				<?php foreach ( (array) ( $data['schedule_fields'] ?? [] ) as $field ) : ?>
+					<?php
+					echo \DGL\Dashboard\FieldRenderer::render( // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside.
+						$field,
+						$data['schedule_values'][ $field->key ] ?? '',
+						$schedule_errors[ $field->key ] ?? ''
+					);
+					?>
+				<?php endforeach; ?>
+				<div class="dgl-form__actions dgl-form__actions--alone">
+					<button type="submit" class="dgl-button" name="dgl_intent" value="schedule">
+						<?php esc_html_e( 'Save dates and times', 'dgl-platform' ); ?>
+					</button>
+				</div>
+			</form>
+		<?php endif; ?>
+	</section>
+<?php endif; ?>
 
 <div class="dgl-detail">
 	<section class="dgl-card">

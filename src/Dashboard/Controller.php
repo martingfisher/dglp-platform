@@ -26,6 +26,9 @@ use DGL\Schema\FieldRegistry;
 use DGL\Statuses;
 use DGL\Taxonomies;
 use DGL\Dashboard\Notifications;
+use DGL\Events\Reminder;
+use DGL\Events\Schedule;
+use DGL\Events\Series;
 use DGL\Workflow\Revisions;
 use DGL\Workflow\StateMachine;
 use DGL\Workflow\Transition;
@@ -71,6 +74,17 @@ final class Controller {
 		 */
 		if ( 'unsubscribe' === ( $segments[0] ?? '' ) ) {
 			self::unsubscribe( (string) ( $segments[1] ?? '' ) );
+			return;
+		}
+
+		/*
+		 * The "still running?" link in the reminder email. It carries its own
+		 * single-use token, so it works from a phone with no session, and it
+		 * lands on a confirm page rather than acting on the GET, so a mail
+		 * scanner following the link cannot spend it.
+		 */
+		if ( 'extend' === ( $segments[0] ?? '' ) ) {
+			self::extend( (int) ( $segments[1] ?? 0 ), (string) ( $segments[2] ?? '' ) );
 			return;
 		}
 
@@ -992,7 +1006,9 @@ final class Controller {
 			return;
 		}
 
-		$action_error = '';
+		$action_error    = '';
+		$schedule_errors = [];
+		$schedule_input  = null;
 
 		/*
 		 * Archive and restore post back to this screen. The state machine
@@ -1009,6 +1025,39 @@ final class Controller {
 				'restore' => StateMachine::RESTORE,
 				default   => '',
 			};
+
+			/*
+			 * Dates and times on a live event apply at once, no review. Both
+			 * moves are refused while an edit is open, because the edit
+			 * carries the dates too and would overwrite these on approval.
+			 */
+			if ( in_array( $intent, [ 'extend', 'schedule' ], true ) ) {
+				if ( ! Schedule::can_change( $user->user_id, $post_id ) ) {
+					$action_error = __( 'You cannot change the dates of this one.', 'dgl-platform' );
+				} elseif ( Schedule::is_locked( $post_id ) ) {
+					$action_error = __( 'Finish or discard your open edit first. It carries the dates too.', 'dgl-platform' );
+				} elseif ( 'extend' === $intent ) {
+					$result = Series::extend( $post_id, $user->user_id );
+
+					if ( is_wp_error( $result ) ) {
+						$action_error = $result->get_error_message();
+					} else {
+						wp_safe_redirect( add_query_arg( 'extended', '1', Router::url( 'item', (string) $post_id ) ) );
+						exit;
+					}
+				} else {
+					// phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- validated field by field in the schema.
+					$input           = isset( $_POST['dgl'] ) && is_array( $_POST['dgl'] ) ? wp_unslash( $_POST['dgl'] ) : [];
+					$schedule_errors = Schedule::save( $post_id, $input, $user->user_id );
+
+					if ( [] === $schedule_errors ) {
+						wp_safe_redirect( add_query_arg( 'scheduled', '1', Router::url( 'item', (string) $post_id ) ) );
+						exit;
+					}
+
+					$schedule_input = $input;
+				}
+			}
 
 			if ( '' !== $action ) {
 				$result = Transition::apply( $post_id, $action, $user->user_id );
@@ -1053,6 +1102,17 @@ final class Controller {
 				 */
 				'revision'   => $revision,
 				'changes'    => null !== $revision ? Revisions::changed_fields( (int) $revision->ID ) : [],
+				// The schedule card: live events only, the owning organisation only.
+				'can_schedule'    => Schedule::can_change( $user->user_id, $post_id ),
+				'schedule_locked' => null !== $revision,
+				'schedule_fields' => Schedule::fields( (string) $post->post_type ),
+				'schedule_errors' => $schedule_errors,
+				// After a failed save the form shows what was typed, not what is stored.
+				'schedule_values' => $schedule_input ?? Wizard::values( $post_id, (string) $post->post_type ),
+				'can_extend'      => Series::can_extend( $post_id ),
+				'series_until'    => Series::until_wording( $post_id ),
+				'scheduled'       => isset( $_GET['scheduled'] ), // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+				'extended'        => isset( $_GET['extended'] ), // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			],
 			$post->post_title !== '' ? $post->post_title : __( 'Submission', 'dgl-platform' ),
 			$user
@@ -1686,6 +1746,72 @@ final class Controller {
 				'done'    => true,
 				'error'   => '',
 				'message' => DigestCopy::unsubscribed_message(),
+			],
+			$title
+		);
+	}
+
+	/**
+	 * The page at the end of the "still running?" link.
+	 *
+	 * GET shows a confirm with one button; POST does it. The token is
+	 * checked both times and spent on success, so the link works once.
+	 */
+	private static function extend( int $post_id, string $token ): void {
+		$title = __( 'Keep it listed', 'dgl-platform' );
+		$valid = $post_id > 0 && Reminder::token_is_valid( $post_id, $token );
+
+		if ( ! $valid ) {
+			self::screen(
+				'extend',
+				[
+					'state' => 'invalid',
+					'error' => __( 'That link has been used already or is not valid. If the event is still running, sign in and open it in your dashboard: there is a button to keep it listed.', 'dgl-platform' ),
+					'item_url' => $post_id > 0 ? Router::url( 'item', (string) $post_id ) : Router::url(),
+				],
+				$title
+			);
+
+			return;
+		}
+
+		$post = get_post( $post_id );
+
+		if ( 'POST' === ( $_SERVER['REQUEST_METHOD'] ?? 'GET' ) ) {
+			check_admin_referer( 'dgl_extend_' . $post_id );
+
+			$result = Series::extend( $post_id, 0, __( 'Confirmed from the reminder email.', 'dgl-platform' ) );
+
+			if ( is_wp_error( $result ) ) {
+				self::screen( 'extend', [ 'state' => 'invalid', 'error' => $result->get_error_message(), 'item_url' => Router::url( 'item', (string) $post_id ) ], $title );
+				return;
+			}
+
+			Reminder::clear_token( $post_id );
+
+			self::screen(
+				'extend',
+				[
+					'state'    => 'done',
+					'title'    => (string) get_the_title( $post ),
+					'until'    => Series::until_wording( $post_id ),
+					'item_url' => Router::url( 'item', (string) $post_id ),
+				],
+				$title
+			);
+
+			return;
+		}
+
+		self::screen(
+			'extend',
+			[
+				'state'     => 'confirm',
+				'post_id'   => $post_id,
+				'title'     => (string) get_the_title( $post ),
+				'until'     => Series::until_wording( $post_id ),
+				'new_until' => (string) wp_date( (string) get_option( 'date_format', 'j F Y' ), Series::now()->setTime( 0, 0, 0 )->modify( '+' . Series::EXTEND_MONTHS . ' months' )->getTimestamp() ),
+				'item_url'  => Router::url( 'item', (string) $post_id ),
 			],
 			$title
 		);

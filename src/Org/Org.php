@@ -120,6 +120,37 @@ final class Org {
 	 *
 	 * @return true|\WP_Error
 	 */
+	/**
+	 * The addresses of an organisation's approved owners.
+	 *
+	 * Owners, not every member: these are the people who answer for the
+	 * organisation, so they are the ones asked whether something still runs
+	 * and told when its details change.
+	 *
+	 * @return string[]
+	 */
+	public static function owner_emails( int $org_id ): array {
+		$to = [];
+
+		foreach ( self::members( $org_id ) as $user_id ) {
+			if ( \DGL\Access\UserContext::ORG_OWNER !== self::role_for_user( $user_id ) ) {
+				continue;
+			}
+
+			if ( \DGL\Access\UserContext::ACCOUNT_APPROVED !== (string) get_user_meta( $user_id, Meta::USER_ACCOUNT_STATUS, true ) ) {
+				continue;
+			}
+
+			$user = get_userdata( $user_id );
+
+			if ( $user && '' !== (string) $user->user_email ) {
+				$to[] = (string) $user->user_email;
+			}
+		}
+
+		return array_values( array_unique( $to ) );
+	}
+
 	public static function remove_member( int $user_id, int $actor_id ) {
 		$actor  = \DGL\Access\Access::user_context( $actor_id );
 		$org_id = self::for_user( $user_id );

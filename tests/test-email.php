@@ -371,3 +371,19 @@ Harness::assert_true( str_contains( $html, 'href="https://example.test/x"' ), 'a
 Harness::assert_true( str_contains( $html, 'x</a>.' ), 'and stays in the sentence where it belongs' );
 Harness::assert_false( str_contains( $html, '<script>' ), 'markup in a footnote is still escaped' );
 Harness::assert_true( str_contains( $html, '&lt;script&gt;' ), 'and shown as text' );
+
+Harness::group( 'Series: the "still running?" reminder' );
+
+$remind = \DGL\Email\SeriesCopy::ending_soon( 'Coffee morning', '31 March 2027', 'https://example.test/dashboard/extend/9/abc/', 'https://example.test/dashboard/item/9/', 'DGLP' );
+
+Harness::assert_same( 'Is this still running? Coffee morning', $remind->subject, 'subject asks the one question' );
+Harness::assert_same( Plan::NOTIFY_MEMBER, $remind->audience, 'it goes to the member side' );
+Harness::assert_true( str_contains( $remind->paragraphs[0], '31 March 2027' ), 'the last date is in the first paragraph' );
+Harness::assert_true( str_contains( $remind->paragraphs[0], 'DGLP' ), 'and the site name' );
+Harness::assert_same( 'https://example.test/dashboard/extend/9/abc/', $remind->cta_url, 'the button is the one-click link' );
+Harness::assert_same( 'Yes, still running: keep it listed', $remind->cta_label, 'the button says what it does' );
+Harness::assert_true( str_contains( implode( ' ', $remind->footnotes ), 'works once' ), 'the small print says the link is single use' );
+Harness::assert_true( str_contains( implode( ' ', $remind->footnotes ), 'https://example.test/dashboard/item/9/' ), 'and points at the dashboard for other changes' );
+Harness::assert_true( str_contains( $remind->paragraphs[2], 'do not need to do anything' ), 'doing nothing is spelled out as fine' );
+Harness::assert_false( str_contains( strtolower( $remind->to_text() ), 'honest' ), 'never that word' );
+Harness::assert_same( 'Untitled event', \DGL\Email\SeriesCopy::ending_soon( '  ', 'x', 'u', 'i', 's' )->facts['Event'], 'a blank title still reads' );

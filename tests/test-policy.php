@@ -175,3 +175,18 @@ Harness::assert_false( Policy::can_remove_member( $pending_owner, 999, ORG_A ), 
 Harness::assert_true( Policy::can_remove_member( administrator(), 999, ORG_B ), 'an administrator can remove anybody from any organisation' );
 Harness::assert_false( Policy::can_remove_member( administrator(), administrator()->user_id, ORG_B ), 'even an administrator cannot remove themselves this way' );
 Harness::assert_false( Policy::can_remove_member( moderator(), 999, ORG_A ), 'a moderator is not an owner and cannot remove members' );
+
+Harness::group( 'Changing a live event\'s dates without review' );
+
+$news_live = new ItemContext( 9002, PostTypes::NEWS, ORG_A, 101, Statuses::LIVE );
+
+Harness::assert_true( Policy::decide( member_a(), Policy::CHANGE_SCHEDULE, item_a( Statuses::LIVE ) ), 'a member of the owning organisation can change a live event\'s schedule' );
+Harness::assert_true( Policy::decide( member_a( UserContext::ORG_OWNER ), Policy::CHANGE_SCHEDULE, item_a( Statuses::LIVE ) ), 'so can its owner' );
+Harness::assert_false( Policy::decide( member_b(), Policy::CHANGE_SCHEDULE, item_a( Statuses::LIVE ) ), 'another organisation cannot' );
+Harness::assert_false( Policy::decide( member_a(), Policy::CHANGE_SCHEDULE, item_a( Statuses::DRAFT ) ), 'a draft carries its dates through the wizard, not here' );
+Harness::assert_false( Policy::decide( member_a(), Policy::CHANGE_SCHEDULE, item_a( Statuses::PENDING ) ), 'nor a pending one' );
+Harness::assert_false( Policy::decide( member_a(), Policy::CHANGE_SCHEDULE, item_a( Statuses::EXPIRED ) ), 'nor an expired one, which goes back through review' );
+Harness::assert_false( Policy::decide( member_a(), Policy::CHANGE_SCHEDULE, $news_live ), 'news has no schedule' );
+Harness::assert_false( Policy::decide( moderator(), Policy::CHANGE_SCHEDULE, item_a( Statuses::LIVE ) ), 'a moderator does not change members\' dates for them' );
+Harness::assert_true( Policy::decide( administrator(), Policy::CHANGE_SCHEDULE, item_a( Statuses::LIVE ) ), 'an administrator can' );
+Harness::assert_false( Policy::decide( member_a( UserContext::ORG_CONTRIBUTOR, UserContext::ACCOUNT_PENDING ), Policy::CHANGE_SCHEDULE, item_a( Statuses::LIVE ) ), 'an unapproved account cannot' );
