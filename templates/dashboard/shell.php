@@ -173,7 +173,7 @@ $alerts = (int) ( $data['alerts'] ?? 0 );
 ob_start();
 wp_footer();
 $footer_output = (string) ob_get_clean();
-echo preg_replace( '#<footer\b[^>]*>.*?</footer>#si', '', $footer_output ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- WordPress's own footer output, minus the theme's footer element.
+echo \DGL\Dashboard\Chrome::strip( $footer_output ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- WordPress's own footer output, minus the theme's furniture.
 ?>
 </body>
 </html>
