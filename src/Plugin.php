@@ -98,6 +98,7 @@ final class Plugin {
 			MailCommand::register();
 			DigestCommand::register();
 			IndexCommand::register();
+			\DGL\Events\Command::register();
 			InviteCommand::register();
 			PrivacyCommand::register();
 			ImportCommand::register();
