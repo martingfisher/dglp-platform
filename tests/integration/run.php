@@ -2774,6 +2774,176 @@ $ok( $pf2 !== $pf1 && 'Sam Story' === get_post_meta( $pf2, 'dgl_contact_name', t
 $ok( '0113 111 1111' === get_post_meta( $pf2, 'dgl_contact_phone', true ), 'a field left as it was carries over too' );
 $ok( true === \DGL\Dashboard\Wizard::is_empty( $pf2 ), 'prefilled contact details do not make the draft count as written in' );
 
+$group( 'Repeating events: one post, stamped, listed, rolled, expired' );
+
+$mail_was = get_option( \DGL\Email\Routing::OPTION_ENABLED, false );
+update_option( \DGL\Email\Routing::OPTION_ENABLED, 1 );
+
+$tz         = wp_timezone();
+$today_wall = new DateTimeImmutable( 'today', $tz );
+$last_tue   = $today_wall->modify( 'last tuesday' );
+$skip_date  = $last_tue->modify( '+14 days' )->format( 'Y-m-d' );
+$until_five = $today_wall->modify( '+5 months' )->format( 'Y-m-d' );
+
+$series = $make_item( $org_a, $alice, Statuses::DRAFT );
+wp_update_post( [ 'ID' => $series, 'post_title' => 'Tuesday coffee' ] );
+update_post_meta( $series, 'dgl_start_datetime', $last_tue->format( 'Y-m-d' ) . ' 13:00:00' );
+update_post_meta( $series, 'dgl_end_datetime', $last_tue->format( 'Y-m-d' ) . ' 15:00:00' );
+update_post_meta( $series, 'dgl_repeat', [ 'freq' => 'weekly', 'weekdays' => [ 2 ], 'until' => $until_five, 'skip' => [ $skip_date ] ] );
+
+$ok( true === Transition::apply( $series, StateMachine::SUBMIT, $alice ), 'a series submits' );
+$ok( true === Transition::apply( $series, StateMachine::APPROVE, $mod ), 'and is approved' );
+$ok( Statuses::LIVE === get_post_status( $series ), 'one live post for the whole series' );
+$ok( $until_five . ' 23:59:59' === (string) get_post_meta( $series, Meta::ITEM_EXPIRES_AT, true ), 'it expires at the end of its last day, not after the first date (' . get_post_meta( $series, Meta::ITEM_EXPIRES_AT, true ) . ')' );
+
+$next_stamp = (string) get_post_meta( $series, Meta::ITEM_NEXT_AT, true );
+$next_at    = new DateTimeImmutable( $next_stamp, $tz );
+$ok( '2' === $next_at->format( 'N' ) && '13:00:00' === $next_at->format( 'H:i:s' ), 'the next stamp is a Tuesday at 13:00 (' . $next_stamp . ')' );
+$ok( $next_at >= $today_wall, 'and not in the past' );
+$ok( $next_at->format( 'Y-m-d' ) !== $skip_date, 'a skipped date is never the next date' );
+
+global $wpdb;
+$index_next = $wpdb->get_var( $wpdb->prepare( 'SELECT next_at FROM ' . ItemsTable::name() . ' WHERE post_id = %d', $series ) );
+$ok( $next_stamp === (string) $index_next, 'the index mirrors the next stamp' );
+
+$one_off_far = $make_item( $org_a, $alice, Statuses::LIVE );
+update_post_meta( $one_off_far, 'dgl_start_datetime', $today_wall->modify( '+40 days' )->format( 'Y-m-d' ) . ' 10:00:00' );
+\DGL\Events\Series::stamp( $one_off_far, PostTypes::EVENT );
+$order_query = new WP_Query();
+$GLOBALS['wp_the_query'] = $order_query;
+$order_ids = array_map( 'intval', (array) $order_query->query( [ 'post_type' => PostTypes::EVENT, 'post_status' => Statuses::LIVE, 'posts_per_page' => 500, 'fields' => 'ids' ] ) );
+$ok( in_array( $series, $order_ids, true ) && array_search( $series, $order_ids, true ) < array_search( $one_off_far, $order_ids, true ), 'the list puts the series where its next date belongs, ahead of a one-off further out' );
+
+$line = \DGL\Frontend\Frontend::meta_line( get_post( $series ) );
+$ok( str_starts_with( $line, 'Every Tuesday, 13:00' ) && str_contains( $line, 'Next: ' ), 'the list line says the pattern and the next date (' . $line . ')' );
+$fact_keys = array_column( \DGL\Frontend\Frontend::facts( get_post( $series ) ), 'key' );
+$ok( ! in_array( 'start_datetime', $fact_keys, true ) && ! in_array( 'end_datetime', $fact_keys, true ), 'the facts card drops the raw start and end for a series' );
+$sched = \DGL\Frontend\Frontend::schedule( get_post( $series ) );
+$ok( is_array( $sched ) && str_contains( (string) $sched['wording'], 'Every Tuesday, 13:00 to 15:00, until' ) && 5 === count( $sched['next'] ), 'the event page gets the wording and five coming dates' );
+
+$window_days = \DGL\Events\Calendar::days( $today_wall, $today_wall->modify( '+4 weeks' ) );
+$series_days = array_keys( array_filter( $window_days, static fn( array $rows ): bool => [] !== array_filter( $rows, static fn( array $r ): bool => (int) $r['post']->ID === $series ) ) );
+$ok( [] !== $series_days && [] === array_filter( $series_days, static fn( string $d ): bool => '2' !== ( new DateTimeImmutable( $d, $tz ) )->format( 'N' ) ), 'the calendar shows the series only on Tuesdays (' . implode( ', ', $series_days ) . ')' );
+$ok( ! in_array( $skip_date, $series_days, true ), 'and not on the skipped date' );
+$ok( count( $series_days ) >= 3, 'across the four-week window' );
+
+update_post_meta( $series, Meta::ITEM_NEXT_AT, $today_wall->modify( '-1 day' )->format( 'Y-m-d 13:00:00' ) );
+$rolled = \DGL\Events\Series::roll_forward();
+$ok( $rolled >= 1 && (string) get_post_meta( $series, Meta::ITEM_NEXT_AT, true ) === $next_stamp, 'the hourly roll-forward restamps a stale next date' );
+
+$rules = get_option( 'rewrite_rules' );
+$cal_pos = is_array( $rules ) ? array_search( '^events/calendar/?$', array_keys( $rules ), true ) : false;
+$ev_pos  = false;
+if ( is_array( $rules ) ) {
+	foreach ( array_keys( $rules ) as $i => $rule_key ) {
+		// The single-event rule is the one that would swallow "calendar" as a slug.
+		if ( str_starts_with( (string) $rule_key, 'events/([^/]+)' ) || str_starts_with( (string) $rule_key, 'events/[^/]+' ) ) {
+			$ev_pos = $i;
+			break;
+		}
+	}
+}
+$ok( false !== $cal_pos && false !== $ev_pos && $cal_pos < $ev_pos, 'the calendar rewrite comes before the single-event rule (' . var_export( $cal_pos, true ) . ' < ' . var_export( $ev_pos, true ) . ')' );
+
+// An edit copies the rule, so the review diff and an applied edit both see it.
+$rev = \DGL\Workflow\Revisions::open( $series, $alice );
+$ok( ! is_wp_error( $rev ) && get_post_meta( (int) $rev, 'dgl_repeat', true ) === get_post_meta( $series, 'dgl_repeat', true ), 'an edit carries the repeat rule' );
+$ok( \DGL\Events\Schedule::is_locked( $series ), 'the schedule card is locked while that edit is open' );
+\DGL\Workflow\Revisions::discard( (int) $rev );
+$ok( ! \DGL\Events\Schedule::is_locked( $series ), 'and unlocked once it is discarded' );
+
+$sent_to = [];
+$sent_bodies = [];
+$ended = (array) get_post_meta( $series, 'dgl_repeat', true );
+$ended['until'] = $today_wall->modify( '-1 day' )->format( 'Y-m-d' );
+update_post_meta( $series, 'dgl_repeat', $ended );
+\DGL\Events\Series::stamp( $series, PostTypes::EVENT );
+$ok( '' === (string) get_post_meta( $series, Meta::ITEM_NEXT_AT, true ), 'a series past its end has no next date' );
+Transition::run_expiry_sweep();
+$ok( Statuses::EXPIRED === get_post_status( $series ), 'the sweep takes it off the site' );
+$ok( [] !== array_filter( $sent_bodies, static fn( string $b ): bool => str_contains( $b, 'passed its date' ) ), 'with the ordinary expired email' );
+
+$group( 'Repeating events: the reminder, the one-click extend, the schedule card' );
+
+$soon = $make_item( $org_a, $alice, Statuses::DRAFT );
+wp_update_post( [ 'ID' => $soon, 'post_title' => 'Thursday walk' ] );
+$last_thu = $today_wall->modify( 'last thursday' );
+update_post_meta( $soon, 'dgl_start_datetime', $last_thu->format( 'Y-m-d' ) . ' 10:00:00' );
+update_post_meta( $soon, 'dgl_repeat', [ 'freq' => 'weekly', 'weekdays' => [ 4 ], 'until' => $today_wall->modify( '+10 days' )->format( 'Y-m-d' ) ] );
+Transition::apply( $soon, StateMachine::SUBMIT, $alice );
+Transition::apply( $soon, StateMachine::APPROVE, $mod );
+
+$sent_to = [];
+$sent_links = [];
+$sent_count = \DGL\Events\Reminder::send_due();
+$ok( 1 === $sent_count, 'one reminder goes for a series ending inside two weeks (' . $sent_count . ')' );
+$reminder_to = explode( ',', (string) end( $sent_to ) );
+$ok( in_array( 'dgl_alice@example.test', $reminder_to, true ) && ! in_array( 'dgl_aaron@example.test', $reminder_to, true ) && ! in_array( 'mod@example.test', $reminder_to, true ), 'to the organisation\'s owners, not the contributor or the moderator (' . implode( ' | ', $reminder_to ) . ')' );
+$extend_link = (string) end( $sent_links );
+$ok( str_contains( $extend_link, '/dashboard/extend/' . $soon . '/' ), 'the button is the one-click link' );
+$ok( 0 === \DGL\Events\Reminder::send_due(), 'it does not go twice for the same end date' );
+
+$token = trim( (string) substr( $extend_link, strrpos( rtrim( $extend_link, '/' ), '/' ) + 1 ), '/' );
+$ok( \DGL\Events\Reminder::token_is_valid( $soon, $token ), 'the token in the link is the live one' );
+$ok( ! \DGL\Events\Reminder::token_is_valid( $soon, str_repeat( '0', 32 ) ), 'and a made-up one is not' );
+$ok( \DGL\Events\Series::can_extend( $soon ), 'the item screen offers an extension when the end is close' );
+$ok( true === \DGL\Events\Series::extend( $soon, 0, 'test' ), 'the link extends it' );
+\DGL\Events\Reminder::clear_token( $soon );
+$new_until = (string) ( get_post_meta( $soon, 'dgl_repeat', true )['until'] ?? '' );
+$ok( $today_wall->modify( '+6 months' )->format( 'Y-m-d' ) === $new_until, 'to six months from today (' . $new_until . ')' );
+$ok( $new_until . ' 23:59:59' === (string) get_post_meta( $soon, Meta::ITEM_EXPIRES_AT, true ), 'and the expiry moves with it' );
+$ok( ! \DGL\Events\Reminder::token_is_valid( $soon, $token ), 'the link works once' );
+$ok( ! \DGL\Events\Series::can_extend( $soon ), 'and nothing is offered while the end is far off' );
+$ok( Statuses::LIVE === get_post_status( $soon ) && null === \DGL\Workflow\Revisions::open_for( $soon ), 'nothing went through review' );
+$ok( 1 === \DGL\Events\Reminder::send_due() || 0 === \DGL\Events\Reminder::send_due(), 'the next reminder waits for the new end date' );
+$feed_titles = array_column( \DGL\Dashboard\Notifications::for_org( $org_a, 10 ), 'title' );
+$ok( in_array( 'Kept on the site for another six months', $feed_titles, true ), 'the owners see the extension in their notifications' );
+
+$ok( \DGL\Events\Schedule::can_change( $alice, $soon ), 'the owning organisation can change the dates' );
+$ok( ! \DGL\Events\Schedule::can_change( $bella, $soon ), 'another organisation cannot' );
+$ok( ! \DGL\Events\Schedule::can_change( $mod, $soon ), 'nor the moderator' );
+
+$sched_until = $today_wall->modify( '+2 months' )->format( 'Y-m-d' );
+$errors = \DGL\Events\Schedule::save(
+	$soon,
+	[
+		'start_datetime' => $last_thu->format( 'Y-m-d' ) . 'T11:00',
+		'end_datetime'   => $last_thu->format( 'Y-m-d' ) . 'T12:30',
+		'repeat'         => [ 'posted' => '1', 'on' => '1', 'freq' => 'weekly', 'weekdays' => [ '4', '6' ], 'until' => $sched_until ],
+	],
+	$alice
+);
+$ok( [] === $errors, 'a schedule change saves: ' . implode( ' | ', $errors ) );
+$saved_rule = (array) get_post_meta( $soon, 'dgl_repeat', true );
+$ok( [ 4, 6 ] === array_values( (array) ( $saved_rule['weekdays'] ?? [] ) ) && $sched_until === (string) ( $saved_rule['until'] ?? '' ), 'the rule is what was posted' );
+$ok( $last_thu->format( 'Y-m-d' ) . ' 11:00:00' === (string) get_post_meta( $soon, 'dgl_start_datetime', true ), 'and so is the start' );
+$ok( $sched_until . ' 23:59:59' === (string) get_post_meta( $soon, Meta::ITEM_EXPIRES_AT, true ), 'expiry follows the new end' );
+$ok( Statuses::LIVE === get_post_status( $soon ) && null === \DGL\Workflow\Revisions::open_for( $soon ), 'still live, still no edit for review' );
+$feed_titles = array_column( \DGL\Dashboard\Notifications::for_org( $org_a, 10 ), 'title' );
+$ok( in_array( 'Dates and times changed', $feed_titles, true ), 'the change is in the notifications' );
+
+$errors = \DGL\Events\Schedule::save( $soon, [ 'start_datetime' => '', 'repeat' => [ 'posted' => '1' ] ], $alice );
+$ok( isset( $errors['start_datetime'] ), 'a schedule without a start is refused, not saved' );
+$ok( $last_thu->format( 'Y-m-d' ) . ' 11:00:00' === (string) get_post_meta( $soon, 'dgl_start_datetime', true ), 'and the stored start is untouched' );
+
+update_option( \DGL\Email\Routing::OPTION_ENABLED, $mail_was );
+
+$group( 'Paging: page two is what page one left out' );
+
+$page_one = ItemsTable::for_org( $org_a, null, null, 3, 0 );
+$page_two = ItemsTable::for_org( $org_a, null, null, 3, 3 );
+$ok( 3 === count( $page_one ) && [] === array_intersect( $page_one, $page_two ), 'item pages do not overlap' );
+
+$readable_keys = array_keys( \DGL\Dashboard\Notifications::readable() );
+$feed_total    = Log::count_for_org( $org_a, $readable_keys );
+$feed_all      = \DGL\Dashboard\Notifications::for_org( $org_a, 1000 );
+$ok( $feed_total === count( $feed_all ) && $feed_total > 4, 'the notification count matches the feed (' . $feed_total . ')' );
+$f1 = \DGL\Dashboard\Notifications::for_org( $org_a, 2, 0 );
+$f2 = \DGL\Dashboard\Notifications::for_org( $org_a, 2, 2 );
+$ok( 2 === count( $f1 ) && 2 === count( $f2 ) && $f1[1]['when'] >= $f2[0]['when'], 'notification pages are consecutive and newest first' );
+$ok( array_slice( $feed_all, 2, 2 ) == $f2, 'page two is exactly rows three and four' );
+$ok( [] === \DGL\Dashboard\Notifications::for_org( $org_a, 2, 100000 ), 'past the end is empty, not an error' );
+
 /* ----------------------------------------------------------------- report */
 
 echo "\n" . str_repeat( '-', 60 ) . "\n";

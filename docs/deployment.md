@@ -101,6 +101,20 @@ The integration suite is **not** for a real site. It creates and deletes
 content, and refuses to run unless `DGL_TEST_SITE` is defined, which should never
 be defined on staging or production.
 
+## After 0.10.0
+
+Repeating events add a column to the index and a public route:
+
+- `wp option get dgl_platform_db_version` should print `5`.
+- `wp rewrite list --match=/events/calendar/` should show
+  `^events/calendar/?$` going to `dgl_calendar=1`; if not, load any page
+  once (the version bump flushes rules) or run `wp rewrite flush`.
+- `wp dgl reindex` stamps every live event's next date. Until it runs, the
+  events list keeps its old order.
+- Add `/events/calendar` to the page cache exclusions alongside `/directory`.
+- The reminder and the roll-forward run on the existing hourly
+  `dgl_run_expiry_sweep` hook, so cron must be on.
+
 ## Staging to production
 
 Do **not** use Wordify's `push_staging` to move the plugin. That pushes the whole

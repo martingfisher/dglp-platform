@@ -41,6 +41,18 @@ until you decide.
 - **Refuse.** The organisation is removed and the account closed. Your note
   goes to them by email, so say why.
 
+## Repeating events
+
+A weekly or monthly event is one listing, not one a week. The member says how
+it repeats and until when (at most six months). It shows once on the events
+list, sorted by its next date, and on every day it runs on the calendar at
+`/events/calendar/`. Two weeks before its end date the organisation's owners
+get one email asking whether it is still running, with a one-click button
+that keeps it listed for six more months. If nobody clicks, it comes off the
+site on its last date. Owners can also change a live event's dates and times
+from its screen without review: the words and pictures still come to you, the
+dates do not. See `docs/events-repeat.md`.
+
 ## Taking something off the site
 
 Open any live item from the queue or from the member's list. The last section
