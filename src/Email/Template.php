@@ -126,7 +126,12 @@ final class Template {
 	 * @param array<string, string> $c
 	 */
 	private static function header( ?string $logo_url, array $c ): string {
-		$out = '<tr><td style="background-color:' . $c['primary'] . ';padding:24px 32px;">';
+		/*
+		 * The band is 88px tall either way. At 40px the round DGLP mark was a
+		 * badge with unreadable words in it; at 64px the words read, and the
+		 * padding gives back the difference so the header takes no more room.
+		 */
+		$out = '<tr><td style="background-color:' . $c['primary'] . ';padding:12px 32px;">';
 
 		if ( is_string( $logo_url ) && '' !== $logo_url ) {
 			/*
@@ -135,7 +140,7 @@ final class Template {
 			 * Width is left to the image so a landscape lockup is not squashed.
 			 */
 			$out .= '<img src="' . esc_url( $logo_url ) . '" alt="' . esc_attr( get_bloginfo( 'name' ) ) . '"'
-				. ' height="40" style="height:40px;width:auto;display:block;border:0;outline:none;text-decoration:none;" />';
+				. ' height="64" style="height:64px;width:auto;display:block;border:0;outline:none;text-decoration:none;" />';
 		} else {
 			$out .= '<span style="font-family:' . self::FONT . ';font-size:20px;font-weight:700;color:' . $c['white'] . ';">'
 				. esc_html( get_bloginfo( 'name' ) ) . '</span>';
