@@ -411,7 +411,7 @@ $is_owner = $user instanceof UserContext && $user->is_org_owner();
 	<?php endif; ?>
 
 	<section class="dgl-card">
-		<h2 class="dgl-section__title"><?php esc_html_e( 'The digest', 'dgl-platform' ); ?></h2>
+		<h2 class="dgl-section__title"><?php esc_html_e( 'Subscribe to DGLP email updates', 'dgl-platform' ); ?></h2>
 
 		<p>
 			<?php esc_html_e( 'A round-up of what other member organisations have posted. Tick what you want to hear about. Tick nothing and we will not send it.', 'dgl-platform' ); ?>
@@ -474,7 +474,6 @@ $is_owner = $user instanceof UserContext && $user->is_org_owner();
 						<input type="checkbox" name="dgl_digest_own_org" value="1" <?php checked( ! empty( $prefs['own_org'] ) ); ?>>
 						<span>
 							<?php esc_html_e( 'Include things we posted ourselves', 'dgl-platform' ); ?>
-							<span class="dgl-help"><?php esc_html_e( 'Off by default. Nobody needs an email about the thing they posted this morning.', 'dgl-platform' ); ?></span>
 						</span>
 					</label>
 				</fieldset>
@@ -508,7 +507,7 @@ $is_owner = $user instanceof UserContext && $user->is_org_owner();
 	<section class="dgl-card">
 		<h2 class="dgl-section__title"><?php esc_html_e( 'Email about your own work', 'dgl-platform' ); ?></h2>
 		<p class="dgl-help">
-			<?php esc_html_e( 'You still get email about your own submissions: when one arrives with the team, and when they decide. Those are not a newsletter and will not be switched off here.', 'dgl-platform' ); ?>
+			<?php esc_html_e( 'You still get email about your own submissions: when one arrives with the team, and when they decide. Those are necessary system notifications and cannot be switched off here.', 'dgl-platform' ); ?>
 		</p>
 	</section>
 

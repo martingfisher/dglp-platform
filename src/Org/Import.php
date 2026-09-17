@@ -91,7 +91,7 @@ final class Import {
 		if ( '' === $description ) {
 			$description = $get( self::DESC_2 );
 		}
-		$fields['org_description'] = mb_substr( $description, 0, 400 );
+		$fields['org_description'] = self::cut( $description, 400 );
 
 		// The public contact address. Any address, including a Gmail one.
 		$email = strtolower( $get( self::EMAIL ) );
@@ -206,6 +206,21 @@ final class Import {
 		}
 
 		return [ $ordered, $left ];
+	}
+
+	/**
+	 * Cut at a word boundary, not mid-word. The field allows 400 characters
+	 * and a fifth of the file's descriptions are longer.
+	 */
+	private static function cut( string $text, int $max ): string {
+		if ( mb_strlen( $text ) <= $max ) {
+			return $text;
+		}
+
+		$short = mb_substr( $text, 0, $max );
+		$space = mb_strrpos( $short, ' ' );
+
+		return rtrim( false !== $space && $space > $max / 2 ? mb_substr( $short, 0, $space ) : $short, " ,;:-" );
 	}
 
 	private static function website( string $url ): string {

@@ -930,21 +930,31 @@ body.dgl-body {
  * borrowed.
  */
 .dgl-field--file {
-	padding: 0 12px 0 6px;
+	padding: 0 12px 0 5px;
+	height: var(--dgl-field-height);
 	min-height: var(--dgl-field-height);
 	line-height: calc(var(--dgl-field-height) - 2 * var(--dgl-field-border));
 	font-size: 14px;
 	color: var(--dgl-text-muted);
 }
 
+/*
+ * The button is given a fixed height, no vertical padding and a line-height
+ * equal to that height, then vertical-align: middle. With padding and the
+ * theme's own line-height it sat a few pixels above the "No file chosen"
+ * text on staging, where Montserrat's metrics differ from the test site's.
+ */
 .dgl-field--file::file-selector-button {
+	box-sizing: border-box;
+	height: calc(var(--dgl-field-height) - 12px);
 	margin: 0 12px 0 0;
-	padding: 5px 12px;
+	padding: 0 12px;
 	border: var(--dgl-field-border) solid var(--dgl-field-outline);
 	border-radius: var(--dgl-radius-button);
 	background: var(--dgl-surface);
 	color: var(--dgl-primary);
-	font: var(--dgl-weight-button) 14px / 1.4 var(--dgl-font);
+	font: var(--dgl-weight-button) 14px / calc(var(--dgl-field-height) - 14px) var(--dgl-font);
+	vertical-align: middle;
 	cursor: pointer;
 }
 

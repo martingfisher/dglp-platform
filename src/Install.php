@@ -50,6 +50,9 @@ final class Install {
 		PostTypes::register();
 		Taxonomies::register();
 		Router::add_rules();
+		// The public directory's rules too: activation runs before `init`,
+		// so a flush here without them wrote a rule set with no /directory/.
+		\DGL\Frontend\Frontend::add_rules();
 		flush_rewrite_rules();
 
 		update_option( self::VERSION_OPTION, VERSION, false );

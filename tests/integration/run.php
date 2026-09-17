@@ -2675,6 +2675,61 @@ $ok( $purged >= 1 && null === get_post( $d4 ), 'the stale empty draft is purged'
 $ok( null !== get_post( $d3 ), 'the stale draft with a headline is kept' );
 $ok( null !== get_post( $d5 ), 'a fresh empty draft is kept' );
 
+/* ------------------------------------------------------------- directory */
+
+$group( 'Public directory: who is listed, search, filters, the permission switch' );
+
+foreach ( [ 'Dirtest Alpha', 'Dirtest Beta', 'Dirtest Gamma', 'Dirtest Delta', 'Dirtest Epsilon' ] as $stale_name ) {
+	foreach ( get_posts( [ 'post_type' => PostTypes::ORG, 'post_status' => 'any', 'title' => $stale_name, 'fields' => 'ids' ] ) as $stale_org ) {
+		wp_delete_post( (int) $stale_org, true );
+	}
+}
+$da = $make_org( 'Dirtest Alpha' );   update_post_meta( $da, Meta::ORG_IN_DIRECTORY, '1' );
+$db = $make_org( 'Dirtest Beta' );    update_post_meta( $db, Meta::ORG_IN_DIRECTORY, '1' );
+$dg = $make_org( 'Dirtest Gamma' );
+$dd = $make_org( 'Dirtest Delta', Meta::ORG_PENDING ); update_post_meta( $dd, Meta::ORG_IN_DIRECTORY, '1' );
+$de = $make_org( 'Dirtest Epsilon' ); update_post_meta( $de, Meta::ORG_FC_PERMISSION, '1' );
+update_post_meta( $da, 'dgl_org_description', 'We run a lunch club for older residents.' );
+update_post_meta( $da, 'dgl_org_ward', 'kippax_and_methley' );
+update_post_meta( $da, 'dgl_org_specialism', [ 'older_people', 'mental_health' ] );
+update_post_meta( $db, 'dgl_org_ward', 'kippax_and_methley' );
+update_post_meta( $db, 'dgl_org_specialism', [ 'mental_health' ] );
+update_post_meta( $dg, 'dgl_org_description', 'Older people too, but not listed.' );
+
+$run = static fn( array $extra = [] ) => \DGL\Org\DirectoryQuery::run( \DGL\Org\DirectoryQuery::args_from( $extra ) );
+$ids = static fn( array $r ): array => $r['ids'];
+
+// The local site also holds the imported list, so every check narrows by name or by a ward nobody in the file used.
+$all = $run( [ 'q' => 'Dirtest' ] );
+$ok( [ $da, $db ] === $all['ids'], 'listed and verified organisations appear, in name order' );
+$ok( ! in_array( $dg, $run( [ 'q' => 'Dirtest Gamma' ] )['ids'], true ), 'an organisation that has not switched itself on does not' );
+$ok( ! in_array( $dd, $run( [ 'q' => 'Dirtest Delta' ] )['ids'], true ), 'a pending organisation does not, whatever its flag says' );
+$ok( 2 === $all['total'] && 1 === $all['pages'], 'total and page count are filled in' );
+$ok( [ $da ] === $ids( $run( [ 'q' => 'lunch club for older residents' ] ) ), 'search finds a word in the description' );
+$ok( [ $da ] === $ids( $run( [ 'q' => 'DIRTEST ALPHA' ] ) ), 'search finds the name, any case' );
+$ok( [] === $ids( $run( [ 'q' => 'Dirtest Gamma' ] ) ), 'search never finds an unlisted organisation' );
+$ok( [ $da, $db ] === $ids( $run( [ 'ward' => 'kippax_and_methley' ] ) ), 'ward filter, in name order' );
+$ok( [ $da ] === $ids( $run( [ 'q' => 'Dirtest', 'area' => 'older_people' ] ) ), 'a list filter matches inside the serialised array' );
+$ok( [ $da ] === $ids( $run( [ 'q' => 'older', 'ward' => 'kippax_and_methley' ] ) ), 'search and a filter together' );
+$ok( [ $da ] === $ids( $run( [ 'q' => 'older', 'area' => 'older_people', 'ward' => 'kippax_and_methley' ] ) ), 'search and two filters together' );
+$ok( [] === $ids( $run( [ 'q' => 'older', 'area' => 'mental_health', 'ward' => 'wetherby' ] ) ), 'a filter nobody matches empties the result' );
+$ok( [] === \DGL\Org\DirectoryQuery::args_from( [ 'ward' => 'not_a_ward', 'area' => '<script>' ] )['filters'], 'unknown filter values are dropped' );
+$ok( 100 === mb_strlen( \DGL\Org\DirectoryQuery::args_from( [ 'q' => str_repeat( 'a', 500 ) ] )['q'] ), 'the search term is capped' );
+
+$found = \DGL\Org\DirectoryQuery::find( get_post( $da )->post_name );
+$ok( $found instanceof WP_Post && $found->ID === $da, 'find by slug returns a listed organisation' );
+$ok( null === \DGL\Org\DirectoryQuery::find( get_post( $dg )->post_name ), 'and null for an unlisted one' );
+$ok( null === \DGL\Org\DirectoryQuery::find( (string) $dd ), 'and null for a pending one by id' );
+$ok( str_ends_with( \DGL\Org\DirectoryQuery::url( $da ), '/directory/' . get_post( $da )->post_name . '/' ), 'the public URL uses the slug' );
+
+$switch = \DGL\Org\Directory::list_permission_holders( false );
+$ok( in_array( $de, $switch, true ) && ! in_array( $da, $switch, true ), 'dry run names the permission holder not yet listed, not the already listed' );
+$ok( false === \DGL\Org\Directory::wants_listing( $de ), 'dry run writes nothing' );
+$switch = \DGL\Org\Directory::list_permission_holders( true );
+$ok( in_array( $de, $switch, true ) && true === \DGL\Org\Directory::wants_listing( $de ), 'the real run switches it on' );
+$ok( [] === array_intersect( [ $de ], \DGL\Org\Directory::list_permission_holders( true ) ), 'and a second run leaves it alone' );
+$ok( in_array( 'directory_on', array_column( Log::for_object( 'org', $de ), 'action' ), true ), 'with an audit row' );
+
 /* ----------------------------------------------------------------- report */
 
 echo "\n" . str_repeat( '-', 60 ) . "\n";

@@ -25,6 +25,10 @@ if ( null !== $dgl_single ) {
 	View::output( 'public/single', [ 'post' => get_post(), 'type' => $dgl_single ] );
 } elseif ( null !== $dgl_archive ) {
 	View::output( 'public/archive', [ 'type' => $dgl_archive ] );
+} elseif ( '1' === Frontend::directory_request() ) {
+	View::output( 'public/directory', [] );
+} elseif ( null !== Frontend::directory_request() ) {
+	View::output( 'public/organisation', [ 'org' => Frontend::directory_org() ] );
 }
 
 get_footer();

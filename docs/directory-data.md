@@ -58,7 +58,35 @@ row).
 - "City" and "State" columns carry street lines and county codes in places.
   Imported as given; owners can tidy.
 
-## Two decisions for DGLP before the directory goes public
+## The public directory
+
+Built 17 September 2026, deployed in 0.9.4.
+
+- `/directory/` lists every organisation that is verified and has the
+  directory switch on, A to Z, 24 to a page. A search box covers the name
+  and the short description; four filters cover ward, area of work,
+  service and who they work with. Filters and search combine.
+- `/directory/<slug>/` is one organisation: description, every list
+  grouped by category, contact details, legal status and size, and up to
+  six of their live listings. A slug that matches nothing listed is a 404.
+- Both pages render inside the theme's header and footer, like the event
+  pages, and share `tokens.css`. Page titles are set for the browser tab.
+- `wp dgl org directory-on` switches on every verified organisation whose
+  Forum Central record says it gave permission to publish. Run once on
+  staging: 146. The rest stay off until a member presses the button.
+- Caching: the site's page cache excludes `/dashboard` only. A member who
+  switches their listing on will not see it on `/directory/` until the
+  cache expires (24 hours) unless `/directory` is excluded too. Done on
+  staging; do the same on production.
+
+## Decisions taken, 17 September 2026
+
+Martin confirmed with the CEOs of Forum Central and DGL, who own the site
+jointly, that Forum Central's permission to publish carries. So the 146 are
+listed and the other 183 wait for a member to switch them on. The import
+ran with `--approve`, so the list is treated as verified.
+
+## Two decisions that were open before that
 
 1. **Permission.** 146 of 329 ticked "I am happy for the information I have
    provided above about this organisation to be made available online and

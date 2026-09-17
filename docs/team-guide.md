@@ -79,10 +79,13 @@ and refuse choices as the queue.
 
 Every organisation's profile carries the details from Forum Central's list:
 address, ward, type, services, who they work with, size, accreditations.
-Owners edit them. Nobody appears in the public directory until a member of
-that organisation presses "Show us in the directory" on the Organisation
-tab. Any approved member can switch it on or off, it takes effect at once,
-and pending or suspended organisations never show whatever the switch says.
+Owners edit them. The public directory at `/directory/` shows an
+organisation when it is verified and its switch is on. The 146 that gave
+Forum Central permission to publish were switched on at the start; the
+rest appear when a member of that organisation presses "Show us in the
+directory" on the Organisation tab. Any approved member can switch it on
+or off, it takes effect at once, and pending or suspended organisations
+never show whatever the switch says.
 
 ## How people join
 

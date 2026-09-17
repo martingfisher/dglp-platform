@@ -19,6 +19,12 @@ defined( 'ABSPATH' ) || exit;
 
 final class Directory {
 
+	/** URL base of the public directory. */
+	public const BASE = 'directory';
+
+	/** The query var the rewrite rule fills: '1' for the index, otherwise a slug. */
+	public const QUERY_VAR = 'dgl_directory';
+
 	/**
 	 * Whether the organisation has asked to be shown. The flag alone is not
 	 * enough to appear: {@see is_listed()} also wants the organisation
@@ -68,6 +74,47 @@ final class Directory {
 		);
 
 		return true;
+	}
+
+	/**
+	 * Switch on every verified organisation whose Forum Central record says
+	 * it gave permission to publish. Decided 17 September 2026: the site is
+	 * owned by Forum Central and DGL jointly, confirmed with both CEOs, so
+	 * that permission carries. The other organisations stay off until a
+	 * member switches them on.
+	 *
+	 * @return int[] The organisations switched on by this call.
+	 */
+	public static function list_permission_holders( bool $write ): array {
+		$ids = get_posts(
+			[
+				'post_type'      => \DGL\PostTypes::ORG,
+				'post_status'    => 'publish',
+				'posts_per_page' => -1,
+				'fields'         => 'ids',
+				'no_found_rows'  => true,
+				'meta_query'     => [
+					[ 'key' => Meta::ORG_FC_PERMISSION, 'value' => '1' ],
+					[ 'key' => Meta::ORG_STATUS, 'value' => Meta::ORG_APPROVED ],
+				],
+			]
+		);
+		$done = [];
+
+		foreach ( array_map( 'intval', (array) $ids ) as $id ) {
+			if ( self::wants_listing( $id ) ) {
+				continue;
+			}
+
+			$done[] = $id;
+
+			if ( $write ) {
+				update_post_meta( $id, Meta::ORG_IN_DIRECTORY, '1' );
+				Log::record( 'directory_on', 'org', $id, $id, 'Forum Central permission to publish', [ 'in_directory' => [ 'no', 'yes' ] ], 0 );
+			}
+		}
+
+		return $done;
 	}
 
 	/**

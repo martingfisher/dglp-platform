@@ -159,6 +159,40 @@ final class ImportCommand {
 	}
 
 	/**
+	 * Put every verified organisation that gave Forum Central permission to
+	 * publish into the public directory.
+	 *
+	 * ## OPTIONS
+	 *
+	 * [--dry-run]
+	 * : Count them and write nothing.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp dgl org directory-on --dry-run
+	 *     wp dgl org directory-on
+	 *
+	 * @subcommand directory-on
+	 * @when after_wp_load
+	 *
+	 * @param string[]              $args
+	 * @param array<string, string> $assoc
+	 */
+	public function directory_on( array $args, array $assoc ): void {
+		$dry_run = isset( $assoc['dry-run'] );
+		$done    = Directory::list_permission_holders( ! $dry_run );
+
+		WP_CLI::log( sprintf( '%s%d organisation(s) with permission recorded and not yet listed.', $dry_run ? 'DRY RUN. ' : '', count( $done ) ) );
+
+		if ( $dry_run ) {
+			WP_CLI::success( 'Nothing was written.' );
+			return;
+		}
+
+		WP_CLI::success( sprintf( '%d switched on.', count( $done ) ) );
+	}
+
+	/**
 	 * @return array<int, array<string, string>>
 	 */
 	private static function read( string $file ): array {

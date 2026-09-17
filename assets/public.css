@@ -372,3 +372,238 @@
 
 	.dgl-pub__thumb img { height: 180px; }
 }
+
+/* ---- Directory --------------------------------------------------------- */
+
+/*
+ * Search first, results second, nothing else. The form is one row of
+ * fields on a desk and a stack on a phone; the results are equal cards so
+ * the eye can scan down the names.
+ */
+.dgl-dir__search {
+	display: grid;
+	grid-template-columns: minmax(0, 2fr) repeat(4, minmax(0, 1fr)) auto;
+	gap: 12px var(--dgl-gap);
+	align-items: end;
+	margin: 0 0 var(--dgl-gap-lg);
+	padding: var(--dgl-gap);
+	background: var(--dgl-white);
+	border: 1px solid var(--dgl-border);
+	border-radius: var(--dgl-radius-card);
+	box-shadow: var(--dgl-shadow-rest);
+}
+
+.dgl-dir__label {
+	display: block;
+	margin: 0 0 4px;
+	font-size: 0.78em;
+	font-weight: 600;
+	letter-spacing: 0.03em;
+	text-transform: uppercase;
+	color: var(--dgl-text-muted);
+}
+
+.dgl-pub .dgl-dir__input {
+	box-sizing: border-box;
+	width: 100%;
+	min-height: var(--dgl-field-height);
+	padding: 0 12px;
+	border: var(--dgl-field-border) solid var(--dgl-field-outline);
+	border-radius: var(--dgl-radius-field);
+	background: var(--dgl-white);
+	color: var(--dgl-text);
+	font: var(--dgl-weight-body) 15px / var(--dgl-line) var(--dgl-font);
+}
+
+.dgl-pub .dgl-dir__input:focus-visible {
+	outline: 3px solid var(--dgl-focus);
+	outline-offset: 2px;
+}
+
+.dgl-dir__actions { display: flex; align-items: center; gap: 12px; }
+
+.dgl-pub .dgl-dir__button {
+	min-height: var(--dgl-field-height);
+	padding: 0 22px;
+	border: 0;
+	cursor: pointer;
+	font: var(--dgl-weight-button) 15px / 1 var(--dgl-font);
+}
+
+.dgl-dir__clear { color: var(--dgl-link); font-size: 0.9em; white-space: nowrap; }
+
+.dgl-dir__count {
+	margin: 0 0 var(--dgl-gap);
+	font-size: 0.9em;
+	color: var(--dgl-text-muted);
+}
+
+.dgl-dir__grid {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+	gap: var(--dgl-gap);
+}
+
+.dgl-dir__card { margin: 0; }
+
+.dgl-dir__cardlink {
+	display: grid;
+	grid-template-columns: 56px minmax(0, 1fr);
+	gap: var(--dgl-gap);
+	height: 100%;
+	box-sizing: border-box;
+	padding: var(--dgl-gap);
+	background: var(--dgl-white);
+	border: 1px solid var(--dgl-border);
+	border-radius: var(--dgl-radius-card);
+	box-shadow: var(--dgl-shadow-rest);
+	color: var(--dgl-text);
+	text-decoration: none;
+	transition: box-shadow var(--dgl-motion), border-color var(--dgl-motion);
+}
+
+.dgl-dir__cardlink:hover,
+.dgl-dir__cardlink:focus-visible {
+	border-color: var(--dgl-border-strong);
+	box-shadow: var(--dgl-shadow-raise);
+}
+
+.dgl-dir__cardlink:hover .dgl-dir__name { text-decoration: underline; }
+
+.dgl-dir__mark {
+	display: grid;
+	place-items: center;
+	width: 56px;
+	height: 56px;
+	border-radius: 12px;
+	background: var(--dgl-surface);
+	overflow: hidden;
+}
+
+.dgl-dir__mark img { width: 100%; height: 100%; object-fit: contain; display: block; }
+
+.dgl-dir__initial {
+	font-size: 1.4rem;
+	font-weight: 700;
+	color: var(--dgl-navy);
+}
+
+.dgl-dir__cardbody { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+
+.dgl-dir__name {
+	font-size: 1.05rem;
+	font-weight: var(--dgl-weight-heading);
+	line-height: 1.3;
+	color: var(--dgl-navy);
+}
+
+.dgl-dir__where { font-size: 0.85em; color: var(--dgl-teal-text); font-weight: 500; }
+
+.dgl-dir__blurb { font-size: 0.9em; line-height: 1.5; color: var(--dgl-text); }
+
+.dgl-dir__tags,
+.dgl-org__tags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	margin: 6px 0 0;
+	padding: 0;
+	list-style: none;
+}
+
+.dgl-dir__tag {
+	display: inline-block;
+	padding: 3px 9px;
+	border-radius: 999px;
+	background: var(--dgl-surface);
+	border: 1px solid var(--dgl-border);
+	font-size: 0.74em;
+	font-weight: 600;
+	line-height: 1.4;
+	color: var(--dgl-navy);
+}
+
+.dgl-dir__tag--more { color: var(--dgl-text-muted); }
+
+.dgl-dir__foot {
+	margin: var(--dgl-gap-lg) 0 0;
+	font-size: 0.85em;
+	color: var(--dgl-text-muted);
+}
+
+/* ---- One organisation -------------------------------------------------- */
+
+.dgl-org__head {
+	display: flex;
+	align-items: center;
+	gap: var(--dgl-gap-lg);
+	margin: 0 0 var(--dgl-gap-lg);
+}
+
+.dgl-org__head .dgl-pub__title { margin-bottom: 4px; }
+
+.dgl-org__logo {
+	flex: none;
+	width: 112px;
+	height: 112px;
+	display: grid;
+	place-items: center;
+	padding: 8px;
+	box-sizing: border-box;
+	background: var(--dgl-white);
+	border: 1px solid var(--dgl-border);
+	border-radius: var(--dgl-radius-card);
+}
+
+.dgl-org__logo img { max-width: 100%; max-height: 100%; width: auto; height: auto; display: block; }
+
+.dgl-org__where { margin: 0; color: var(--dgl-teal-text); font-weight: 500; }
+
+.dgl-org__section { margin: 0 0 var(--dgl-gap-lg); }
+
+.dgl-org__h2 {
+	margin: 0 0 8px;
+	font-size: 1rem;
+	font-weight: var(--dgl-weight-heading);
+	color: var(--dgl-navy);
+}
+
+.dgl-org__tags { margin: 0; }
+
+.dgl-org__group { margin: 0 0 10px; }
+
+.dgl-org__group:last-child { margin-bottom: 0; }
+
+.dgl-org__h3 {
+	margin: 0 0 4px;
+	font-size: 0.78em;
+	font-weight: 600;
+	letter-spacing: 0.03em;
+	text-transform: uppercase;
+	color: var(--dgl-text-muted);
+}
+
+.dgl-org__tags .dgl-dir__tag { font-size: 0.82em; padding: 5px 11px; }
+
+.dgl-org__live { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+
+.dgl-org__live a { color: var(--dgl-link); font-weight: 500; }
+
+.dgl-org__livetype { margin-left: 8px; font-size: 0.8em; color: var(--dgl-text-muted); }
+
+/* The first fact on an organisation is not a date, so it does not lead. */
+.dgl-org__facts dd:first-of-type { font-size: inherit; font-weight: 500; color: var(--dgl-text); }
+
+@media ( max-width: 1000px ) {
+	.dgl-dir__search { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+	.dgl-dir__query { grid-column: 1 / -1; }
+}
+
+@media ( max-width: 560px ) {
+	.dgl-dir__search { grid-template-columns: minmax(0, 1fr); }
+	.dgl-org__head { align-items: flex-start; }
+	.dgl-org__logo { width: 80px; height: 80px; }
+}

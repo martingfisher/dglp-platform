@@ -11,6 +11,8 @@ namespace DGL\Frontend;
 
 use DGL\Dashboard\Assets;
 use DGL\Dashboard\View;
+use DGL\Org\Directory;
+use DGL\Org\DirectoryQuery;
 use DGL\Org\Org;
 use DGL\PostTypes;
 use DGL\Schema\FieldRegistry;
@@ -35,6 +37,10 @@ defined( 'ABSPATH' ) || exit;
 final class Frontend {
 
 	public static function init(): void {
+		add_action( 'init', [ self::class, 'add_rules' ] );
+		add_filter( 'query_vars', [ self::class, 'add_query_var' ] );
+		add_filter( 'pre_get_document_title', [ self::class, 'directory_title' ] );
+		add_action( 'template_redirect', [ self::class, 'directory_status' ] );
 		add_filter( 'template_include', [ self::class, 'template' ] );
 		add_action( 'wp_enqueue_scripts', [ self::class, 'assets' ] );
 		add_action( 'pre_get_posts', [ self::class, 'order_archive' ] );
@@ -48,7 +54,92 @@ final class Frontend {
 	 * work without anybody remembering to change this.
 	 */
 	public static function is_ours(): bool {
-		return self::single_type() !== null || self::archive_type() !== null;
+		return self::single_type() !== null || self::archive_type() !== null || self::directory_request() !== null;
+	}
+
+	/* ---- The organisation directory ------------------------------------ */
+
+	public static function add_rules(): void {
+		add_rewrite_rule( '^' . Directory::BASE . '/?$', 'index.php?' . Directory::QUERY_VAR . '=1', 'top' );
+		add_rewrite_rule( '^' . Directory::BASE . '/([^/]+)/?$', 'index.php?' . Directory::QUERY_VAR . '=$matches[1]', 'top' );
+	}
+
+	/**
+	 * @param string[] $vars
+	 * @return string[]
+	 */
+	public static function add_query_var( array $vars ): array {
+		$vars[] = Directory::QUERY_VAR;
+
+		return $vars;
+	}
+
+	/**
+	 * '1' for the index, a slug for one organisation, null when this is not
+	 * a directory request.
+	 */
+	public static function directory_request(): ?string {
+		$value = get_query_var( Directory::QUERY_VAR, null );
+
+		return is_string( $value ) && '' !== $value ? $value : null;
+	}
+
+	/**
+	 * The organisation a directory request is for, or null on the index or
+	 * when the slug matches nothing listed.
+	 */
+	public static function directory_org(): ?WP_Post {
+		$request = self::directory_request();
+
+		return null === $request || '1' === $request ? null : DirectoryQuery::find( $request );
+	}
+
+	/**
+	 * A slug that matches nothing listed is a 404, sent before the theme's
+	 * header has put a byte on the wire. WordPress's own query sees only a
+	 * custom query var here and would call it a 200.
+	 */
+	public static function directory_status(): void {
+		$request = self::directory_request();
+
+		if ( null === $request ) {
+			return;
+		}
+
+		global $wp_query;
+
+		if ( '1' === $request ) {
+			// The index is not a 404 either, whatever the main query thinks.
+			$wp_query->is_404 = false;
+			status_header( 200 );
+			return;
+		}
+
+		if ( null === self::directory_org() ) {
+			$wp_query->set_404();
+			status_header( 404 );
+			nocache_headers();
+		} else {
+			$wp_query->is_404 = false;
+			status_header( 200 );
+		}
+	}
+
+	public static function directory_title( string $title ): string {
+		$request = self::directory_request();
+
+		if ( null === $request ) {
+			return $title;
+		}
+
+		$org  = self::directory_org();
+		$name = $org instanceof WP_Post ? get_the_title( $org ) : __( 'Member organisations', 'dgl-platform' );
+
+		if ( '1' !== $request && null === $org ) {
+			$name = __( 'Not found', 'dgl-platform' );
+		}
+
+		return $name . ' | ' . get_bloginfo( 'name' );
 	}
 
 	public static function single_type(): ?string {

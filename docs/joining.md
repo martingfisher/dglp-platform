@@ -204,5 +204,5 @@ Asked for on 16 September 2026, for "at some point", not this release.
 - Rendered the way the event listing is: the plugin's own template inside
   the theme's header and footer, sharing `tokens.css`.
 
-Started 17 September 2026: the data, the fields and the switch are built
-(see `docs/directory-data.md`). The public listing template is not.
+Built 17 September 2026, including the public pages. See
+`docs/directory-data.md`.
