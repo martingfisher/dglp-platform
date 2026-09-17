@@ -355,3 +355,9 @@ clean. They are the only DGLP content on staging.
   link plus an image reaches WordPress, so the difference is in the
   browser's request; waiting on a retry with the link alone and the
   response headers.
+- **0.9.10 deployed**: organisation description allows 650 characters
+  (was 400); the directory page folds a long one at about 320 with a
+  More/Less button, whole text without JavaScript; a phone with no digits
+  ("N/A") is not shown. The mid-word cuts on staging are in Forum
+  Central's export: 72 of 197 descriptions are exactly 255 characters in
+  the file. Owners will need to complete those. Pinned to commit `66b751d`.
