@@ -180,7 +180,7 @@ if ( $revision instanceof WP_Post ) {
 		<?php
 		$filled = array_filter(
 			$data['fields'],
-			static fn( $field ): bool => '' !== (string) ( $values[ $field->key ] ?? '' ) || Field::CHECKBOX === $field->type
+			static fn( $field ): bool => ( is_array( $values[ $field->key ] ?? '' ) ? [] !== $values[ $field->key ] : '' !== (string) ( $values[ $field->key ] ?? '' ) ) || Field::CHECKBOX === $field->type
 		);
 		?>
 		<?php if ( [] === $filled ) : ?>

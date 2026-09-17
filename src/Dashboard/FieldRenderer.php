@@ -75,6 +75,8 @@ final class FieldRenderer {
 			$out .= self::checkbox( $field, $id, $name, $value, $aria );
 		} elseif ( Field::CHOICES === $field->type ) {
 			$out .= self::choices( $field, $id, $name, $value, $aria );
+		} elseif ( Field::REPEAT === $field->type ) {
+			$out .= RepeatControl::render( $field, $id, $name, $value, $aria );
 		} else {
 			$out .= sprintf(
 				'<label class="dgl-label" for="%s">%s%s</label>',

@@ -258,6 +258,23 @@ final class FieldRegistry {
 			return null;
 		}
 
+		/*
+		 * A repeating event is listed until the end of the last day it runs,
+		 * not until its first session ends. The rule carries that date.
+		 */
+		foreach ( self::for_type( $post_type ) as $field ) {
+			if ( Field::REPEAT !== $field->type ) {
+				continue;
+			}
+
+			$repeat = $values[ $field->key ] ?? null;
+			$until  = is_array( $repeat ) ? trim( (string) ( $repeat['until'] ?? '' ) ) : '';
+
+			if ( '' !== $until ) {
+				return $until . ' 23:59:59';
+			}
+		}
+
 		foreach ( [ $definition::expiry_field(), $definition::expiry_fallback() ] as $key ) {
 			if ( null === $key ) {
 				continue;

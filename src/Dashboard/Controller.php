@@ -814,7 +814,7 @@ final class Controller {
 		if ( $is_post ) {
 			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.NonceVerification.Missing -- nonce checked above, escaped on output.
 			foreach ( (array) wp_unslash( $_POST[ FieldRenderer::INPUT_NAME ] ?? [] ) as $key => $raw ) {
-				if ( array_key_exists( $key, $values ) && is_scalar( $raw ) ) {
+				if ( array_key_exists( $key, $values ) && ( is_scalar( $raw ) || is_array( $raw ) ) ) {
 					$values[ $key ] = $raw;
 				}
 			}

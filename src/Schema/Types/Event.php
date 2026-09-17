@@ -32,25 +32,34 @@ final class Event implements TypeDefinition {
 				type: Field::DATETIME,
 				required: true,
 				in_digest: true,
+				schedule: true,
 			),
 			new Field(
 				key: 'end_datetime',
 				label: __( 'End date and time', 'dgl-platform' ),
 				type: Field::DATETIME,
-				help: __( 'The event comes off the listings automatically once this passes.', 'dgl-platform' ),
+				help: __( 'A one-off event comes off the listings once this passes. For a repeating event it is the finish time of each session.', 'dgl-platform' ),
+				schedule: true,
 			),
+			/*
+			 * The repeat rule. Public is false because the public page renders
+			 * the schedule itself, in words, with the next dates; a raw rule
+			 * in the facts card would say the same thing worse.
+			 */
 			new Field(
-				key: 'is_recurring',
-				label: __( 'This event repeats', 'dgl-platform' ),
-				type: Field::CHECKBOX,
+				key: 'repeat',
+				label: __( 'Repeats', 'dgl-platform' ),
+				type: Field::REPEAT,
+				public: false,
+				in_csv: false,
+				schedule: true,
 			),
 			new Field(
 				key: 'recurrence_note',
-				label: __( 'How often does it repeat?', 'dgl-platform' ),
+				label: __( 'Anything else about the timing', 'dgl-platform' ),
 				type: Field::TEXT,
-				help: __( 'For example, every Tuesday at 13:00.', 'dgl-platform' ),
+				help: __( 'For example, doors open at 12:45. Leave blank if the schedule above says it all.', 'dgl-platform' ),
 				max_length: 120,
-				depends_on: [ 'field' => 'is_recurring', 'value' => true ],
 			),
 			new Field(
 				key: 'venue_name',

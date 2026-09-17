@@ -1025,6 +1025,20 @@ body.dgl-body {
 
 .dgl-form .dgl-section__title--form:first-child { margin-top: 0; }
 
+/* The repeat control: a tick box, then its parts indented under it. */
+.dgl-repeat { margin: 0 0 18px; padding: 0; border: 0; }
+.dgl-repeat > .dgl-check { margin-bottom: 8px; }
+.dgl-repeat__body {
+	margin-top: 8px;
+	padding: 14px 16px 2px;
+	border: var(--dgl-field-border) solid var(--dgl-border);
+	border-radius: var(--dgl-radius-field);
+	background: var(--dgl-surface);
+}
+.dgl-repeat__body .dgl-field-row { margin-bottom: 14px; }
+.dgl-repeat__days { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+.dgl-repeat__monthly { margin: 0; padding: 0; border: 0; display: grid; gap: 6px; }
+
 .dgl-check {
 	display: flex;
 	align-items: flex-start;

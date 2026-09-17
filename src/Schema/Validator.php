@@ -45,7 +45,7 @@ final class Validator {
 		foreach ( $fields as $field ) {
 			$raw = $input[ $field->key ] ?? null;
 
-			[ $value, $error ] = self::check( $field, $raw );
+			[ $value, $error ] = self::check( $field, $raw, $input );
 
 			if ( null !== $error ) {
 				$errors[ $field->key ] = $error;
@@ -66,9 +66,13 @@ final class Validator {
 	 *
 	 * @return array{0: mixed, 1: string|null} Normalised value, then error or null.
 	 */
-	private static function check( Field $field, mixed $raw ): array {
+	private static function check( Field $field, mixed $raw, array $input = [] ): array {
 		if ( Field::CHECKBOX === $field->type ) {
 			return [ self::truthy( $raw ), null ];
+		}
+
+		if ( Field::REPEAT === $field->type ) {
+			return self::check_repeat( $field, $raw, $input );
 		}
 
 		if ( Field::CHOICES === $field->type ) {
@@ -292,6 +296,159 @@ final class Validator {
 		}
 
 		return [ (int) $value, null ];
+	}
+
+	/**
+	 * How an event repeats, checked against the start and end on the same step.
+	 *
+	 * Returns the storable rule, or [] when the box is not ticked. Day,
+	 * weekday and ordinal come from the start date, never from the form, so
+	 * there is nothing for a member to get wrong there. The stored value has
+	 * no `on` key, so a rule read back for a full re-validation counts as on.
+	 *
+	 * @param array<string, mixed> $input The whole step's raw input.
+	 * @return array{0: mixed, 1: string|null}
+	 */
+	private static function check_repeat( Field $field, mixed $raw, array $input ): array {
+		if ( ! is_array( $raw ) ) {
+			return [ [], null ];
+		}
+
+		$on = array_key_exists( 'posted', $raw ) ? self::truthy( $raw['on'] ?? '' ) : '' !== (string) ( $raw['freq'] ?? '' );
+
+		if ( ! $on ) {
+			return [ [], null ];
+		}
+
+		$freq = (string) ( $raw['freq'] ?? '' );
+
+		if ( ! in_array( $freq, \DGL\Events\Rule::freqs(), true ) ) {
+			return [ null, __( 'Choose how often it repeats.', 'dgl-platform' ) ];
+		}
+
+		$start_raw = is_scalar( $input['start_datetime'] ?? null ) ? trim( (string) $input['start_datetime'] ) : '';
+		[ $start, $start_error ] = '' === $start_raw ? [ null, 'missing' ] : self::check_datetime( $field, $start_raw );
+
+		if ( null !== $start_error ) {
+			return [ null, __( 'Set the start date and time first, then say how it repeats.', 'dgl-platform' ) ];
+		}
+
+		$end_raw = is_scalar( $input['end_datetime'] ?? null ) ? trim( (string) $input['end_datetime'] ) : '';
+
+		if ( '' !== $end_raw ) {
+			[ $end, $end_error ] = self::check_datetime( $field, $end_raw );
+
+			if ( null === $end_error && substr( (string) $end, 0, 10 ) !== substr( (string) $start, 0, 10 ) ) {
+				return [ null, __( 'For a repeating event the end time has to be on the same day as the start.', 'dgl-platform' ) ];
+			}
+		}
+
+		$start_at = new DateTimeImmutable( (string) $start );
+		$rule     = [ 'freq' => $freq ];
+
+		if ( \DGL\Events\Rule::MONTHLY === $freq ) {
+			$monthly = (string) ( $raw['monthly'] ?? '' );
+
+			if ( ! in_array( $monthly, [ \DGL\Events\Rule::BY_DAY, \DGL\Events\Rule::BY_NTH, \DGL\Events\Rule::BY_LAST ], true ) ) {
+				return [ null, __( 'Choose which day of the month it repeats on.', 'dgl-platform' ) ];
+			}
+
+			$day = (int) $start_at->format( 'j' );
+
+			if ( \DGL\Events\Rule::BY_LAST === $monthly && $day + 7 <= (int) $start_at->format( 't' ) ) {
+				return [
+					null,
+					sprintf(
+						/* translators: %s: weekday name. */
+						__( 'The start date is not the last %s of its month, so choose one of the other patterns.', 'dgl-platform' ),
+						\DGL\Events\Wording::weekday_name( (int) $start_at->format( 'N' ) )
+					),
+				];
+			}
+
+			$rule['monthly'] = $monthly;
+			$rule['day']     = $day;
+			$rule['weekday'] = (int) $start_at->format( 'N' );
+			$rule['nth']     = intdiv( $day - 1, 7 ) + 1;
+		} else {
+			$weekdays = array_values( array_unique( array_filter( array_map( 'intval', (array) ( $raw['weekdays'] ?? [] ) ), static fn( int $d ): bool => $d >= 1 && $d <= 7 ) ) );
+			$weekdays[] = (int) $start_at->format( 'N' );
+			$weekdays   = array_values( array_unique( $weekdays ) );
+			sort( $weekdays );
+			$rule['weekdays'] = $weekdays;
+		}
+
+		$until_raw = is_scalar( $raw['until'] ?? null ) ? trim( (string) $raw['until'] ) : '';
+
+		if ( '' === $until_raw ) {
+			return [ null, __( 'Say when it runs until.', 'dgl-platform' ) ];
+		}
+
+		[ $until, $until_error ] = self::check_date( $field, $until_raw, 'Y-m-d' );
+
+		if ( null !== $until_error ) {
+			return [ null, __( 'Runs until needs to be a real date.', 'dgl-platform' ) ];
+		}
+
+		if ( (string) $until < $start_at->format( 'Y-m-d' ) ) {
+			return [ null, __( 'Runs until has to be on or after the start date.', 'dgl-platform' ) ];
+		}
+
+		$latest = ( new DateTimeImmutable( 'today' ) )->modify( '+' . \DGL\Events\Rule::MAX_MONTHS_AHEAD . ' months' )->format( 'Y-m-d' );
+
+		if ( (string) $until > $latest ) {
+			return [
+				null,
+				sprintf(
+					/* translators: %s: the latest allowed date. */
+					__( 'A series can run for up to six months. Set an end date on or before %s. You can extend it later with one click.', 'dgl-platform' ),
+					( new DateTimeImmutable( $latest ) )->format( 'j F Y' )
+				),
+			];
+		}
+
+		$rule['until'] = (string) $until;
+
+		$skip_raw = $raw['skip'] ?? [];
+		$parts    = is_array( $skip_raw ) ? $skip_raw : ( preg_split( '/[\n,]+/', (string) $skip_raw ) ?: [] );
+		$skip     = [];
+
+		foreach ( $parts as $part ) {
+			$part = trim( (string) $part );
+
+			if ( '' === $part ) {
+				continue;
+			}
+
+			$date = DateTimeImmutable::createFromFormat( '!Y-m-d', $part ) ?: DateTimeImmutable::createFromFormat( '!d/m/Y', $part );
+
+			if ( false === $date ) {
+				/* translators: %s: what was typed. */
+				return [ null, sprintf( __( '"%s" is not a date. Use the form 2026-12-23.', 'dgl-platform' ), $part ) ];
+			}
+
+			$ymd = $date->format( 'Y-m-d' );
+
+			if ( $ymd < $start_at->format( 'Y-m-d' ) || $ymd > (string) $until ) {
+				/* translators: %s: the date. */
+				return [ null, sprintf( __( '%s is outside the dates the event runs between.', 'dgl-platform' ), $date->format( 'j F Y' ) ) ];
+			}
+
+			$skip[] = $ymd;
+		}
+
+		$skip = array_values( array_unique( $skip ) );
+		sort( $skip );
+
+		if ( count( $skip ) > \DGL\Events\Rule::MAX_SKIPS ) {
+			return [ null, __( 'Up to ten dates it does not run.', 'dgl-platform' ) ];
+		}
+
+		if ( [] !== $skip ) {
+			$rule['skip'] = $skip;
+		}
+
+		return [ $rule, null ];
 	}
 
 	/**

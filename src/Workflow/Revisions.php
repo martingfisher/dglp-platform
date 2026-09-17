@@ -475,6 +475,11 @@ final class Revisions {
 			return self::normalise_html( (string) $before ) === self::normalise_html( (string) $after );
 		}
 
+		// List-valued fields: no row yet and an empty list are the same answer.
+		if ( null !== $field && in_array( $field->type, [ Field::CHOICES, Field::REPEAT ], true ) ) {
+			return ( '' === $before || null === $before ? [] : (array) $before ) === ( '' === $after || null === $after ? [] : (array) $after );
+		}
+
 		if ( is_scalar( $before ) || null === $before ) {
 			return (string) $before === (string) $after;
 		}

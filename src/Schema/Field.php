@@ -38,6 +38,8 @@ final readonly class Field {
 	public const POSTCODE = 'postcode';
 	/** Several of a fixed list. Stored as an array of option keys. */
 	public const CHOICES  = 'choices';
+	/** How an event repeats. Stored as the rule array; see Events\Rule. */
+	public const REPEAT   = 'repeat';
 
 	/**
 	 * @param string                $key       Meta key, without the plugin prefix.
@@ -51,6 +53,9 @@ final readonly class Field {
 	 * @param bool                  $public    Whether it renders on the public listing.
 	 * @param bool                  $in_digest Whether it can appear in a digest summary.
 	 * @param bool                  $in_csv    Whether it appears in the CSV export.
+	 * @param bool                  $schedule  Part of an event's schedule: the
+	 *        organisation may change it on a live item at once, without review,
+	 *        because it is a fact about the world they know and the team does not.
 	 * @param array{field:string, value:mixed}|null $depends_on Show only when
 	 *        another field on the same step holds one of these values. Purely a
 	 *        display nicety: the field still validates and saves normally, so
@@ -69,6 +74,7 @@ final readonly class Field {
 		public bool $in_digest = false,
 		public bool $in_csv = true,
 		public ?array $depends_on = null,
+		public bool $schedule = false,
 	) {}
 
 	/**
@@ -111,6 +117,7 @@ final readonly class Field {
 			self::IMAGE,
 			self::POSTCODE,
 			self::CHOICES,
+			self::REPEAT,
 		];
 	}
 

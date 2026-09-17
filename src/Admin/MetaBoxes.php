@@ -158,6 +158,9 @@ final class MetaBoxes {
 				return '<label><input type="checkbox"' . $common . ' value="1" ' . checked( (bool) $value, true, false ) . ' /> '
 					. esc_html__( 'Yes', 'dgl-platform' ) . '</label>';
 
+			case Field::REPEAT:
+				return \DGL\Dashboard\RepeatControl::render( $field, $id, $name, $value, '' );
+
 			case Field::CHOICES:
 				$chosen = array_map( 'strval', (array) $value );
 				$out    = '';

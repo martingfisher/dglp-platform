@@ -163,11 +163,14 @@ final class View {
 			\DGL\Schema\Field::SELECT   => '' === (string) $value
 				? $blank
 				: esc_html( (string) ( $field->options[ (string) $value ] ?? $value ) ),
+			\DGL\Schema\Field::REPEAT   => [] === (array) $value
+				? esc_html__( 'Does not repeat', 'dgl-platform' )
+				: esc_html( self::repeat_summary( (array) $value ) ),
 			\DGL\Schema\Field::CHOICES  => [] === (array) $value
 				? $blank
 				: esc_html( implode( ', ', array_map( static fn( $v ): string => (string) ( $field->options[ (string) $v ] ?? $v ), (array) $value ) ) ),
-			\DGL\Schema\Field::DATE     => '' === (string) $value ? $blank : esc_html( self::date( (string) $value ) ),
-			\DGL\Schema\Field::DATETIME => '' === (string) $value ? $blank : esc_html( self::date( (string) $value, true ) ),
+			\DGL\Schema\Field::DATE     => '' === (string) $value ? $blank : esc_html( self::wall_date( (string) $value ) ),
+			\DGL\Schema\Field::DATETIME => '' === (string) $value ? $blank : esc_html( self::wall_date( (string) $value, true ) ),
 			\DGL\Schema\Field::MONEY    => '' === (string) $value
 				? $blank
 				: esc_html( '£' . number_format( (float) $value, 2 ) ),
@@ -212,6 +215,36 @@ final class View {
 	/**
 	 * A human date, in the site's timezone and UK format.
 	 */
+	/**
+	 * A stored rule in a sentence, for the review and detail screens.
+	 *
+	 * @param array<string, mixed> $repeat
+	 */
+	public static function repeat_summary( array $repeat ): string {
+		return \DGL\Events\Wording::long( $repeat, '', '', static fn( string $d ): string => self::wall_date( $d ) );
+	}
+
+	/**
+	 * A stored wall-clock date or datetime, in the site's own timezone.
+	 *
+	 * Schema dates are typed by a member in the site's local time and stored
+	 * as typed. {@see date()} is for UTC stamps and would shift these by an
+	 * hour in summer.
+	 */
+	public static function wall_date( mixed $wall, bool $with_time = false ): string {
+		if ( ! is_string( $wall ) || '' === $wall ) {
+			return '';
+		}
+
+		try {
+			$at = new \DateTimeImmutable( str_replace( 'T', ' ', $wall ), wp_timezone() );
+		} catch ( \Exception $e ) {
+			return '';
+		}
+
+		return wp_date( $with_time ? 'j M Y, H:i' : 'j M Y', $at->getTimestamp() ) ?: '';
+	}
+
 	public static function date( mixed $utc, bool $with_time = false ): string {
 		// WordPress date helpers return string|false, so a false reaches here
 		// whenever a post has no usable modified date.

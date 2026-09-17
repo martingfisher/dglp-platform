@@ -61,7 +61,7 @@ final class Store {
 			 * a blank Capacity became "Capacity: 0", which is a claim nobody
 			 * made.
 			 */
-			if ( Field::CHOICES === $field->type ? [] === (array) $value : ( Field::CHECKBOX !== $field->type && '' === (string) $value ) ) {
+			if ( in_array( $field->type, [ Field::CHOICES, Field::REPEAT ], true ) ? [] === (array) $value : ( Field::CHECKBOX !== $field->type && '' === (string) $value ) ) {
 				delete_post_meta( $post_id, $field->meta_key() );
 				continue;
 			}
@@ -93,6 +93,38 @@ final class Store {
 	 * The validator has already normalised shape and format. This is the second
 	 * layer: what actually goes in the database.
 	 */
+	/**
+	 * The rule with only its known keys, each cast to its type.
+	 *
+	 * @param array<string, mixed> $value
+	 * @return array<string, mixed>
+	 */
+	public static function sanitise_repeat( array $value ): array {
+		$out = [];
+
+		foreach ( [ 'freq', 'monthly', 'until' ] as $key ) {
+			if ( isset( $value[ $key ] ) && is_scalar( $value[ $key ] ) ) {
+				$out[ $key ] = sanitize_text_field( (string) $value[ $key ] );
+			}
+		}
+
+		foreach ( [ 'day', 'weekday', 'nth' ] as $key ) {
+			if ( isset( $value[ $key ] ) ) {
+				$out[ $key ] = (int) $value[ $key ];
+			}
+		}
+
+		if ( isset( $value['weekdays'] ) ) {
+			$out['weekdays'] = array_values( array_map( 'intval', (array) $value['weekdays'] ) );
+		}
+
+		if ( ! empty( $value['skip'] ) ) {
+			$out['skip'] = array_values( array_map( 'sanitize_text_field', array_map( 'strval', (array) $value['skip'] ) ) );
+		}
+
+		return isset( $out['freq'] ) ? $out : [];
+	}
+
 	public static function sanitise( Field $field, mixed $value ): mixed {
 		return match ( $field->type ) {
 			Field::TEXTAREA => sanitize_textarea_field( (string) $value ),
@@ -104,6 +136,7 @@ final class Store {
 			Field::EMAIL                => sanitize_email( (string) $value ),
 			Field::CHECKBOX             => (bool) $value,
 			Field::CHOICES              => array_values( array_map( 'sanitize_text_field', array_map( 'strval', (array) $value ) ) ),
+			Field::REPEAT               => self::sanitise_repeat( (array) $value ),
 			Field::NUMBER, Field::IMAGE => (int) $value,
 			Field::MONEY                => (float) $value,
 			default                     => sanitize_text_field( (string) $value ),

@@ -33,6 +33,15 @@
 	 */
 	function applyDependencies( form ) {
 		var rows = form.querySelectorAll( '[data-dgl-depends]' );
+		var syncs = [];
+
+		// Every change re-runs every row in document order, so a block inside a
+		// block that has just been shown is disabled again by its own rule.
+		function runAll() {
+			syncs.forEach( function ( sync ) {
+				sync();
+			} );
+		}
 
 		Array.prototype.forEach.call( rows, function ( row ) {
 			var controllerId = 'dgl-' + row.getAttribute( 'data-dgl-depends' );
@@ -57,10 +66,12 @@
 				);
 			}
 
-			controller.addEventListener( 'change', sync );
-			controller.addEventListener( 'input', sync );
-			sync();
+			syncs.push( sync );
+			controller.addEventListener( 'change', runAll );
+			controller.addEventListener( 'input', runAll );
 		} );
+
+		runAll();
 	}
 
 	/**
