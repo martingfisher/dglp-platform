@@ -370,3 +370,7 @@ clean. They are the only DGLP content on staging.
   phone photo; its neighbour passed, so the trigger is in that file's
   bytes. The re-encode means the server never sees the original bytes.
   Not yet retried with that photo on staging. Pinned to commit `3a026c5`.
+- **403 on POST closed** (17 September): Martin retried the same 1.7MB
+  phone photo after 0.9.11 and it uploaded. The trigger was in the
+  original file's bytes, which the browser-side re-encode no longer
+  sends. Probe builds 0.9.6 to 0.9.8 stay in the plugin as tooling.
