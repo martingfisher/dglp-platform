@@ -21,6 +21,7 @@ use DGL\Invites\Invites;
 use DGL\Org\ImportCommand;
 use DGL\Privacy\Command as PrivacyCommand;
 use DGL\Privacy\Privacy;
+use DGL\Tools\ProbeCommand;
 use DGL\Invites\Command as InviteCommand;
 use DGL\Email\Digest\Frequency;
 use DGL\Email\Digest\Runner as DigestRunner;
@@ -100,6 +101,7 @@ final class Plugin {
 			InviteCommand::register();
 			PrivacyCommand::register();
 			ImportCommand::register();
+			ProbeCommand::register();
 		}
 
 		add_action( self::EXPIRY_HOOK, [ Transition::class, 'run_expiry_sweep' ] );
