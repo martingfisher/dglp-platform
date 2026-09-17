@@ -374,3 +374,7 @@ clean. They are the only DGLP content on staging.
   phone photo after 0.9.11 and it uploaded. The trigger was in the
   original file's bytes, which the browser-side re-encode no longer
   sends. Probe builds 0.9.6 to 0.9.8 stay in the plugin as tooling.
+- **0.9.12 deployed**: every coloured side rail removed (notification
+  feed items, active nav item, change diff, gated-field note, public
+  "date has passed" notice, email note box). AAA walk clear. Pinned to
+  commit `09cad3c`.
