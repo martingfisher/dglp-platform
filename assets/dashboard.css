@@ -667,15 +667,73 @@ body.dgl-body {
 .dgl-table tr:last-child td { border-bottom: 0; }
 
 /*
- * A four-column table does not fit a phone. It scrolls sideways inside its
- * own box rather than pushing the whole page wider, which is what the Members
- * tab was doing at 390px.
+ * A four-column table does not fit a phone. Each row becomes a card: the
+ * first cell is the title, the rest sit on one line under it, and an
+ * action button spans the width. The header row is read out to screen
+ * readers and not drawn. Nothing scrolls sideways.
  */
 @media (max-width: 720px) {
 	.dgl-dash__main .dgl-table {
 		display: block;
-		overflow-x: auto;
-		-webkit-overflow-scrolling: touch;
+		overflow: visible;
+		border: 0;
+		border-radius: 0;
+		background: transparent;
+	}
+
+	.dgl-dash__main .dgl-table thead {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		margin: -1px;
+		padding: 0;
+		overflow: hidden;
+		clip: rect(0 0 0 0);
+		white-space: nowrap;
+		border: 0;
+	}
+
+	.dgl-dash__main .dgl-table tbody { display: block; }
+
+	.dgl-dash__main .dgl-table tr {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 6px 12px;
+		margin-bottom: 10px;
+		padding: 12px 14px;
+		background: var(--dgl-white);
+		border: 1px solid var(--dgl-border);
+		border-radius: var(--dgl-radius-field);
+	}
+
+	.dgl-dash__main .dgl-table td {
+		display: block;
+		padding: 0;
+		border: 0;
+	}
+
+	.dgl-dash__main .dgl-table td:first-child {
+		flex: 1 1 100%;
+		font-size: 1.1em;
+		font-weight: 600;
+		line-height: 1.35;
+	}
+
+	.dgl-dash__main .dgl-table td:first-child a { text-decoration: none; }
+
+	.dgl-dash__main .dgl-table td:first-child a:hover,
+	.dgl-dash__main .dgl-table td:first-child a:focus { text-decoration: underline; }
+
+	.dgl-dash__main .dgl-table .dgl-table__action {
+		flex: 1 1 100%;
+		margin-top: 4px;
+		text-align: start;
+	}
+
+	.dgl-dash__main .dgl-table .dgl-table__action .dgl-button {
+		width: 100%;
+		justify-content: center;
 	}
 }
 
@@ -771,7 +829,6 @@ body.dgl-body {
 
 	.dgl-topbar__label { display: none; }
 
-	.dgl-table { display: block; overflow-x: auto; }
 }
 
 /* Wide screens: the disclosure is not a disclosure. */
