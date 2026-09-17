@@ -272,3 +272,10 @@ clean. They are the only DGLP content on staging.
   paragraph. `wp dgl privacy export <email>` prints the same data and was
   run on staging against a joined address: membership, activity and the
   joining request came back. Pinned to commit `c831d0c`. No data changed.
+- **0.8.8 deployed**: email header logo 64px instead of 40px in the same
+  88px band (measured in a rendered preview: band 88 before and after).
+  The build folder had been swept into git by `git add -A`, so the 0.8.7
+  zip carried a stale nested copy of the plugin under `build/`; it is now
+  untracked and ignored, and the 0.8.8 zip has no `build/` entries. The
+  `--force` install removes the old plugin folder, so the nested copy is
+  gone from staging too. Pinned to commit `0f755eb`.
