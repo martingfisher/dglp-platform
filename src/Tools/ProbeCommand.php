@@ -40,6 +40,11 @@ final class ProbeCommand {
 	 * [--after=<chars>]
 	 * : Characters to show after each match. Default 200.
 	 *
+	 * [--post=<query>]
+	 * : Send a POST instead, with this urlencoded body, e.g.
+	 * "dgl[title]=Hello&dgl[body]=<p>Hi</p>". For finding out whether a
+	 * firewall in front of WordPress rejects a form before it arrives.
+	 *
 	 * ## EXAMPLES
 	 *
 	 *     wp dgl probe /dashboard/ "Cookies Policy"
@@ -59,15 +64,19 @@ final class ProbeCommand {
 			WP_CLI::error( 'Give a phrase to look for.' );
 		}
 
-		$url      = home_url( $path );
-		$response = wp_remote_get( $url, [ 'timeout' => 20, 'redirection' => 3, 'sslverify' => false ] );
+		$url  = home_url( $path );
+		$post = isset( $assoc['post'] ) ? (string) $assoc['post'] : null;
+
+		$response = null === $post
+			? wp_remote_get( $url, [ 'timeout' => 20, 'redirection' => 3, 'sslverify' => false ] )
+			: wp_remote_post( $url, [ 'timeout' => 20, 'redirection' => 0, 'sslverify' => false, 'body' => $post, 'headers' => [ 'Content-Type' => 'application/x-www-form-urlencoded' ] ] );
 
 		if ( is_wp_error( $response ) ) {
 			WP_CLI::error( $response->get_error_message() );
 		}
 
 		$html = (string) wp_remote_retrieve_body( $response );
-		WP_CLI::log( sprintf( 'GET %s -> HTTP %d, %d bytes', $url, (int) wp_remote_retrieve_response_code( $response ), strlen( $html ) ) );
+		WP_CLI::log( sprintf( '%s %s -> HTTP %d, %d bytes%s', null === $post ? 'GET' : 'POST', $url, (int) wp_remote_retrieve_response_code( $response ), strlen( $html ), '' !== (string) wp_remote_retrieve_header( $response, 'server' ) ? ', server: ' . wp_remote_retrieve_header( $response, 'server' ) : '' ) );
 
 		$at    = 0;
 		$found = 0;
