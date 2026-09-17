@@ -11,3 +11,6 @@ docs/wireframes/design-conversation.md
 !.impeccable/design.json
 !.impeccable/surfaces/
 !.impeccable/critique/
+
+# Build staging area for the dist zip. Never commit it.
+build/
