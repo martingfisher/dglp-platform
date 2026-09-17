@@ -50,6 +50,24 @@ $page_url = static function ( int $page ) use ( $args, $base ): string {
 			<input class="dgl-dir__input" id="dgl-dir-q" type="search" name="q" value="<?php echo esc_attr( $args['q'] ); ?>" placeholder="<?php esc_attr_e( 'Name, or a word from their description', 'dgl-platform' ); ?>">
 		</div>
 
+		<?php
+		/*
+		 * On a phone the four filters fold behind one button, so the search
+		 * box and the first results are on the first screen. They start
+		 * open when any filter is set, and always show without JavaScript.
+		 */
+		$filters_on = count( array_filter( $args['filters'] ) );
+		?>
+		<button class="dgl-dir__toggle" type="button" hidden aria-expanded="<?php echo $filters_on > 0 ? 'true' : 'false'; ?>" aria-controls="dgl-dir-filters">
+			<?php
+			echo $filters_on > 0
+				/* translators: %d: how many filters are set. */
+				? esc_html( sprintf( _n( 'Filters (%d set)', 'Filters (%d set)', $filters_on, 'dgl-platform' ), $filters_on ) )
+				: esc_html__( 'Filters', 'dgl-platform' );
+			?>
+		</button>
+
+		<div class="dgl-dir__filters" id="dgl-dir-filters" data-dgl-open="<?php echo $filters_on > 0 ? '1' : '0'; ?>">
 		<?php foreach ( $filters as $param => $filter ) : ?>
 			<div class="dgl-dir__filter">
 				<label class="dgl-dir__label" for="dgl-dir-<?php echo esc_attr( $param ); ?>"><?php echo esc_html( $filter['label'] ); ?></label>
@@ -61,6 +79,7 @@ $page_url = static function ( int $page ) use ( $args, $base ): string {
 				</select>
 			</div>
 		<?php endforeach; ?>
+		</div>
 
 		<div class="dgl-dir__actions">
 			<button class="dgl-pub__button dgl-dir__button" type="submit"><?php esc_html_e( 'Search', 'dgl-platform' ); ?></button>
@@ -69,6 +88,41 @@ $page_url = static function ( int $page ) use ( $args, $base ): string {
 			<?php endif; ?>
 		</div>
 	</form>
+
+	<script>
+	( function () {
+		var toggle = document.querySelector( '.dgl-dir__toggle' );
+		var panel  = document.getElementById( 'dgl-dir-filters' );
+		var narrow = window.matchMedia( '(max-width: 560px)' );
+
+		if ( ! toggle || ! panel || ! narrow ) {
+			return;
+		}
+
+		function apply() {
+			if ( narrow.matches ) {
+				toggle.hidden = false;
+				panel.hidden  = 'true' !== toggle.getAttribute( 'aria-expanded' );
+			} else {
+				toggle.hidden = true;
+				panel.hidden  = false;
+			}
+		}
+
+		toggle.addEventListener( 'click', function () {
+			toggle.setAttribute( 'aria-expanded', 'true' === toggle.getAttribute( 'aria-expanded' ) ? 'false' : 'true' );
+			apply();
+
+			if ( ! panel.hidden ) {
+				var first = panel.querySelector( 'select' );
+				if ( first ) { first.focus(); }
+			}
+		} );
+
+		if ( narrow.addEventListener ) { narrow.addEventListener( 'change', apply ); } else { narrow.addListener( apply ); }
+		apply();
+	}() );
+	</script>
 
 	<p class="dgl-dir__count" role="status">
 		<?php

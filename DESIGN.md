@@ -265,6 +265,13 @@ chips 12px, help and counters 14px, stat labels 13px. Confirmed 17
 September 2026 across seventeen member-area screens at 390px: no sideways
 scroll, no target under 44px other than the WordPress editor's toolbar.
 
+The public pages follow the same phone rules: list and calendar titles are
+44px rows, the calendar's month links and every text link are thumb-sized,
+and the directory's four filters fold behind one "Filters" button under
+560px (open when a filter is set, always shown without JavaScript) so the
+search box and the first results share the first screen. Confirmed 17
+September 2026 on seven public screens at 390px and 1280px.
+
 ## Elevation & Depth
 
 Gently lifted, confirmed 16 September 2026. Cards, tiles and stats carry a
