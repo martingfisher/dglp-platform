@@ -342,8 +342,7 @@ body.dgl-body {
 	justify-content: space-between;
 	gap: 8px;
 	padding: 9px 12px;
-	border-inline-start: 3px solid transparent;
-	border-radius: 0 var(--dgl-radius-button) var(--dgl-radius-button) 0;
+	border-radius: var(--dgl-radius-button);
 	font-size: 0.88em;
 	font-weight: 500;
 	color: var(--dgl-on-dark-body);
@@ -356,9 +355,8 @@ body.dgl-body {
 	color: var(--dgl-on-dark);
 }
 
-/* The one place the teal earns its keep: a rail, carrying no text. */
+/* The current item is the filled one. No rail: the fill and the weight say it. */
 .dgl-nav__item--active {
-	border-inline-start-color: var(--dgl-teal);
 	background: rgba(255, 255, 255, 0.14);
 	color: var(--dgl-on-dark);
 	font-weight: 600;
@@ -1542,7 +1540,6 @@ body.dgl-body {
 .dgl-change__side--after {
 	background: #eaf4e6;
 	color: var(--dgl-ink);
-	border-inline-start: 2px solid #387923;
 }
 
 .dgl-change__cap {
@@ -1625,8 +1622,6 @@ body.dgl-body {
 .dgl-help--gated {
 	margin-top: -14px;
 	margin-bottom: 18px;
-	padding-inline-start: 10px;
-	border-inline-start: 2px solid var(--dgl-border-strong);
 	font-style: italic;
 }
 
@@ -1673,10 +1668,7 @@ body.dgl-body {
 	background: var(--dgl-white);
 }
 
-.dgl-feed__item--good      { border-inline-start-color: #387923; }
-.dgl-feed__item--attention { border-color: #7a5a1c; }
-.dgl-feed__item--bad       { border-inline-start-color: var(--dgl-danger); }
-.dgl-feed__item--quiet     { border-inline-start-color: var(--theme-palette-color-1, #57b0b6); }
+/* No coloured rail per tone: the first words of each item already say what happened. */
 
 .dgl-feed__what {
 	margin: 0 0 2px;

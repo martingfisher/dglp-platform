@@ -266,7 +266,7 @@ final class Template {
 		}
 
 		$out = '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 24px;">';
-		$out .= '<tr><td style="padding:16px 20px;background-color:' . $c['surface'] . ';border-left:4px solid ' . $c['rule'] . ';border-radius:0 8px 8px 0;">';
+		$out .= '<tr><td style="padding:16px 20px;background-color:' . $c['surface'] . ';border-radius:8px;">';
 
 		if ( '' !== $message->note_label ) {
 			$out .= '<p style="margin:0 0 8px;font-family:' . self::FONT . ';font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:' . $c['muted'] . ';">'
