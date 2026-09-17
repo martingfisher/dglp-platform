@@ -314,11 +314,25 @@ final class FieldRenderer {
 			}
 		}
 
+		/*
+		 * The size limit rides on the control so the browser can refuse a
+		 * file before it is sent. A 40MB photo that goes up the wire is
+		 * refused by the web server, not by us, and the member sees a bare
+		 * 403 with no way back. Checked again on the server regardless.
+		 */
 		$out .= sprintf(
-			'<input class="dgl-field dgl-field--file" type="file" id="%s" name="%s" accept="%s"%s>',
+			'<input class="dgl-field dgl-field--file" type="file" id="%s" name="%s" accept="%s" data-dgl-max-bytes="%d" data-dgl-max-message="%s"%s>',
 			esc_attr( $id ),
 			esc_attr( self::INPUT_NAME . '_file_' . $field->key ),
 			esc_attr( implode( ',', array_values( \DGL\Uploads::allowed_mimes() ) ) ),
+			\DGL\Uploads::MAX_BYTES,
+			esc_attr(
+				sprintf(
+					/* translators: %s: the size limit, e.g. "20MB". */
+					__( 'That file is %%s, and the largest we can take is %s. Export a smaller copy and choose it again.', 'dgl-platform' ),
+					size_format( \DGL\Uploads::MAX_BYTES )
+				)
+			),
 			$aria
 		);
 

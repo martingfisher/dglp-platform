@@ -100,6 +100,73 @@
 	}
 
 	/**
+	 * Refuse a file that is over the limit before it leaves the browser.
+	 *
+	 * The server checks again, but a file the web server's own limit
+	 * rejects never reaches PHP, and what the member sees then is a bare
+	 * 403 page with their work gone. So the size is read here, the control
+	 * is cleared, the reason is written under it, and the form will not
+	 * submit until a smaller file is chosen.
+	 */
+	function guardFileSize( form ) {
+		var inputs = form.querySelectorAll( 'input[type="file"][data-dgl-max-bytes]' );
+
+		Array.prototype.forEach.call( inputs, function ( input ) {
+			var max = parseInt( input.getAttribute( 'data-dgl-max-bytes' ), 10 );
+			var row = input.closest ? input.closest( '.dgl-field-row' ) : input.parentNode;
+			var note = null;
+
+			function clear() {
+				if ( note && note.parentNode ) {
+					note.parentNode.removeChild( note );
+				}
+				note = null;
+				if ( row ) {
+					row.classList.remove( 'dgl-field-row--error' );
+				}
+				input.removeAttribute( 'aria-invalid' );
+			}
+
+			function human( bytes ) {
+				return bytes >= 1048576 ? ( bytes / 1048576 ).toFixed( 1 ) + 'MB' : Math.round( bytes / 1024 ) + 'KB';
+			}
+
+			input.addEventListener( 'change', function () {
+				clear();
+
+				var file = input.files && input.files[ 0 ];
+
+				if ( ! file || ! max || file.size <= max ) {
+					return;
+				}
+
+				note = document.createElement( 'p' );
+				note.className = 'dgl-error';
+				note.id = input.id + '-size';
+				note.setAttribute( 'role', 'alert' );
+				note.textContent = input.getAttribute( 'data-dgl-max-message' ).replace( '%s', human( file.size ) );
+				input.insertAdjacentElement( 'afterend', note );
+				input.setAttribute( 'aria-invalid', 'true' );
+				if ( row ) {
+					row.classList.add( 'dgl-field-row--error' );
+				}
+				// Clearing the control is what stops the file being sent.
+				input.value = '';
+			} );
+
+			form.addEventListener( 'submit', function ( event ) {
+				var file = input.files && input.files[ 0 ];
+
+				if ( file && max && file.size > max ) {
+					event.preventDefault();
+					event.stopImmediatePropagation();
+					input.focus();
+				}
+			}, true );
+		} );
+	}
+
+	/**
 	 * Warn before losing typed work, but never when the member is deliberately
 	 * saving. Every button in the wizard submits, so submission clears the flag.
 	 */
@@ -169,6 +236,16 @@
 				button.disabled = true;
 				button.classList.add( 'is-working' );
 			} );
+
+			/*
+			 * Say so on the button that was pressed. An image upload can take
+			 * a few seconds, and a button that merely dims reads as a page
+			 * that has stopped.
+			 */
+			if ( pressed ) {
+				pressed.setAttribute( 'aria-live', 'polite' );
+				pressed.textContent = pressed.getAttribute( 'data-dgl-working' ) || ( 'submit' === pressed.value ? 'Sending\u2026' : 'Saving\u2026' );
+			}
 		} );
 	}
 
@@ -237,6 +314,7 @@
 		Array.prototype.forEach.call( forms, function ( form ) {
 			applyDependencies( form );
 			addCounters( form );
+			guardFileSize( form );
 			guardUnsavedWork( form );
 			guardDoubleSubmit( form );
 		} );

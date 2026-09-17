@@ -104,7 +104,7 @@ final class FieldRegistry {
 				label: __( 'Image', 'dgl-platform' ),
 				type: Field::IMAGE,
 				step: self::STEP_BASICS,
-				help: __( 'At least 1200 pixels wide. A placeholder is used if you do not add one.', 'dgl-platform' ),
+				help: __( 'At least 1200 pixels wide, JPG or PNG, up to 20MB. A placeholder is used if you do not add one.', 'dgl-platform' ),
 				in_csv: false,
 			),
 		];

@@ -91,38 +91,51 @@ foreach ( ItemsTable::for_org( $id, PostTypes::enabled_keys(), [ Statuses::LIVE 
 					<p class="dgl-pub__standfirst"><?php echo esc_html( $blurb ); ?></p>
 				<?php endif; ?>
 
+				<?php
+				/*
+				 * Areas of work are the organisation's identity and stay as a
+				 * short row of tags under the description. Everything else is
+				 * a labelled list: the category on the left, the items as a
+				 * plain comma-separated line on the right. Forty chips at one
+				 * weight were a wall nobody could parse; forty words in six
+				 * lines read like a paragraph.
+				 */
+				$areas = $sections[ __( 'Areas of work', 'dgl-platform' ) ] ?? [];
+				unset( $sections[ __( 'Areas of work', 'dgl-platform' ) ] );
+				?>
+				<?php if ( [] !== $areas ) : ?>
+					<ul class="dgl-org__areas" aria-label="<?php esc_attr_e( 'Areas of work', 'dgl-platform' ); ?>">
+						<?php foreach ( $areas as $label ) : ?>
+							<li class="dgl-dir__tag"><?php echo esc_html( $label ); ?></li>
+						<?php endforeach; ?>
+					</ul>
+				<?php endif; ?>
+
 				<?php foreach ( $sections as $heading => $items ) : ?>
 					<section class="dgl-org__section">
 						<h2 class="dgl-org__h2"><?php echo esc_html( $heading ); ?></h2>
 						<?php
-						/*
-						 * Forum Central's labels carry their category in front:
-						 * "People of Faith: Muslim". Printed whole, forty of
-						 * them are a wall. Grouped, the category is said once
-						 * and the tags carry only the part that differs.
-						 */
+						// "Category: value" labels are grouped so the category is said once.
 						$groups = [];
 						foreach ( $items as $label ) {
 							$parts = explode( ': ', $label, 2 );
 							$groups[ 2 === count( $parts ) ? $parts[0] : '' ][] = 2 === count( $parts ) ? $parts[1] : $label;
 						}
-						// Plain tags first, then each category in the order the list gives them.
 						if ( isset( $groups[''] ) ) {
 							$groups = [ '' => $groups[''] ] + $groups;
 						}
+						$single = 1 === count( $groups ) && isset( $groups[''] );
 						?>
-						<?php foreach ( $groups as $category => $tags ) : ?>
-							<div class="dgl-org__group">
-								<?php if ( '' !== $category ) : ?>
-									<h3 class="dgl-org__h3"><?php echo esc_html( $category ); ?></h3>
-								<?php endif; ?>
-								<ul class="dgl-org__tags">
-									<?php foreach ( $tags as $tag ) : ?>
-										<li class="dgl-dir__tag"><?php echo esc_html( $tag ); ?></li>
-									<?php endforeach; ?>
-								</ul>
-							</div>
-						<?php endforeach; ?>
+						<?php if ( $single ) : ?>
+							<p class="dgl-org__line"><?php echo esc_html( implode( ', ', $groups[''] ) ); ?></p>
+						<?php else : ?>
+							<dl class="dgl-org__list">
+								<?php foreach ( $groups as $category => $tags ) : ?>
+									<dt><?php echo '' === $category ? esc_html__( 'General', 'dgl-platform' ) : esc_html( $category ); ?></dt>
+									<dd><?php echo esc_html( implode( ', ', $tags ) ); ?></dd>
+								<?php endforeach; ?>
+							</dl>
+						<?php endif; ?>
 					</section>
 				<?php endforeach; ?>
 

@@ -142,7 +142,7 @@ final class Schema {
 				label: __( 'Logo', 'dgl-platform' ),
 				type: Field::IMAGE,
 				step: 1,
-				help: __( 'A square or landscape image. A change goes back to the team.', 'dgl-platform' ),
+				help: __( 'A square or landscape image, up to 20MB. A change goes back to the team.', 'dgl-platform' ),
 				in_csv: false,
 			),
 		];
