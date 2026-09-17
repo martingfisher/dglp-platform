@@ -344,3 +344,14 @@ clean. They are the only DGLP content on staging.
   the server's own address, so this does not prove the firewall never
   inspects bodies. Waiting on the exact submission and the response
   headers from the browser. Pinned to commit `cd5e1ae`.
+- **0.9.9 deployed**: a file over 20MB is refused in the browser before it
+  is sent, with the size and the limit written under the control (checked
+  with a 25MB file locally: refused, control cleared, a good file clears
+  the error); the pressed wizard button reads "Saving…" or "Sending…"
+  while the request runs; the organisation page keeps areas of work as
+  tags and turns every other list into a labelled list. BEAT's page probed
+  on staging: the new lists are in the markup. Pinned to commit `f620c4f`.
+  The 403 on POST is still open: from the server every variant including a
+  link plus an image reaches WordPress, so the difference is in the
+  browser's request; waiting on a retry with the link alone and the
+  response headers.
