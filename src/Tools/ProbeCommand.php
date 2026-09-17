@@ -45,6 +45,14 @@ final class ProbeCommand {
 	 * "dgl[title]=Hello&dgl[body]=<p>Hi</p>". For finding out whether a
 	 * firewall in front of WordPress rejects a form before it arrives.
 	 *
+	 * [--multipart]
+	 * : Send the --post fields as multipart/form-data, the way a form with
+	 * a file control posts.
+	 *
+	 * [--file=<kind>]
+	 * : With --multipart, also attach a small generated file as
+	 * dgl_file_image: "png" (a real 1x1 PNG) or "text" (a .txt).
+	 *
 	 * ## EXAMPLES
 	 *
 	 *     wp dgl probe /dashboard/ "Cookies Policy"
@@ -67,9 +75,14 @@ final class ProbeCommand {
 		$url  = home_url( $path );
 		$post = isset( $assoc['post'] ) ? (string) $assoc['post'] : null;
 
-		$response = null === $post
-			? wp_remote_get( $url, [ 'timeout' => 20, 'redirection' => 3, 'sslverify' => false ] )
-			: wp_remote_post( $url, [ 'timeout' => 20, 'redirection' => 0, 'sslverify' => false, 'body' => $post, 'headers' => [ 'Content-Type' => 'application/x-www-form-urlencoded' ] ] );
+		if ( null === $post ) {
+			$response = wp_remote_get( $url, [ 'timeout' => 20, 'redirection' => 3, 'sslverify' => false ] );
+		} elseif ( isset( $assoc['multipart'] ) ) {
+			[ $body, $type ] = self::multipart( $post, (string) ( $assoc['file'] ?? '' ) );
+			$response        = wp_remote_post( $url, [ 'timeout' => 20, 'redirection' => 0, 'sslverify' => false, 'body' => $body, 'headers' => [ 'Content-Type' => $type ] ] );
+		} else {
+			$response = wp_remote_post( $url, [ 'timeout' => 20, 'redirection' => 0, 'sslverify' => false, 'body' => $post, 'headers' => [ 'Content-Type' => 'application/x-www-form-urlencoded' ] ] );
+		}
 
 		if ( is_wp_error( $response ) ) {
 			WP_CLI::error( $response->get_error_message() );
@@ -96,5 +109,49 @@ final class ProbeCommand {
 
 		WP_CLI::log( '' );
 		WP_CLI::log( 0 === $found ? 'Not found.' : sprintf( '%d match(es).', $found ) );
+	}
+
+	/**
+	 * Build a multipart body from a urlencoded field string.
+	 *
+	 * @return array{0: string, 1: string} Body, then the Content-Type header.
+	 */
+	private static function multipart( string $query, string $file ): array {
+		$boundary = 'dglprobe' . wp_generate_password( 12, false );
+		$fields   = [];
+		parse_str( $query, $fields );
+		$body = '';
+
+		$flat = static function ( array $values, string $prefix = '' ) use ( &$flat ): array {
+			$out = [];
+			foreach ( $values as $key => $value ) {
+				$name = '' === $prefix ? (string) $key : $prefix . '[' . $key . ']';
+				if ( is_array( $value ) ) {
+					$out = array_merge( $out, $flat( $value, $name ) );
+				} else {
+					$out[ $name ] = (string) $value;
+				}
+			}
+			return $out;
+		};
+
+		foreach ( $flat( $fields ) as $name => $value ) {
+			$body .= "--{$boundary}\r\nContent-Disposition: form-data; name=\"{$name}\"\r\n\r\n{$value}\r\n";
+		}
+
+		if ( 'png' === $file ) {
+			$png   = base64_decode( 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==' );
+			$body .= "--{$boundary}\r\nContent-Disposition: form-data; name=\"dgl_file_image\"; filename=\"probe.png\"\r\nContent-Type: image/png\r\n\r\n{$png}\r\n";
+		} elseif ( 'text' === $file ) {
+			$body .= "--{$boundary}\r\nContent-Disposition: form-data; name=\"dgl_file_image\"; filename=\"probe.txt\"\r\nContent-Type: text/plain\r\n\r\nhello\r\n";
+		} elseif ( '' === $file ) {
+			// An untouched file control still posts an empty part, and that is
+			// the shape a firewall might object to.
+			$body .= "--{$boundary}\r\nContent-Disposition: form-data; name=\"dgl_file_image\"; filename=\"\"\r\nContent-Type: application/octet-stream\r\n\r\n\r\n";
+		}
+
+		$body .= "--{$boundary}--\r\n";
+
+		return [ $body, 'multipart/form-data; boundary=' . $boundary ];
 	}
 }
