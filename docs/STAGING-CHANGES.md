@@ -296,3 +296,12 @@ clean. They are the only DGLP content on staging.
   after the deploy: `/dashboard/` has no `hook:1258` and no "Cookies
   Policy"; `/events/` still carries the block at byte 209268. Pinned to
   commit `bb86f27`. No theme or content-block settings were changed.
+- **Forum Central list imported on staging** (17 September, 08:54 UTC):
+  `wp dgl org import .../FC-Member-Orgs-for-DGLP-directory.csv --approve`
+  after a clean dry run. 329 organisations created and verified, 0
+  skipped; 224 organisations now carry a join domain (223 from the file
+  plus demo org 8438); 4 rows had ward "City" and were left without a
+  ward. Nobody is in the directory. Sample record 8446 checked field by
+  field. The CSV sits in the Media Library at
+  `wp-content/uploads/2026/09/FC-Member-Orgs-for-DGLP-directory.csv`;
+  delete it once no longer needed.
