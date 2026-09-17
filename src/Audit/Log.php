@@ -81,6 +81,47 @@ final class Log {
 	}
 
 	/**
+	 * One organisation's history limited to the actions somebody reads, paged
+	 * at the query rather than after it, so page two is page two.
+	 *
+	 * @param string[] $actions
+	 * @return array<int, array<string, mixed>>
+	 */
+	public static function for_org_actions( int $org_id, array $actions, int $limit = 40, int $offset = 0 ): array {
+		global $wpdb;
+
+		if ( [] === $actions ) {
+			return [];
+		}
+
+		$sql = 'SELECT * FROM ' . Table::name()
+			. ' WHERE org_id = %d AND action IN (' . implode( ',', array_fill( 0, count( $actions ), '%s' ) ) . ')'
+			. ' ORDER BY logged_at DESC, id DESC LIMIT %d OFFSET %d';
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		return (array) $wpdb->get_results( $wpdb->prepare( $sql, array_merge( [ $org_id ], $actions, [ $limit, $offset ] ) ), ARRAY_A );
+	}
+
+	/**
+	 * How many of those there are, for the pager.
+	 *
+	 * @param string[] $actions
+	 */
+	public static function count_for_org( int $org_id, array $actions ): int {
+		global $wpdb;
+
+		if ( [] === $actions ) {
+			return 0;
+		}
+
+		$sql = 'SELECT COUNT(*) FROM ' . Table::name()
+			. ' WHERE org_id = %d AND action IN (' . implode( ',', array_fill( 0, count( $actions ), '%s' ) ) . ')';
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		return (int) $wpdb->get_var( $wpdb->prepare( $sql, array_merge( [ $org_id ], $actions ) ) );
+	}
+
+	/**
 	 * One item's history, oldest first, as the status timeline in wireframe 1g.
 	 *
 	 * @return array<int, array<string, mixed>>

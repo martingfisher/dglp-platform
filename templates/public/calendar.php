@@ -34,7 +34,7 @@ $month = '';
 		</p>
 	</header>
 
-	<nav class="dgl-cal__nav" aria-label="<?php esc_attr_e( 'Other dates', 'dgl-platform' ); ?>">
+	<nav class="dgl-cal__nav" data-dgl-pager="keep" aria-label="<?php esc_attr_e( 'Other dates', 'dgl-platform' ); ?>">
 		<?php if ( ! empty( $data['earlier'] ) ) : ?>
 			<a class="dgl-cal__navlink" href="<?php echo esc_url( (string) $data['earlier'] ); ?>"><?php esc_html_e( 'Earlier', 'dgl-platform' ); ?></a>
 		<?php endif; ?>
@@ -54,7 +54,7 @@ $month = '';
 			<p><?php esc_html_e( 'Nothing is listed for these weeks yet.', 'dgl-platform' ); ?></p>
 		</div>
 	<?php else : ?>
-		<div class="dgl-cal__days" data-dgl-autoload>
+		<div class="dgl-cal__days" data-dgl-autoload=".dgl-cal__row">
 			<?php foreach ( $days as $date => $rows ) : ?>
 				<?php
 				$day  = new DateTimeImmutable( $date, wp_timezone() );

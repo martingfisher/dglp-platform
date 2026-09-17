@@ -28,7 +28,7 @@ $rows = $data['rows'] ?? [];
 		<?php esc_html_e( 'Nothing yet. Decisions on anything you submit will appear here.', 'dgl-platform' ); ?>
 	</p>
 <?php else : ?>
-	<ol class="dgl-feed">
+	<ol class="dgl-feed" data-dgl-autoload="li">
 		<?php foreach ( $rows as $row ) : ?>
 			<li class="dgl-feed__item dgl-feed__item--<?php echo esc_attr( $row['tone'] ); ?>">
 				<p class="dgl-feed__what">
@@ -65,4 +65,18 @@ $rows = $data['rows'] ?? [];
 			</li>
 		<?php endforeach; ?>
 	</ol>
+	<?php
+	View::output(
+		'dashboard/pager',
+		[
+			'total' => (int) ( $data['total'] ?? 0 ),
+			'page'  => (int) ( $data['page'] ?? 1 ),
+			'pages' => (int) ( $data['pages'] ?? 1 ),
+			'first' => (int) ( $data['first'] ?? 0 ),
+			'last'  => (int) ( $data['last'] ?? 0 ),
+			'base'  => (string) ( $data['base'] ?? '' ),
+			'noun'  => __( 'notifications', 'dgl-platform' ),
+		]
+	);
+	?>
 <?php endif; ?>

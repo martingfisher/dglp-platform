@@ -33,7 +33,7 @@ $label = Frontend::type_label( $type, true );
 
 	<?php if ( have_posts() ) : ?>
 
-		<ul class="dgl-pub__list">
+		<ul class="dgl-pub__list" data-dgl-autoload="li">
 			<?php
 			while ( have_posts() ) :
 				the_post();
@@ -85,7 +85,7 @@ $label = Frontend::type_label( $type, true );
 		?>
 
 		<?php if ( is_string( $pagination ) && '' !== $pagination ) : ?>
-			<nav class="dgl-pub__pagination" aria-label="<?php esc_attr_e( 'Pagination', 'dgl-platform' ); ?>">
+			<nav class="dgl-pub__pagination" data-dgl-pager="hide" aria-label="<?php esc_attr_e( 'Pagination', 'dgl-platform' ); ?>">
 				<?php echo wp_kses_post( $pagination ); ?>
 			</nav>
 		<?php endif; ?>

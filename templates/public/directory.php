@@ -85,7 +85,7 @@ $page_url = static function ( int $page ) use ( $args, $base ): string {
 	</p>
 
 	<?php if ( [] !== $result['ids'] ) : ?>
-		<ul class="dgl-dir__grid">
+		<ul class="dgl-dir__grid" data-dgl-autoload="li">
 			<?php foreach ( $result['ids'] as $org_id ) : ?>
 				<?php
 				$name    = (string) get_the_title( $org_id );
@@ -131,8 +131,11 @@ $page_url = static function ( int $page ) use ( $args, $base ): string {
 		</ul>
 
 		<?php if ( $result['pages'] > 1 ) : ?>
-			<nav class="dgl-pub__pagination" aria-label="<?php esc_attr_e( 'More pages', 'dgl-platform' ); ?>">
+			<nav class="dgl-pub__pagination" data-dgl-pager="hide" aria-label="<?php esc_attr_e( 'More pages', 'dgl-platform' ); ?>">
 				<ul>
+					<?php if ( $args['page'] > 1 ) : ?>
+						<li><a rel="prev" href="<?php echo esc_url( $page_url( $args['page'] - 1 ) ); ?>"><?php esc_html_e( 'Previous', 'dgl-platform' ); ?></a></li>
+					<?php endif; ?>
 					<?php for ( $p = 1; $p <= $result['pages']; $p++ ) : ?>
 						<li>
 							<?php if ( $p === $args['page'] ) : ?>
@@ -142,6 +145,9 @@ $page_url = static function ( int $page ) use ( $args, $base ): string {
 							<?php endif; ?>
 						</li>
 					<?php endfor; ?>
+					<?php if ( $args['page'] < $result['pages'] ) : ?>
+						<li><a rel="next" href="<?php echo esc_url( $page_url( $args['page'] + 1 ) ); ?>"><?php esc_html_e( 'Next', 'dgl-platform' ); ?></a></li>
+					<?php endif; ?>
 				</ul>
 			</nav>
 		<?php endif; ?>

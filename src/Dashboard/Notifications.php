@@ -67,7 +67,7 @@ final class Notifications {
 	 *
 	 * @return array<int, array<string, mixed>>
 	 */
-	public static function for_org( int $org_id, int $limit = 60 ): array {
+	public static function for_org( int $org_id, int $limit = 40, int $offset = 0 ): array {
 		if ( $org_id <= 0 ) {
 			return [];
 		}
@@ -75,7 +75,7 @@ final class Notifications {
 		$readable = self::readable();
 		$rows     = [];
 
-		foreach ( Log::for_org( $org_id, $limit ) as $entry ) {
+		foreach ( Log::for_org_actions( $org_id, array_keys( $readable ), $limit, $offset ) as $entry ) {
 			$action = (string) ( $entry['action'] ?? '' );
 
 			if ( ! isset( $readable[ $action ] ) ) {
@@ -112,6 +112,11 @@ final class Notifications {
 		}
 
 		return $rows;
+	}
+
+	/** How many readable entries the organisation has, for the pager. */
+	public static function count_for_org( int $org_id ): int {
+		return $org_id <= 0 ? 0 : Log::count_for_org( $org_id, array_keys( self::readable() ) );
 	}
 
 	/**

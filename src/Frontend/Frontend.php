@@ -39,6 +39,9 @@ defined( 'ABSPATH' ) || exit;
  */
 final class Frontend {
 
+	/** Items per page on a public listing. */
+	public const PER_PAGE = 20;
+
 	public static function init(): void {
 		add_action( 'init', [ self::class, 'add_rules' ] );
 		add_filter( 'query_vars', [ self::class, 'add_query_var' ] );
@@ -207,6 +210,7 @@ final class Frontend {
 		// Goes through the same helper as the member area, so the shared
 		// design tokens are always loaded first.
 		Assets::style( 'assets/public.css', 'dgl-public' );
+		Assets::autoload();
 	}
 
 	/**
@@ -232,6 +236,13 @@ final class Frontend {
 
 		if ( null === $type ) {
 			return;
+		}
+
+		// The page size is the plugin's, not the Reading setting's, so the
+		// autoload has a known page to fetch and the setting cannot make it 1.
+		// A query that asked for its own size (a test, a feed) keeps it.
+		if ( '' === (string) $query->get( 'posts_per_page', '' ) ) {
+			$query->set( 'posts_per_page', self::PER_PAGE );
 		}
 
 		$sort_field = self::sort_key( $type );

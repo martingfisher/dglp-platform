@@ -781,3 +781,38 @@
 	.dgl-cal__row { grid-template-columns: minmax(0, 1fr) auto; }
 	.dgl-cal__time { grid-column: 1 / -1; }
 }
+
+/* ---- Load more on scroll ------------------------------------------------
+ *
+ * The pager stays in the markup for anybody without JavaScript. With it, the
+ * script hides a pager marked "hide" and adds one button that scrolling
+ * presses on the reader's behalf. */
+
+.dgl-js [data-dgl-pager="hide"] { display: none; }
+
+.dgl-more { margin-top: var(--dgl-gap-lg); text-align: center; }
+
+.dgl-more__sentinel { height: 1px; }
+
+.dgl-more__button {
+	display: inline-flex;
+	align-items: center;
+	min-height: 44px;
+	padding: 0 20px;
+	border: var(--dgl-field-border) solid var(--dgl-field-outline);
+	border-radius: var(--dgl-radius-button);
+	background: var(--dgl-white);
+	color: var(--dgl-link);
+	font: inherit;
+	font-weight: var(--dgl-weight-button);
+	cursor: pointer;
+}
+
+.dgl-more__button:hover,
+.dgl-more__button:focus { background: var(--dgl-surface); }
+
+.dgl-more__button[disabled] { cursor: progress; opacity: 0.7; }
+
+.dgl-more__status { margin: 10px 0 0; color: var(--dgl-text-muted); font-size: 0.9em; }
+
+.dgl-more__status:empty { display: none; }

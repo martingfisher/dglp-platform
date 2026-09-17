@@ -204,7 +204,10 @@ final class Controller {
 		$status = isset( $_GET['status'] ) ? sanitize_key( wp_unslash( $_GET['status'] ) ) : '';
 		$filter = in_array( $status, Statuses::all(), true ) ? [ $status ] : null;
 
-		$ids = $org_id > 0 ? ItemsTable::for_org( $org_id, [ $post_type ], $filter, 50 ) : [];
+		$counts = $org_id > 0 ? ItemsTable::counts_for_org( $org_id, $post_type ) : [];
+		$total  = null === $filter ? array_sum( $counts ) : (int) ( $counts[ $status ] ?? 0 );
+		$paging = self::page_args( $total, 50 );
+		$ids    = $org_id > 0 ? ItemsTable::for_org( $org_id, [ $post_type ], $filter, 50, $paging['offset'] ) : [];
 
 		self::screen(
 			'category',
@@ -215,9 +218,9 @@ final class Controller {
 				'singular'  => $def['singular'],
 				'slug'      => $def['slug'],
 				'items'     => array_map( [ self::class, 'row' ], $ids ),
-				'counts'    => $org_id > 0 ? ItemsTable::counts_for_org( $org_id, $post_type ) : [],
+				'counts'    => $counts,
 				'active'    => $status,
-			],
+			] + $paging,
 			$def['plural'],
 			$user
 		);
@@ -228,14 +231,17 @@ final class Controller {
 	 */
 	private static function archive( UserContext $user ): void {
 		$org_id = $user->org_id ?? 0;
-		$ids    = $org_id > 0 ? ItemsTable::for_org( $org_id, null, Statuses::archival(), 50 ) : [];
+		$counts = $org_id > 0 ? ItemsTable::counts_for_org( $org_id ) : [];
+		$total  = array_sum( array_intersect_key( $counts, array_flip( Statuses::archival() ) ) );
+		$paging = self::page_args( $total, 50 );
+		$ids    = $org_id > 0 ? ItemsTable::for_org( $org_id, null, Statuses::archival(), 50, $paging['offset'] ) : [];
 
 		self::screen(
 			'archive',
 			[
 				'user'  => $user,
 				'items' => array_map( [ self::class, 'row' ], $ids ),
-			],
+			] + $paging,
 			__( 'Archive', 'dgl-platform' ),
 			$user
 		);
@@ -274,11 +280,8 @@ final class Controller {
 		 * hides the newest arrivals; cap it the other way and it hides the
 		 * oldest, which is worse. A backlog over one page has to be reachable.
 		 */
-		$per_page = 50;
-		$total    = ItemsTable::queue_count();
-		$pages    = max( 1, (int) ceil( $total / $per_page ) );
-		$page     = min( $pages, max( 1, (int) ( $_GET['paged'] ?? 1 ) ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$ids      = ItemsTable::queue( null, $per_page, ( $page - 1 ) * $per_page );
+		$paging = self::page_args( ItemsTable::queue_count(), 50 );
+		$ids    = ItemsTable::queue( null, 50, $paging['offset'] );
 
 		self::screen(
 			'review-queue',
@@ -292,12 +295,7 @@ final class Controller {
 				// same people, so the same screen.
 				'org_changes' => self::org_change_rows(),
 				'joins'       => self::join_rows(),
-				'total' => $total,
-				'page'  => $page,
-				'pages' => $pages,
-				'first' => $total > 0 ? ( ( $page - 1 ) * $per_page ) + 1 : 0,
-				'last'  => min( $total, $page * $per_page ),
-			],
+			] + $paging,
 			__( 'Review queue', 'dgl-platform' ),
 			$user
 		);
@@ -1335,15 +1333,41 @@ final class Controller {
 	 * Wireframe 1j: every decision the team has made, newest first.
 	 */
 	private static function notifications( UserContext $user ): void {
+		$paging = self::page_args( Notifications::count_for_org( $user->org_id ?? 0 ), 40 );
+
 		self::screen(
 			'notifications',
 			[
 				'user' => $user,
-				'rows' => Notifications::for_org( $user->org_id ?? 0 ),
-			],
+				'rows' => Notifications::for_org( $user->org_id ?? 0, 40, $paging['offset'] ),
+			] + $paging,
 			__( 'Notifications', 'dgl-platform' ),
 			$user
 		);
+	}
+
+	/**
+	 * Paging for a list: which page, from `?paged=`, clamped to what exists.
+	 *
+	 * The base URL is the current request minus `paged` (and minus the
+	 * one-off `decided` flash on the queue), so a status filter survives
+	 * onto page two and a "Approved" banner does not.
+	 *
+	 * @return array{page:int, pages:int, total:int, first:int, last:int, offset:int, base:string}
+	 */
+	private static function page_args( int $total, int $per_page ): array {
+		$pages = max( 1, (int) ceil( $total / $per_page ) );
+		$page  = min( $pages, max( 1, (int) ( $_GET['paged'] ?? 1 ) ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+
+		return [
+			'page'   => $page,
+			'pages'  => $pages,
+			'total'  => $total,
+			'first'  => $total > 0 ? ( ( $page - 1 ) * $per_page ) + 1 : 0,
+			'last'   => min( $total, $page * $per_page ),
+			'offset' => ( $page - 1 ) * $per_page,
+			'base'   => remove_query_arg( [ 'paged', 'decided' ] ),
+		];
 	}
 
 	private static function stub( string $title, UserContext $user ): void {

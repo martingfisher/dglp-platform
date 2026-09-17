@@ -64,3 +64,16 @@ View::output(
 		'empty' => __( 'Nothing of this type yet. Start one with the button above.', 'dgl-platform' ),
 	]
 );
+
+View::output(
+	'dashboard/pager',
+	[
+		'total' => (int) ( $data['total'] ?? 0 ),
+		'page'  => (int) ( $data['page'] ?? 1 ),
+		'pages' => (int) ( $data['pages'] ?? 1 ),
+		'first' => (int) ( $data['first'] ?? 0 ),
+		'last'  => (int) ( $data['last'] ?? 0 ),
+		'base'  => (string) ( $data['base'] ?? '' ),
+		'noun'  => strtolower( $label ),
+	]
+);

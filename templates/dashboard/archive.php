@@ -27,3 +27,16 @@ View::output(
 		'empty' => __( 'Nothing archived yet. Items appear here once they expire or you archive them.', 'dgl-platform' ),
 	]
 );
+
+View::output(
+	'dashboard/pager',
+	[
+		'total' => (int) ( $data['total'] ?? 0 ),
+		'page'  => (int) ( $data['page'] ?? 1 ),
+		'pages' => (int) ( $data['pages'] ?? 1 ),
+		'first' => (int) ( $data['first'] ?? 0 ),
+		'last'  => (int) ( $data['last'] ?? 0 ),
+		'base'  => (string) ( $data['base'] ?? '' ),
+		'noun'  => __( 'items', 'dgl-platform' ),
+	]
+);

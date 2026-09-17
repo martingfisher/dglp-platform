@@ -25,6 +25,7 @@ final class Assets {
 	public static function enqueue( bool $with_editor = false ): void {
 		self::style( 'assets/dashboard.css', self::HANDLE );
 		self::script( 'assets/dashboard.js', self::HANDLE );
+		self::autoload();
 
 		if ( $with_editor ) {
 			/*
@@ -61,7 +62,30 @@ final class Assets {
 		);
 	}
 
-	private static function script( string $relative, string $handle ): void {
+	/**
+	 * The load-more-on-scroll script, shared by the member area and the
+	 * public pages, with its few words translated.
+	 */
+	public static function autoload(): void {
+		self::script( 'assets/autoload.js', 'dgl-autoload' );
+
+		wp_add_inline_script(
+			'dgl-autoload',
+			'window.dglAutoload = ' . wp_json_encode(
+				[
+					'more'    => __( 'Load more', 'dgl-platform' ),
+					'loading' => __( 'Loading…', 'dgl-platform' ),
+					/* translators: 1: how many were just added, 2: how many are now shown. */
+					'loaded'  => __( '%1$d more loaded, showing %2$d.', 'dgl-platform' ),
+					'all'     => __( 'That is everything.', 'dgl-platform' ),
+					'failed'  => __( 'Could not load more. The page links are below.', 'dgl-platform' ),
+				]
+			) . ';',
+			'before'
+		);
+	}
+
+	public static function script( string $relative, string $handle ): void {
 		$path = \DGL\PLUGIN_DIR . $relative;
 
 		if ( ! is_readable( $path ) ) {
