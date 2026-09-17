@@ -1503,7 +1503,7 @@ add_action(
 	static function ( $sent, $message, $to ) use ( &$sent_links, &$sent_to, &$sent_bodies ): void {
 		$sent_links[]  = (string) $message->cta_url;
 		$sent_to[]     = implode( ',', (array) $to );
-		$sent_bodies[] = implode( ' ', $message->paragraphs );
+		$sent_bodies[] = implode( ' ', $message->paragraphs ) . ' ' . $message->note;
 	},
 	10,
 	3
@@ -2355,6 +2355,20 @@ $ok( is_wp_error( $r ), 'refusing needs a reason' );
 $r = \DGL\Org\Profile::reject_pending( $org_a, $mod, 'Please use the registered charity name.' );
 $ok( true === $r && ! in_array( $org_a, \DGL\Org\Profile::awaiting_review(), true ), 'refused with a reason, and off the waiting list' );
 $ok( 'Org A' === get_the_title( $org_a ), 'the live name never changed' );
+$owner_mail = (string) get_userdata( $alice )->user_email;
+$refusals   = array_filter( $sent_to, static fn( string $t ): bool => str_contains( $t, $owner_mail ) );
+$ok( 1 === count( $refusals ), 'the owner is emailed the refusal (' . implode( ' | ', $sent_to ) . ')' );
+$ok( str_contains( implode( ' ', $sent_bodies ), 'Please use the registered charity name.' ), 'with the reason, word for word' );
+$ok( ! str_contains( implode( ' ', $sent_to ), (string) get_userdata( $aaron )->user_email ), 'a contributor is not' );
+$sent_to = []; $sent_bodies = []; $sent_links = [];
+$org_input['org_name'] = 'Org A, properly renamed';
+$saved = \DGL\Org\Profile::save( $org_a, $org_input, $alice, [] );
+$sent_to = []; $sent_bodies = []; $sent_links = [];
+$ok( true === \DGL\Org\Profile::approve_pending( $org_a, $mod ), 'a second request is accepted' );
+$ok( 'Org A, properly renamed' === get_the_title( $org_a ), 'and the name is live' );
+$ok( 1 === count( $sent_to ) && str_contains( $sent_to[0], $owner_mail ), 'the owner is emailed the acceptance (' . implode( ' | ', $sent_to ) . ')' );
+$ok( str_contains( implode( ' ', $sent_bodies ), 'organisation name' ) && str_contains( implode( ' ', $sent_links ), '/profile/organisation' ), 'naming what changed and linking to the profile' );
+wp_update_post( [ 'ID' => $org_a, 'post_title' => 'Org A' ] );
 
 update_option( \DGL\Email\Routing::OPTION_ENABLED, $mail_was_on );
 

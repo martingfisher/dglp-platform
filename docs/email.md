@@ -88,3 +88,15 @@ because somebody reading in plain text is reading the whole message.
 **No unsubscribe link.** These are transactional, not marketing. A link that
 does nothing is worse than saying plainly what the email is. Digest preferences
 are separate and live in the dashboard.
+
+## Organisation change decisions
+
+Added 17 September 2026. When the review team accepts or refuses a name or
+logo change, every approved owner of the organisation is emailed:
+`org_change_approved` ("Your new organisation name is live") or
+`org_change_rejected`, which carries the team's note word for word under
+"From the review team". Contributors and pending or suspended accounts are
+not emailed. Both go through `Mailer::send()` like everything else, so the
+staging redirect applies. Sent from `Profile::approve_pending()` and
+`Profile::reject_pending()`, which the front-end review screen and the
+wp-admin Organisations box both call.

@@ -9,6 +9,7 @@ declare( strict_types=1 );
 
 namespace DGL\Org;
 
+use DGL\Access\UserContext as UserContextRole;
 use DGL\Audit\Log;
 use DGL\Meta;
 use DGL\Schema\Field;
@@ -253,6 +254,56 @@ final class Profile {
 	}
 
 	/**
+	 * Field labels for a set of keys, for the emails.
+	 *
+	 * @param string[] $keys
+	 * @return string[]
+	 */
+	private static function labels( array $keys ): array {
+		$labels = [];
+
+		foreach ( $keys as $key ) {
+			$field    = Schema::find( (string) $key );
+			$labels[] = null !== $field ? $field->label : (string) $key;
+		}
+
+		return $labels;
+	}
+
+	/**
+	 * Email the organisation's owners about a decision on their request.
+	 *
+	 * Owners, because only an owner can ask for a name or logo change, so
+	 * whoever asked is among them and the rest ought to know too. Nobody
+	 * pending or suspended: a decision email is not an invitation back in.
+	 */
+	private static function tell_the_owners( int $org_id, \DGL\Email\Message $message ): void {
+		$to = [];
+
+		foreach ( Org::members( $org_id ) as $user_id ) {
+			if ( UserContextRole::ORG_OWNER !== Org::role_for_user( $user_id ) ) {
+				continue;
+			}
+
+			if ( UserContextRole::ACCOUNT_APPROVED !== (string) get_user_meta( $user_id, Meta::USER_ACCOUNT_STATUS, true ) ) {
+				continue;
+			}
+
+			$user = get_userdata( $user_id );
+
+			if ( $user && '' !== (string) $user->user_email ) {
+				$to[] = (string) $user->user_email;
+			}
+		}
+
+		if ( [] === $to ) {
+			return;
+		}
+
+		\DGL\Email\Mailer::send( $message->for_recipients( $to ) );
+	}
+
+	/**
 	 * Email the review team that a change is waiting, with a link to decide.
 	 *
 	 * @param string[] $keys Field keys held for approval.
@@ -338,6 +389,8 @@ final class Profile {
 		 */
 		do_action( 'dgl_org_change_approved', $org_id, array_keys( $pending ) );
 
+		self::tell_the_owners( $org_id, \DGL\Email\OrgCopy::change_approved( (string) get_the_title( $org_id ), self::labels( array_keys( $pending ) ), \DGL\Dashboard\Router::url( 'profile', 'organisation' ) ) );
+
 		return true;
 	}
 
@@ -372,6 +425,8 @@ final class Profile {
 		 * @param string $note   The reason, shown to the organisation.
 		 */
 		do_action( 'dgl_org_change_rejected', $org_id, trim( $note ) );
+
+		self::tell_the_owners( $org_id, \DGL\Email\OrgCopy::change_refused( (string) get_the_title( $org_id ), self::labels( array_keys( $pending ) ), trim( $note ), \DGL\Dashboard\Router::url( 'profile', 'organisation' ) ) );
 
 		return true;
 	}

@@ -399,10 +399,9 @@ final class Organisations {
 	/**
 	 * Say what actually happened, and no more than that.
 	 *
-	 * There is no email to an organisation when its name change is decided:
-	 * `dgl_org_change_approved` and `dgl_org_change_rejected` both fire and
-	 * nothing listens yet. Saying "they have been told" would be a claim the
-	 * system cannot keep, so it says what is true instead.
+	 * Since 0.9.5 the organisation's owners are emailed on both decisions,
+	 * from Profile::approve_pending() and reject_pending(), so the notice
+	 * can say so.
 	 */
 	public static function notices(): void {
 		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
@@ -430,8 +429,8 @@ final class Organisations {
 		}
 
 		$said = 'reject' === $decided
-			? __( 'Refused. The requested change has been discarded and the organisation keeps its current details.', 'dgl-platform' )
-			: __( 'Accepted. The new details are now on every listing this organisation has posted.', 'dgl-platform' );
+			? __( 'Refused. The organisation keeps its current details, and its owners have been emailed your reason.', 'dgl-platform' )
+			: __( 'Accepted. The new details are now on every listing this organisation has posted, and its owners have been emailed.', 'dgl-platform' );
 
 		echo '<div class="notice notice-success"><p>' . esc_html( $said ) . '</p></div>';
 	}
