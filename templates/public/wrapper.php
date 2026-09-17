@@ -25,6 +25,8 @@ if ( null !== $dgl_single ) {
 	View::output( 'public/single', [ 'post' => get_post(), 'type' => $dgl_single ] );
 } elseif ( null !== $dgl_archive ) {
 	View::output( 'public/archive', [ 'type' => $dgl_archive ] );
+} elseif ( Frontend::calendar_request() ) {
+	View::output( 'public/calendar', \DGL\Events\Calendar::view_data( wp_unslash( $_GET ) ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 } elseif ( '1' === Frontend::directory_request() ) {
 	View::output( 'public/directory', [] );
 } elseif ( null !== Frontend::directory_request() ) {

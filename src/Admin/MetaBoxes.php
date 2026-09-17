@@ -300,6 +300,9 @@ final class MetaBoxes {
 		}
 
 		Store::write( $post_id, (string) $post->post_type, $result['values'] );
+
+		// Dates changed here would otherwise wait for the hourly roll-forward.
+		\DGL\Events\Series::stamp( $post_id, (string) $post->post_type );
 	}
 
 	/**

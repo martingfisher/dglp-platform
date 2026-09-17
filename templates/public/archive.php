@@ -25,6 +25,9 @@ $label = Frontend::type_label( $type, true );
 		<h1 class="dgl-pub__title"><?php echo esc_html( $label ); ?></h1>
 		<p class="dgl-pub__lede">
 			<?php esc_html_e( 'Posted by organisations in the Doing Good Leeds Partnership.', 'dgl-platform' ); ?>
+			<?php if ( \DGL\PostTypes::EVENT === $type ) : ?>
+				<a class="dgl-pub__callink" href="<?php echo esc_url( \DGL\Events\Calendar::url() ); ?>"><?php esc_html_e( 'See them day by day on the calendar', 'dgl-platform' ); ?></a>
+			<?php endif; ?>
 		</p>
 	</header>
 

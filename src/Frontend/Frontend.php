@@ -11,6 +11,9 @@ namespace DGL\Frontend;
 
 use DGL\Dashboard\Assets;
 use DGL\Dashboard\View;
+use DGL\Events\Calendar;
+use DGL\Events\Series;
+use DGL\Events\Wording;
 use DGL\Org\Directory;
 use DGL\Org\DirectoryQuery;
 use DGL\Org\Org;
@@ -54,12 +57,14 @@ final class Frontend {
 	 * work without anybody remembering to change this.
 	 */
 	public static function is_ours(): bool {
-		return self::single_type() !== null || self::archive_type() !== null || self::directory_request() !== null;
+		return self::single_type() !== null || self::archive_type() !== null || self::directory_request() !== null || self::calendar_request();
 	}
 
 	/* ---- The organisation directory ------------------------------------ */
 
 	public static function add_rules(): void {
+		// Before the post type's own rules, or 'calendar' is read as an event slug.
+		add_rewrite_rule( '^' . PostTypes::definitions()[ PostTypes::EVENT ]['slug'] . '/calendar/?$', 'index.php?' . Calendar::QUERY_VAR . '=1', 'top' );
 		add_rewrite_rule( '^' . Directory::BASE . '/?$', 'index.php?' . Directory::QUERY_VAR . '=1', 'top' );
 		add_rewrite_rule( '^' . Directory::BASE . '/([^/]+)/?$', 'index.php?' . Directory::QUERY_VAR . '=$matches[1]', 'top' );
 	}
@@ -70,6 +75,7 @@ final class Frontend {
 	 */
 	public static function add_query_var( array $vars ): array {
 		$vars[] = Directory::QUERY_VAR;
+		$vars[] = Calendar::QUERY_VAR;
 
 		return $vars;
 	}
@@ -82,6 +88,10 @@ final class Frontend {
 		$value = get_query_var( Directory::QUERY_VAR, null );
 
 		return is_string( $value ) && '' !== $value ? $value : null;
+	}
+
+	public static function calendar_request(): bool {
+		return '1' === (string) get_query_var( Calendar::QUERY_VAR, '' );
 	}
 
 	/**
@@ -102,11 +112,17 @@ final class Frontend {
 	public static function directory_status(): void {
 		$request = self::directory_request();
 
-		if ( null === $request ) {
+		global $wp_query;
+
+		if ( self::calendar_request() ) {
+			$wp_query->is_404 = false;
+			status_header( 200 );
 			return;
 		}
 
-		global $wp_query;
+		if ( null === $request ) {
+			return;
+		}
 
 		if ( '1' === $request ) {
 			// The index is not a 404 either, whatever the main query thinks.
@@ -126,6 +142,10 @@ final class Frontend {
 	}
 
 	public static function directory_title( string $title ): string {
+		if ( self::calendar_request() ) {
+			return __( 'Events calendar', 'dgl-platform' ) . ' | ' . get_bloginfo( 'name' );
+		}
+
 		$request = self::directory_request();
 
 		if ( null === $request ) {
@@ -226,6 +246,12 @@ final class Frontend {
 		// row has ever carried.
 		$date_key = $field->meta_key();
 
+		// Events sort by their next occurrence, so a weekly group sits where
+		// its next date belongs rather than where its first one was.
+		if ( PostTypes::EVENT === $type ) {
+			$date_key = \DGL\Meta::ITEM_NEXT_AT;
+		}
+
 		/*
 		 * Items with no date still have to appear. Setting `meta_key` makes
 		 * WordPress inner-join postmeta on that key, whatever the meta_query
@@ -291,10 +317,17 @@ final class Frontend {
 	public static function facts( WP_Post $post ): array {
 		$out = [];
 
+		$schedule = self::schedule( $post );
+
 		foreach ( FieldRegistry::public_fields( (string) $post->post_type ) as $field ) {
 			// The headline is the page title and the summary is the standfirst.
 			// Repeating them in a fact table is noise.
 			if ( in_array( $field->key, [ 'title', 'summary', 'body', 'image' ], true ) ) {
+				continue;
+			}
+
+			// A series says when in the schedule block above the card; its raw start and end would repeat it.
+			if ( null !== $schedule && in_array( $field->key, [ 'start_datetime', 'end_datetime' ], true ) ) {
 				continue;
 			}
 
@@ -331,6 +364,26 @@ final class Frontend {
 	 */
 	public static function meta_line( WP_Post $post ): string {
 		$parts = [];
+
+		$rule = Series::rule_for( (int) $post->ID );
+
+		if ( null !== $rule ) {
+			$parts[] = Wording::with_times( $rule->to_meta(), $rule->start->format( 'Y-m-d H:i:s' ), '' );
+			$coming  = Series::next_dates( (int) $post->ID, 1 );
+
+			if ( [] !== $coming ) {
+				/* translators: %s: a date like "Tue 23 Sep". */
+				$parts[] = sprintf( __( 'Next: %s', 'dgl-platform' ), wp_date( 'D j M', $coming[0]->start->getTimestamp() ) );
+			}
+
+			$venue = (string) self::value( $post, 'venue_name' );
+
+			if ( '' !== $venue ) {
+				$parts[] = $venue;
+			}
+
+			return implode( ' · ', $parts );
+		}
 
 		$when = (string) self::value( $post, 'start_datetime' );
 
@@ -391,6 +444,28 @@ final class Frontend {
 	 * a page can only be reached in this state between the date passing and the
 	 * sweep running. Saying so is better than quietly showing a stale listing.
 	 */
+	/**
+	 * A repeating event's schedule in words, with its next dates.
+	 *
+	 * @return array{wording: string, next: \DGL\Events\Occurrence[], ended: bool, until: string}|null
+	 */
+	public static function schedule( WP_Post $post ): ?array {
+		$rule = Series::rule_for( (int) $post->ID );
+
+		if ( null === $rule ) {
+			return null;
+		}
+
+		$next = Series::next_dates( (int) $post->ID, 5 );
+
+		return [
+			'wording' => Wording::long( $rule->to_meta(), $rule->start->format( 'Y-m-d H:i:s' ), null !== $rule->duration ? $rule->start->add( $rule->duration )->format( 'Y-m-d H:i:s' ) : '', static fn( string $d ): string => wp_date( 'j F Y', ( new \DateTimeImmutable( $d, wp_timezone() ) )->getTimestamp() ) ),
+			'next'    => $next,
+			'ended'   => [] === $next,
+			'until'   => $rule->until->format( 'Y-m-d' ),
+		];
+	}
+
 	public static function has_passed( WP_Post $post ): bool {
 		$expires = (string) get_post_meta( (int) $post->ID, \DGL\Meta::ITEM_EXPIRES_AT, true );
 

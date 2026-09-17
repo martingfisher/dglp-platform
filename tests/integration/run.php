@@ -2122,6 +2122,10 @@ $ev_soon  = $make_item( $org_a, $alice, Statuses::LIVE );
 $ev_never = $make_item( $org_a, $alice, Statuses::LIVE );
 update_post_meta( $ev_late, 'dgl_start_datetime', '2031-12-01 10:00:00' );
 update_post_meta( $ev_soon, 'dgl_start_datetime', '2031-01-01 10:00:00' );
+// Events sort by their next occurrence, stamped on submit, approve, admin save and the hourly roll-forward.
+\DGL\Events\Series::stamp( $ev_late, PostTypes::EVENT );
+\DGL\Events\Series::stamp( $ev_soon, PostTypes::EVENT );
+\DGL\Events\Series::stamp( $ev_never, PostTypes::EVENT );
 
 $archive_query = new WP_Query();
 $GLOBALS['wp_the_query'] = $archive_query;
