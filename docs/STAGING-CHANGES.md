@@ -430,3 +430,15 @@ clean. They are the only DGLP content on staging.
   seventeen screens at 390px: no sideways scroll, no target under 44px
   except the WordPress editor toolbar; unit suite and both AAA walks
   clear. Recorded in DESIGN.md. Pinned to commit `6eef41e`.
+- **0.10.7 deployed** (17 September): an impeccable adapt pass over the
+  public pages. On a phone the directory's four filters fold behind one
+  "Filters" button (open when a filter is set, always shown without
+  JavaScript), so the search box and the first results share the first
+  screen; list and calendar titles are 44px rows; calendar month links,
+  the calendar link, Clear and the organisation contact links are
+  thumb-sized. Checked on seven public screens at 390px and 1280px
+  locally: no sideways scroll, no target under 44px on the phone pass;
+  contrast walk clear. Staging could not be screenshotted from here (the
+  egress proxy blocks the browser), so the theme-framed result is NOT
+  VERIFIED visually; the markup is confirmed served. Pinned to commit
+  `8e2ccdd`.
