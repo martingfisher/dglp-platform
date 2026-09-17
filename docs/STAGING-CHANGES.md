@@ -326,3 +326,10 @@ clean. They are the only DGLP content on staging.
   purged once after. Email preferences tab reworded as asked; file control
   button centred (checked locally, not on staging's font). Pinned to
   commit `5679717`.
+- **0.9.5 deployed**: owners are emailed when a name or logo change is
+  accepted or refused (the refusal carries the note word for word). The
+  admin notice and the queue line that claimed "the member has been told"
+  are now true. Rendered both messages locally and checked the layout;
+  not sent on staging yet, since that needs a real change to decide. To
+  see one: as an owner, change the organisation name, then decide it from
+  the queue; mail goes to the redirect address. Pinned to commit `aab52dc`.
