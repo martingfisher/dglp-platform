@@ -51,7 +51,8 @@ final class ProbeCommand {
 	 *
 	 * [--file=<kind>]
 	 * : With --multipart, also attach a small generated file as
-	 * dgl_file_image: "png" (a real 1x1 PNG) or "text" (a .txt).
+	 * dgl_file_image: "png" (a real 1x1 PNG), "text" (a .txt), or "blob:N"
+	 * (N megabytes of random bytes named photo.jpg) to find a size limit.
 	 *
 	 * ## EXAMPLES
 	 *
@@ -142,6 +143,10 @@ final class ProbeCommand {
 		if ( 'png' === $file ) {
 			$png   = base64_decode( 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==' );
 			$body .= "--{$boundary}\r\nContent-Disposition: form-data; name=\"dgl_file_image\"; filename=\"probe.png\"\r\nContent-Type: image/png\r\n\r\n{$png}\r\n";
+		} elseif ( str_starts_with( $file, 'blob:' ) ) {
+			$mb    = max( 1, min( 64, (int) substr( $file, 5 ) ) );
+			$blob  = random_bytes( $mb * 1024 * 1024 );
+			$body .= "--{$boundary}\r\nContent-Disposition: form-data; name=\"dgl_file_image\"; filename=\"photo.jpg\"\r\nContent-Type: image/jpeg\r\n\r\n{$blob}\r\n";
 		} elseif ( 'text' === $file ) {
 			$body .= "--{$boundary}\r\nContent-Disposition: form-data; name=\"dgl_file_image\"; filename=\"probe.txt\"\r\nContent-Type: text/plain\r\n\r\nhello\r\n";
 		} elseif ( '' === $file ) {
