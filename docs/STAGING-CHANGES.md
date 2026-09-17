@@ -279,3 +279,11 @@ clean. They are the only DGLP content on staging.
   untracked and ignored, and the 0.8.8 zip has no `build/` entries. The
   `--force` install removes the old plugin folder, so the nested copy is
   gone from staging too. Pinned to commit `0f755eb`.
+- **0.9.0 deployed**: organisation profile carries Forum Central's
+  directory data (fifteen new fields under five headings, fixed option
+  lists generated from Jenny's export), `wp dgl org import` with a dry
+  run, and the "Show us in the directory" switch any approved member can
+  use. Off for everyone until switched. Command confirmed registered on
+  staging (refuses a missing file). The CSV itself has not been imported
+  on staging yet: it needs to be on the server first, and it is not going
+  in the public repo. Pinned to commit `b13a89d`.
