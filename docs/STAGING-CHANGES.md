@@ -395,3 +395,20 @@ clean. They are the only DGLP content on staging.
   hourly hook could not be exercised from here; the server's own cron will
   run it at 12:53 GMT, and `wp dgl series status 8439` shows "Reminded for"
   once it has. Pinned to commit `f823988`.
+- **0.10.2 to 0.10.4 deployed** (17 September): events ask "Where it
+  happens" (in person, online, both); venue, address and postcode are only
+  asked and required when there is somewhere to go, online and hybrid get a
+  "Link to join online"; every earlier event was marked in person by the
+  schema-6 migration (`dgl_platform_db_version` 6, demo event 8439 reads
+  `in_person` and its page shows "Where it happens: In person"). Review
+  team gets a Decided screen (`/dashboard/review/decided/`, filtered by
+  outcome) and a refusal can be reopened into the queue, an archived item
+  restored from the review screen, a live one taken down as before. The
+  Blocksy breadcrumb over the directory and calendar read "Home > News";
+  it now reads Home > Events > Calendar, Home > Directory, and Home >
+  Directory > organisation (probed on all three after a cache clear; the
+  theme's filter is `blocksy:breadcrumbs:items-array`, found with the new
+  `wp dgl probe grep`). `wp dgl probe file|grep` read files under
+  wp-content for exactly this kind of question. Pinned to commit `ca4bc2f`.
+  Known: the member-area list tables are cramped at phone width; that is
+  the shared table partial and predates this release.
