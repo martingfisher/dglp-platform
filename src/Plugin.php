@@ -105,6 +105,7 @@ final class Plugin {
 		}
 
 		add_action( self::EXPIRY_HOOK, [ Transition::class, 'run_expiry_sweep' ] );
+		add_action( self::EXPIRY_HOOK, static fn() => \DGL\Dashboard\Wizard::purge_empty_drafts() );
 		add_action( self::DIGEST_HOOK, [ self::class, 'run_digests' ] );
 	}
 

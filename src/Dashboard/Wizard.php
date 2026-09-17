@@ -61,6 +61,18 @@ final class Wizard {
 			return new WP_Error( 'dgl_no_org', __( 'Your account is not linked to an organisation yet.', 'dgl-platform' ) );
 		}
 
+		/*
+		 * Every visit to "New event" used to insert a post, so a member who
+		 * clicked it, thought better of it and went back to the list left an
+		 * Untitled draft behind each time; one test account had 47. An empty
+		 * draft this person already owns is reused instead.
+		 */
+		$existing = self::empty_draft_for( $post_type, $user_id, $org_id );
+
+		if ( null !== $existing ) {
+			return $existing;
+		}
+
 		$post_id = wp_insert_post(
 			[
 				'post_type'   => $post_type,
@@ -79,6 +91,92 @@ final class Wizard {
 		update_post_meta( $post_id, Meta::ITEM_ORG, $org_id );
 
 		return (int) $post_id;
+	}
+
+	/**
+	 * Whether nothing has been typed into this draft yet.
+	 *
+	 * Title, summary and body are the three things step one asks for; a
+	 * draft with none of them has never been saved, because step one will
+	 * not save without them.
+	 */
+	public static function is_empty( int $post_id ): bool {
+		$post = get_post( $post_id );
+
+		if ( null === $post || Statuses::DRAFT !== $post->post_status ) {
+			return false;
+		}
+
+		return '' === trim( $post->post_title )
+			&& '' === trim( $post->post_content )
+			&& '' === trim( (string) get_post_meta( $post_id, 'dgl_summary', true ) );
+	}
+
+	/**
+	 * Delete a new draft that is still empty. Returns whether it did.
+	 */
+	public static function discard_if_empty( int $post_id ): bool {
+		if ( ! self::is_empty( $post_id ) ) {
+			return false;
+		}
+
+		return false !== wp_delete_post( $post_id, true );
+	}
+
+	/**
+	 * Empty drafts nobody has touched for a while. Run from the daily sweep.
+	 *
+	 * @return int How many were deleted.
+	 */
+	public static function purge_empty_drafts( int $older_than_days = 7, int $limit = 200 ): int {
+		$ids = get_posts(
+			[
+				'post_type'      => PostTypes::submittable(),
+				'post_status'    => Statuses::DRAFT,
+				'posts_per_page' => $limit,
+				'fields'         => 'ids',
+				// post_modified, not post_modified_gmt: WordPress leaves the GMT
+				// column at 0000-00-00 on a draft that has never been published,
+				// which reads as older than anything and would purge a draft
+				// somebody started a minute ago. Caught by the integration test.
+				'date_query'     => [ [ 'column' => 'post_modified', 'before' => $older_than_days . ' days ago' ] ],
+				'no_found_rows'  => true,
+			]
+		);
+		$done = 0;
+
+		foreach ( (array) $ids as $id ) {
+			if ( self::discard_if_empty( (int) $id ) ) {
+				++$done;
+			}
+		}
+
+		return $done;
+	}
+
+	private static function empty_draft_for( string $post_type, int $user_id, int $org_id ): ?int {
+		$ids = get_posts(
+			[
+				'post_type'      => $post_type,
+				'post_status'    => Statuses::DRAFT,
+				'author'         => $user_id,
+				'posts_per_page' => 20,
+				'fields'         => 'ids',
+				'orderby'        => 'modified',
+				'order'          => 'DESC',
+				'no_found_rows'  => true,
+				'meta_key'       => Meta::ITEM_ORG,
+				'meta_value'     => $org_id,
+			]
+		);
+
+		foreach ( (array) $ids as $id ) {
+			if ( self::is_empty( (int) $id ) ) {
+				return (int) $id;
+			}
+		}
+
+		return null;
 	}
 
 	/**

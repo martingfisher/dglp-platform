@@ -778,6 +778,14 @@ final class Controller {
 				return;
 			}
 
+			if ( 'cancel' === $intent && ! $is_edit ) {
+				// Nothing typed yet: the draft goes, and the list does not
+				// gain an Untitled row. Anything saved is kept.
+				Wizard::discard_if_empty( $post_id );
+				wp_safe_redirect( Router::url( PostTypes::definitions()[ $post->post_type ]['slug'] ) );
+				exit;
+			}
+
 			$errors = Wizard::save_step( $post_id, $schema_type, $step, $input, $_FILES );
 
 			if ( empty( $errors ) ) {

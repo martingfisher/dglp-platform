@@ -903,6 +903,8 @@ body.dgl-body {
  * one thing here a theme is not allowed to decide.
  */
 .dgl-dash .dgl-field {
+	/* Border-box, or width: 100% plus 24px of padding overflows the card by 24px, which is what every text input was doing. */
+	box-sizing: border-box;
 	width: 100%;
 	min-height: var(--dgl-field-height);
 	padding: 0 12px;
@@ -1062,6 +1064,13 @@ body.dgl-body {
 	gap: 8px;
 }
 
+/* A form that holds nothing but the actions has no rule to sit under. */
+.dgl-form__actions.dgl-form__actions--alone {
+	margin-top: 0;
+	padding-top: 0;
+	border-top: 0;
+}
+
 .dgl-form__actions {
 	display: flex;
 	flex-wrap: wrap;
@@ -1153,6 +1162,8 @@ body.dgl-body {
 
 .dgl-review__list dt { color: var(--dgl-text-muted); }
 .dgl-review__list dd { margin: 0; }
+.dgl-review__list dd > :first-child { margin-top: 0; }
+.dgl-review__list dd > :last-child { margin-bottom: 0; }
 
 .dgl-review__missing { color: var(--dgl-danger); font-weight: 600; }
 .dgl-review__blank   { color: var(--dgl-text-muted); }
@@ -1221,6 +1232,23 @@ body.dgl-body {
 @media (max-width: 860px) {
 	.dgl-wizard,
 	.dgl-detail { grid-template-columns: minmax(0, 1fr); }
+
+	/*
+	 * On a phone the four-row progress list and the callout pushed the
+	 * step's heading below the fold. The list becomes one row of numbers
+	 * with only the current step named, and the callout waits for the
+	 * review step, which is where "nothing goes live automatically" is
+	 * the thing somebody needs to read before pressing the button.
+	 */
+	.dgl-progress__heading { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+	.dgl-progress__list { display: flex; align-items: center; gap: 4px; }
+	.dgl-progress__step a,
+	.dgl-progress__step > span { padding: 4px 0; gap: 8px; }
+	.dgl-progress__step:not(.dgl-progress__step--current) .dgl-progress__label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+	.dgl-progress__step--current { flex: 1 1 auto; min-width: 0; }
+	.dgl-progress__step--current .dgl-progress__label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+	.dgl-progress .dgl-callout { display: none; }
+	.dgl-wizard--review .dgl-progress .dgl-callout { display: block; }
 
 	.dgl-review__list { grid-template-columns: minmax(0, 1fr); gap: 2px; }
 	.dgl-review__list dd { margin-bottom: 10px; }

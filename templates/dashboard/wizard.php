@@ -128,9 +128,23 @@ if ( FieldRegistry::STEP_DETAILS === $step ) {
 						? Router::url( 'item', (string) $data['parent']->ID )
 						: Router::url( $data['slug'] );
 					?>
-					<a class="dgl-button dgl-button--secondary" href="<?php echo esc_url( $cancel_url ); ?>">
-						<?php esc_html_e( 'Cancel', 'dgl-platform' ); ?>
-					</a>
+					<?php if ( empty( $data['is_edit'] ) ) : ?>
+						<?php
+						/*
+						 * A new draft that has had nothing typed into it is
+						 * deleted on cancel rather than left as an "Untitled"
+						 * row in the list. Once something is saved, cancel
+						 * keeps it, the same as before.
+						 */
+						?>
+						<button class="dgl-button dgl-button--secondary" type="submit" name="dgl_intent" value="cancel" formnovalidate>
+							<?php esc_html_e( 'Cancel', 'dgl-platform' ); ?>
+						</button>
+					<?php else : ?>
+						<a class="dgl-button dgl-button--secondary" href="<?php echo esc_url( $cancel_url ); ?>">
+							<?php esc_html_e( 'Cancel', 'dgl-platform' ); ?>
+						</a>
+					<?php endif; ?>
 				<?php endif; ?>
 
 				<div class="dgl-form__actions-end">

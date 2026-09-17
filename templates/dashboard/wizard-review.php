@@ -36,7 +36,7 @@ $changes    = $data['changes'] ?? [];
  */
 $ready = empty( $all_errors ) && ( ! $is_edit || ! empty( $changes ) );
 ?>
-<div class="dgl-wizard">
+<div class="dgl-wizard dgl-wizard--review">
 	<?php
 	View::output(
 		'dashboard/wizard-progress',
@@ -139,7 +139,7 @@ $ready = empty( $all_errors ) && ( ! $is_edit || ! empty( $changes ) );
 		<form class="dgl-form" method="post">
 			<?php wp_nonce_field( Wizard::NONCE ); ?>
 
-			<div class="dgl-form__actions">
+			<div class="dgl-form__actions dgl-form__actions--alone">
 				<a class="dgl-button dgl-button--secondary" href="<?php echo esc_url( Router::url( 'edit', (string) $post->ID, '3' ) ); ?>">
 					<?php esc_html_e( 'Back', 'dgl-platform' ); ?>
 				</a>

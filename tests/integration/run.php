@@ -110,7 +110,7 @@ foreach ( $fixture_users as $stale_user ) {
 	wp_delete_user( (int) $stale_user );
 }
 
-foreach ( [ 'dgl_alice', 'dgl_aaron', 'dgl_bella', 'dgl_mod', 'dgl_pending', 'dgl_susp', 'dgl_carl', 'dgl_tina', 'dgl_owen', 'dgl_pendowner', 'dgl_loose', 'dgl_privacy', 'dgl_dirowner', 'dgl_dircontr', 'dgl_dirpend', 'dgl_dirout' ] as $login ) {
+foreach ( [ 'dgl_alice', 'dgl_aaron', 'dgl_bella', 'dgl_mod', 'dgl_pending', 'dgl_susp', 'dgl_carl', 'dgl_tina', 'dgl_owen', 'dgl_pendowner', 'dgl_loose', 'dgl_privacy', 'dgl_dirowner', 'dgl_dircontr', 'dgl_dirpend', 'dgl_dirout', 'dgl_wizard' ] as $login ) {
 	$existing = get_user_by( 'login', $login );
 	if ( $existing ) {
 		wp_delete_user( $existing->ID );
@@ -2637,6 +2637,43 @@ $out = $run_import( '' );
 $ok( str_contains( $out, '3 organisations: 0 new, 2 already known, 1 skipped.' ), 'running again updates and does not duplicate' );
 $ok( 1 === count( get_posts( [ 'post_type' => PostTypes::ORG, 'post_status' => 'any', 'title' => 'Import Test Trust', 'fields' => 'ids' ] ) ), 'still one trust' );
 $ok( true === \DGL\Org\Directory::wants_listing( $imp ), 'and the directory choice is left alone' );
+
+/* ------------------------------------------------------------ empty drafts */
+
+$group( 'Empty drafts: reused, discarded on cancel, purged when stale' );
+
+$wz_org  = $make_org( 'Wizard Org' );
+$wz_user = $make_member( 'dgl_wizard', $wz_org, 'owner' );
+Access::flush_cache();
+
+$d1 = \DGL\Dashboard\Wizard::create( PostTypes::EVENT, $wz_user );
+$d2 = \DGL\Dashboard\Wizard::create( PostTypes::EVENT, $wz_user );
+$ok( ! is_wp_error( $d1 ) && $d1 === $d2, 'starting twice reuses the empty draft rather than making two' );
+update_post_meta( (int) $d1, DGL_FIXTURE_FLAG, '1' );
+$ok( true === \DGL\Dashboard\Wizard::is_empty( (int) $d1 ), 'a fresh draft is empty' );
+$ok( true === \DGL\Dashboard\Wizard::discard_if_empty( (int) $d1 ) && null === get_post( (int) $d1 ), 'cancel on an empty draft deletes it' );
+
+$d3 = (int) \DGL\Dashboard\Wizard::create( PostTypes::EVENT, $wz_user );
+update_post_meta( $d3, DGL_FIXTURE_FLAG, '1' );
+$ok( $d3 !== $d1, 'after a discard a new draft is made' );
+wp_update_post( [ 'ID' => $d3, 'post_title' => 'Half written' ] );
+$ok( false === \DGL\Dashboard\Wizard::is_empty( $d3 ), 'a draft with a headline is not empty' );
+$ok( false === \DGL\Dashboard\Wizard::discard_if_empty( $d3 ) && null !== get_post( $d3 ), 'cancel keeps a draft with anything in it' );
+$d4 = (int) \DGL\Dashboard\Wizard::create( PostTypes::EVENT, $wz_user );
+update_post_meta( $d4, DGL_FIXTURE_FLAG, '1' );
+$ok( $d4 !== $d3, 'a draft with content is not reused for a new one' );
+$d5 = (int) \DGL\Dashboard\Wizard::create( PostTypes::NEWS, $wz_user );
+update_post_meta( $d5, DGL_FIXTURE_FLAG, '1' );
+$ok( $d5 !== $d4, 'an empty event draft is not reused for a news item' );
+
+// Age two of them.
+$wpdb->update( $wpdb->posts, [ 'post_modified_gmt' => gmdate( 'Y-m-d H:i:s', time() - 10 * DAY_IN_SECONDS ), 'post_modified' => gmdate( 'Y-m-d H:i:s', time() - 10 * DAY_IN_SECONDS ) ], [ 'ID' => $d4 ] );
+$wpdb->update( $wpdb->posts, [ 'post_modified_gmt' => gmdate( 'Y-m-d H:i:s', time() - 10 * DAY_IN_SECONDS ), 'post_modified' => gmdate( 'Y-m-d H:i:s', time() - 10 * DAY_IN_SECONDS ) ], [ 'ID' => $d3 ] );
+clean_post_cache( $d4 ); clean_post_cache( $d3 );
+$purged = \DGL\Dashboard\Wizard::purge_empty_drafts( 7 );
+$ok( $purged >= 1 && null === get_post( $d4 ), 'the stale empty draft is purged' );
+$ok( null !== get_post( $d3 ), 'the stale draft with a headline is kept' );
+$ok( null !== get_post( $d5 ), 'a fresh empty draft is kept' );
 
 /* ----------------------------------------------------------------- report */
 
