@@ -69,9 +69,11 @@ resubmitting it is a stateful document, not a form entry.
 - Built since, all in 0.8.x: archive, restore and take-down; removing a
   member; self-serve joining with email-domain matching; an approval queue for
   new organisations; the team told when an organisation change is waiting.
-- Not yet built, and known: importing the supplied organisation list; a public
-  searchable directory of organisations with a per-organisation visibility
-  toggle; Microsoft and Google sign-in; CSV export; consent records at
+- Built 17 September 2026: the organisation profile carries Forum Central's
+  directory data in fixed lists, the import loads it, and any approved member
+  can switch the organisation into or out of the directory.
+- Not yet built, and known: the public directory page itself; Microsoft and
+  Google sign-in; CSV export; consent records at
   registration; Turnstile on the join form; member-initiated account closure.
 - Constraint: the plugin must not depend on the theme's markup. Theme updates
   cannot be allowed to break the member area.

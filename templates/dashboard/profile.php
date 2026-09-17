@@ -93,7 +93,12 @@ $is_owner = $user instanceof UserContext && $user->is_org_owner();
 			</p>
 		<?php endif; ?>
 
+		<?php $section_shown = 0; ?>
 		<?php foreach ( $data['fields'] as $field ) : ?>
+			<?php if ( $field->step !== $section_shown && isset( $data['sections'][ $field->step ] ) ) : ?>
+				<?php $section_shown = $field->step; ?>
+				<h2 class="dgl-section__title dgl-section__title--form"><?php echo esc_html( $data['sections'][ $field->step ] ); ?></h2>
+			<?php endif; ?>
 			<?php
 			echo FieldRenderer::render( // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped by the renderer.
 				$field,
@@ -114,6 +119,49 @@ $is_owner = $user instanceof UserContext && $user->is_org_owner();
 			</div>
 		<?php endif; ?>
 	</form>
+
+	<section class="dgl-card dgl-section" aria-labelledby="dgl-directory-heading">
+		<h2 class="dgl-section__title" id="dgl-directory-heading"><?php esc_html_e( 'The public directory', 'dgl-platform' ); ?></h2>
+		<?php if ( ! empty( $data['directory_notice'] ) ) : ?>
+			<div class="dgl-alert dgl-alert--good" role="status"><p><?php echo esc_html( $data['directory_notice'] ); ?></p></div>
+		<?php endif; ?>
+		<?php if ( ! empty( $data['directory_error'] ) ) : ?>
+			<div class="dgl-alert" role="alert"><p><?php echo esc_html( $data['directory_error'] ); ?></p></div>
+		<?php endif; ?>
+		<p>
+			<?php if ( $data['directory_on'] ) : ?>
+				<?php esc_html_e( 'You are shown in the directory of member organisations on the website, with the details above.', 'dgl-platform' ); ?>
+			<?php else : ?>
+				<?php esc_html_e( 'You are not shown in the directory of member organisations on the website. Nobody appears without choosing to.', 'dgl-platform' ); ?>
+			<?php endif; ?>
+			<?php if ( $data['directory_on'] && ! $data['directory_live'] ) : ?>
+				<?php esc_html_e( 'It will show once the team has verified your organisation.', 'dgl-platform' ); ?>
+			<?php endif; ?>
+		</p>
+		<?php if ( $data['can_toggle_directory'] ) : ?>
+			<form method="post" action="<?php echo esc_url( Router::url( 'profile', 'organisation' ) ); ?>" class="dgl-form dgl-form--bare">
+				<?php wp_nonce_field( Wizard::NONCE ); ?>
+				<input type="hidden" name="dgl_directory" value="<?php echo $data['directory_on'] ? '0' : '1'; ?>">
+				<button class="dgl-button<?php echo $data['directory_on'] ? ' dgl-button--secondary' : ''; ?>" type="submit">
+					<?php echo $data['directory_on'] ? esc_html__( 'Remove us from the directory', 'dgl-platform' ) : esc_html__( 'Show us in the directory', 'dgl-platform' ); ?>
+				</button>
+			</form>
+			<p class="dgl-help"><?php esc_html_e( 'Any member of this organisation can change this, and it takes effect straight away.', 'dgl-platform' ); ?></p>
+		<?php endif; ?>
+	</section>
+
+	<?php if ( ! empty( $data['imported_facts'] ) ) : ?>
+		<section class="dgl-card dgl-section" aria-labelledby="dgl-imported-heading">
+			<h2 class="dgl-section__title" id="dgl-imported-heading"><?php esc_html_e( 'From Forum Central\'s records', 'dgl-platform' ); ?></h2>
+			<p class="dgl-help"><?php esc_html_e( 'Carried over when your organisation was added. Ask the DGLP team if anything here is wrong.', 'dgl-platform' ); ?></p>
+			<dl class="dgl-review__list">
+				<?php foreach ( $data['imported_facts'] as $label => $value ) : ?>
+					<dt><?php echo esc_html( $label ); ?></dt>
+					<dd><?php echo esc_html( $value ); ?></dd>
+				<?php endforeach; ?>
+			</dl>
+		</section>
+	<?php endif; ?>
 
 <?php elseif ( 'you' === $tab ) : ?>
 

@@ -36,6 +36,8 @@ final readonly class Field {
 	public const CHECKBOX = 'checkbox';
 	public const IMAGE    = 'image';
 	public const POSTCODE = 'postcode';
+	/** Several of a fixed list. Stored as an array of option keys. */
+	public const CHOICES  = 'choices';
 
 	/**
 	 * @param string                $key       Meta key, without the plugin prefix.
@@ -108,6 +110,7 @@ final readonly class Field {
 			self::CHECKBOX,
 			self::IMAGE,
 			self::POSTCODE,
+			self::CHOICES,
 		];
 	}
 

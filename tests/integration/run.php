@@ -110,7 +110,7 @@ foreach ( $fixture_users as $stale_user ) {
 	wp_delete_user( (int) $stale_user );
 }
 
-foreach ( [ 'dgl_alice', 'dgl_aaron', 'dgl_bella', 'dgl_mod', 'dgl_pending', 'dgl_susp', 'dgl_carl', 'dgl_tina', 'dgl_owen', 'dgl_pendowner', 'dgl_loose' ] as $login ) {
+foreach ( [ 'dgl_alice', 'dgl_aaron', 'dgl_bella', 'dgl_mod', 'dgl_pending', 'dgl_susp', 'dgl_carl', 'dgl_tina', 'dgl_owen', 'dgl_pendowner', 'dgl_loose', 'dgl_privacy', 'dgl_dirowner', 'dgl_dircontr', 'dgl_dirpend', 'dgl_dirout' ] as $login ) {
 	$existing = get_user_by( 'login', $login );
 	if ( $existing ) {
 		wp_delete_user( $existing->ID );
@@ -2522,6 +2522,121 @@ $ok( 0 === (int) $wpdb->get_var( $wpdb->prepare( 'SELECT author_id FROM ' . Item
 
 $again = \DGL\Privacy\Privacy::erase( 'subject@privacy.test' );
 $ok( false === $again['items_removed'] && true === $again['done'], 'erasing twice removes nothing more' );
+
+/* ---------------------------------------------------- directory and import */
+
+$group( 'Directory toggle: any approved member, immediate, audited' );
+
+$dir_org   = $make_org( 'Directory Org' );
+$dir_owner = $make_member( 'dgl_dirowner', $dir_org, 'owner' );
+$dir_contr = $make_member( 'dgl_dircontr', $dir_org, 'contributor' );
+$dir_pend  = $make_member( 'dgl_dirpend', $dir_org, 'contributor', 'pending' );
+$other_org = $make_org( 'Other Directory Org' );
+$outsider  = $make_member( 'dgl_dirout', $other_org, 'owner' );
+Access::flush_cache();
+
+$ctx = static fn( int $uid ) => Access::user_context( $uid );
+$ok( false === \DGL\Org\Directory::wants_listing( $dir_org ), 'off by default' );
+$ok( true === \DGL\Org\Directory::set( $dir_org, true, $ctx( $dir_contr ) ), 'a contributor can switch it on' );
+$ok( true === \DGL\Org\Directory::wants_listing( $dir_org ) && true === \DGL\Org\Directory::is_listed( $dir_org ), 'and an approved organisation is then listed' );
+$ok( is_wp_error( \DGL\Org\Directory::set( $dir_org, false, $ctx( $dir_pend ) ) ), 'a pending member cannot' );
+$ok( is_wp_error( \DGL\Org\Directory::set( $dir_org, false, $ctx( $outsider ) ) ), 'nor can somebody from another organisation' );
+$ok( true === \DGL\Org\Directory::wants_listing( $dir_org ), 'so it stayed on' );
+$ok( true === \DGL\Org\Directory::set( $dir_org, false, $ctx( $dir_owner ) ), 'the owner can switch it off' );
+$ok( false === \DGL\Org\Directory::wants_listing( $dir_org ), 'and it is off' );
+$dir_audit = array_column( Log::for_object( 'org', $dir_org ), 'action' );
+$ok( in_array( 'directory_on', $dir_audit, true ) && in_array( 'directory_off', $dir_audit, true ), 'both switches are in the audit log' );
+update_post_meta( $dir_org, Meta::ORG_STATUS, Meta::ORG_PENDING );
+update_post_meta( $dir_org, Meta::ORG_IN_DIRECTORY, '1' );
+$ok( false === \DGL\Org\Directory::is_listed( $dir_org ), 'a pending organisation is never listed, whatever the flag says' );
+update_post_meta( $dir_org, Meta::ORG_STATUS, Meta::ORG_APPROVED );
+
+$group( 'Profile save with several-of-a-list fields' );
+
+$saved = \DGL\Org\Profile::save(
+	$dir_org,
+	[
+		'org_name'       => 'Directory Org',
+		'org_email'      => 'hello@directory.test',
+		'org_services'   => [ 'volunteering', 'not_an_option', 'advocacy_and_advice' ],
+		'org_ward'       => 'armley',
+		'org_service_users' => [],
+	],
+	$dir_owner
+);
+$ok( [] === $saved['errors'], 'saves without errors' );
+$ok( [ 'advocacy_and_advice', 'volunteering' ] === get_post_meta( $dir_org, 'dgl_org_services', true ), 'known options kept in option order, unknown dropped' );
+$ok( 'armley' === get_post_meta( $dir_org, 'dgl_org_ward', true ), 'a ward is stored by key' );
+$ok( ! metadata_exists( 'post', $dir_org, 'dgl_org_service_users' ), 'an empty list leaves no row' );
+$updates_before = count( array_filter( Log::for_object( 'org', $dir_org ), static fn( $r ) => 'org_updated' === $r['action'] ) );
+$saved = \DGL\Org\Profile::save( $dir_org, [ 'org_name' => 'Directory Org', 'org_email' => 'hello@directory.test', 'org_services' => [ 'volunteering', 'advocacy_and_advice' ], 'org_ward' => 'armley' ], $dir_owner );
+$updates_after = count( array_filter( Log::for_object( 'org', $dir_org ), static fn( $r ) => 'org_updated' === $r['action'] ) );
+$ok( $updates_before === $updates_after, 'saving the same choices again is not logged as a change' );
+
+$group( 'Import: Forum Central CSV, dry run then real, then again' );
+
+$import_dir = trailingslashit( wp_upload_dir()['basedir'] ) . 'dgl-import-test';
+wp_mkdir_p( $import_dir );
+$csv_path = $import_dir . '/fc-sample.csv';
+$csv_rows = [
+	[ 'Organisation Name', 'Email', 'Phone', 'Website', 'Street Address', 'Supplemental Address 1', 'Supplemental Address 2', 'Postal Code', 'Latitude', 'Longitude', 'Short Description of Organisation', 'Organisation Type', 'Accessibility Provision', 'Accreditations', 'Ward Organisation is based in', 'Short description of services delivered', 'FC specialism (relevant to organisation)', 'General Service Users', 'General Service Provision', 'General Service Delivery Type', 'Legal Status', 'Charity/Company Number', 'Size - Number of Paid Staff', 'Size - Number of Volunteers (approx)', 'Permission to publish online', 'Volition Member Status', 'LOPF Membership Status', 'Contact ID', 'City', 'Contact Subtype' ],
+	[ 'Import Test Trust', 'info@importtest.test', '0113 000 0000', 'www.importtest.test', '1 Test Street', 'Suite 2', '', 'ls1 1aa', '53.8', '-1.5', 'We test imports.', 'Community Anchor, Neighbourhood Network', 'Step Free Access, Induction Loop', 'Living Wage Employer', 'Armley', '', 'Older People', "Age Groups: Adults, People's circumstances: Gypsy, Roma and Traveller Communities, Made Up Group", 'Volunteering, Advocacy and advice', 'Online', 'Registered Charity', '1234567', '11 - 50', '100+', 'I am happy for the information I have provided above about this organisation to be made available online and shared where appropriate by Forum Central', 'Current Member', '', '900001', 'Leeds', 'Age_and_Dementia_Friendly_Business' ],
+	[ 'Gmail Only Group', 'someone@gmail.com', '', '', '', '', '', '', '', '', '', '', '', '', 'City', '', '', '', '', '', '', '', '', '', '', 'Current Member', '', '900002', 'Leeds', '' ],
+	[ '', 'blank@nowhere.test', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '900003', '', '' ],
+];
+$fh = fopen( $csv_path, 'w' );
+fwrite( $fh, "\xEF\xBB\xBF" );
+foreach ( $csv_rows as $r ) { fputcsv( $fh, $r, ',', '"', '' ); }
+fclose( $fh );
+
+foreach ( [ 'Import Test Trust', 'Gmail Only Group' ] as $stale_name ) {
+	foreach ( get_posts( [ 'post_type' => PostTypes::ORG, 'post_status' => 'any', 'title' => $stale_name, 'fields' => 'ids' ] ) as $stale_org ) {
+		wp_delete_post( (int) $stale_org, true );
+	}
+}
+
+$run_import = static function ( string $flags ) use ( $csv_path ): string {
+	$cmd = sprintf( 'php %s --path=%s --allow-root dgl org import %s %s 2>&1', escapeshellarg( '/home/claude/wp-test/wp-cli.phar' ), escapeshellarg( ABSPATH ), escapeshellarg( $csv_path ), $flags );
+	$result = (string) shell_exec( $cmd );
+	// The import ran in another process; this one's query cache does not know.
+	wp_cache_flush();
+	return $result;
+};
+
+$out = $run_import( '--dry-run' );
+$ok( str_contains( $out, 'DRY RUN. 3 organisations: 2 new, 0 already known, 1 skipped.' ), 'dry run counts two new and one skipped: ' . trim( strtok( $out, "\n" ) ) );
+$ok( str_contains( $out, 'Made Up Group' ) && str_contains( $out, '"City"' ), 'dry run reports the values that match nothing' );
+$ok( str_contains( $out, 'no organisation name' ), 'and the row with no name' );
+$ok( [] === get_posts( [ 'post_type' => PostTypes::ORG, 'post_status' => 'any', 'title' => 'Import Test Trust', 'fields' => 'ids' ] ), 'dry run wrote nothing' );
+
+$out = $run_import( '--approve' );
+$ok( str_contains( $out, '3 organisations: 2 new, 0 already known, 1 skipped.' ), 'real run creates two' );
+$imported = get_posts( [ 'post_type' => PostTypes::ORG, 'post_status' => 'any', 'title' => 'Import Test Trust', 'fields' => 'ids' ] );
+$ok( 1 === count( $imported ), 'the trust exists once' );
+$imp = (int) ( $imported[0] ?? 0 );
+update_post_meta( $imp, DGL_FIXTURE_FLAG, '1' );
+$gm = (int) ( get_posts( [ 'post_type' => PostTypes::ORG, 'post_status' => 'any', 'title' => 'Gmail Only Group', 'fields' => 'ids' ] )[0] ?? 0 );
+update_post_meta( $gm, DGL_FIXTURE_FLAG, '1' );
+$ok( Meta::ORG_APPROVED === \DGL\Org\Org::status( $imp ), '--approve verifies it' );
+$ok( [ 'importtest.test' ] === \DGL\Org\Org::domains( $imp ), 'its email domain is recorded for joining' );
+$ok( [] === \DGL\Org\Org::domains( $gm ), 'a Gmail address records no domain' );
+$ok( 'https://www.importtest.test' === get_post_meta( $imp, 'dgl_org_website', true ), 'a bare website gets a scheme' );
+$ok( 'LS1 1AA' === get_post_meta( $imp, 'dgl_org_postcode', true ), 'postcode upper-cased' );
+$ok( 'Suite 2' === get_post_meta( $imp, 'dgl_org_address_2', true ), 'supplemental address lines joined' );
+$ok( [ 'community_anchor', 'neighbourhood_network' ] === get_post_meta( $imp, 'dgl_org_type', true ), 'several-of-a-list stored as keys in option order' );
+$ok( in_array( 'circ_gypsy_roma_and_traveller_communities', (array) get_post_meta( $imp, 'dgl_org_service_users', true ), true ), 'a label with commas in it survives' );
+$ok( 'armley' === get_post_meta( $imp, 'dgl_org_ward', true ) && '11_50' === get_post_meta( $imp, 'dgl_org_staff', true ) && '100_plus' === get_post_meta( $imp, 'dgl_org_volunteers', true ), 'one-of-a-list fields stored by key' );
+$ok( '' === (string) get_post_meta( $gm, 'dgl_org_ward', true ), '"City" matches no ward and is left blank' );
+$ok( '1' === get_post_meta( $imp, Meta::ORG_FC_PERMISSION, true ) && '1' === get_post_meta( $imp, Meta::ORG_AGE_FRIENDLY, true ) && '900001' === get_post_meta( $imp, Meta::ORG_FC_ID, true ), 'Forum Central facts carried over' );
+$ok( '53.8' === get_post_meta( $imp, Meta::ORG_LAT, true ), 'coordinates kept' );
+$ok( false === \DGL\Org\Directory::wants_listing( $imp ), 'imported organisations are not in the directory' );
+$ok( [] !== \DGL\Org\Directory::imported_facts( $imp ) && [] === \DGL\Org\Directory::imported_facts( $dir_org ), 'the read-only panel has facts only for imported organisations' );
+
+update_post_meta( $imp, Meta::ORG_IN_DIRECTORY, '1' );
+$out = $run_import( '' );
+$ok( str_contains( $out, '3 organisations: 0 new, 2 already known, 1 skipped.' ), 'running again updates and does not duplicate' );
+$ok( 1 === count( get_posts( [ 'post_type' => PostTypes::ORG, 'post_status' => 'any', 'title' => 'Import Test Trust', 'fields' => 'ids' ] ) ), 'still one trust' );
+$ok( true === \DGL\Org\Directory::wants_listing( $imp ), 'and the directory choice is left alone' );
 
 /* ----------------------------------------------------------------- report */
 

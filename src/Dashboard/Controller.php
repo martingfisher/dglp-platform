@@ -1120,6 +1120,27 @@ final class Controller {
 				exit;
 			}
 
+			/*
+			 * The directory switch is its own one-button form, open to any
+			 * approved member rather than only the owner, so it cannot share
+			 * the owner-gated profile save.
+			 */
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- checked above.
+			if ( isset( $_POST['dgl_directory'] ) ) {
+				// phpcs:ignore WordPress.Security.NonceVerification.Missing
+				$on     = '1' === sanitize_text_field( wp_unslash( (string) $_POST['dgl_directory'] ) );
+				$result = \DGL\Org\Directory::set( $org_id, $on, $user );
+
+				if ( is_wp_error( $result ) ) {
+					self::flash( '', $result->get_error_message() );
+				} else {
+					self::flash( $on ? __( 'You are now shown in the directory.', 'dgl-platform' ) : __( 'You are no longer shown in the directory.', 'dgl-platform' ), '' );
+				}
+
+				wp_safe_redirect( Router::url( 'profile', 'organisation' ) );
+				exit;
+			}
+
 			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- the validator sanitises every declared field.
 			$input = isset( $_POST[ FieldRenderer::INPUT_NAME ] ) ? (array) wp_unslash( $_POST[ FieldRenderer::INPUT_NAME ] ) : [];
 
@@ -1141,6 +1162,13 @@ final class Controller {
 				'org_status' => $org_id > 0 ? Org::status( $org_id ) : '',
 				'org_trust'  => \DGL\Org\Trust::label( \DGL\Org\Org::trust_level( $org_id > 0 ? $org_id : null ) ),
 				'fields'     => \DGL\Org\Schema::fields(),
+				'sections'   => \DGL\Org\Schema::sections(),
+				'directory_on'   => $org_id > 0 && \DGL\Org\Directory::wants_listing( $org_id ),
+				'directory_live' => $org_id > 0 && \DGL\Org\Directory::is_listed( $org_id ),
+				'can_toggle_directory' => $org_id > 0 && Policy::can_toggle_directory( $user, $org_id ),
+				'directory_notice' => 'organisation' === $tab ? self::flash_notice() : '',
+				'directory_error'  => 'organisation' === $tab ? self::flash_error() : '',
+				'imported_facts' => $org_id > 0 ? \DGL\Org\Directory::imported_facts( $org_id ) : [],
 				// The form shows what was asked for; the panel above it shows
 				// what is live. Swapping those round makes the field look as if
 				// it rejected the member's edit.

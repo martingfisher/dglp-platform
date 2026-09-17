@@ -18,6 +18,7 @@ use DGL\Dashboard\Router;
 use DGL\Email\Command as MailCommand;
 use DGL\Email\Mailer;
 use DGL\Invites\Invites;
+use DGL\Org\ImportCommand;
 use DGL\Privacy\Command as PrivacyCommand;
 use DGL\Privacy\Privacy;
 use DGL\Invites\Command as InviteCommand;
@@ -98,6 +99,7 @@ final class Plugin {
 			IndexCommand::register();
 			InviteCommand::register();
 			PrivacyCommand::register();
+			ImportCommand::register();
 		}
 
 		add_action( self::EXPIRY_HOOK, [ Transition::class, 'run_expiry_sweep' ] );

@@ -73,6 +73,8 @@ final class FieldRenderer {
 
 		if ( Field::CHECKBOX === $field->type ) {
 			$out .= self::checkbox( $field, $id, $name, $value, $aria );
+		} elseif ( Field::CHOICES === $field->type ) {
+			$out .= self::choices( $field, $id, $name, $value, $aria );
 		} else {
 			$out .= sprintf(
 				'<label class="dgl-label" for="%s">%s%s</label>',
@@ -242,6 +244,42 @@ final class FieldRenderer {
 		}
 
 		return $out . '</select>';
+	}
+
+	/**
+	 * Several of a fixed list, as a group of checkboxes.
+	 *
+	 * A fieldset with a legend rather than a label and a select: a screen
+	 * reader announces the group once and then each option, and a member on
+	 * a phone taps boxes rather than fighting a multi-select. The name ends
+	 * in [] so PHP receives an array, and a hidden empty value first so that
+	 * unticking everything still posts the field and clears it.
+	 */
+	private static function choices( Field $field, string $id, string $name, mixed $value, string $aria ): string {
+		$chosen = array_map( 'strval', is_array( $value ) ? $value : [] );
+		$out    = sprintf(
+			'<fieldset class="dgl-choices" id="%s"%s><legend class="dgl-label">%s%s</legend>',
+			esc_attr( $id ),
+			$aria,
+			esc_html( $field->label ),
+			$field->required ? ' <span class="dgl-req" aria-hidden="true">*</span>' : ''
+		);
+		$out .= sprintf( '<input type="hidden" name="%s[]" value="">', esc_attr( $name ) );
+
+		foreach ( $field->options as $option_value => $label ) {
+			$option_id = $id . '-' . sanitize_html_class( (string) $option_value );
+			$out      .= sprintf(
+				'<label class="dgl-check" for="%s"><input type="checkbox" id="%s" name="%s[]" value="%s"%s> <span>%s</span></label>',
+				esc_attr( $option_id ),
+				esc_attr( $option_id ),
+				esc_attr( $name ),
+				esc_attr( (string) $option_value ),
+				in_array( (string) $option_value, $chosen, true ) ? ' checked' : '',
+				esc_html( (string) $label )
+			);
+		}
+
+		return $out . '</fieldset>';
 	}
 
 	private static function checkbox( Field $field, string $id, string $name, mixed $value, string $aria ): string {

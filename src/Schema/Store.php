@@ -61,7 +61,7 @@ final class Store {
 			 * a blank Capacity became "Capacity: 0", which is a claim nobody
 			 * made.
 			 */
-			if ( Field::CHECKBOX !== $field->type && '' === (string) $value ) {
+			if ( Field::CHOICES === $field->type ? [] === (array) $value : ( Field::CHECKBOX !== $field->type && '' === (string) $value ) ) {
 				delete_post_meta( $post_id, $field->meta_key() );
 				continue;
 			}
@@ -103,6 +103,7 @@ final class Store {
 			Field::URL                  => esc_url_raw( (string) $value ),
 			Field::EMAIL                => sanitize_email( (string) $value ),
 			Field::CHECKBOX             => (bool) $value,
+			Field::CHOICES              => array_values( array_map( 'sanitize_text_field', array_map( 'strval', (array) $value ) ) ),
 			Field::NUMBER, Field::IMAGE => (int) $value,
 			Field::MONEY                => (float) $value,
 			default                     => sanitize_text_field( (string) $value ),

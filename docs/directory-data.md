@@ -1,0 +1,87 @@
+# Organisation data and the directory
+
+Jenny's file, received 17 September 2026: `FC_Member_Orgs_for_DGLP_directory.csv`,
+a Forum Central (CiviCRM) export of 329 member organisations, 39 columns. This
+records what was kept, what was dropped, and the two things DGLP need to
+decide before any of it is public.
+
+## What is stored, and where
+
+Every organisation has these on the Organisation tab of the member area, in
+five sections. An owner edits them; the review team sees them in wp-admin.
+
+| Section | Field | From column | Stored as |
+|---|---|---|---|
+| About | Name, logo | Organisation Name | post title (name change goes through review) |
+| About | Charity or company number | Charity/Company Number | text |
+| About | Website | Website | URL, `https://` added when missing |
+| About | Short description | Short Description of Organisation, else Short description of services delivered | text, cut at 400 |
+| About | Public contact email | Email | email, any provider |
+| About | Phone | Phone | text |
+| Where | Address line 1 | Street Address | text |
+| Where | Address line 2 | Supplemental Address 1 + 2 | text |
+| Where | Town or city | City | text |
+| Where | Postcode | Postal Code | postcode |
+| Where | Ward | Ward Organisation is based in | one of 33 wards or Leeds-wide |
+| What you do | Type of organisation | Organisation Type | several of 5 |
+| What you do | Areas of work | FC specialism | several of 9 |
+| What you do | Services you provide | General Service Provision | several of 52 |
+| What you do | How you deliver them | General Service Delivery Type | several of 8 |
+| Who you help | Who you work with | General Service Users | several of 46 |
+| Who you help | Accessibility at your premises | Accessibility Provision | several of 6 |
+| Size and status | Legal status | Legal Status | one of 9 |
+| Size and status | Paid staff, Volunteers | Size columns | one of 4 bands |
+| Size and status | Accreditations | Accreditations | several of 7 |
+
+The lists are in `src/Org/Options.php`, generated from the values in the file
+and nothing else. Stored values are stable keys, so labels can be reworded.
+
+Read-only, shown under "From Forum Central's records": Contact ID, Volition
+membership, LOPF membership, Age and Dementia Friendly Business, whether
+permission to publish was given to Forum Central, and the import date.
+Latitude and longitude are stored for a map later and not shown.
+
+Dropped: Postal Greeting, Email Greeting, Street Name, Network/Board name,
+Contact Type, Sort Name, Addressee, State (a county code), PCN (empty in every
+row).
+
+## What the file told us
+
+- 329 organisations, no duplicate names.
+- 251 have an email address. 24 of those are public providers (Gmail and the
+  like), so 106 organisations have no domain anyone can join on. Their
+  colleagues come in by invitation from the owner.
+- Three domains are shared by more than one organisation (RVS, MHA, Mencap).
+  The join flow offers a list in that case; nothing to do.
+- 4 rows say their ward is "City", which is not a ward. Left blank; the
+  owner can pick one.
+- "City" and "State" columns carry street lines and county codes in places.
+  Imported as given; owners can tidy.
+
+## Two decisions for DGLP before the directory goes public
+
+1. **Permission.** 146 of 329 ticked "I am happy for the information I have
+   provided above about this organisation to be made available online and
+   shared where appropriate by Forum Central". That permission was given to
+   Forum Central, not to DGLP, and 183 gave none. The build therefore lists
+   nobody by default: every organisation is off until one of its members
+   switches it on from the Organisation tab. If DGLP want the 146 shown from
+   day one, that is a one-line command once they have satisfied themselves
+   Forum Central's permission covers it. The other 183 need their own yes.
+2. **Verification.** The import marks organisations verified only when run
+   with `--approve`. Jenny's list is Forum Central's member list, so on
+   staging it was run that way. DGLP should confirm they treat the list as
+   verified for production too, because a verified organisation lets anyone
+   with a matching email address join and submit without a check.
+
+## Running it
+
+```
+wp dgl org import members.csv --dry-run
+wp dgl org import members.csv --approve
+```
+
+Dry run writes nothing and reports counts, values that match no option, and
+rows with problems. A second run matches on Contact ID, then exact name, and
+updates rather than duplicates. The directory switch is never touched by an
+import.

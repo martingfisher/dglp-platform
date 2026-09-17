@@ -204,6 +204,5 @@ Asked for on 16 September 2026, for "at some point", not this release.
 - Rendered the way the event listing is: the plugin's own template inside
   the theme's header and footer, sharing `tokens.css`.
 
-Not started. Nothing in the data model blocks it: the organisation is
-already a post type with the fields, so the work is one meta flag, one
-listing template with a search box, and a line on the Organisation tab.
+Started 17 September 2026: the data, the fields and the switch are built
+(see `docs/directory-data.md`). The public listing template is not.

@@ -39,6 +39,19 @@ final class Meta {
 	/** One row per email domain an organisation uses. Lower-case, exact. */
 	public const ORG_DOMAIN = 'dgl_org_domain';
 
+	/** '1' when the organisation has chosen to appear in the public directory. */
+	public const ORG_IN_DIRECTORY = 'dgl_org_in_directory';
+
+	/* Facts carried over from Forum Central's records by the import. Read-only in the member area. */
+	public const ORG_FC_ID          = 'dgl_org_fc_id';
+	public const ORG_FC_VOLITION    = 'dgl_org_fc_volition';
+	public const ORG_FC_LOPF        = 'dgl_org_fc_lopf';
+	public const ORG_FC_PERMISSION  = 'dgl_org_fc_permission';
+	public const ORG_AGE_FRIENDLY   = 'dgl_org_age_friendly';
+	public const ORG_LAT            = 'dgl_org_lat';
+	public const ORG_LNG            = 'dgl_org_lng';
+	public const ORG_IMPORTED_AT    = 'dgl_org_imported_at';
+
 	/* Submission post meta. */
 
 	/** Owning organisation post ID. Mirrored into the items index. */

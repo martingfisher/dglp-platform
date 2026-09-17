@@ -12,6 +12,7 @@ namespace DGL\Org;
 use DGL\Audit\Log;
 use DGL\Meta;
 use DGL\Schema\Field;
+use DGL\Schema\Store;
 use DGL\Schema\Validator;
 use DGL\Uploads;
 use WP_Post;
@@ -461,6 +462,13 @@ final class Profile {
 	 * moderator. Both spellings of nothing are nothing.
 	 */
 	private static function same( Field $field, mixed $a, mixed $b ): bool {
+		if ( Field::CHOICES === $field->type ) {
+			// No row yet and an empty list are the same answer: nothing chosen.
+			$list = static fn( mixed $v ): array => array_values( array_filter( array_map( 'strval', (array) $v ), static fn( string $s ): bool => '' !== $s ) );
+
+			return $list( $a ) === $list( $b );
+		}
+
 		$blank = static fn( mixed $v ): bool => '' === (string) $v
 			|| ( Field::IMAGE === $field->type && 0 === (int) $v );
 
@@ -487,7 +495,13 @@ final class Profile {
 	private static function write_meta( int $org_id, Field $field, mixed $value ): void {
 		$key = $field->meta_key();
 
-		if ( '' === (string) $value || ( Field::IMAGE === $field->type && 0 === (int) $value ) ) {
+		if ( Field::CHOICES === $field->type ) {
+			$value = Store::sanitise( $field, $value );
+			if ( [] === $value ) {
+				delete_post_meta( $org_id, $key );
+				return;
+			}
+		} elseif ( '' === (string) $value || ( Field::IMAGE === $field->type && 0 === (int) $value ) ) {
 			delete_post_meta( $org_id, $key );
 			return;
 		}

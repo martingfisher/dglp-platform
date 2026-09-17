@@ -75,6 +75,15 @@ the owner instead.
 A pending name or logo change also shows on this screen with the same accept
 and refuse choices as the queue.
 
+## The directory
+
+Every organisation's profile carries the details from Forum Central's list:
+address, ward, type, services, who they work with, size, accreditations.
+Owners edit them. Nobody appears in the public directory until a member of
+that organisation presses "Show us in the directory" on the Organisation
+tab. Any approved member can switch it on or off, it takes effect at once,
+and pending or suspended organisations never show whatever the switch says.
+
 ## How people join
 
 The sign-in page links to "Join the member area". The person gives their email

@@ -163,6 +163,9 @@ final class View {
 			\DGL\Schema\Field::SELECT   => '' === (string) $value
 				? $blank
 				: esc_html( (string) ( $field->options[ (string) $value ] ?? $value ) ),
+			\DGL\Schema\Field::CHOICES  => [] === (array) $value
+				? $blank
+				: esc_html( implode( ', ', array_map( static fn( $v ): string => (string) ( $field->options[ (string) $v ] ?? $v ), (array) $value ) ) ),
 			\DGL\Schema\Field::DATE     => '' === (string) $value ? $blank : esc_html( self::date( (string) $value ) ),
 			\DGL\Schema\Field::DATETIME => '' === (string) $value ? $blank : esc_html( self::date( (string) $value, true ) ),
 			\DGL\Schema\Field::MONEY    => '' === (string) $value

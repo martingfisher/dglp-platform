@@ -71,6 +71,10 @@ final class Validator {
 			return [ self::truthy( $raw ), null ];
 		}
 
+		if ( Field::CHOICES === $field->type ) {
+			return self::check_choices( $field, $raw );
+		}
+
 		$value = is_scalar( $raw ) ? trim( (string) $raw ) : '';
 
 		if ( '' === $value ) {
@@ -230,6 +234,31 @@ final class Validator {
 	/**
 	 * @return array{0: mixed, 1: string|null}
 	 */
+	/**
+	 * Several of a fixed list. Unknown values are dropped rather than
+	 * refused: a stale option in a saved profile should not stop the member
+	 * saving the rest. Order follows the option list, not the post.
+	 *
+	 * @return array{0: mixed, 1: string|null}
+	 */
+	private static function check_choices( Field $field, mixed $raw ): array {
+		$given = array_map( static fn( $v ): string => is_scalar( $v ) ? trim( (string) $v ) : '', is_array( $raw ) ? $raw : [ $raw ] );
+		$kept  = [];
+
+		foreach ( array_keys( $field->options ) as $option ) {
+			if ( in_array( (string) $option, $given, true ) ) {
+				$kept[] = (string) $option;
+			}
+		}
+
+		if ( [] === $kept && $field->required ) {
+			/* translators: %s: field label. */
+			return [ null, sprintf( __( 'Choose at least one for %s.', 'dgl-platform' ), $field->label ) ];
+		}
+
+		return [ $kept, null ];
+	}
+
 	private static function check_select( Field $field, string $value ): array {
 		if ( ! array_key_exists( $value, $field->options ) ) {
 			/* translators: %s: field label. */

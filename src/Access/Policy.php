@@ -121,6 +121,25 @@ final class Policy {
 	 * @param int         $target_id  The user to remove.
 	 * @param int|null    $target_org The organisation that user is linked to.
 	 */
+	/**
+	 * Whether this person can switch the organisation's directory listing.
+	 *
+	 * Any approved member of the organisation, owner or contributor: it is
+	 * the organisation's choice and the dashboard is shared. Pending and
+	 * suspended accounts cannot, and nobody can for another organisation.
+	 */
+	public static function can_toggle_directory( UserContext $actor, int $org_id ): bool {
+		if ( $org_id <= 0 ) {
+			return false;
+		}
+
+		if ( $actor->is_admin() ) {
+			return true;
+		}
+
+		return $actor->org_id === $org_id && $actor->is_fully_approved();
+	}
+
 	public static function can_remove_member( UserContext $actor, int $target_id, ?int $target_org ): bool {
 		if ( $target_id <= 0 || null === $target_org || $target_id === $actor->user_id ) {
 			return false;

@@ -977,6 +977,44 @@ body.dgl-body {
 	color: var(--dgl-danger);
 }
 
+/*
+ * Several-of-a-list. A fieldset of the same .dgl-check rows, two columns
+ * when there is room, one on a phone. The border is the field outline so
+ * the group reads as one control, which for a screen reader it is.
+ */
+.dgl-choices {
+	margin: 0;
+	padding: 12px 14px 8px;
+	border: var(--dgl-field-border) solid var(--dgl-field-outline);
+	border-radius: var(--dgl-radius-field);
+	background: var(--dgl-white);
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+	column-gap: 16px;
+	row-gap: 6px;
+}
+
+.dgl-choices > legend {
+	grid-column: 1 / -1;
+	padding: 0 4px;
+	margin-inline-start: -4px;
+}
+
+.dgl-choices .dgl-check { margin: 0 0 4px; }
+
+.dgl-dash .dgl-choices:focus-within {
+	outline: 2px solid var(--dgl-focus);
+	outline-offset: 2px;
+}
+
+/* A heading inside a long form: more air above than below, per the craft floor. */
+.dgl-form .dgl-section__title--form {
+	margin: 28px 0 10px;
+	font-size: 1.05em;
+}
+
+.dgl-form .dgl-section__title--form:first-child { margin-top: 0; }
+
 .dgl-check {
 	display: flex;
 	align-items: flex-start;

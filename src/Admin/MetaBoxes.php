@@ -158,6 +158,17 @@ final class MetaBoxes {
 				return '<label><input type="checkbox"' . $common . ' value="1" ' . checked( (bool) $value, true, false ) . ' /> '
 					. esc_html__( 'Yes', 'dgl-platform' ) . '</label>';
 
+			case Field::CHOICES:
+				$chosen = array_map( 'strval', (array) $value );
+				$out    = '';
+
+				foreach ( $field->options as $key => $label ) {
+					$out .= '<label style="display:block"><input type="checkbox" name="' . esc_attr( $name ) . '[]" value="' . esc_attr( (string) $key ) . '" '
+						. checked( in_array( (string) $key, $chosen, true ), true, false ) . ' /> ' . esc_html( (string) $label ) . '</label>';
+				}
+
+				return $out;
+
 			case Field::SELECT:
 				$out = '<select' . $common . '><option value="">' . esc_html__( '— none —', 'dgl-platform' ) . '</option>';
 
