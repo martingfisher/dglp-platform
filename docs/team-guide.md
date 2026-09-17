@@ -120,3 +120,11 @@ is nothing new.
 - An email did not arrive: ask the site administrator to run the mail status
   check. It reports whether sending is on, where mail is being redirected on
   staging, and whether the logo in the email header can be fetched.
+
+## Images and contact details on submissions
+
+A photo is shrunk to 1600px and stripped of its camera data in the
+member's browser before it is sent, and anything over 20MB is refused
+there with a message. A new submission starts with the contact name,
+email, phone and website the organisation used last time; every one can
+be changed on the Contact and links step.

@@ -361,3 +361,12 @@ clean. They are the only DGLP content on staging.
   ("N/A") is not shown. The mid-word cuts on staging are in Forum
   Central's export: 72 of 197 descriptions are exactly 255 characters in
   the file. Owners will need to complete those. Pinned to commit `66b751d`.
+- **0.9.11 deployed**: images are redrawn to 1600px and re-encoded in the
+  browser before upload (a 7.2MB 4000x3000 JPEG left the browser at
+  350KB, 1600x1200, and was stored at that size); a new or reused draft
+  starts with the contact details from the organisation's last item, else
+  the profile and the member's name (checked in a browser: step 3 opened
+  with name, email and phone filled). The 403 was one specific 1.7MB
+  phone photo; its neighbour passed, so the trigger is in that file's
+  bytes. The re-encode means the server never sees the original bytes.
+  Not yet retried with that photo on staging. Pinned to commit `3a026c5`.
