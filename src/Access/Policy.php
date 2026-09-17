@@ -46,6 +46,7 @@ final class Policy {
 	public const VIEW_ORG_AUDIT = 'view_org_audit';
 	public const VIEW_ALL_AUDIT = 'view_all_audit';
 	public const CHANGE_SCHEDULE = 'change_schedule';
+	public const REOPEN_ITEM     = 'reopen_item';
 
 	/**
 	 * Decide whether an actor may perform an action, optionally on an item.
@@ -76,6 +77,7 @@ final class Policy {
 			self::MODERATE_ITEM  => self::can_moderate_item( $user, $item ),
 			self::TAKE_DOWN_ITEM => self::can_take_down_item( $user, $item ),
 			self::CHANGE_SCHEDULE => self::can_change_schedule( $user, $item ),
+			self::REOPEN_ITEM    => self::can_reopen_item( $user, $item ),
 			default              => false,
 		};
 	}
@@ -336,6 +338,18 @@ final class Policy {
 	/**
 	 * Pulling live content off the site pending review, for reported items.
 	 */
+	/**
+	 * A refusal can be looked at again by any moderator, including the one
+	 * who refused it: undoing a mistake should not need a second person.
+	 */
+	private static function can_reopen_item( UserContext $user, ?ItemContext $item ): bool {
+		if ( null === $item || ! $user->is_moderator() || ! $user->can_write() ) {
+			return false;
+		}
+
+		return Statuses::REJECTED === $item->status;
+	}
+
 	private static function can_take_down_item( UserContext $user, ?ItemContext $item ): bool {
 		if ( null === $item || ! $user->is_moderator() || ! $user->can_write() ) {
 			return false;

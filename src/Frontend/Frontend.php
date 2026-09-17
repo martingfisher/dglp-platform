@@ -47,6 +47,7 @@ final class Frontend {
 		add_filter( 'query_vars', [ self::class, 'add_query_var' ] );
 		add_filter( 'pre_get_document_title', [ self::class, 'directory_title' ] );
 		add_action( 'template_redirect', [ self::class, 'directory_status' ] );
+		add_filter( 'blocksy:breadcrumbs:items:array', [ self::class, 'breadcrumbs' ] );
 		add_filter( 'template_include', [ self::class, 'template' ] );
 		add_action( 'wp_enqueue_scripts', [ self::class, 'assets' ] );
 		add_action( 'pre_get_posts', [ self::class, 'order_archive' ] );
@@ -119,6 +120,8 @@ final class Frontend {
 
 		if ( self::calendar_request() ) {
 			$wp_query->is_404 = false;
+			// Not the blog either: the theme's breadcrumb read "News" off is_home.
+			$wp_query->is_home = false;
 			status_header( 200 );
 			return;
 		}
@@ -130,6 +133,7 @@ final class Frontend {
 		if ( '1' === $request ) {
 			// The index is not a 404 either, whatever the main query thinks.
 			$wp_query->is_404 = false;
+			$wp_query->is_home = false;
 			status_header( 200 );
 			return;
 		}
@@ -142,6 +146,44 @@ final class Frontend {
 			$wp_query->is_404 = false;
 			status_header( 200 );
 		}
+	}
+
+	/**
+	 * The theme's breadcrumb for the pages WordPress has no name for.
+	 *
+	 * Blocksy builds its trail from the main query's flags. Ours are custom
+	 * query vars, which parse as the blog index, so the trail read
+	 * "Home > News" over the directory and the calendar.
+	 *
+	 * @param array<int, array<string, mixed>> $items
+	 * @return array<int, array<string, mixed>>
+	 */
+	public static function breadcrumbs( array $items ): array {
+		$request = self::directory_request();
+		$home    = [] !== $items ? [ $items[0] ] : [ [ 'name' => __( 'Home', 'dgl-platform' ), 'url' => home_url( '/' ) ] ];
+
+		if ( self::calendar_request() ) {
+			return array_merge(
+				$home,
+				[
+					[ 'name' => PostTypes::definitions()[ PostTypes::EVENT ]['plural'] ?? __( 'Events', 'dgl-platform' ), 'url' => self::archive_url( PostTypes::EVENT ) ],
+					[ 'name' => __( 'Calendar', 'dgl-platform' ), 'url' => '' ],
+				]
+			);
+		}
+
+		if ( null === $request ) {
+			return $items;
+		}
+
+		$trail = array_merge( $home, [ [ 'name' => __( 'Directory', 'dgl-platform' ), 'url' => home_url( '/' . Directory::BASE . '/' ) ] ] );
+		$org   = '1' === $request ? null : self::directory_org();
+
+		if ( null !== $org ) {
+			$trail[] = [ 'name' => (string) get_the_title( $org ), 'url' => '' ];
+		}
+
+		return $trail;
 	}
 
 	public static function directory_title( string $title ): string {
@@ -330,7 +372,16 @@ final class Frontend {
 
 		$schedule = self::schedule( $post );
 
+		$all_values = [];
+		foreach ( FieldRegistry::for_type( (string) $post->post_type ) as $f ) {
+			$all_values[ $f->key ] = self::value( $post, $f->key );
+		}
+
 		foreach ( FieldRegistry::public_fields( (string) $post->post_type ) as $field ) {
+			if ( ! $field->applies( $all_values ) ) {
+				continue;
+			}
+
 			// The headline is the page title and the summary is the standfirst.
 			// Repeating them in a fact table is noise.
 			if ( in_array( $field->key, [ 'title', 'summary', 'body', 'image' ], true ) ) {
@@ -373,6 +424,25 @@ final class Frontend {
 	 * from the two things they are deciding on rather than from whichever
 	 * fields happen to come first.
 	 */
+	/**
+	 * Where it happens, in a word or a name: the venue, "Online", or both.
+	 */
+	public static function where( WP_Post $post ): string {
+		$venue  = (string) self::value( $post, 'venue_name' );
+		$format = (string) self::value( $post, 'format' );
+
+		if ( 'online' === $format ) {
+			return __( 'Online', 'dgl-platform' );
+		}
+
+		if ( 'hybrid' === $format && '' !== $venue ) {
+			/* translators: %s: venue name. */
+			return sprintf( __( '%s and online', 'dgl-platform' ), $venue );
+		}
+
+		return $venue;
+	}
+
 	public static function meta_line( WP_Post $post ): string {
 		$parts = [];
 
@@ -387,7 +457,7 @@ final class Frontend {
 				$parts[] = sprintf( __( 'Next: %s', 'dgl-platform' ), wp_date( 'D j M', $coming[0]->start->getTimestamp() ) );
 			}
 
-			$venue = (string) self::value( $post, 'venue_name' );
+			$venue = self::where( $post );
 
 			if ( '' !== $venue ) {
 				$parts[] = $venue;
@@ -410,7 +480,7 @@ final class Frontend {
 			$parts[] = View::wall_date( $when, str_contains( $when, ':' ) );
 		}
 
-		$venue = (string) self::value( $post, 'venue_name' );
+		$venue = self::where( $post );
 
 		if ( '' !== $venue ) {
 			$parts[] = $venue;

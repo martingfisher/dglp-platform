@@ -63,6 +63,59 @@ final class ProbeCommand {
 	 * @param string[]              $args
 	 * @param array<string, string> $assoc
 	 */
+	/**
+	 * Print the lines of a file under wp-content that contain a phrase.
+	 *
+	 * Read only. For reading a theme or plugin on a host where `wp eval`
+	 * and a shell are not available.
+	 *
+	 * ## OPTIONS
+	 *
+	 * <path>
+	 * : Path relative to wp-content, e.g. plugins/blocksy-companion-pro/framework/features/breadcrumbs.php.
+	 *
+	 * <needle>
+	 * : Text to look for.
+	 *
+	 * [--context=<lines>]
+	 * : Lines to show either side of a match. Default 2.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp dgl probe file plugins/blocksy-companion-pro/framework/features/breadcrumbs.php apply_filters
+	 *
+	 * @when after_wp_load
+	 */
+	public function file( array $args, array $assoc ): void {
+		$relative = ltrim( str_replace( '\\', '/', (string) ( $args[0] ?? '' ) ), '/' );
+		$needle   = (string) ( $args[1] ?? '' );
+		$context  = max( 0, (int) ( $assoc['context'] ?? 2 ) );
+		$root     = rtrim( str_replace( '\\', '/', (string) WP_CONTENT_DIR ), '/' );
+		$path     = realpath( $root . '/' . $relative );
+
+		if ( '' === $needle || false === $path || ! str_starts_with( $path, $root . '/' ) || ! is_file( $path ) ) {
+			WP_CLI::error( 'No such file under wp-content, or no phrase given.' );
+		}
+
+		$lines = file( $path, FILE_IGNORE_NEW_LINES );
+		$hits  = 0;
+
+		foreach ( $lines as $i => $line ) {
+			if ( false === stripos( $line, $needle ) ) {
+				continue;
+			}
+
+			++$hits;
+			WP_CLI::log( sprintf( '--- line %d ---', $i + 1 ) );
+
+			for ( $j = max( 0, $i - $context ); $j <= min( count( $lines ) - 1, $i + $context ); $j++ ) {
+				WP_CLI::log( sprintf( '%5d  %s', $j + 1, $lines[ $j ] ) );
+			}
+		}
+
+		WP_CLI::log( sprintf( '%d match(es) in %d lines.', $hits, count( $lines ) ) );
+	}
+
 	public function page( array $args, array $assoc ): void {
 		$path   = '/' . ltrim( (string) ( $args[0] ?? '/' ), '/' );
 		$needle = (string) ( $args[1] ?? '' );

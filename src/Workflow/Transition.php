@@ -44,6 +44,7 @@ final class Transition {
 		StateMachine::TAKE_DOWN       => Policy::TAKE_DOWN_ITEM,
 		StateMachine::ARCHIVE         => Policy::ARCHIVE_ITEM,
 		StateMachine::RESTORE         => Policy::RESTORE_ITEM,
+		StateMachine::REOPEN          => Policy::REOPEN_ITEM,
 	];
 
 	/**

@@ -10,6 +10,13 @@ The "Review" link in the member area sidebar carries a count. It is the number
 of things waiting for a decision, not unread items. The queue has three parts,
 oldest first.
 
+**Decided.** The second entry under Review team lists everything already
+decided, newest first, filtered by outcome. Open one to check it again. What
+you can change depends on where it is: a live item can be taken off the site
+(it goes back in the queue), a refusal can be reopened (back in the queue,
+the member is told), an archived item can be restored (back in the queue).
+Nothing goes straight back on the site from here; it is decided again.
+
 **Submissions.** News, events and training that members have sent in, and
 edits to items already on the site. Open one to read it as the public would
 see it, then choose:

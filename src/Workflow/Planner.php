@@ -47,6 +47,7 @@ final class Planner {
 			StateMachine::EXPIRE          => self::expire( $from, $to ),
 			StateMachine::ARCHIVE         => self::archive( $from, $to, $actor_is_staff ),
 			StateMachine::RESTORE         => self::restore( $from, $to ),
+			StateMachine::REOPEN          => self::reopen( $from, $to ),
 			default                       => null,
 		};
 	}
@@ -113,6 +114,20 @@ final class Planner {
 			message_key: 'rejected',
 			requires_note: true,
 			revokes_trust: true,
+		);
+	}
+
+	/**
+	 * A refused item looked at again. The member is told, because "not
+	 * approved" has just stopped being the last word on it.
+	 */
+	private static function reopen( string $from, string $to ): Plan {
+		return new Plan(
+			action: StateMachine::REOPEN,
+			from: $from,
+			to: $to,
+			notify: [ Plan::NOTIFY_MEMBER ],
+			message_key: 'reopened',
 		);
 	}
 

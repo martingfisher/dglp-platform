@@ -176,6 +176,7 @@ $check_word = static fn( string $status ): string => match ( $status ) {
 			<h2 class="dgl-section__title"><?php esc_html_e( 'Every field as submitted', 'dgl-platform' ); ?></h2>
 			<dl class="dgl-review__list">
 				<?php foreach ( $data['fields'] as $field ) : ?>
+					<?php if ( ! $field->applies( $values ) ) { continue; } ?>
 					<dt><?php echo esc_html( $field->label ); ?></dt>
 					<dd><?php echo View::field_value( $field, $values[ $field->key ] ?? '' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></dd>
 				<?php endforeach; ?>
@@ -229,6 +230,46 @@ $check_word = static fn( string $status ): string => match ( $status ) {
 			</section>
 		<?php endif; ?>
 
+		<?php if ( ! empty( $data['can_reopen'] ) ) : ?>
+			<section class="dgl-card dgl-decision">
+				<h2 class="dgl-section__title"><?php esc_html_e( 'Look at it again', 'dgl-platform' ); ?></h2>
+				<p class="dgl-help"><?php esc_html_e( 'This was refused. Reopening puts it back in the queue to be decided again, and the member is told. Nothing goes on the site until somebody approves it.', 'dgl-platform' ); ?></p>
+
+				<form method="post" class="dgl-form dgl-form--bare">
+					<?php wp_nonce_field( Wizard::NONCE ); ?>
+
+					<div class="dgl-field-row">
+						<label class="dgl-label" for="dgl-note"><?php esc_html_e( 'Note to the member', 'dgl-platform' ); ?></label>
+						<textarea class="dgl-field dgl-field--area" id="dgl-note" name="dgl_note" rows="3"></textarea>
+						<p class="dgl-help"><?php esc_html_e( 'Optional. For example, that the refusal was a mistake.', 'dgl-platform' ); ?></p>
+					</div>
+
+					<div class="dgl-decision__actions">
+						<button class="dgl-button" type="submit" name="dgl_intent" value="reopen">
+							<?php esc_html_e( 'Reopen for review', 'dgl-platform' ); ?>
+						</button>
+					</div>
+				</form>
+			</section>
+		<?php endif; ?>
+
+		<?php if ( ! empty( $data['can_restore'] ) ) : ?>
+			<section class="dgl-card dgl-decision">
+				<h2 class="dgl-section__title"><?php esc_html_e( 'Restore it', 'dgl-platform' ); ?></h2>
+				<p class="dgl-help"><?php esc_html_e( 'This is archived. Restoring puts it back in the queue to be decided again; it does not go straight on the site.', 'dgl-platform' ); ?></p>
+
+				<form method="post" class="dgl-form dgl-form--bare">
+					<?php wp_nonce_field( Wizard::NONCE ); ?>
+					<div class="dgl-decision__actions">
+						<button class="dgl-button" type="submit" name="dgl_intent" value="restore"
+							data-dgl-confirm="<?php esc_attr_e( 'Restore this and send it back through review?', 'dgl-platform' ); ?>">
+							<?php esc_html_e( 'Restore and review again', 'dgl-platform' ); ?>
+						</button>
+					</div>
+				</form>
+			</section>
+		<?php endif; ?>
+
 		<?php if ( $decidable ) : ?>
 			<section class="dgl-card dgl-decision">
 				<h2 class="dgl-section__title"><?php esc_html_e( 'Decision', 'dgl-platform' ); ?></h2>
@@ -268,7 +309,11 @@ $check_word = static fn( string $status ): string => match ( $status ) {
 					<?php
 					echo Statuses::PENDING === $post->post_status
 						? esc_html__( 'You submitted this, so somebody else has to decide on it.', 'dgl-platform' )
-						: esc_html__( 'This has already been decided.', 'dgl-platform' );
+						: sprintf(
+							/* translators: %s: status label. */
+							esc_html__( 'Already decided: %s. Anything you can change about that is offered above.', 'dgl-platform' ),
+							esc_html( Statuses::label( (string) $post->post_status ) )
+						);
 					?>
 				</p>
 			</section>

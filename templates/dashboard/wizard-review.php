@@ -107,6 +107,7 @@ $ready = empty( $all_errors ) && ( ! $is_edit || ! empty( $changes ) );
 
 					<dl class="dgl-review__list">
 						<?php foreach ( $step_fields as $field ) : ?>
+							<?php if ( ! $field->applies( $values ) ) { continue; } ?>
 							<?php $value = $values[ $field->key ] ?? ''; ?>
 							<dt><?php echo esc_html( $field->label ); ?></dt>
 							<dd<?php echo isset( $all_errors[ $field->key ] ) ? ' class="dgl-review__missing"' : ''; ?>>

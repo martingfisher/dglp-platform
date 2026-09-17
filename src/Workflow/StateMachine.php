@@ -34,6 +34,7 @@ final class StateMachine {
 	public const RESTORE         = 'restore';
 	public const EXPIRE          = 'expire';
 	public const TAKE_DOWN       = 'take_down';
+	public const REOPEN          = 'reopen';
 
 	/**
 	 * Legal moves, as action => [ from status => to status ].
@@ -73,6 +74,10 @@ final class StateMachine {
 			// A moderator pulling reported content while they look at it.
 			self::TAKE_DOWN       => [
 				Statuses::LIVE => Statuses::PENDING,
+			],
+			// A refusal looked at again: back in the queue, decided afresh.
+			self::REOPEN          => [
+				Statuses::REJECTED => Statuses::PENDING,
 			],
 		];
 	}

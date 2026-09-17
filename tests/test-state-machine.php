@@ -131,3 +131,11 @@ Harness::group( 'An edit is decided like anything else once it is in the queue' 
 Harness::assert_same( Statuses::LIVE, StateMachine::next( StateMachine::APPROVE, Statuses::PENDING, Trust::MODERATED, true ), 'approving an edit resolves it' );
 Harness::assert_same( Statuses::CHANGES, StateMachine::next( StateMachine::REQUEST_CHANGES, Statuses::PENDING, Trust::MODERATED, true ), 'changes can be asked for' );
 Harness::assert_same( Statuses::REJECTED, StateMachine::next( StateMachine::REJECT, Statuses::PENDING, Trust::MODERATED, true ), 'and it can be refused' );
+
+Harness::group( 'Reopening a refusal' );
+
+Harness::assert_same( Statuses::PENDING, StateMachine::next( StateMachine::REOPEN, Statuses::REJECTED ), 'a refused item reopens into the queue' );
+Harness::assert_same( null, StateMachine::next( StateMachine::REOPEN, Statuses::LIVE ), 'a live item is taken down, not reopened' );
+Harness::assert_same( null, StateMachine::next( StateMachine::REOPEN, Statuses::ARCHIVED ), 'an archived item is restored, not reopened' );
+Harness::assert_false( StateMachine::requires_note( StateMachine::REOPEN ), 'reopening does not need a note' );
+Harness::assert_false( StateMachine::revokes_trust( StateMachine::REOPEN ), 'and does not touch trust' );

@@ -18,6 +18,8 @@ $decided_copy = [
 	'changes'   => __( 'Sent back with your note. The member has been told.', 'dgl-platform' ),
 	'reject'    => __( 'Refused. The member has been told, with your reason.', 'dgl-platform' ),
 	'take_down' => __( 'Taken off the site. It is back in this queue, and the member has been told why.', 'dgl-platform' ),
+	'reopen'    => __( 'Reopened. It is back in this queue to be decided again, and the member has been told.', 'dgl-platform' ),
+	'restore'   => __( 'Restored. It is back in this queue to be decided again.', 'dgl-platform' ),
 	'org_approve' => __( 'Organisation change accepted. Their listings carry the new details from now, and the owners have been told.', 'dgl-platform' ),
 	'org_refuse'  => __( 'Organisation change refused. The member has been told, with your reason.', 'dgl-platform' ),
 	'join_approve' => __( 'Organisation verified. They can submit now, and they have been told.', 'dgl-platform' ),
@@ -32,7 +34,10 @@ $decided = (string) ( $data['decided'] ?? '' );
 <header class="dgl-page-head">
 	<div>
 		<h1 class="dgl-page-head__title"><?php esc_html_e( 'Review queue', 'dgl-platform' ); ?></h1>
-		<p class="dgl-page-head__lede"><?php esc_html_e( 'Member submissions waiting for a decision. Oldest first.', 'dgl-platform' ); ?></p>
+		<p class="dgl-page-head__lede">
+			<?php esc_html_e( 'Member submissions waiting for a decision. Oldest first.', 'dgl-platform' ); ?>
+			<a href="<?php echo esc_url( \DGL\Dashboard\Router::url( 'review', 'decided' ) ); ?>"><?php esc_html_e( 'Look over what has been decided', 'dgl-platform' ); ?></a>
+		</p>
 	</div>
 </header>
 

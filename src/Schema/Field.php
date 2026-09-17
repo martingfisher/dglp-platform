@@ -82,6 +82,36 @@ final readonly class Field {
 	 *
 	 * @return array<string, string>
 	 */
+	/**
+	 * Whether this field is in play, given the other values.
+	 *
+	 * A field that depends on another is only asked, required, stored or
+	 * shown when the controlling value is one it is declared for. Without
+	 * this the venue was demanded of an online event and "Not given" was
+	 * printed under fields nobody was asked.
+	 *
+	 * @param array<string, mixed> $values Every value by field key.
+	 */
+	public function applies( array $values ): bool {
+		if ( null === $this->depends_on ) {
+			return true;
+		}
+
+		$controller = (string) ( $this->depends_on['field'] ?? '' );
+		$current    = $values[ $controller ] ?? '';
+		$current    = is_bool( $current ) ? ( $current ? '1' : '0' ) : ( is_scalar( $current ) ? (string) $current : '' );
+
+		foreach ( (array) ( $this->depends_on['value'] ?? [] ) as $allowed ) {
+			$allowed = is_bool( $allowed ) ? ( $allowed ? '1' : '0' ) : (string) $allowed;
+
+			if ( $allowed === $current ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	public function depends_attrs(): array {
 		if ( null === $this->depends_on ) {
 			return [];

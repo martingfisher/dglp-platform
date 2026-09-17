@@ -163,7 +163,7 @@ final class View {
 			\DGL\Schema\Field::SELECT   => '' === (string) $value
 				? $blank
 				: esc_html( (string) ( $field->options[ (string) $value ] ?? $value ) ),
-			\DGL\Schema\Field::REPEAT   => [] === (array) $value
+			\DGL\Schema\Field::REPEAT   => ! is_array( $value ) || [] === $value || '' === (string) ( $value['freq'] ?? '' )
 				? esc_html__( 'Does not repeat', 'dgl-platform' )
 				: esc_html( self::repeat_summary( (array) $value ) ),
 			\DGL\Schema\Field::CHOICES  => [] === (array) $value

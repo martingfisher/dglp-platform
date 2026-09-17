@@ -88,7 +88,19 @@ $fields = FieldRegistry::for_step( PostTypes::EVENT, 2 );
 $result = Validator::validate( $fields, [] );
 
 Harness::assert_true( isset( $result['errors']['start_datetime'] ), 'a missing start time is an error' );
-Harness::assert_true( isset( $result['errors']['venue_name'] ), 'a missing venue is an error' );
+Harness::assert_true( isset( $result['errors']['format'] ), 'where it happens is needed' );
+Harness::assert_false( isset( $result['errors']['venue_name'] ), 'no venue error until the format says there is a venue' );
+
+$in_person = Validator::validate( $fields, [ 'format' => 'in_person' ] );
+Harness::assert_true( isset( $in_person['errors']['venue_name'] ) && isset( $in_person['errors']['address'] ) && isset( $in_person['errors']['postcode'] ), 'an in-person event needs venue, address and postcode' );
+$online = Validator::validate( $fields, [ 'format' => 'online', 'venue_name' => 'Typed then hidden', 'start_datetime' => '2026-10-06T13:00', 'cost' => 'free' ] );
+Harness::assert_false( isset( $online['errors']['venue_name'] ) || isset( $online['errors']['address'] ) || isset( $online['errors']['postcode'] ), 'an online event needs none of them' );
+Harness::assert_same( '', $online['values']['venue_name'] ?? null, 'and a venue typed before switching to online is dropped' );
+Harness::assert_same( [], $online['errors'], 'an online event with a start and a cost validates: ' . implode( ' | ', $online['errors'] ) );
+$hybrid = Validator::validate( $fields, [ 'format' => 'hybrid' ] );
+Harness::assert_true( isset( $hybrid['errors']['venue_name'] ), 'in person and online still needs the venue' );
+$format_field = FieldRegistry::find( PostTypes::EVENT, 'online_url' );
+Harness::assert_true( $format_field->applies( [ 'format' => 'online' ] ) && $format_field->applies( [ 'format' => 'hybrid' ] ) && ! $format_field->applies( [ 'format' => 'in_person' ] ) && ! $format_field->applies( [] ), 'the join link applies to online and hybrid only' );
 Harness::assert_false( isset( $result['errors']['capacity'] ), 'an optional field left blank is not an error' );
 Harness::assert_same( '', $result['values']['capacity'] ?? null, 'an optional blank field stores as empty' );
 

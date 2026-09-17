@@ -67,6 +67,11 @@ final class Validator {
 	 * @return array{0: mixed, 1: string|null} Normalised value, then error or null.
 	 */
 	private static function check( Field $field, mixed $raw, array $input = [] ): array {
+		// Hidden by its controlling field: nothing to check and nothing to keep.
+		if ( ! $field->applies( $input ) ) {
+			return [ in_array( $field->type, [ Field::CHOICES, Field::REPEAT ], true ) ? [] : ( Field::CHECKBOX === $field->type ? false : '' ), null ];
+		}
+
 		if ( Field::CHECKBOX === $field->type ) {
 			return [ self::truthy( $raw ), null ];
 		}

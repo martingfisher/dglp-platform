@@ -384,6 +384,34 @@ final class Copy {
 	 * After publication
 	 * ------------------------------------------------------------------ */
 
+	private static function compose_reopened( string $audience, Context $c ): ?Message {
+		if ( Plan::NOTIFY_MEMBER !== $audience ) {
+			return null;
+		}
+
+		return new Message(
+			key: 'reopened',
+			audience: $audience,
+			/* translators: %s: item title. */
+			subject: sprintf( __( 'Being looked at again: %s', 'dgl-platform' ), $c->title() ),
+			preheader: __( 'It was not approved before. The team are reading it again.', 'dgl-platform' ),
+			heading: __( 'The team are looking at this again', 'dgl-platform' ),
+			paragraphs: [
+				sprintf(
+					/* translators: %s: item title. */
+					__( '%s was not approved earlier. The DGLP team have put it back in the review queue to decide again. You do not need to do anything, and you will get an email when they have.', 'dgl-platform' ),
+					$c->title()
+				),
+			],
+			facts: self::facts( $c, [ 'type', 'org', 'actor' ] ),
+			note: $c->note,
+			note_label: __( 'Note from the team', 'dgl-platform' ),
+			cta_label: __( 'See the submission', 'dgl-platform' ),
+			cta_url: $c->member_link(),
+			footnotes: self::footnotes( $audience, $c ),
+		);
+	}
+
 	private static function compose_taken_down( string $audience, Context $c ): ?Message {
 		if ( Plan::NOTIFY_MEMBER === $audience ) {
 			return new Message(

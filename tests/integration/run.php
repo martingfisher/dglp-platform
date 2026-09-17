@@ -588,6 +588,7 @@ Access::flush_cache();
 	\DGL\Schema\FieldRegistry::STEP_DETAILS,
 	[
 		'start_datetime' => gmdate( 'Y-m-d H:i:s', strtotime( '+10 days' ) ),
+		'format'         => 'in_person',
 		'venue_name'     => 'Somewhere',
 		'address'        => 'A street',
 		'postcode'       => 'LS1 1UD',
@@ -2058,7 +2059,7 @@ wp_update_post( [ 'ID' => $pub_item, 'post_title' => 'A public event' ] );
 // Stored the way the wizard stores them, under the meta key. The fixtures
 // used the bare field key, which is how the public pages passed every test
 // while showing a real event with no date, venue or summary.
-foreach ( [ 'summary' => 'The standfirst.', 'venue_name' => 'Armley Library', 'start_datetime' => '2026-11-04 18:30:00', 'capacity' => '40', 'booking_url' => 'https://example.test/book' ] as $k => $v ) {
+foreach ( [ 'summary' => 'The standfirst.', 'format' => 'in_person', 'venue_name' => 'Armley Library', 'start_datetime' => '2026-11-04 18:30:00', 'capacity' => '40', 'booking_url' => 'https://example.test/book' ] as $k => $v ) {
 	update_post_meta( $pub_item, \DGL\Schema\FieldRegistry::find( PostTypes::EVENT, $k )->meta_key(), $v );
 }
 $ok( 'dgl_summary' === \DGL\Schema\FieldRegistry::find( PostTypes::EVENT, 'summary' )->meta_key(), 'the stored key is the prefixed one' );
@@ -2943,6 +2944,49 @@ $f2 = \DGL\Dashboard\Notifications::for_org( $org_a, 2, 2 );
 $ok( 2 === count( $f1 ) && 2 === count( $f2 ) && $f1[1]['when'] >= $f2[0]['when'], 'notification pages are consecutive and newest first' );
 $ok( array_slice( $feed_all, 2, 2 ) == $f2, 'page two is exactly rows three and four' );
 $ok( [] === \DGL\Dashboard\Notifications::for_org( $org_a, 2, 100000 ), 'past the end is empty, not an error' );
+
+$group( 'Decided: looking over past decisions and undoing a refusal' );
+
+$mail_was = get_option( \DGL\Email\Routing::OPTION_ENABLED, false );
+update_option( \DGL\Email\Routing::OPTION_ENABLED, 1 );
+
+$refused = $make_item( $org_a, $alice, Statuses::DRAFT );
+wp_update_post( [ 'ID' => $refused, 'post_title' => 'Refused by mistake' ] );
+Transition::apply( $refused, StateMachine::SUBMIT, $alice );
+Transition::apply( $refused, StateMachine::REJECT, $mod, 'Wrong button.' );
+$ok( Statuses::REJECTED === get_post_status( $refused ), 'a refused item to start with' );
+
+$decided_ids = ItemsTable::decided( ItemsTable::decided_statuses(), 500 );
+$ok( in_array( $refused, $decided_ids, true ) && in_array( $a_live, $decided_ids, true ), 'the decided list holds refusals and live items' );
+$ok( ! in_array( $a_pending, $decided_ids, true ) && ! in_array( $a_draft, $decided_ids, true ), 'but nothing pending or drafted' );
+$ok( [ $refused ] === array_values( array_intersect( ItemsTable::decided( [ Statuses::REJECTED ], 500 ), [ $refused, $a_live ] ) ), 'filtered by outcome' );
+$ok( ItemsTable::decided_count( [ Statuses::REJECTED ] ) >= 1 && [] === ItemsTable::decided( [ Statuses::PENDING ], 10 ), 'counts follow the same rule and pending is refused as a filter' );
+
+$sent_to = [];
+$sent_bodies = [];
+$r = Transition::apply( $refused, StateMachine::REOPEN, $alice );
+$ok( is_wp_error( $r ), 'the member cannot reopen their own refusal' );
+$r = Transition::apply( $refused, StateMachine::REOPEN, $mod, 'Sorry, wrong button.' );
+$ok( true === $r && Statuses::PENDING === get_post_status( $refused ), 'the moderator reopens it into the queue' );
+$ok( in_array( $refused, ItemsTable::queue( null, 500 ), true ), 'and it is in the queue' );
+$ok( [] !== array_filter( $sent_bodies, static fn( string $b ): bool => str_contains( $b, 'put it back in the review queue' ) && str_contains( $b, 'wrong button' ) ), 'the member is emailed, with the note' );
+$feed_titles = array_column( \DGL\Dashboard\Notifications::for_org( $org_a, 5 ), 'title' );
+$ok( in_array( 'Being looked at again', $feed_titles, true ), 'and sees it in notifications' );
+$ok( true === Transition::apply( $refused, StateMachine::APPROVE, $mod ) && Statuses::LIVE === get_post_status( $refused ), 'then it can be approved like any other' );
+
+update_option( \DGL\Email\Routing::OPTION_ENABLED, $mail_was );
+
+$group( 'Where it happens: an online event needs no venue' );
+
+$online = $make_item( $org_a, $alice, Statuses::DRAFT );
+$saved  = \DGL\Dashboard\Wizard::save_step( $online, PostTypes::EVENT, 2, [ 'start_datetime' => '2026-11-03T18:00', 'format' => 'online', 'online_url' => 'https://example.test/meet', 'cost' => 'free', 'repeat' => [ 'posted' => '1' ] ] );
+$ok( [] === $saved, 'step 2 saves for an online event with no venue: ' . implode( ' | ', $saved ) );
+$ok( 'online' === get_post_meta( $online, 'dgl_format', true ) && '' === (string) get_post_meta( $online, 'dgl_venue_name', true ), 'the format is stored and no venue is' );
+$ok( 'Online' === \DGL\Frontend\Frontend::where( get_post( $online ) ), 'the public line says Online' );
+$fact_keys = array_column( \DGL\Frontend\Frontend::facts( get_post( $online ) ), 'key' );
+$ok( in_array( 'format', $fact_keys, true ) && in_array( 'online_url', $fact_keys, true ) && ! in_array( 'venue_name', $fact_keys, true ) && ! in_array( 'postcode', $fact_keys, true ), 'the facts card shows the format and the link, not venue fields' );
+$saved = \DGL\Dashboard\Wizard::save_step( $online, PostTypes::EVENT, 2, [ 'start_datetime' => '2026-11-03T18:00', 'format' => 'in_person', 'cost' => 'free', 'repeat' => [ 'posted' => '1' ] ] );
+$ok( isset( $saved['venue_name'] ) && isset( $saved['postcode'] ), 'switching to in person asks for the venue again' );
 
 /* ----------------------------------------------------------------- report */
 

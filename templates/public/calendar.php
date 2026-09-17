@@ -75,7 +75,7 @@ $month = '';
 								<span class="dgl-cal__body">
 									<a class="dgl-cal__title" href="<?php echo esc_url( get_permalink( $row['post'] ) ); ?>"><?php echo esc_html( get_the_title( $row['post'] ) ); ?></a>
 									<?php
-									$venue = (string) Frontend::value( $row['post'], 'venue_name' );
+									$venue = Frontend::where( $row['post'] );
 									$org   = Frontend::organisation( $row['post'] );
 									$where = implode( ' · ', array_filter( [ $venue, $org['name'] ] ) );
 									?>

@@ -30,6 +30,7 @@ final class Navigation {
 	 */
 	public static function items( UserContext $user ): array {
 		$first  = Router::segments()[0] ?? '';
+		$second = Router::segments()[1] ?? '';
 		$counts = null !== $user->org_id ? self::counts_by_type( $user->org_id ) : [];
 
 		/*
@@ -97,7 +98,15 @@ final class Navigation {
 				// 500 stops being a number and starts being a guess.
 				'count'   => ItemsTable::queue_count() + count( \DGL\Org\Profile::awaiting_review() ) + \DGL\Joining\Store::awaiting_count(),
 				'section' => __( 'Review team', 'dgl-platform' ),
-				'current' => 'review' === $first,
+				'current' => 'review' === $first && 'decided' !== $second,
+			];
+
+			$items[] = [
+				'label'   => __( 'Decided', 'dgl-platform' ),
+				'url'     => Router::url( 'review', 'decided' ),
+				'count'   => null,
+				'section' => __( 'Review team', 'dgl-platform' ),
+				'current' => 'review' === $first && 'decided' === $second,
 			];
 		}
 

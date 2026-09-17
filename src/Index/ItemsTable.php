@@ -218,6 +218,57 @@ final class ItemsTable {
 	 *
 	 * @param string[]|null $types
 	 */
+	/**
+	 * Items a moderator has already decided on, newest decision first: what
+	 * is live, refused, expired or archived. For looking over past decisions
+	 * and undoing one.
+	 *
+	 * @param string[] $statuses A subset of {@see self::decided_statuses()}.
+	 * @return int[]
+	 */
+	public static function decided( array $statuses, int $limit = 50, int $offset = 0 ): array {
+		global $wpdb;
+
+		$statuses = array_values( array_intersect( $statuses, self::decided_statuses() ) );
+
+		if ( [] === $statuses ) {
+			return [];
+		}
+
+		$sql = 'SELECT post_id FROM ' . self::name()
+			. ' WHERE status IN (' . implode( ',', array_fill( 0, count( $statuses ), '%s' ) ) . ')'
+			. self::content_only()
+			. ' ORDER BY updated_at DESC LIMIT %d OFFSET %d';
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery
+		return array_map( 'intval', (array) $wpdb->get_col( $wpdb->prepare( $sql, array_merge( $statuses, [ $limit, $offset ] ) ) ) );
+	}
+
+	/**
+	 * @param string[] $statuses
+	 */
+	public static function decided_count( array $statuses ): int {
+		global $wpdb;
+
+		$statuses = array_values( array_intersect( $statuses, self::decided_statuses() ) );
+
+		if ( [] === $statuses ) {
+			return 0;
+		}
+
+		$sql = 'SELECT COUNT(*) FROM ' . self::name()
+			. ' WHERE status IN (' . implode( ',', array_fill( 0, count( $statuses ), '%s' ) ) . ')'
+			. self::content_only();
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery
+		return (int) $wpdb->get_var( $wpdb->prepare( $sql, $statuses ) );
+	}
+
+	/** @return string[] */
+	public static function decided_statuses(): array {
+		return [ Statuses::LIVE, Statuses::REJECTED, Statuses::EXPIRED, Statuses::ARCHIVED ];
+	}
+
 	public static function queue_count( ?array $types = null ): int {
 		global $wpdb;
 

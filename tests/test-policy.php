@@ -190,3 +190,11 @@ Harness::assert_false( Policy::decide( member_a(), Policy::CHANGE_SCHEDULE, $new
 Harness::assert_false( Policy::decide( moderator(), Policy::CHANGE_SCHEDULE, item_a( Statuses::LIVE ) ), 'a moderator does not change members\' dates for them' );
 Harness::assert_true( Policy::decide( administrator(), Policy::CHANGE_SCHEDULE, item_a( Statuses::LIVE ) ), 'an administrator can' );
 Harness::assert_false( Policy::decide( member_a( UserContext::ORG_CONTRIBUTOR, UserContext::ACCOUNT_PENDING ), Policy::CHANGE_SCHEDULE, item_a( Statuses::LIVE ) ), 'an unapproved account cannot' );
+
+Harness::group( 'Reopening a refusal is a moderator\'s move' );
+
+Harness::assert_true( Policy::decide( moderator(), Policy::REOPEN_ITEM, item_a( Statuses::REJECTED ) ), 'a moderator can reopen a refusal' );
+Harness::assert_true( Policy::decide( moderator( 101 ), Policy::REOPEN_ITEM, item_a( Statuses::REJECTED ) ), 'including the author-moderator: undoing a mistake needs no second person' );
+Harness::assert_false( Policy::decide( moderator(), Policy::REOPEN_ITEM, item_a( Statuses::LIVE ) ), 'only a refusal reopens' );
+Harness::assert_false( Policy::decide( member_a( UserContext::ORG_OWNER ), Policy::REOPEN_ITEM, item_a( Statuses::REJECTED ) ), 'a member cannot reopen their own refusal' );
+Harness::assert_true( Policy::decide( administrator(), Policy::REOPEN_ITEM, item_a( Statuses::REJECTED ) ), 'an administrator can' );

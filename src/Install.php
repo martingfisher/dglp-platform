@@ -138,8 +138,31 @@ final class Install {
 		InviteStore::create();
 		DigestStore::create();
 		SignupStore::create();
+		self::backfill_event_format();
 
 		update_option( self::DB_VERSION_OPTION, DB_VERSION, false );
+	}
+
+	/**
+	 * Events from before "Where it happens" existed were all in person, so
+	 * they say so. Without this their venue fields would hide behind a
+	 * format nobody had chosen.
+	 */
+	private static function backfill_event_format(): void {
+		$ids = get_posts(
+			[
+				'post_type'      => \DGL\PostTypes::EVENT,
+				'post_status'    => 'any',
+				'posts_per_page' => -1,
+				'fields'         => 'ids',
+				'no_found_rows'  => true,
+				'meta_query'     => [ [ 'key' => 'dgl_format', 'compare' => 'NOT EXISTS' ] ], // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+			]
+		);
+
+		foreach ( $ids as $id ) {
+			update_post_meta( (int) $id, 'dgl_format', 'in_person' );
+		}
 	}
 
 	/**

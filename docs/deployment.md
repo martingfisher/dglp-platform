@@ -105,7 +105,8 @@ be defined on staging or production.
 
 Repeating events add a column to the index and a public route:
 
-- `wp option get dgl_platform_db_version` should print `5`.
+- `wp option get dgl_platform_db_version` should print `6` (5 added the
+  `next_at` column; 6 marks every earlier event as in person).
 - `wp rewrite list --match=/events/calendar/` should show
   `^events/calendar/?$` going to `dgl_calendar=1`; if not, load any page
   once (the version bump flushes rules) or run `wp rewrite flush`.

@@ -268,6 +268,11 @@ final class Controller {
 			return;
 		}
 
+		if ( 'decided' === ( $segments[1] ?? '' ) ) {
+			self::decided( $user );
+			return;
+		}
+
 		$post_id = (int) ( $segments[1] ?? 0 );
 
 		if ( $post_id > 0 ) {
@@ -577,6 +582,37 @@ final class Controller {
 	}
 
 	/**
+	 * What has already been decided, for looking over and undoing.
+	 *
+	 * Newest decision first, filtered by outcome. Every row opens the same
+	 * review screen, which offers whichever change of mind the state
+	 * machine allows from there: take a live item down, reopen a refusal,
+	 * restore an archived one.
+	 */
+	private static function decided( UserContext $user ): void {
+		$status = isset( $_GET['status'] ) ? sanitize_key( wp_unslash( $_GET['status'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$filter = in_array( $status, ItemsTable::decided_statuses(), true ) ? [ $status ] : ItemsTable::decided_statuses();
+		$paging = self::page_args( ItemsTable::decided_count( $filter ), 50 );
+
+		$counts = [];
+		foreach ( ItemsTable::decided_statuses() as $s ) {
+			$counts[ $s ] = ItemsTable::decided_count( [ $s ] );
+		}
+
+		self::screen(
+			'review-decided',
+			[
+				'user'    => $user,
+				'items'   => array_map( static fn( int $id ): array => self::row( $id, true ), ItemsTable::decided( $filter, 50, $paging['offset'] ) ),
+				'counts'  => $counts,
+				'active'  => $status,
+			] + $paging,
+			__( 'Decided', 'dgl-platform' ),
+			$user
+		);
+	}
+
+	/**
 	 * One submission, read and decided. Wireframe 1l.
 	 */
 	private static function review_item( int $post_id, UserContext $user ): void {
@@ -620,6 +656,8 @@ final class Controller {
 				'changes'   => StateMachine::REQUEST_CHANGES,
 				'reject'    => StateMachine::REJECT,
 				'take_down' => StateMachine::TAKE_DOWN,
+				'reopen'    => StateMachine::REOPEN,
+				'restore'   => StateMachine::RESTORE,
 				default     => '',
 			};
 
@@ -674,6 +712,9 @@ final class Controller {
 				// A live item can be pulled while the team look at it. It goes
 				// back to pending, so it comes down now and gets decided later.
 				'can_take_down' => Access::can( $user->user_id, Policy::TAKE_DOWN_ITEM, $post_id ),
+				// A refusal or an archive can be sent back through the queue.
+				'can_reopen'    => Access::can( $user->user_id, Policy::REOPEN_ITEM, $post_id ),
+				'can_restore'   => ! $is_edit && Access::can( $user->user_id, Policy::RESTORE_ITEM, $post_id ),
 			],
 			$post->post_title !== '' ? $post->post_title : __( 'Review', 'dgl-platform' ),
 			$user

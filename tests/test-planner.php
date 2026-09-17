@@ -133,3 +133,9 @@ foreach ( StateMachine::table() as $action => $moves ) {
 		}
 	}
 }
+
+Harness::group( 'Reopening tells the member' );
+
+$plan = Planner::plan( StateMachine::REOPEN, Statuses::REJECTED );
+Harness::assert_true( null !== $plan && [ Plan::NOTIFY_MEMBER ] === $plan->notify && 'reopened' === $plan->message_key, 'the member is told, nobody else' );
+Harness::assert_true( in_array( 'reopened', \DGL\Email\Copy::keys(), true ), 'and the copy exists' );

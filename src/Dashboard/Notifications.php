@@ -48,6 +48,7 @@ final class Notifications {
 			StateMachine::REQUEST_CHANGES => [ 'title' => __( 'The team asked for a change', 'dgl-platform' ), 'tone' => 'attention' ],
 			StateMachine::REJECT          => [ 'title' => __( 'Not approved', 'dgl-platform' ), 'tone' => 'bad' ],
 			StateMachine::TAKE_DOWN       => [ 'title' => __( 'Taken off the site', 'dgl-platform' ), 'tone' => 'bad' ],
+			StateMachine::REOPEN          => [ 'title' => __( 'Being looked at again', 'dgl-platform' ), 'tone' => 'quiet' ],
 			StateMachine::EXPIRE          => [ 'title' => __( 'Came off the site on its date', 'dgl-platform' ), 'tone' => 'quiet' ],
 			StateMachine::ARCHIVE         => [ 'title' => __( 'Archived', 'dgl-platform' ), 'tone' => 'quiet' ],
 			StateMachine::RESTORE         => [ 'title' => __( 'Restored from the archive', 'dgl-platform' ), 'tone' => 'quiet' ],

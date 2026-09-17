@@ -61,6 +61,23 @@ final class Event implements TypeDefinition {
 				help: __( 'For example, doors open at 12:45. Leave blank if the schedule above says it all.', 'dgl-platform' ),
 				max_length: 120,
 			),
+			/*
+			 * Where it happens decides what else is asked. An online event
+			 * has no venue, so the venue fields only appear, and are only
+			 * required, when there is somewhere to go.
+			 */
+			new Field(
+				key: 'format',
+				label: __( 'Where it happens', 'dgl-platform' ),
+				type: Field::SELECT,
+				required: true,
+				options: [
+					'in_person' => __( 'In person', 'dgl-platform' ),
+					'online'    => __( 'Online', 'dgl-platform' ),
+					'hybrid'    => __( 'In person and online', 'dgl-platform' ),
+				],
+				in_digest: true,
+			),
 			new Field(
 				key: 'venue_name',
 				label: __( 'Venue name', 'dgl-platform' ),
@@ -68,6 +85,7 @@ final class Event implements TypeDefinition {
 				required: true,
 				max_length: 120,
 				in_digest: true,
+				depends_on: [ 'field' => 'format', 'value' => [ 'in_person', 'hybrid' ] ],
 			),
 			new Field(
 				key: 'address',
@@ -75,12 +93,21 @@ final class Event implements TypeDefinition {
 				type: Field::TEXT,
 				required: true,
 				max_length: 200,
+				depends_on: [ 'field' => 'format', 'value' => [ 'in_person', 'hybrid' ] ],
 			),
 			new Field(
 				key: 'postcode',
 				label: __( 'Postcode', 'dgl-platform' ),
 				type: Field::POSTCODE,
 				required: true,
+				depends_on: [ 'field' => 'format', 'value' => [ 'in_person', 'hybrid' ] ],
+			),
+			new Field(
+				key: 'online_url',
+				label: __( 'Link to join online', 'dgl-platform' ),
+				type: Field::URL,
+				help: __( 'If people get the link after booking, leave this blank and add the booking link below.', 'dgl-platform' ),
+				depends_on: [ 'field' => 'format', 'value' => [ 'online', 'hybrid' ] ],
 			),
 			new Field(
 				key: 'cost',
