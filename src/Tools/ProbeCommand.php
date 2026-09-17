@@ -77,7 +77,7 @@ final class ProbeCommand {
 	 * <needle>
 	 * : Text to look for.
 	 *
-	 * [--context=<lines>]
+	 * [--around=<lines>]
 	 * : Lines to show either side of a match. Default 2.
 	 *
 	 * ## EXAMPLES
@@ -89,7 +89,7 @@ final class ProbeCommand {
 	public function file( array $args, array $assoc ): void {
 		$relative = ltrim( str_replace( '\\', '/', (string) ( $args[0] ?? '' ) ), '/' );
 		$needle   = (string) ( $args[1] ?? '' );
-		$context  = max( 0, (int) ( $assoc['context'] ?? 2 ) );
+		$context  = max( 0, (int) ( $assoc['around'] ?? 2 ) );
 		$root     = rtrim( str_replace( '\\', '/', (string) WP_CONTENT_DIR ), '/' );
 		$path     = realpath( $root . '/' . $relative );
 
@@ -114,6 +114,63 @@ final class ProbeCommand {
 		}
 
 		WP_CLI::log( sprintf( '%d match(es) in %d lines.', $hits, count( $lines ) ) );
+	}
+
+	/**
+	 * Search every PHP file under a wp-content directory for a phrase.
+	 *
+	 * Read only. Prints file and line, capped at 200 matches.
+	 *
+	 * ## OPTIONS
+	 *
+	 * <dir>
+	 * : Directory relative to wp-content, e.g. plugins/blocksy-companion-pro or themes.
+	 *
+	 * <needle>
+	 * : Text to look for.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp dgl probe grep plugins/blocksy-companion-pro breadcrumbs:items
+	 *
+	 * @when after_wp_load
+	 */
+	public function grep( array $args ): void {
+		$relative = ltrim( str_replace( '\\', '/', (string) ( $args[0] ?? '' ) ), '/' );
+		$needle   = (string) ( $args[1] ?? '' );
+		$root     = rtrim( str_replace( '\\', '/', (string) WP_CONTENT_DIR ), '/' );
+		$dir      = realpath( $root . '/' . $relative );
+
+		if ( '' === $needle || false === $dir || ! str_starts_with( $dir, $root ) || ! is_dir( $dir ) ) {
+			WP_CLI::error( 'No such directory under wp-content, or no phrase given.' );
+		}
+
+		$hits  = 0;
+		$files = 0;
+		$it    = new \RecursiveIteratorIterator( new \RecursiveDirectoryIterator( $dir, \FilesystemIterator::SKIP_DOTS ) );
+
+		foreach ( $it as $file ) {
+			if ( 'php' !== strtolower( $file->getExtension() ) ) {
+				continue;
+			}
+
+			++$files;
+
+			foreach ( file( $file->getPathname(), FILE_IGNORE_NEW_LINES ) as $i => $line ) {
+				if ( false === stripos( $line, $needle ) ) {
+					continue;
+				}
+
+				WP_CLI::log( sprintf( '%s:%d: %s', substr( $file->getPathname(), strlen( $root ) + 1 ), $i + 1, trim( $line ) ) );
+
+				if ( ++$hits >= 200 ) {
+					WP_CLI::log( 'Stopped at 200 matches.' );
+					return;
+				}
+			}
+		}
+
+		WP_CLI::log( sprintf( '%d match(es) in %d PHP file(s).', $hits, $files ) );
 	}
 
 	public function page( array $args, array $assoc ): void {
