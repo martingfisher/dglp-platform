@@ -287,3 +287,12 @@ clean. They are the only DGLP content on staging.
   staging (refuses a missing file). The CSV itself has not been imported
   on staging yet: it needs to be on the server first, and it is not going
   in the public repo. Pinned to commit `b13a89d`.
+- **0.9.1 and 0.9.2 deployed**: `wp dgl probe page <path> <phrase>` reads
+  a page from the server itself, which is how the "footer" under the
+  member area was finally identified: not the theme footer but a Blocksy
+  content block, post 1258, hooked into `wp_footer` and wrapped in
+  `<div data-block="hook:1258">`, background `#a8c8e8`. The shell now
+  strips footer elements and hook blocks whole, by counting tags. Probed
+  after the deploy: `/dashboard/` has no `hook:1258` and no "Cookies
+  Policy"; `/events/` still carries the block at byte 209268. Pinned to
+  commit `bb86f27`. No theme or content-block settings were changed.
