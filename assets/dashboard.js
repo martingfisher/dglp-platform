@@ -167,6 +167,63 @@
 	}
 
 	/**
+	 * Shrink a photo in the browser before it is sent.
+	 *
+	 * The server cuts every image to 1600px and strips its metadata anyway,
+	 * so doing the same here first loses nothing and gains three things: a
+	 * phone photo of 8MB becomes a few hundred KB and uploads in a moment;
+	 * camera and editor metadata never leaves the device; and a firewall
+	 * that dislikes something inside a file's bytes never sees those bytes.
+	 * One specific 1.7MB image was refused by the web server with a 403
+	 * while its neighbour passed, which is what this is for. Anything that
+	 * cannot be redrawn is sent as it was.
+	 */
+	function shrinkImages( form ) {
+		var inputs = form.querySelectorAll( 'input[type="file"][accept*="image"]' );
+		var MAX_EDGE = 1600;
+
+		if ( ! window.DataTransfer || ! window.createImageBitmap || ! document.createElement( 'canvas' ).toBlob ) {
+			return;
+		}
+
+		Array.prototype.forEach.call( inputs, function ( input ) {
+			input.addEventListener( 'change', function () {
+				var file = input.files && input.files[ 0 ];
+
+				if ( ! file || ! /^image\/(jpeg|png|webp)$/.test( file.type ) ) {
+					return;
+				}
+
+				var keepPng = 'image/png' === file.type;
+
+				createImageBitmap( file ).then( function ( bitmap ) {
+					var scale = Math.min( 1, MAX_EDGE / Math.max( bitmap.width, bitmap.height ) );
+					var canvas = document.createElement( 'canvas' );
+					canvas.width = Math.round( bitmap.width * scale );
+					canvas.height = Math.round( bitmap.height * scale );
+					canvas.getContext( '2d' ).drawImage( bitmap, 0, 0, canvas.width, canvas.height );
+
+					return new Promise( function ( resolve ) {
+						canvas.toBlob( resolve, keepPng ? 'image/png' : 'image/jpeg', 0.86 );
+					} );
+				} ).then( function ( blob ) {
+					if ( ! blob || ( blob.size >= file.size && blob.type === file.type ) ) {
+						return;
+					}
+
+					var name = file.name.replace( /\.[^.]+$/, '' ) + ( keepPng ? '.png' : '.jpg' );
+					var transfer = new DataTransfer();
+					transfer.items.add( new File( [ blob ], name, { type: blob.type, lastModified: Date.now() } ) );
+					input.files = transfer.files;
+					input.setAttribute( 'data-dgl-shrunk', String( blob.size ) );
+				} ).catch( function () {
+					// Not an image the browser can decode: leave it to the server.
+				} );
+			} );
+		} );
+	}
+
+	/**
 	 * Warn before losing typed work, but never when the member is deliberately
 	 * saving. Every button in the wizard submits, so submission clears the flag.
 	 */
@@ -315,6 +372,7 @@
 			applyDependencies( form );
 			addCounters( form );
 			guardFileSize( form );
+			shrinkImages( form );
 			guardUnsavedWork( form );
 			guardDoubleSubmit( form );
 		} );

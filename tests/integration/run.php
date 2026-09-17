@@ -110,7 +110,7 @@ foreach ( $fixture_users as $stale_user ) {
 	wp_delete_user( (int) $stale_user );
 }
 
-foreach ( [ 'dgl_alice', 'dgl_aaron', 'dgl_bella', 'dgl_mod', 'dgl_pending', 'dgl_susp', 'dgl_carl', 'dgl_tina', 'dgl_owen', 'dgl_pendowner', 'dgl_loose', 'dgl_privacy', 'dgl_dirowner', 'dgl_dircontr', 'dgl_dirpend', 'dgl_dirout', 'dgl_wizard' ] as $login ) {
+foreach ( [ 'dgl_alice', 'dgl_aaron', 'dgl_bella', 'dgl_mod', 'dgl_pending', 'dgl_susp', 'dgl_carl', 'dgl_tina', 'dgl_owen', 'dgl_pendowner', 'dgl_loose', 'dgl_privacy', 'dgl_dirowner', 'dgl_dircontr', 'dgl_dirpend', 'dgl_dirout', 'dgl_wizard', 'dgl_prefill' ] as $login ) {
 	$existing = get_user_by( 'login', $login );
 	if ( $existing ) {
 		wp_delete_user( $existing->ID );
@@ -2743,6 +2743,32 @@ $switch = \DGL\Org\Directory::list_permission_holders( true );
 $ok( in_array( $de, $switch, true ) && true === \DGL\Org\Directory::wants_listing( $de ), 'the real run switches it on' );
 $ok( [] === array_intersect( [ $de ], \DGL\Org\Directory::list_permission_holders( true ) ), 'and a second run leaves it alone' );
 $ok( in_array( 'directory_on', array_column( Log::for_object( 'org', $de ), 'action' ), true ), 'with an audit row' );
+
+/* ---------------------------------------------------------- contact prefill */
+
+$group( 'A new draft starts with the contact details used last time' );
+
+$pf_org  = $make_org( 'Prefill Org' );
+$pf_user = $make_member( 'dgl_prefill', $pf_org, 'owner' );
+Access::flush_cache();
+update_post_meta( $pf_org, 'dgl_org_email', 'hello@prefill.test' );
+update_post_meta( $pf_org, 'dgl_org_phone', '0113 111 1111' );
+update_post_meta( $pf_org, 'dgl_org_website', 'https://prefill.test' );
+wp_update_user( [ 'ID' => $pf_user, 'display_name' => 'Pat Prefill' ] );
+
+$pf1 = (int) \DGL\Dashboard\Wizard::create( PostTypes::EVENT, $pf_user );
+update_post_meta( $pf1, DGL_FIXTURE_FLAG, '1' );
+$ok( 'hello@prefill.test' === get_post_meta( $pf1, 'dgl_contact_email', true ) && '0113 111 1111' === get_post_meta( $pf1, 'dgl_contact_phone', true ) && 'https://prefill.test' === get_post_meta( $pf1, 'dgl_website', true ), 'the first draft takes the organisation profile\'s email, phone and website' );
+$ok( 'Pat Prefill' === get_post_meta( $pf1, 'dgl_contact_name', true ), 'and the member\'s own name' );
+
+update_post_meta( $pf1, 'dgl_contact_name', 'Sam Story' );
+update_post_meta( $pf1, 'dgl_contact_email', 'sam@prefill.test' );
+wp_update_post( [ 'ID' => $pf1, 'post_title' => 'First story' ] );
+$pf2 = (int) \DGL\Dashboard\Wizard::create( PostTypes::NEWS, $pf_user );
+update_post_meta( $pf2, DGL_FIXTURE_FLAG, '1' );
+$ok( $pf2 !== $pf1 && 'Sam Story' === get_post_meta( $pf2, 'dgl_contact_name', true ) && 'sam@prefill.test' === get_post_meta( $pf2, 'dgl_contact_email', true ), 'the next draft, of any type, takes what was used last time' );
+$ok( '0113 111 1111' === get_post_meta( $pf2, 'dgl_contact_phone', true ), 'a field left as it was carries over too' );
+$ok( true === \DGL\Dashboard\Wizard::is_empty( $pf2 ), 'prefilled contact details do not make the draft count as written in' );
 
 /* ----------------------------------------------------------------- report */
 

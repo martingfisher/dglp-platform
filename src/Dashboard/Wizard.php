@@ -70,6 +70,9 @@ final class Wizard {
 		$existing = self::empty_draft_for( $post_type, $user_id, $org_id );
 
 		if ( null !== $existing ) {
+			// Fills blanks only, so a reused draft gets the same start as a new one.
+			self::prefill_contact( $existing, $org_id, $user_id );
+
 			return $existing;
 		}
 
@@ -90,7 +93,65 @@ final class Wizard {
 		// Written after insert, which is why Index\Sync also watches meta writes.
 		update_post_meta( $post_id, Meta::ITEM_ORG, $org_id );
 
+		self::prefill_contact( (int) $post_id, $org_id, $user_id );
+
 		return (int) $post_id;
+	}
+
+	/**
+	 * The contact fields a new draft starts with.
+	 *
+	 * Typing the same name, email, phone and website into every story was
+	 * the complaint. So a new draft starts with whatever this organisation
+	 * used last time, from its most recent item of any type; failing that,
+	 * the organisation profile's public email, phone and website and the
+	 * member's own name. Every value stays editable on step three.
+	 */
+	public const CONTACT_KEYS = [ 'contact_name', 'contact_email', 'contact_phone', 'website' ];
+
+	private static function prefill_contact( int $post_id, int $org_id, int $user_id ): void {
+		$values = [];
+		$latest = get_posts(
+			[
+				'post_type'      => PostTypes::submittable(),
+				'post_status'    => 'any',
+				'exclude'        => [ $post_id ],
+				'posts_per_page' => 1,
+				'fields'         => 'ids',
+				'orderby'        => 'modified',
+				'order'          => 'DESC',
+				'no_found_rows'  => true,
+				'meta_key'       => Meta::ITEM_ORG,
+				'meta_value'     => $org_id,
+			]
+		);
+
+		if ( [] !== $latest ) {
+			foreach ( self::CONTACT_KEYS as $key ) {
+				$values[ $key ] = (string) get_post_meta( (int) $latest[0], 'dgl_' . $key, true );
+			}
+		}
+
+		$profile = \DGL\Org\Profile::values( $org_id );
+		$user    = get_userdata( $user_id );
+		$fallback = [
+			'contact_name'  => $user ? (string) $user->display_name : '',
+			'contact_email' => (string) ( $profile['org_email'] ?? '' ),
+			'contact_phone' => (string) ( $profile['org_phone'] ?? '' ),
+			'website'       => (string) ( $profile['org_website'] ?? '' ),
+		];
+
+		foreach ( self::CONTACT_KEYS as $key ) {
+			$value = trim( (string) ( $values[ $key ] ?? '' ) );
+
+			if ( '' === $value ) {
+				$value = trim( $fallback[ $key ] );
+			}
+
+			if ( '' !== $value ) {
+				update_post_meta( $post_id, 'dgl_' . $key, $value );
+			}
+		}
 	}
 
 	/**
