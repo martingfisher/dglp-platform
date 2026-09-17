@@ -26,7 +26,7 @@ $wanted  = isset( $_GET['redirect_to'] ) ? (string) wp_unslash( $_GET['redirect_
 		<?php if ( '' !== $message ) : ?>
 			<div class="dgl-alert" role="alert"><p><?php echo esc_html( $message ); ?></p></div>
 		<?php endif; ?>
-		<p class="dgl-page-head__lede"><?php esc_html_e( 'Sign in to your admin dashboard.', 'dgl-platform' ); ?></p>
+		<p class="dgl-page-head__lede"><?php esc_html_e( 'Sign in to the member area.', 'dgl-platform' ); ?></p>
 
 		<?php
 		wp_login_form(

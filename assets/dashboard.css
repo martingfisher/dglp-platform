@@ -25,7 +25,7 @@
 	align-items: center;
 	padding: 3px 10px;
 	border-radius: 999px;
-	font-size: 0.72em;
+	font-size: max(0.72em, 12px); /* Never below 12px however deep the em nesting. */
 	font-weight: 600;
 	line-height: 1.5;
 	white-space: nowrap;
@@ -600,7 +600,8 @@ body.dgl-body {
 	display: inline-flex;
 	align-items: center;
 	gap: 6px;
-	padding: 5px 12px;
+	min-height: 36px;
+	padding: 5px 14px;
 	border: 1px solid var(--dgl-border);
 	border-radius: 999px;
 	background: var(--dgl-white);
@@ -1033,7 +1034,7 @@ body.dgl-body {
 
 .dgl-help {
 	margin: 6px 0 0;
-	font-size: 0.8em;
+	font-size: max(0.8em, 14px);
 	color: var(--dgl-text-muted);
 }
 
@@ -1856,3 +1857,57 @@ body.dgl-body {
 }
 
 .dgl-table__action { text-align: right; white-space: nowrap; }
+
+/* ---- Phones and touch ---------------------------------------------------
+ *
+ * The least confident member posts from a phone. Every control they can
+ * press is at least 44px tall there, the top bar is one line, and the
+ * wizard's footer stacks so "Continue" is the full-width thing under the
+ * thumb. Sized by pointer where it is about touch, by width where it is
+ * about room. */
+
+/* Real phones report a coarse pointer; a narrow window is treated the same so a
+ * desktop browser shrunk to phone width (and the test harness) sees what a phone sees. */
+@media (pointer: coarse), (max-width: 782px) {
+	.dgl-check { min-height: 44px; align-items: center; padding: 2px 0; }
+	.dgl-check > input { width: 22px; height: 22px; margin: 0; }
+	.dgl-filter { min-height: 44px; }
+	.dgl-linkish { min-height: 44px; padding: 8px 0 !important; }
+	.dgl-crumbs a { display: inline-block; padding: 10px 0; }
+	.dgl-progress__step a, .dgl-progress__step > span { min-height: 44px; }
+	.dgl-review__head a { display: inline-block; padding: 10px 0; }
+	.dgl-topbar__link { min-height: 44px; }
+	.dgl-topbar__brand { min-height: 44px; }
+	.dgl-progress__step a { padding-right: 8px; }
+	/* In a list card the title is the way in, so it is a whole-width, thumb-sized target. */
+	.dgl-dash__main .dgl-table td:first-child a { display: flex; align-items: center; min-height: 44px; }
+	.dgl-feed__subject a { display: inline-flex; align-items: center; min-height: 44px; }
+	.dgl-signin input[type="checkbox"] { width: 22px; height: 22px; accent-color: var(--dgl-navy); }
+	.dgl-signin label { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; }
+	.dgl-signin p a { display: inline-block; padding: 8px 0; }
+}
+
+@media (max-width: 782px) {
+	/* One line: the brand and the way out. Notifications, the name and
+	 * Sign out are all in the menu below, so the bar does not repeat them. */
+	.dgl-topbar__inner { flex-wrap: nowrap; gap: 12px; padding: 6px 16px; }
+	.dgl-topbar__end { flex-wrap: nowrap; gap: 0; }
+	.dgl-topbar__end .dgl-topbar__link:not(.dgl-topbar__link--back) { display: none; }
+	.dgl-topbar__link--back { min-height: 44px; }
+
+	.dgl-stat__label { font-size: max(0.72em, 13px); }
+	.dgl-progress__heading { font-size: max(0.72em, 13px); }
+	.dgl-edit-flag { font-size: max(0.7em, 12px); }
+	.dgl-counter { font-size: max(0.78em, 14px); }
+}
+
+@media (max-width: 600px) {
+	/* The wizard footer: Continue full width and first under the thumb,
+	 * Back and Save and close on one row beneath it. */
+	.dgl-form__actions { flex-direction: column-reverse; align-items: stretch; gap: 12px; }
+	.dgl-form__actions-end { display: flex; flex-direction: column-reverse; gap: 12px; align-items: stretch; }
+	.dgl-form__actions-end .dgl-button { width: 100%; justify-content: center; }
+	.dgl-form__actions-end .dgl-linkish { justify-content: center; }
+	.dgl-form__actions > .dgl-button--secondary { width: 100%; justify-content: center; }
+	.dgl-decision__actions .dgl-button { width: 100%; justify-content: center; }
+}

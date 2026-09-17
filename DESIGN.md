@@ -252,6 +252,19 @@ Tile and stat grids use `auto-fit, minmax(150px, 1fr)` so nothing strands on
 a row of its own. Screens with no sidebar (sign-in, accept an invitation) run a
 single column no wider than 760px.
 
+On a phone (a coarse pointer, or any window under 782px) every control a
+member can press is at least 44px tall: checkbox and radio rows, filter
+chips, breadcrumb and text-shaped links, the wizard's progress steps, and
+the title link in a list card, which becomes the whole card's way in. The
+top bar is one line, brand and "Back to the website" only, because the
+menu below already holds Notifications, the name and Sign out. Tables
+become stacked cards (title, then type, status and date on one line, then
+a full-width button). The wizard footer stacks with Continue first and
+full width. Type never drops below its floor through nested em sizing:
+chips 12px, help and counters 14px, stat labels 13px. Confirmed 17
+September 2026 across seventeen member-area screens at 390px: no sideways
+scroll, no target under 44px other than the WordPress editor's toolbar.
+
 ## Elevation & Depth
 
 Gently lifted, confirmed 16 September 2026. Cards, tiles and stats carry a
