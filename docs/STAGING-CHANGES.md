@@ -412,3 +412,10 @@ clean. They are the only DGLP content on staging.
   wp-content for exactly this kind of question. Pinned to commit `ca4bc2f`.
   Known: the member-area list tables are cramped at phone width; that is
   the shared table partial and predates this release.
+- **0.10.5 deployed** (17 September): member-area tables (queue, Decided,
+  category lists, archive, home activity, members, invitations) turn into
+  cards at phone width: title, then type, status and date on one line, then
+  a full-width button. Checked at 390px on six screens locally, no sideways
+  scroll; desktop rows unchanged; contrast walk clear. Verified on staging
+  by version (0.10.5) and by reading the rule out of the served stylesheet.
+  Pinned to commit `5ac943a`.
