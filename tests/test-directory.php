@@ -103,10 +103,10 @@ Harness::assert_same( [ 'caringtogether.org.uk' ], $m['domains'], 'domain taken 
 Harness::assert_same( 'https://www.caringtogether.org.uk', $m['fields']['org_website'], 'website given a scheme' );
 Harness::assert_same( 'LS6 2PY', $m['fields']['org_postcode'], 'postcode upper-cased' );
 Harness::assert_same( 'Woodhouse', $m['fields']['org_address_2'], 'supplemental lines become line 2' );
-Harness::assert_same( 400, mb_strlen( $m['fields']['org_description'] ), 'a description with no spaces is cut at the field limit' );
-$long = str_repeat( 'word ', 90 ) . 'tail';
+Harness::assert_same( 450, mb_strlen( $m['fields']['org_description'] ), 'a description under the 650 limit is kept whole' );
+$long = str_repeat( 'word ', 140 ) . 'tail';
 $cut  = Import::map( [ Import::NAME => 'X', Import::FC_ID => '1', Import::DESC => $long ] )['fields']['org_description'];
-Harness::assert_true( mb_strlen( $cut ) <= 400 && str_ends_with( $cut, 'word' ) && ! str_ends_with( $cut, 'wor' ), 'a long description is cut at a word boundary: ' . mb_strlen( $cut ) . ' chars' );
+Harness::assert_true( mb_strlen( $cut ) <= 650 && mb_strlen( $cut ) > 600 && str_ends_with( $cut, 'word' ), 'a long description is cut at a word boundary under 650: ' . mb_strlen( $cut ) . ' chars' );
 Harness::assert_same( 'little_london_and_woodhouse', $m['fields']['org_ward'], 'ward by key' );
 Harness::assert_same( 'registered_charity', $m['fields']['org_legal_status'], 'legal status by key' );
 Harness::assert_same( '11_50', $m['fields']['org_staff'], 'staff band by key' );

@@ -91,7 +91,7 @@ final class Import {
 		if ( '' === $description ) {
 			$description = $get( self::DESC_2 );
 		}
-		$fields['org_description'] = self::cut( $description, 400 );
+		$fields['org_description'] = self::cut( $description, 650 );
 
 		// The public contact address. Any address, including a Gmail one.
 		$email = strtolower( $get( self::EMAIL ) );

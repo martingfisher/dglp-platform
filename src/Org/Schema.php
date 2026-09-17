@@ -54,8 +54,8 @@ final class Schema {
 				label: __( 'Short description', 'dgl-platform' ),
 				type: Field::TEXTAREA,
 				step: 1,
-				help: __( 'Shown on your listings. Two or three sentences about what you do.', 'dgl-platform' ),
-				max_length: 400,
+				help: __( 'Shown on your listings and in the directory. A short paragraph about what you do; the directory shows the first few lines and a More button for the rest.', 'dgl-platform' ),
+				max_length: 650,
 			),
 			new Field(
 				key: 'org_email',

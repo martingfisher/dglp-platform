@@ -562,6 +562,26 @@
 
 .dgl-org__where { margin: 0; color: var(--dgl-teal-text); font-weight: 500; }
 
+.dgl-org__blurb { margin-bottom: 8px; }
+
+.dgl-pub .dgl-org__more {
+	display: inline-flex;
+	align-items: center;
+	min-height: 36px;
+	margin: 0 0 var(--dgl-gap-lg);
+	padding: 0 14px;
+	border: var(--dgl-field-border) solid var(--dgl-field-outline);
+	border-radius: var(--dgl-radius-button);
+	background: var(--dgl-white);
+	color: var(--dgl-link);
+	font: var(--dgl-weight-button) 14px / 1 var(--dgl-font);
+	cursor: pointer;
+}
+
+.dgl-pub .dgl-org__more:hover { background: var(--dgl-surface); }
+
+.dgl-org__more + .dgl-org__areas { margin-top: 0; }
+
 .dgl-org__areas {
 	display: flex;
 	flex-wrap: wrap;

@@ -87,8 +87,48 @@ foreach ( ItemsTable::for_org( $id, PostTypes::enabled_keys(), [ Statuses::LIVE 
 
 		<div class="dgl-pub__layout<?php echo '' === $blurb && [] === $sections ? ' dgl-pub__layout--nobody' : ''; ?>">
 			<div class="dgl-pub__body">
+				<?php
+				/*
+				 * A long description opens folded: the first part, then a
+				 * More button for the rest. Without JavaScript the whole
+				 * text shows, since a hidden paragraph nobody can open is
+				 * worse than a long one. The fold lands on a word boundary.
+				 */
+				$fold  = 320;
+				$head  = $blurb;
+				$tail  = '';
+				if ( mb_strlen( $blurb ) > $fold + 80 ) {
+					$at   = mb_strrpos( mb_substr( $blurb, 0, $fold ), ' ' );
+					$at   = false === $at || $at < $fold / 2 ? $fold : $at;
+					$head = mb_substr( $blurb, 0, $at );
+					$tail = mb_substr( $blurb, $at );
+				}
+				?>
 				<?php if ( '' !== $blurb ) : ?>
-					<p class="dgl-pub__standfirst"><?php echo esc_html( $blurb ); ?></p>
+					<p class="dgl-pub__standfirst dgl-org__blurb" id="dgl-org-blurb">
+						<?php echo esc_html( $head ); ?><?php if ( '' !== $tail ) : ?><span class="dgl-org__fold" hidden>…</span><span class="dgl-org__rest"><?php echo esc_html( $tail ); ?></span><?php endif; ?>
+					</p>
+					<?php if ( '' !== $tail ) : ?>
+						<button class="dgl-org__more" type="button" aria-expanded="true" aria-controls="dgl-org-blurb" hidden><?php esc_html_e( 'More', 'dgl-platform' ); ?></button>
+						<script>
+						( function () {
+							var more = document.querySelector( '.dgl-org__more' );
+							var rest = document.querySelector( '.dgl-org__rest' );
+							var fold = document.querySelector( '.dgl-org__fold' );
+							if ( ! more || ! rest ) { return; }
+							var open = false;
+							function paint() {
+								rest.hidden = ! open;
+								fold.hidden = open;
+								more.textContent = open ? <?php echo wp_json_encode( __( 'Less', 'dgl-platform' ) ); ?> : <?php echo wp_json_encode( __( 'More', 'dgl-platform' ) ); ?>;
+								more.setAttribute( 'aria-expanded', open ? 'true' : 'false' );
+							}
+							more.hidden = false;
+							more.addEventListener( 'click', function () { open = ! open; paint(); } );
+							paint();
+						} )();
+						</script>
+					<?php endif; ?>
 				<?php endif; ?>
 
 				<?php
@@ -166,7 +206,7 @@ foreach ( ItemsTable::for_org( $id, PostTypes::enabled_keys(), [ Statuses::LIVE 
 							<dt><?php esc_html_e( 'Email', 'dgl-platform' ); ?></dt>
 							<dd><a href="mailto:<?php echo esc_attr( $meta( 'email' ) ); ?>"><?php echo esc_html( $meta( 'email' ) ); ?></a></dd>
 						<?php endif; ?>
-						<?php if ( '' !== $meta( 'phone' ) ) : ?>
+						<?php if ( 1 === preg_match( '/\d{5,}/', $meta( 'phone' ) ) ) : ?>
 							<dt><?php esc_html_e( 'Phone', 'dgl-platform' ); ?></dt>
 							<dd><a href="tel:<?php echo esc_attr( preg_replace( '/\s+/', '', $meta( 'phone' ) ) ); ?>"><?php echo esc_html( $meta( 'phone' ) ); ?></a></dd>
 						<?php endif; ?>
