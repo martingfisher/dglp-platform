@@ -314,3 +314,15 @@ clean. They are the only DGLP content on staging.
   Staging had three empty drafts from yesterday's walk (8441 to 8443,
   author 11); left alone, they are reused or purged. Pinned to commit
   `6d50c35`.
+- **0.9.4 deployed**: the public directory. `/directory/` (146
+  organisations, A to Z, probed from the server), `/directory/<slug>/`
+  (Caring Together page probed, "Get in touch" present), search plus
+  filters combining (`?q=older&area=older_people` -> 12 match). Run on
+  staging: `wp dgl org directory-on` switched on the 146 with Forum
+  Central permission (dry run first, 146 both times); the import was
+  re-run so descriptions cut at a word boundary (329 updated, 0 new).
+  **Config change**: SmartCache `exclude_urls` gained `/directory`, so a
+  member's switch shows at once; production will need the same. SmartCache
+  purged once after. Email preferences tab reworded as asked; file control
+  button centred (checked locally, not on staging's font). Pinned to
+  commit `5679717`.
