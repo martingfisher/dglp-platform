@@ -419,3 +419,14 @@ clean. They are the only DGLP content on staging.
   scroll; desktop rows unchanged; contrast walk clear. Verified on staging
   by version (0.10.5) and by reading the rule out of the served stylesheet.
   Pinned to commit `5ac943a`.
+- **0.10.6 deployed** (17 September): an impeccable adapt pass over the
+  member area at phone width. Every pressable control is at least 44px on
+  a phone (checkbox and radio rows, filter chips, crumbs, text-shaped
+  links, wizard steps, list-card titles); the top bar is one line (brand
+  and Back, the rest is in the menu); the wizard footer stacks with
+  Continue first and full width; type floors stop nested em sizing taking
+  chips to 11px and help text to 12px; the sign-in lede says "member
+  area" not "admin dashboard" and its Remember me box is 22px. Checked on
+  seventeen screens at 390px: no sideways scroll, no target under 44px
+  except the WordPress editor toolbar; unit suite and both AAA walks
+  clear. Recorded in DESIGN.md. Pinned to commit `6eef41e`.
