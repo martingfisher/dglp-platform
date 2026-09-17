@@ -378,3 +378,20 @@ clean. They are the only DGLP content on staging.
   feed items, active nav item, change diff, gated-field note, public
   "date has passed" notice, email note box). AAA walk clear. Pinned to
   commit `09cad3c`.
+- **0.10.0 and 0.10.1 deployed** (17 September): repeating events (one post
+  per series, weekly/fortnightly/monthly, end date up to six months, skip
+  dates), `/events/calendar/` day by day for eight weeks, events list
+  ordered by next date, "Dates and times" card and "Keep it listed" button
+  on a live event's screen, the two-weeks-before reminder with a one-click
+  extend link, load-more-on-scroll on every paged list, a Review button on
+  each queue row. Verified by wp-cli: version 0.10.1, `dgl_platform_db_version`
+  5, `^events/calendar/?$` rule listed, `/events/calendar/` 200 with title,
+  `/directory/?pg=2` carries `rel="next"`, autoload.js enqueued on
+  `/events/`. SmartCache exclusions now include `/events/calendar`.
+  `wp dgl reindex` run. The demo event 8439 is now a weekly Tuesday series
+  ending 27 September; the "still running?" email was sent to the redirect
+  address with `wp dgl series remind 8439`. The Wordify console runs
+  `wp cron event run` without plugins loaded (0.003s, no listeners), so the
+  hourly hook could not be exercised from here; the server's own cron will
+  run it at 12:53 GMT, and `wp dgl series status 8439` shows "Reminded for"
+  once it has. Pinned to commit `f823988`.

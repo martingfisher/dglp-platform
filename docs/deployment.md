@@ -113,7 +113,11 @@ Repeating events add a column to the index and a public route:
   events list keeps its old order.
 - Add `/events/calendar` to the page cache exclusions alongside `/directory`.
 - The reminder and the roll-forward run on the existing hourly
-  `dgl_run_expiry_sweep` hook, so cron must be on.
+  `dgl_run_expiry_sweep` hook, so cron must be on. `wp dgl series status <id>`
+  prints every check the hook makes for one event; `wp dgl series remind <id>`
+  sends its reminder by hand; `wp dgl series roll` restamps. Note that the
+  Wordify console runs `wp cron event run` without plugins loaded, so it
+  cannot exercise the hook; the server cron can.
 
 ## Staging to production
 

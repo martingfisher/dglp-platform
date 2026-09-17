@@ -78,4 +78,5 @@ sweep compares wall clock with wall clock. The audit stamps are UTC and use
 tested in `tests/test-recurrence.php`), `Series` (the one writer of the two
 stamps, extend), `Reminder` (the email and its token), `Schedule` (the card's
 save), `Calendar` (the public page). `src/Dashboard/RepeatControl.php` renders
-the control. `tests/integration/run.php` has two "Repeating events" groups.
+the control. `tests/integration/run.php` has two "Repeating events" groups. `wp dgl series
+status|remind|roll` reads and drives one series from the command line.
