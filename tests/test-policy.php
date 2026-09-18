@@ -198,3 +198,15 @@ Harness::assert_true( Policy::decide( moderator( 101 ), Policy::REOPEN_ITEM, ite
 Harness::assert_false( Policy::decide( moderator(), Policy::REOPEN_ITEM, item_a( Statuses::LIVE ) ), 'only a refusal reopens' );
 Harness::assert_false( Policy::decide( member_a( UserContext::ORG_OWNER ), Policy::REOPEN_ITEM, item_a( Statuses::REJECTED ) ), 'a member cannot reopen their own refusal' );
 Harness::assert_true( Policy::decide( administrator(), Policy::REOPEN_ITEM, item_a( Statuses::REJECTED ) ), 'an administrator can' );
+
+Harness::group( 'Keeping a listing up longer is the owning organisation\'s move' );
+
+$news_live = new ItemContext( 9003, PostTypes::NEWS, ORG_A, 101, Statuses::LIVE );
+$training_live = new ItemContext( 9004, PostTypes::TRAINING, ORG_A, 101, Statuses::LIVE );
+
+Harness::assert_true( Policy::decide( member_a(), Policy::EXTEND_ITEM, item_a( Statuses::LIVE ) ), 'an approved member can extend a live event' );
+Harness::assert_true( Policy::decide( member_a(), Policy::EXTEND_ITEM, $news_live ), 'and a live news item' );
+Harness::assert_false( Policy::decide( member_a(), Policy::EXTEND_ITEM, $training_live ), 'training comes off on its own date' );
+Harness::assert_false( Policy::decide( member_b(), Policy::EXTEND_ITEM, $news_live ), 'another organisation cannot' );
+Harness::assert_false( Policy::decide( member_a(), Policy::EXTEND_ITEM, item_a( Statuses::EXPIRED ) ), 'nor once it has expired' );
+Harness::assert_false( Policy::decide( moderator(), Policy::EXTEND_ITEM, $news_live ), 'a moderator does not extend members\' listings for them' );

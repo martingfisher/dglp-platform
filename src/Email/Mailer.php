@@ -149,6 +149,8 @@ final class Mailer {
 			expires_on: self::expires_on( (int) $subject->ID ),
 			note: $note,
 			is_edit: $is_edit,
+			// "3 months" for a listing that stays up for a spell, '' for a dated one.
+			lifetime: null !== \DGL\Workflow\Lifetime::days_for( (string) $subject->post_type ) ? \DGL\Workflow\Lifetime::spell_for( (string) $subject->post_type ) : '',
 		);
 	}
 

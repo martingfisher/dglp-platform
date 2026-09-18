@@ -47,6 +47,7 @@ final class Policy {
 	public const VIEW_ALL_AUDIT = 'view_all_audit';
 	public const CHANGE_SCHEDULE = 'change_schedule';
 	public const REOPEN_ITEM     = 'reopen_item';
+	public const EXTEND_ITEM     = 'extend_item';
 
 	/**
 	 * Decide whether an actor may perform an action, optionally on an item.
@@ -78,6 +79,7 @@ final class Policy {
 			self::TAKE_DOWN_ITEM => self::can_take_down_item( $user, $item ),
 			self::CHANGE_SCHEDULE => self::can_change_schedule( $user, $item ),
 			self::REOPEN_ITEM    => self::can_reopen_item( $user, $item ),
+			self::EXTEND_ITEM    => self::can_extend_item( $user, $item ),
 			default              => false,
 		};
 	}
@@ -338,6 +340,22 @@ final class Policy {
 	/**
 	 * Pulling live content off the site pending review, for reported items.
 	 */
+	/**
+	 * Keeping a live item listed longer: a repeating event or an undated
+	 * listing. The same gate as changing a schedule, for the same reason.
+	 */
+	private static function can_extend_item( UserContext $user, ?ItemContext $item ): bool {
+		if ( null === $item || ! $user->can_write() || Statuses::LIVE !== $item->status ) {
+			return false;
+		}
+
+		if ( ! in_array( $item->post_type, [ PostTypes::EVENT, PostTypes::NEWS ], true ) ) {
+			return false;
+		}
+
+		return $user->is_admin() || ( self::owns( $user, $item ) && $user->is_fully_approved() );
+	}
+
 	/**
 	 * A refusal can be looked at again by any moderator, including the one
 	 * who refused it: undoing a mistake should not need a second person.

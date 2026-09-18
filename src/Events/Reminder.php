@@ -68,13 +68,20 @@ final class Reminder {
 	 * One series: the email, if it is due and has not gone for this end date.
 	 */
 	public static function send_for( int $post_id ): bool {
-		$rule = Series::rule_for( $post_id );
-
-		if ( null === $rule || Statuses::LIVE !== get_post_status( $post_id ) ) {
+		if ( Statuses::LIVE !== get_post_status( $post_id ) ) {
 			return false;
 		}
 
-		$until = $rule->until->format( 'Y-m-d' );
+		$rule     = Series::rule_for( $post_id );
+		$lifetime = \DGL\Workflow\Lifetime::until( $post_id );
+
+		// A dated one-off comes off on its date and nobody is asked.
+		if ( null === $rule && null === $lifetime ) {
+			return false;
+		}
+
+		$until_at = null !== $rule ? $rule->until : $lifetime;
+		$until    = $until_at->format( 'Y-m-d' );
 
 		if ( (string) get_post_meta( $post_id, self::META_REMINDED_FOR, true ) === $until ) {
 			return false;
@@ -90,13 +97,24 @@ final class Reminder {
 
 		$token = self::issue_token( $post_id );
 
-		$message = SeriesCopy::ending_soon(
-			(string) get_the_title( $post_id ),
-			(string) wp_date( (string) get_option( 'date_format', 'j F Y' ), $rule->until->getTimestamp() ),
-			Router::url( 'extend', (string) $post_id, $token ),
-			Router::url( 'item', (string) $post_id ),
-			(string) get_bloginfo( 'name' )
-		);
+		$when = (string) wp_date( (string) get_option( 'date_format', 'j F Y' ), $until_at->getTimestamp() );
+
+		$message = null !== $rule
+			? SeriesCopy::ending_soon(
+				(string) get_the_title( $post_id ),
+				$when,
+				Router::url( 'extend', (string) $post_id, $token ),
+				Router::url( 'item', (string) $post_id ),
+				(string) get_bloginfo( 'name' )
+			)
+			: SeriesCopy::listing_ending(
+				(string) get_the_title( $post_id ),
+				$when,
+				Router::url( 'extend', (string) $post_id, $token ),
+				Router::url( 'item', (string) $post_id ),
+				(string) get_bloginfo( 'name' ),
+				\DGL\Workflow\Lifetime::spell_for( (string) get_post_type( $post_id ) )
+			);
 
 		$sent = Mailer::send( $message->for_recipients( $to ) );
 
@@ -128,7 +146,7 @@ final class Reminder {
 			return false;
 		}
 
-		if ( PostTypes::EVENT !== get_post_type( $post_id ) ) {
+		if ( ! PostTypes::is_submittable( (string) get_post_type( $post_id ) ) ) {
 			return false;
 		}
 

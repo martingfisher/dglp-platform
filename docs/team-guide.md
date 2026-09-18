@@ -60,6 +60,16 @@ site on its last date. Owners can also change a live event's dates and times
 from its screen without review: the words and pictures still come to you, the
 dates do not. See `docs/events-repeat.md`.
 
+## How long news stays up
+
+Events and training come off the site on their dates. A news story has no
+date, so it is listed for three months from the day it is approved. Two weeks
+before the end the organisation's owners get one email asking whether it is
+still current, with a one-click button that keeps it for another three
+months; the same button is on the story's screen in the member area once the
+end is within eight weeks. Nobody clicks, it comes off on its last day and
+stays in their dashboard. Nothing about this comes to you.
+
 ## Taking something off the site
 
 Open any live item from the queue or from the member's list. The last section

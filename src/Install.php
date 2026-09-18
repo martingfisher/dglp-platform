@@ -139,6 +139,7 @@ final class Install {
 		DigestStore::create();
 		SignupStore::create();
 		self::backfill_event_format();
+		\DGL\Workflow\Lifetime::backfill();
 
 		update_option( self::DB_VERSION_OPTION, DB_VERSION, false );
 	}

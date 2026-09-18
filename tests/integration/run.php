@@ -3010,6 +3010,54 @@ $ok( str_contains( (string) ( $checks['image']['detail'] ?? '' ), 'Described as 
 $saved = \DGL\Dashboard\Wizard::save_step( $pic_item, PostTypes::EVENT, 1, [ 'title' => 'Tree planting', 'summary' => 'A morning of planting.', 'body' => '<p>Bring gloves.</p>', 'image' => '0', 'image_alt' => '' ] );
 $ok( [] === $saved, 'no picture, no description needed: ' . implode( ' | ', $saved ) );
 
+$group( 'News stays up for three months, then asks, then comes off' );
+
+$mail_was = get_option( \DGL\Email\Routing::OPTION_ENABLED, false );
+update_option( \DGL\Email\Routing::OPTION_ENABLED, 1 );
+
+$story = wp_insert_post( [ 'post_type' => PostTypes::NEWS, 'post_title' => 'Grant round opens', 'post_status' => Statuses::DRAFT, 'post_author' => $alice ] );
+update_post_meta( $story, DGL_FIXTURE_FLAG, '1' );
+update_post_meta( $story, Meta::ITEM_ORG, $org_a );
+Transition::apply( $story, StateMachine::SUBMIT, $alice );
+$ok( '' === (string) get_post_meta( $story, \DGL\Workflow\Lifetime::META_UNTIL, true ), 'a pending story has no end date yet' );
+Transition::apply( $story, StateMachine::APPROVE, $mod );
+$today_wall = new DateTimeImmutable( 'today', wp_timezone() );
+$expect_until = $today_wall->modify( '+90 days' )->format( 'Y-m-d' );
+$ok( $expect_until === (string) get_post_meta( $story, \DGL\Workflow\Lifetime::META_UNTIL, true ), 'approval gives it ninety days (' . get_post_meta( $story, \DGL\Workflow\Lifetime::META_UNTIL, true ) . ')' );
+$ok( $expect_until . ' 23:59:59' === (string) get_post_meta( $story, Meta::ITEM_EXPIRES_AT, true ), 'and the expiry stamp follows' );
+$ok( \DGL\Access\Access::can( $alice, Policy::EXTEND_ITEM, $story ) && ! \DGL\Workflow\Lifetime::can_extend( $story ), 'the owner may extend, but nothing is offered while the end is far off' );
+
+update_post_meta( $story, \DGL\Workflow\Lifetime::META_UNTIL, $today_wall->modify( '+10 days' )->format( 'Y-m-d' ) );
+\DGL\Events\Series::stamp( $story, PostTypes::NEWS );
+$ok( \DGL\Workflow\Lifetime::can_extend( $story ), 'with ten days left the item screen offers an extension' );
+
+$sent_to = []; $sent_links = []; $sent_bodies = [];
+$ok( 1 === \DGL\Events\Reminder::send_due(), 'the reminder goes' );
+$ok( [] !== array_filter( $sent_bodies, static fn( string $b ): bool => str_contains( $b, 'still current' ) || str_contains( $b, 'Nothing stays up forever' ) ), 'and it is the listing wording, not the repeating-event wording' );
+$story_link = (string) end( $sent_links );
+$ok( str_contains( $story_link, '/dashboard/extend/' . $story . '/' ), 'with the one-click link' );
+$story_token = trim( (string) substr( $story_link, strrpos( rtrim( $story_link, '/' ), '/' ) + 1 ), '/' );
+$ok( \DGL\Events\Reminder::token_is_valid( $story, $story_token ), 'whose token is live for a news item too' );
+$ok( true === \DGL\Workflow\Lifetime::extend( $story, 0, 'test' ), 'the link extends it' );
+$ok( $expect_until === (string) get_post_meta( $story, \DGL\Workflow\Lifetime::META_UNTIL, true ), 'to ninety days from today' );
+$feed_titles = array_column( \DGL\Dashboard\Notifications::for_org( $org_a, 5 ), 'title' );
+$ok( in_array( 'Kept on the site for another three months', $feed_titles, true ), 'and the owners see it in notifications' );
+
+$sent_bodies = [];
+update_post_meta( $story, \DGL\Workflow\Lifetime::META_UNTIL, $today_wall->modify( '-1 day' )->format( 'Y-m-d' ) );
+\DGL\Events\Series::stamp( $story, PostTypes::NEWS );
+Transition::run_expiry_sweep();
+$ok( Statuses::EXPIRED === get_post_status( $story ), 'past its end date the sweep takes it off' );
+$ok( [] !== array_filter( $sent_bodies, static fn( string $b ): bool => str_contains( $b, 'listed for 3 months' ) ), 'with the expired email in listing words' );
+
+$dated = $make_item( $org_a, $alice, Statuses::LIVE );
+update_post_meta( $dated, 'dgl_start_datetime', $today_wall->modify( '+5 days' )->format( 'Y-m-d' ) . ' 10:00:00' );
+\DGL\Events\Series::stamp( $dated, PostTypes::EVENT );
+$sent_to = [];
+$ok( 0 === \DGL\Events\Reminder::send_due(), 'a dated one-off inside the window is not asked anything' );
+
+update_option( \DGL\Email\Routing::OPTION_ENABLED, $mail_was );
+
 /* ----------------------------------------------------------------- report */
 
 echo "\n" . str_repeat( '-', 60 ) . "\n";

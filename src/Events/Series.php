@@ -73,6 +73,13 @@ final class Series {
 		$expires = FieldRegistry::expiry_for( $post_type, $values );
 		$next    = null;
 
+		// An undated type is listed for a spell instead. Set on the day it
+		// goes live, moved by an extension, read here.
+		if ( null === $expires ) {
+			\DGL\Workflow\Lifetime::ensure( $post_id, $post_type );
+			$expires = \DGL\Workflow\Lifetime::expiry_for( $post_id );
+		}
+
 		if ( PostTypes::EVENT === $post_type ) {
 			$rule = self::rule_for( $post_id );
 

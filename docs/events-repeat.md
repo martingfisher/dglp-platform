@@ -65,6 +65,14 @@ with an older one. Finish or discard the edit first.
 Every save and extension is logged and appears in the organisation's
 notifications.
 
+## Undated listings
+
+The same reminder, token and confirm page serve news, which has no date and
+is listed for three months from approval (`Workflow\Lifetime`). The end date
+is `dgl_listed_until` on the post; the expiry stamp follows it; extending
+moves it to three months from today. A dated one-off inside the reminder
+window is not asked anything.
+
 ## Timezone
 
 Stored dates are the site's wall clock. Everything that prints one uses

@@ -1086,12 +1086,18 @@ final class Controller {
 			 * carries the dates too and would overwrite these on approval.
 			 */
 			if ( in_array( $intent, [ 'extend', 'schedule' ], true ) ) {
-				if ( ! Schedule::can_change( $user->user_id, $post_id ) ) {
+				$allowed = 'extend' === $intent
+					? Access::can( $user->user_id, Policy::EXTEND_ITEM, $post_id )
+					: Schedule::can_change( $user->user_id, $post_id );
+
+				if ( ! $allowed ) {
 					$action_error = __( 'You cannot change the dates of this one.', 'dgl-platform' );
 				} elseif ( Schedule::is_locked( $post_id ) ) {
 					$action_error = __( 'Finish or discard your open edit first. It carries the dates too.', 'dgl-platform' );
 				} elseif ( 'extend' === $intent ) {
-					$result = Series::extend( $post_id, $user->user_id );
+					$result = Series::is_series( $post_id )
+						? Series::extend( $post_id, $user->user_id )
+						: \DGL\Workflow\Lifetime::extend( $post_id, $user->user_id );
 
 					if ( is_wp_error( $result ) ) {
 						$action_error = $result->get_error_message();
@@ -1163,8 +1169,12 @@ final class Controller {
 				'schedule_errors' => $schedule_errors,
 				// After a failed save the form shows what was typed, not what is stored.
 				'schedule_values' => $schedule_input ?? Wizard::values( $post_id, (string) $post->post_type ),
-				'can_extend'      => Series::can_extend( $post_id ),
-				'series_until'    => Series::until_wording( $post_id ),
+				'can_extend'      => Access::can( $user->user_id, Policy::EXTEND_ITEM, $post_id ) && ( Series::can_extend( $post_id ) || \DGL\Workflow\Lifetime::can_extend( $post_id ) ),
+				'series_until'    => Series::is_series( $post_id ) ? Series::until_wording( $post_id ) : \DGL\Workflow\Lifetime::until_wording( $post_id ),
+				'extend_spell'    => Series::is_series( $post_id )
+					/* translators: %d: months. */
+					? sprintf( __( '%d months', 'dgl-platform' ), Series::EXTEND_MONTHS )
+					: \DGL\Workflow\Lifetime::spell_for( (string) $post->post_type ),
 				'scheduled'       => isset( $_GET['scheduled'] ), // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 				'extended'        => isset( $_GET['extended'] ), // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			],
@@ -1860,7 +1870,9 @@ final class Controller {
 		if ( 'POST' === ( $_SERVER['REQUEST_METHOD'] ?? 'GET' ) ) {
 			check_admin_referer( 'dgl_extend_' . $post_id );
 
-			$result = Series::extend( $post_id, 0, __( 'Confirmed from the reminder email.', 'dgl-platform' ) );
+			$result = Series::is_series( $post_id )
+				? Series::extend( $post_id, 0, __( 'Confirmed from the reminder email.', 'dgl-platform' ) )
+				: \DGL\Workflow\Lifetime::extend( $post_id, 0, __( 'Confirmed from the reminder email.', 'dgl-platform' ) );
 
 			if ( is_wp_error( $result ) ) {
 				self::screen( 'extend', [ 'state' => 'invalid', 'error' => $result->get_error_message(), 'item_url' => Router::url( 'item', (string) $post_id ) ], $title );
@@ -1874,7 +1886,7 @@ final class Controller {
 				[
 					'state'    => 'done',
 					'title'    => (string) get_the_title( $post ),
-					'until'    => Series::until_wording( $post_id ),
+					'until'    => Series::is_series( $post_id ) ? Series::until_wording( $post_id ) : \DGL\Workflow\Lifetime::until_wording( $post_id ),
 					'item_url' => Router::url( 'item', (string) $post_id ),
 				],
 				$title
@@ -1888,9 +1900,12 @@ final class Controller {
 			[
 				'state'     => 'confirm',
 				'post_id'   => $post_id,
+				'is_series' => Series::is_series( $post_id ),
 				'title'     => (string) get_the_title( $post ),
-				'until'     => Series::until_wording( $post_id ),
-				'new_until' => (string) wp_date( (string) get_option( 'date_format', 'j F Y' ), Series::now()->setTime( 0, 0, 0 )->modify( '+' . Series::EXTEND_MONTHS . ' months' )->getTimestamp() ),
+				'until'     => Series::is_series( $post_id ) ? Series::until_wording( $post_id ) : \DGL\Workflow\Lifetime::until_wording( $post_id ),
+				'new_until' => Series::is_series( $post_id )
+					? (string) wp_date( (string) get_option( 'date_format', 'j F Y' ), Series::now()->setTime( 0, 0, 0 )->modify( '+' . Series::EXTEND_MONTHS . ' months' )->getTimestamp() )
+					: \DGL\Workflow\Lifetime::next_until_wording( (string) $post->post_type ),
 				'item_url'  => Router::url( 'item', (string) $post_id ),
 			],
 			$title

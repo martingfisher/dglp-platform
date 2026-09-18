@@ -340,12 +340,12 @@ final class ItemsTable {
 		global $wpdb;
 
 		$sql = 'SELECT post_id FROM ' . self::name()
-			. ' WHERE post_type = %s AND status = %s AND expires_at IS NOT NULL AND expires_at BETWEEN %s AND %s'
+			. ' WHERE status = %s AND expires_at IS NOT NULL AND expires_at BETWEEN %s AND %s'
 			. self::content_only()
 			. ' ORDER BY expires_at ASC LIMIT %d';
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery
-		return array_map( 'intval', (array) $wpdb->get_col( $wpdb->prepare( $sql, PostTypes::EVENT, Statuses::LIVE, $from_wall, $to_wall, $limit ) ) );
+		return array_map( 'intval', (array) $wpdb->get_col( $wpdb->prepare( $sql, Statuses::LIVE, $from_wall, $to_wall, $limit ) ) );
 	}
 
 	public static function due_for_expiry( string $now_utc, int $limit = 100 ): array {

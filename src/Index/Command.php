@@ -57,11 +57,13 @@ final class Command {
 		// Events carry a next-occurrence stamp the index mirrors; write it
 		// first so a deploy does not wait an hour for the roll-forward.
 		$stamped = 0;
-		foreach ( get_posts( [ 'post_type' => \DGL\PostTypes::EVENT, 'post_status' => 'any', 'posts_per_page' => -1, 'fields' => 'ids', 'no_found_rows' => true ] ) as $event_id ) {
-			\DGL\Events\Series::stamp( (int) $event_id, \DGL\PostTypes::EVENT );
-			++$stamped;
+		foreach ( PostTypes::submittable() as $type ) {
+			foreach ( get_posts( [ 'post_type' => $type, 'post_status' => 'any', 'posts_per_page' => -1, 'fields' => 'ids', 'no_found_rows' => true ] ) as $item_id ) {
+				\DGL\Events\Series::stamp( (int) $item_id, $type );
+				++$stamped;
+			}
 		}
-		WP_CLI::log( sprintf( 'Events stamped: %d', $stamped ) );
+		WP_CLI::log( sprintf( 'Items stamped: %d', $stamped ) );
 
 		$done   = Sync::rebuild_all();
 		$after  = self::count();

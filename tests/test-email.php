@@ -387,3 +387,16 @@ Harness::assert_true( str_contains( implode( ' ', $remind->footnotes ), 'https:/
 Harness::assert_true( str_contains( $remind->paragraphs[2], 'do not need to do anything' ), 'doing nothing is spelled out as fine' );
 Harness::assert_false( str_contains( strtolower( $remind->to_text() ), 'honest' ), 'never that word' );
 Harness::assert_same( 'Untitled event', \DGL\Email\SeriesCopy::ending_soon( '  ', 'x', 'u', 'i', 's' )->facts['Event'], 'a blank title still reads' );
+
+Harness::group( 'Listing: the "still current?" reminder' );
+
+$current = \DGL\Email\SeriesCopy::listing_ending( 'Grant round opens', '17 December 2026', 'https://example.test/dashboard/extend/9/abc/', 'https://example.test/dashboard/item/9/', 'DGLP', '3 months' );
+Harness::assert_same( 'Is this still current? Grant round opens', $current->subject, 'subject asks whether it is still current' );
+Harness::assert_true( str_contains( $current->paragraphs[0], '17 December 2026' ) && str_contains( $current->paragraphs[1], '3 months' ), 'the date and the spell are in the body' );
+Harness::assert_same( 'Yes, still current: keep it listed', $current->cta_label, 'the button says what it does' );
+Harness::assert_false( str_contains( strtolower( $current->to_text() ), 'honest' ), 'never that word' );
+
+$gone = Copy::compose( 'expired', Plan::NOTIFY_MEMBER, new Context( title: 'Grant round opens', type_label: 'News item', lifetime: '3 months' ) );
+Harness::assert_true( null !== $gone && str_contains( $gone->paragraphs[0], 'listed for 3 months' ), 'an expired listing is told it ran its spell, not that it passed a date' );
+$dated = Copy::compose( 'expired', Plan::NOTIFY_MEMBER, new Context( title: 'Fete', type_label: 'Event' ) );
+Harness::assert_true( null !== $dated && str_contains( $dated->paragraphs[0], 'passed its date' ), 'a dated item keeps the old wording' );

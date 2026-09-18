@@ -476,16 +476,28 @@ final class Copy {
 			audience: $audience,
 			/* translators: %s: item title. */
 			subject: sprintf( __( 'Expired: %s', 'dgl-platform' ), $c->title() ),
-			preheader: __( 'It has passed its date, so it is no longer listed.', 'dgl-platform' ),
+			preheader: '' !== $c->lifetime
+				? __( 'It has had its time on the site, so it is no longer listed.', 'dgl-platform' )
+				: __( 'It has passed its date, so it is no longer listed.', 'dgl-platform' ),
 			heading: __( 'This has come off the site', 'dgl-platform' ),
-			paragraphs: [
-				sprintf(
-					/* translators: %s: item title. */
-					__( '%s has passed its date, so it is no longer listed. Nobody made this decision. It is automatic.', 'dgl-platform' ),
-					$c->title()
-				),
-				__( 'It is still in your dashboard. If you want to run it again, copy it into a new submission with the new dates.', 'dgl-platform' ),
-			],
+			paragraphs: '' !== $c->lifetime
+				? [
+					sprintf(
+						/* translators: 1: item title, 2: a spell like "3 months". */
+						__( '%1$s has been listed for %2$s, which is as long as anything stays up, so it has come off the site. Nobody made this decision. It is automatic.', 'dgl-platform' ),
+						$c->title(),
+						$c->lifetime
+					),
+					__( 'It is still in your dashboard. If it is still current, copy it into a new submission.', 'dgl-platform' ),
+				]
+				: [
+					sprintf(
+						/* translators: %s: item title. */
+						__( '%s has passed its date, so it is no longer listed. Nobody made this decision. It is automatic.', 'dgl-platform' ),
+						$c->title()
+					),
+					__( 'It is still in your dashboard. If you want to run it again, copy it into a new submission with the new dates.', 'dgl-platform' ),
+				],
 			facts: self::facts( $c, [ 'type', 'org', 'expires' ] ),
 			cta_label: __( 'See the submission', 'dgl-platform' ),
 			cta_url: $c->member_link(),

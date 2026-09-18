@@ -34,6 +34,7 @@ final readonly class Context {
 		public string $expires_on = '',
 		public string $note = '',
 		public bool $is_edit = false,
+		public string $lifetime = '',
 	) {}
 
 	/**

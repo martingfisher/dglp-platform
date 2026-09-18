@@ -54,8 +54,11 @@ $state = (string) ( $data['state'] ?? 'invalid' );
 		<p>
 			<?php
 			printf(
-				/* translators: %s: a date. */
-				esc_html__( 'Still running? One click keeps it listed until %s. Nothing else changes and nothing goes through review.', 'dgl-platform' ),
+				! empty( $data['is_series'] )
+					/* translators: %s: a date. */
+					? esc_html__( 'Still running? One click keeps it listed until %s. Nothing else changes and nothing goes through review.', 'dgl-platform' )
+					/* translators: %s: a date. */
+					: esc_html__( 'Still current? One click keeps it listed until %s. Nothing else changes and nothing goes through review.', 'dgl-platform' ),
 				esc_html( (string) ( $data['new_until'] ?? '' ) )
 			);
 			?>
@@ -63,10 +66,10 @@ $state = (string) ( $data['state'] ?? 'invalid' );
 
 		<form method="post" class="dgl-inline-form">
 			<?php wp_nonce_field( 'dgl_extend_' . (int) ( $data['post_id'] ?? 0 ) ); ?>
-			<button type="submit" class="dgl-button"><?php esc_html_e( 'Yes, still running: keep it listed', 'dgl-platform' ); ?></button>
+			<button type="submit" class="dgl-button"><?php echo ! empty( $data['is_series'] ) ? esc_html__( 'Yes, still running: keep it listed', 'dgl-platform' ) : esc_html__( 'Yes, still current: keep it listed', 'dgl-platform' ); ?></button>
 		</form>
 
-		<p class="dgl-help"><?php esc_html_e( 'If it has stopped, close this page. It comes off the site on its last date and stays in your dashboard.', 'dgl-platform' ); ?></p>
+		<p class="dgl-help"><?php echo ! empty( $data['is_series'] ) ? esc_html__( 'If it has stopped, close this page. It comes off the site on its last date and stays in your dashboard.', 'dgl-platform' ) : esc_html__( 'If it has had its day, close this page. It comes off the site on its last date and stays in your dashboard.', 'dgl-platform' ); ?></p>
 
 	<?php else : ?>
 

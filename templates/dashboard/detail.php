@@ -190,6 +190,34 @@ if ( $revision instanceof WP_Post ) {
 }
 ?>
 
+<?php if ( empty( $data['can_schedule'] ) && ! empty( $data['can_extend'] ) ) : ?>
+	<section class="dgl-card dgl-schedule" aria-labelledby="dgl-listed-title">
+		<h2 class="dgl-section__title" id="dgl-listed-title"><?php esc_html_e( 'How long it stays up', 'dgl-platform' ); ?></h2>
+		<?php if ( ! empty( $data['schedule_locked'] ) ) : ?>
+			<p class="dgl-help"><?php esc_html_e( 'Finish or discard your open edit first.', 'dgl-platform' ); ?></p>
+		<?php else : ?>
+			<form method="post" class="dgl-schedule__extend" action="<?php echo esc_url( Router::url( 'item', (string) $post->ID ) ); ?>">
+				<?php wp_nonce_field( \DGL\Dashboard\Wizard::NONCE ); ?>
+				<p>
+					<?php
+					printf(
+						/* translators: %s: a date. */
+						esc_html__( 'Listed until %s. Still current after that?', 'dgl-platform' ),
+						'<strong>' . esc_html( (string) ( $data['series_until'] ?? '' ) ) . '</strong>'
+					);
+					?>
+				</p>
+				<button type="submit" class="dgl-button" name="dgl_intent" value="extend">
+					<?php
+					/* translators: %s: a spell like "3 months". */
+					printf( esc_html__( 'Keep it listed for another %s', 'dgl-platform' ), esc_html( (string) ( $data['extend_spell'] ?? '' ) ) );
+					?>
+				</button>
+			</form>
+		<?php endif; ?>
+	</section>
+<?php endif; ?>
+
 <?php if ( ! empty( $data['can_schedule'] ) ) : ?>
 	<section class="dgl-card dgl-schedule" aria-labelledby="dgl-schedule-title">
 		<h2 class="dgl-section__title" id="dgl-schedule-title"><?php esc_html_e( 'Dates and times', 'dgl-platform' ); ?></h2>
@@ -212,7 +240,10 @@ if ( $revision instanceof WP_Post ) {
 						?>
 					</p>
 					<button type="submit" class="dgl-button" name="dgl_intent" value="extend">
-						<?php esc_html_e( 'Keep it listed for another 6 months', 'dgl-platform' ); ?>
+						<?php
+						/* translators: %s: a spell like "6 months". */
+						printf( esc_html__( 'Keep it listed for another %s', 'dgl-platform' ), esc_html( (string) ( $data['extend_spell'] ?? '' ) ) );
+						?>
 					</button>
 				</form>
 			<?php endif; ?>
