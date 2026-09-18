@@ -70,6 +70,14 @@ months; the same button is on the story's screen in the member area once the
 end is within eight weeks. Nobody clicks, it comes off on its last day and
 stays in their dashboard. Nothing about this comes to you.
 
+## Featuring an item
+
+Open any live event or news story from the queue or the Decided screen. The
+"Feature it" section holds it at the top of its public list for 7 or 14 days
+with a Featured stamp. It drops back on its own when the time is up, hourly
+by cron, and the organisation is told either way. "Stop featuring it" ends
+it early. Nothing longer than a fortnight.
+
 ## Taking something off the site
 
 Open any live item from the queue or from the member's list. The last section

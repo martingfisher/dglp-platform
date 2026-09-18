@@ -283,6 +283,19 @@
 	border-radius: var(--dgl-radius-field);
 }
 
+.dgl-pub__pin {
+	display: inline-block;
+	margin: 0 0 6px;
+	padding: 3px 9px;
+	border-radius: 999px;
+	background: var(--dgl-navy);
+	color: var(--dgl-white);
+	font-size: 0.74em;
+	font-weight: 600;
+	letter-spacing: 0.03em;
+	text-transform: uppercase;
+}
+
 .dgl-pub__rowtitle {
 	margin: 0 0 4px;
 	font-size: 1.2rem;

@@ -470,3 +470,17 @@ clean. They are the only DGLP content on staging.
   sends, the confirm page reads "still current", the item screen's "Keep it
   listed for another 3 months" moves the date. Unit suite 1767, integration
   732. Pinned to commit `037f8ca`.
+- **0.11.1 and 0.11.2 deployed** (18 September): copy to a new draft (words,
+  picture, venue, contact and topics; not the dates); owners can make a
+  colleague an owner or a contributor, with an email and a notification;
+  System health under Organisations in wp-admin (cron, email, index, queue,
+  reminders, digests, directory, in words, Fine/Look/Broken). 0.11.2 fixed
+  a fault 0.11.1 shipped with: the hourly listeners now accept no arguments,
+  so a bare do_action cannot break them. Verified on staging: version
+  0.11.2, schema 7, the live news story now carries a listed-until date of
+  16 December. Unit 1774, integration 756. Pinned to commit `588366c`.
+- **0.11.3 deployed** (18 September): Feature it. Moderators pin a live event
+  or news story for 7 or 14 days from its review screen; it sits first on its
+  public list with a Featured stamp, drops back on its own by the hourly hook,
+  the organisation is told. Ordering is a left join in SQL, not a meta_query
+  clause, which kept the date order intact. Unit 1777, integration 766.

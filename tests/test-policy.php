@@ -217,3 +217,9 @@ Harness::assert_true( Policy::can_change_role( member_a( UserContext::ORG_OWNER 
 Harness::assert_false( Policy::can_change_role( member_a( UserContext::ORG_CONTRIBUTOR ), 999, ORG_A ), 'a contributor cannot' );
 Harness::assert_false( Policy::can_change_role( member_a( UserContext::ORG_OWNER ), member_a( UserContext::ORG_OWNER )->user_id, ORG_A ), 'nobody changes their own role, so the last owner cannot demote themselves' );
 Harness::assert_false( Policy::can_change_role( member_a( UserContext::ORG_OWNER ), 999, ORG_B ), 'nor a person in another organisation' );
+
+Harness::group( 'Featuring is the review team\'s move on live items' );
+
+Harness::assert_true( Policy::decide( moderator(), Policy::PIN_ITEM, item_a( Statuses::LIVE ) ), 'a moderator can feature a live item' );
+Harness::assert_false( Policy::decide( moderator(), Policy::PIN_ITEM, item_a( Statuses::PENDING ) ), 'not a pending one' );
+Harness::assert_false( Policy::decide( member_a( UserContext::ORG_OWNER ), Policy::PIN_ITEM, item_a( Statuses::LIVE ) ), 'and a member cannot feature their own' );

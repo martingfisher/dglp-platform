@@ -54,6 +54,9 @@ $label = Frontend::type_label( $type, true );
 					<?php endif; ?>
 
 					<div class="dgl-pub__rowbody">
+						<?php if ( \DGL\Workflow\Pins::is_pinned( (int) $item->ID ) ) : ?>
+							<p class="dgl-pub__pin"><?php esc_html_e( 'Featured', 'dgl-platform' ); ?></p>
+						<?php endif; ?>
 						<h2 class="dgl-pub__rowtitle">
 							<a href="<?php the_permalink(); ?>"><?php echo esc_html( get_the_title() ); ?></a>
 						</h2>

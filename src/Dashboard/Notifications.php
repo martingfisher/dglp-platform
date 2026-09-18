@@ -53,6 +53,8 @@ final class Notifications {
 			StateMachine::ARCHIVE         => [ 'title' => __( 'Archived', 'dgl-platform' ), 'tone' => 'quiet' ],
 			StateMachine::RESTORE         => [ 'title' => __( 'Restored from the archive', 'dgl-platform' ), 'tone' => 'quiet' ],
 			'series_extended'             => [ 'title' => __( 'Kept on the site for another six months', 'dgl-platform' ), 'tone' => 'good' ],
+			'pinned'                      => [ 'title' => __( 'Featured at the top of its list', 'dgl-platform' ), 'tone' => 'good' ],
+			'unpinned'                    => [ 'title' => __( 'No longer featured', 'dgl-platform' ), 'tone' => 'quiet' ],
 			'copied'                      => [ 'title' => __( 'Copied into a new draft', 'dgl-platform' ), 'tone' => 'quiet' ],
 			'listing_extended'            => [ 'title' => __( 'Kept on the site for another three months', 'dgl-platform' ), 'tone' => 'good' ],
 			'schedule_changed'            => [ 'title' => __( 'Dates and times changed', 'dgl-platform' ), 'tone' => 'quiet' ],

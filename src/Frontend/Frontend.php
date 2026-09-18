@@ -51,6 +51,7 @@ final class Frontend {
 		add_filter( 'template_include', [ self::class, 'template' ] );
 		add_action( 'wp_enqueue_scripts', [ self::class, 'assets' ] );
 		add_action( 'pre_get_posts', [ self::class, 'order_archive' ] );
+		add_filter( 'posts_clauses', [ self::class, 'pin_first' ], 10, 2 );
 	}
 
 	/**
@@ -323,6 +324,39 @@ final class Frontend {
 			]
 		);
 		$query->set( 'orderby', [ 'dgl_when' => 'ASC', 'date' => 'DESC' ] );
+
+		// A featured item sits first. That is done in SQL by pin_first(), not
+		// by another meta_query clause: adding one to the OR above changed how
+		// WordPress joined the date and broke the date order for everything.
+		$query->set( 'dgl_pin_first', true );
+	}
+
+	/**
+	 * Put the featured items at the top of a public list.
+	 *
+	 * Left-joins the pin and orders by "pinned and not yet lapsed" before the
+	 * date order the query already asked for. The comparison is against the
+	 * wall clock now, so a pin whose time is up drops back the moment it
+	 * lapses, not an hour later when the sweep deletes it.
+	 *
+	 * @param array<string, string> $clauses
+	 * @return array<string, string>
+	 */
+	public static function pin_first( array $clauses, WP_Query $query ): array {
+		if ( ! $query->get( 'dgl_pin_first' ) ) {
+			return $clauses;
+		}
+
+		global $wpdb;
+
+		$clauses['join']   .= $wpdb->prepare(
+			" LEFT JOIN {$wpdb->postmeta} dgl_pin ON ( dgl_pin.post_id = {$wpdb->posts}.ID AND dgl_pin.meta_key = %s )",
+			\DGL\Workflow\Pins::META_UNTIL
+		);
+		$featured           = $wpdb->prepare( '( dgl_pin.meta_value > %s ) DESC', \DGL\Events\Series::now()->format( 'Y-m-d H:i:s' ) );
+		$clauses['orderby'] = '' === trim( (string) $clauses['orderby'] ) ? $featured : $featured . ', ' . $clauses['orderby'];
+
+		return $clauses;
 	}
 
 	/**

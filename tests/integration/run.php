@@ -3111,6 +3111,34 @@ $sweep = array_values( array_filter( $health, static fn( array $r ): bool => 'Ho
 $ok( null !== $sweep && 'good' === $sweep['status'] && str_contains( $sweep['value'], 'Last ran' ) && ! str_contains( $sweep['value'], 'never' ), 'the sweep is seen to have just run (' . ( $sweep['value'] ?? '' ) . ')' );
 $ok( [] !== array_filter( $health, static fn( array $r ): bool => 'bad' === $r['status'] && '' !== $r['todo'] ) || [] === array_filter( $health, static fn( array $r ): bool => 'bad' === $r['status'] ), 'anything broken says what to do' );
 
+$group( 'Featured for a week or a fortnight, first on the list, then back on its own' );
+
+$pin_late = $make_item( $org_a, $alice, Statuses::LIVE );
+update_post_meta( $pin_late, 'dgl_start_datetime', $today_wall->modify( '+60 days' )->format( 'Y-m-d' ) . ' 10:00:00' );
+\DGL\Events\Series::stamp( $pin_late, PostTypes::EVENT );
+$pin_soon = $make_item( $org_a, $alice, Statuses::LIVE );
+update_post_meta( $pin_soon, 'dgl_start_datetime', $today_wall->modify( '+2 days' )->format( 'Y-m-d' ) . ' 10:00:00' );
+\DGL\Events\Series::stamp( $pin_soon, PostTypes::EVENT );
+
+$ok( is_wp_error( \DGL\Workflow\Pins::pin( $pin_late, 10, $mod ) ), 'ten days is not a choice' );
+$ok( true === \DGL\Workflow\Pins::pin( $pin_late, 14, $mod ) && \DGL\Workflow\Pins::is_pinned( $pin_late ), 'the moderator features the later event for a fortnight' );
+$until = \DGL\Workflow\Pins::until( $pin_late );
+$ok( null !== $until && $until > $today_wall->modify( '+13 days' ) && $until < $today_wall->modify( '+15 days' ), 'until fourteen days from now' );
+
+$pin_query = new WP_Query();
+$GLOBALS['wp_the_query'] = $pin_query;
+$pin_ids = array_map( 'intval', (array) $pin_query->query( [ 'post_type' => PostTypes::EVENT, 'post_status' => Statuses::LIVE, 'posts_per_page' => 500, 'fields' => 'ids' ] ) );
+$ok( $pin_late === ( $pin_ids[0] ?? 0 ), 'the public events list puts it first, ahead of everything sooner (first is ' . ( $pin_ids[0] ?? 'none' ) . ')' );
+$ok( in_array( $pin_soon, $pin_ids, true ) && array_search( $pin_soon, $pin_ids, true ) > 0, 'and the sooner unfeatured event is still there, later' );
+$ok( in_array( 'Featured at the top of its list', array_column( \DGL\Dashboard\Notifications::for_org( $org_a, 3 ), 'title' ), true ), 'the organisation is told' );
+
+update_post_meta( $pin_late, \DGL\Workflow\Pins::META_UNTIL, $today_wall->modify( '-1 hour' )->format( 'Y-m-d H:i:s' ) );
+$ok( ! \DGL\Workflow\Pins::is_pinned( $pin_late ), 'a pin whose time has passed no longer counts' );
+$ok( 1 === \DGL\Workflow\Pins::lapse() && '' === (string) get_post_meta( $pin_late, \DGL\Workflow\Pins::META_UNTIL, true ), 'the hourly lapse takes it off' );
+$pin_ids = array_map( 'intval', (array) $pin_query->query( [ 'post_type' => PostTypes::EVENT, 'post_status' => Statuses::LIVE, 'posts_per_page' => 500, 'fields' => 'ids' ] ) );
+$ok( array_search( $pin_soon, $pin_ids, true ) < array_search( $pin_late, $pin_ids, true ), 'and the list goes back to date order' );
+$ok( true === \DGL\Workflow\Pins::pin( $pin_late, 7, $mod ) && true === \DGL\Workflow\Pins::unpin( $pin_late, $mod ) && ! \DGL\Workflow\Pins::is_pinned( $pin_late ), 'a moderator can take a pin off by hand' );
+
 /* ----------------------------------------------------------------- report */
 
 echo "\n" . str_repeat( '-', 60 ) . "\n";

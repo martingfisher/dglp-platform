@@ -651,6 +651,25 @@ final class Controller {
 				exit;
 			}
 
+			// Featuring is a moderator's move on a live item; it never touches review.
+			if ( in_array( $intent, [ 'pin', 'unpin' ], true ) ) {
+				if ( ! Access::can( $user->user_id, Policy::PIN_ITEM, $post_id ) ) {
+					$error = __( 'Only something on the site can be featured, and only by the review team.', 'dgl-platform' );
+				} else {
+					$days   = isset( $_POST['dgl_pin_days'] ) ? (int) $_POST['dgl_pin_days'] : 0;
+					$result = 'pin' === $intent
+						? \DGL\Workflow\Pins::pin( $post_id, $days, $user->user_id )
+						: \DGL\Workflow\Pins::unpin( $post_id, $user->user_id );
+
+					if ( is_wp_error( $result ) ) {
+						$error = $result->get_error_message();
+					} else {
+						wp_safe_redirect( add_query_arg( 'featured', 'pin' === $intent ? '1' : '0', Router::url( 'review', (string) $post_id ) ) );
+						exit;
+					}
+				}
+			}
+
 			$action = match ( $intent ) {
 				'approve'   => StateMachine::APPROVE,
 				'changes'   => StateMachine::REQUEST_CHANGES,
@@ -714,6 +733,9 @@ final class Controller {
 				'can_take_down' => Access::can( $user->user_id, Policy::TAKE_DOWN_ITEM, $post_id ),
 				// A refusal or an archive can be sent back through the queue.
 				'can_reopen'    => Access::can( $user->user_id, Policy::REOPEN_ITEM, $post_id ),
+				'can_pin'       => ! $is_edit && Access::can( $user->user_id, Policy::PIN_ITEM, $post_id ),
+				'pinned_until'  => \DGL\Workflow\Pins::is_pinned( $post_id ) ? (string) wp_date( (string) get_option( 'date_format', 'j F Y' ), \DGL\Workflow\Pins::until( $post_id )->getTimestamp() ) : '',
+				'featured'      => isset( $_GET['featured'] ) ? (string) $_GET['featured'] : null, // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 				'can_restore'   => ! $is_edit && Access::can( $user->user_id, Policy::RESTORE_ITEM, $post_id ),
 			],
 			$post->post_title !== '' ? $post->post_title : __( 'Review', 'dgl-platform' ),

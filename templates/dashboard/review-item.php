@@ -207,6 +207,44 @@ $check_word = static fn( string $status ): string => match ( $status ) {
 			</form>
 		</section>
 
+		<?php if ( ! empty( $data['can_pin'] ) ) : ?>
+			<section class="dgl-card dgl-decision">
+				<h2 class="dgl-section__title"><?php esc_html_e( 'Feature it', 'dgl-platform' ); ?></h2>
+				<?php if ( '1' === ( $data['featured'] ?? null ) ) : ?>
+					<div class="dgl-alert dgl-alert--good" role="status"><p><?php esc_html_e( 'Featured. It sits first on its list and the organisation has been told.', 'dgl-platform' ); ?></p></div>
+				<?php elseif ( '0' === ( $data['featured'] ?? null ) ) : ?>
+					<div class="dgl-alert dgl-alert--good" role="status"><p><?php esc_html_e( 'No longer featured.', 'dgl-platform' ); ?></p></div>
+				<?php endif; ?>
+				<?php if ( '' !== (string) ( $data['pinned_until'] ?? '' ) ) : ?>
+					<p class="dgl-help">
+						<?php
+						printf(
+							/* translators: %s: a date. */
+							esc_html__( 'Featured at the top of its list until %s, then it drops back on its own.', 'dgl-platform' ),
+							'<strong>' . esc_html( (string) $data['pinned_until'] ) . '</strong>'
+						);
+						?>
+					</p>
+					<form method="post" class="dgl-form dgl-form--bare">
+						<?php wp_nonce_field( Wizard::NONCE ); ?>
+						<div class="dgl-decision__actions">
+							<button class="dgl-button dgl-button--secondary" type="submit" name="dgl_intent" value="unpin"><?php esc_html_e( 'Stop featuring it', 'dgl-platform' ); ?></button>
+						</div>
+					</form>
+				<?php else : ?>
+					<p class="dgl-help"><?php esc_html_e( 'Holds it at the top of its public list for a week or a fortnight, with a Featured stamp, then it drops back on its own. The organisation is told.', 'dgl-platform' ); ?></p>
+					<form method="post" class="dgl-form dgl-form--bare">
+						<?php wp_nonce_field( Wizard::NONCE ); ?>
+						<div class="dgl-decision__actions">
+							<button class="dgl-button dgl-button--secondary" type="submit" name="dgl_intent" value="pin" onclick="this.form.dgl_pin_days.value=7"><?php esc_html_e( 'Feature for 7 days', 'dgl-platform' ); ?></button>
+							<button class="dgl-button dgl-button--secondary" type="submit" name="dgl_intent" value="pin" onclick="this.form.dgl_pin_days.value=14"><?php esc_html_e( 'Feature for 14 days', 'dgl-platform' ); ?></button>
+							<input type="hidden" name="dgl_pin_days" value="7">
+						</div>
+					</form>
+				<?php endif; ?>
+			</section>
+		<?php endif; ?>
+
 		<?php if ( ! empty( $data['can_take_down'] ) ) : ?>
 			<section class="dgl-card dgl-decision">
 				<h2 class="dgl-section__title"><?php esc_html_e( 'Take it off the site', 'dgl-platform' ); ?></h2>
