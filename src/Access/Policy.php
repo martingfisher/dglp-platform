@@ -161,6 +161,15 @@ final class Policy {
 			&& $actor->org_id === $target_org;
 	}
 
+	/**
+	 * Making a colleague an owner, or an owner a contributor: the same people
+	 * who can remove them, for the same reasons, and never on themselves, so
+	 * an organisation cannot demote its last owner by accident.
+	 */
+	public static function can_change_role( UserContext $actor, int $target_id, ?int $target_org ): bool {
+		return self::can_remove_member( $actor, $target_id, $target_org );
+	}
+
 	private static function can_invite_member( UserContext $user ): bool {
 		if ( $user->is_admin() ) {
 			return true;

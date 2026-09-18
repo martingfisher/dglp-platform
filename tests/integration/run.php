@@ -3081,6 +3081,26 @@ $ok( isset( \DGL\Dashboard\Wizard::validate_all( (int) $copy, PostTypes::EVENT )
 $ok( is_wp_error( \DGL\Dashboard\Wizard::copy( $orig, $bella ) ), 'another organisation cannot copy it' );
 $ok( in_array( 'Copied into a new draft', array_column( \DGL\Dashboard\Notifications::for_org( $org_a, 3 ), 'title' ), true ), 'the organisation sees the copy in notifications' );
 
+$group( 'An owner can make a colleague an owner, and back' );
+
+$mail_was = get_option( \DGL\Email\Routing::OPTION_ENABLED, false );
+update_option( \DGL\Email\Routing::OPTION_ENABLED, 1 );
+$sent_to = []; $sent_bodies = [];
+
+$ok( is_wp_error( \DGL\Org\Org::set_role( $alice, 'contributor', $aaron ) ), 'a contributor cannot change an owner' );
+$ok( is_wp_error( \DGL\Org\Org::set_role( $alice, 'contributor', $alice ) ), 'an owner cannot change themselves' );
+$ok( is_wp_error( \DGL\Org\Org::set_role( $aaron, 'owner', $bella ) ), 'nor can an owner from another organisation' );
+$ok( true === \DGL\Org\Org::set_role( $aaron, 'owner', $alice ), 'Alice makes Aaron an owner' );
+$ok( 'owner' === \DGL\Org\Org::role_for_user( $aaron ), 'and he is one' );
+$ok( in_array( 'dgl_aaron@example.test', array_map( 'strtolower', $sent_to ), true ), 'Aaron is emailed' );
+$ok( [] !== array_filter( $sent_bodies, static fn( string $b ): bool => str_contains( $b, 'made you an owner' ) ), 'in owner words' );
+$ok( in_array( 'What a colleague can do has changed', array_column( \DGL\Dashboard\Notifications::for_org( $org_a, 3 ), 'title' ), true ), 'and the organisation sees it' );
+$ok( \DGL\Access\Access::can( $aaron, Policy::MANAGE_ORG ), 'Aaron can now manage the organisation in the same request' );
+$ok( true === \DGL\Org\Org::set_role( $aaron, 'contributor', $alice ), 'and Alice makes him a contributor again' );
+$ok( 'contributor' === \DGL\Org\Org::role_for_user( $aaron ) && ! \DGL\Access\Access::can( $aaron, Policy::MANAGE_ORG ), 'which he is' );
+
+update_option( \DGL\Email\Routing::OPTION_ENABLED, $mail_was );
+
 /* ----------------------------------------------------------------- report */
 
 echo "\n" . str_repeat( '-', 60 ) . "\n";

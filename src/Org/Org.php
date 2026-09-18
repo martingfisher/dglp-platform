@@ -191,6 +191,64 @@ final class Org {
 	}
 
 	/**
+	 * Make a colleague an owner or a contributor.
+	 *
+	 * Applies at once. The person is emailed, because what they can do has
+	 * changed, and the organisation's owners see it in their notifications.
+	 *
+	 * @return true|\WP_Error
+	 */
+	public static function set_role( int $user_id, string $role, int $actor_id ) {
+		$actor  = \DGL\Access\Access::user_context( $actor_id );
+		$org_id = self::for_user( $user_id );
+
+		if ( ! in_array( $role, [ \DGL\Access\UserContext::ORG_OWNER, \DGL\Access\UserContext::ORG_CONTRIBUTOR ], true ) ) {
+			return new \WP_Error( 'dgl_bad_role', __( 'That is not a role.', 'dgl-platform' ) );
+		}
+
+		if ( ! \DGL\Access\Policy::can_change_role( $actor, $user_id, $org_id ) ) {
+			return new \WP_Error( 'dgl_not_allowed', __( 'You cannot change what that person can do.', 'dgl-platform' ) );
+		}
+
+		$person = get_userdata( $user_id );
+
+		if ( ! $person ) {
+			return new \WP_Error( 'dgl_no_user', __( 'That account no longer exists.', 'dgl-platform' ) );
+		}
+
+		if ( $role === self::role_for_user( $user_id ) ) {
+			return true;
+		}
+
+		update_user_meta( $user_id, Meta::USER_ORG_ROLE, $role );
+		\DGL\Access\Access::forget( $user_id );
+
+		$is_owner = \DGL\Access\UserContext::ORG_OWNER === $role;
+
+		\DGL\Audit\Log::record(
+			'member_role_changed',
+			'org',
+			(int) $org_id,
+			(int) $org_id,
+			sprintf(
+				$is_owner
+					/* translators: %s: name. */
+					? __( '%s is now an owner: they can manage members and the organisation page.', 'dgl-platform' )
+					/* translators: %s: name. */
+					: __( '%s is now a contributor: they can submit and edit listings.', 'dgl-platform' ),
+				$person->display_name
+			),
+			[ 'role' => $role ],
+			$actor_id
+		);
+
+		$message = \DGL\Email\InviteCopy::role_changed( get_the_title( (int) $org_id ), $is_owner, \DGL\Dashboard\Router::url() );
+		\DGL\Email\Mailer::send( $message->for_recipients( [ (string) $person->user_email ] ) );
+
+		return true;
+	}
+
+	/**
 	 * The email domains an organisation has recorded.
 	 *
 	 * @return string[]

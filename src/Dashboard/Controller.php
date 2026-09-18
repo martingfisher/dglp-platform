@@ -1393,6 +1393,7 @@ final class Controller {
 				'status'     => (string) get_user_meta( $user_id, \DGL\Meta::USER_ACCOUNT_STATUS, true ),
 				'is_you'     => $user_id === get_current_user_id(),
 				'can_remove' => Policy::can_remove_member( Access::user_context( get_current_user_id() ), $user_id, $org_id ),
+				'can_change_role' => Policy::can_change_role( Access::user_context( get_current_user_id() ), $user_id, $org_id ),
 			];
 		}
 
@@ -1695,6 +1696,28 @@ final class Controller {
 			} else {
 				self::flash( '', $result['error'] );
 			}
+
+			wp_safe_redirect( $back );
+			exit;
+		}
+
+		if ( 'role' === $action ) {
+			$member_id = isset( $post['dgl_member_id'] ) ? (int) $post['dgl_member_id'] : 0;
+			$role      = isset( $post['dgl_role'] ) ? sanitize_key( (string) $post['dgl_role'] ) : '';
+			$person    = get_userdata( $member_id );
+			$result    = \DGL\Org\Org::set_role( $member_id, $role, $user->user_id );
+
+			self::flash(
+				is_wp_error( $result ) ? '' : sprintf(
+					UserContext::ORG_OWNER === $role
+						/* translators: %s: person's name. */
+						? __( '%s is now an owner. They have been told.', 'dgl-platform' )
+						/* translators: %s: person's name. */
+						: __( '%s is now a contributor. They have been told.', 'dgl-platform' ),
+					$person ? $person->display_name : __( 'That person', 'dgl-platform' )
+				),
+				is_wp_error( $result ) ? $result->get_error_message() : ''
+			);
 
 			wp_safe_redirect( $back );
 			exit;

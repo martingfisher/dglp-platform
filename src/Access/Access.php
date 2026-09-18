@@ -78,6 +78,11 @@ final class Access {
 		return self::can( get_current_user_id(), $action, $object );
 	}
 
+	/** Drop a cached snapshot after something about the person changed. */
+	public static function forget( int $user_id ): void {
+		unset( self::$user_cache[ $user_id ] );
+	}
+
 	/**
 	 * Build the actor snapshot. Cached for the request.
 	 */

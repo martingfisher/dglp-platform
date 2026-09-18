@@ -210,3 +210,10 @@ Harness::assert_false( Policy::decide( member_a(), Policy::EXTEND_ITEM, $trainin
 Harness::assert_false( Policy::decide( member_b(), Policy::EXTEND_ITEM, $news_live ), 'another organisation cannot' );
 Harness::assert_false( Policy::decide( member_a(), Policy::EXTEND_ITEM, item_a( Statuses::EXPIRED ) ), 'nor once it has expired' );
 Harness::assert_false( Policy::decide( moderator(), Policy::EXTEND_ITEM, $news_live ), 'a moderator does not extend members\' listings for them' );
+
+Harness::group( 'Changing a colleague\'s role follows the removal rules' );
+
+Harness::assert_true( Policy::can_change_role( member_a( UserContext::ORG_OWNER ), 999, ORG_A ), 'an owner can change a colleague\'s role' );
+Harness::assert_false( Policy::can_change_role( member_a( UserContext::ORG_CONTRIBUTOR ), 999, ORG_A ), 'a contributor cannot' );
+Harness::assert_false( Policy::can_change_role( member_a( UserContext::ORG_OWNER ), member_a( UserContext::ORG_OWNER )->user_id, ORG_A ), 'nobody changes their own role, so the last owner cannot demote themselves' );
+Harness::assert_false( Policy::can_change_role( member_a( UserContext::ORG_OWNER ), 999, ORG_B ), 'nor a person in another organisation' );

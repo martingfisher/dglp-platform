@@ -240,6 +240,26 @@ $is_owner = $user instanceof UserContext && $user->is_org_owner();
 						</td>
 						<?php if ( ! empty( $data['can_invite'] ) ) : ?>
 							<td class="dgl-row-actions">
+								<?php if ( ! empty( $row['can_change_role'] ) ) : ?>
+									<?php $to_owner = UserContext::ORG_OWNER !== $row['role']; ?>
+									<form method="post" class="dgl-inline-form">
+										<?php wp_nonce_field( \DGL\Dashboard\Wizard::NONCE ); ?>
+										<input type="hidden" name="dgl_invite_action" value="role">
+										<input type="hidden" name="dgl_member_id" value="<?php echo esc_attr( (string) $row['id'] ); ?>">
+										<input type="hidden" name="dgl_role" value="<?php echo esc_attr( $to_owner ? UserContext::ORG_OWNER : UserContext::ORG_CONTRIBUTOR ); ?>">
+										<button type="submit" class="dgl-button dgl-button--quiet"
+											data-dgl-confirm="<?php echo esc_attr( sprintf(
+												$to_owner
+													/* translators: %s: person's name. */
+													? __( 'Make %s an owner? They will be able to manage members and this page, the same as you.', 'dgl-platform' )
+													/* translators: %s: person's name. */
+													: __( 'Make %s a contributor? They will still be able to submit and edit listings, but not manage members or this page.', 'dgl-platform' ),
+												$row['name']
+											) ); ?>">
+											<?php echo $to_owner ? esc_html__( 'Make an owner', 'dgl-platform' ) : esc_html__( 'Make a contributor', 'dgl-platform' ); ?>
+										</button>
+									</form>
+								<?php endif; ?>
 								<?php if ( ! empty( $row['can_remove'] ) ) : ?>
 									<form method="post" class="dgl-inline-form">
 										<?php wp_nonce_field( \DGL\Dashboard\Wizard::NONCE ); ?>
@@ -263,7 +283,7 @@ $is_owner = $user instanceof UserContext && $user->is_org_owner();
 		</table>
 
 		<p class="dgl-help">
-			<?php esc_html_e( 'Removing somebody takes their access away straight away. What they posted stays with the organisation. You cannot remove yourself.', 'dgl-platform' ); ?>
+			<?php esc_html_e( 'An owner can do everything, including this page; a contributor submits and edits listings. Changing a role or removing somebody applies straight away and they are told. What they posted stays with the organisation. You cannot change or remove yourself.', 'dgl-platform' ); ?>
 		</p>
 	</section>
 

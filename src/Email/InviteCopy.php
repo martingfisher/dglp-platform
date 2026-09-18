@@ -163,6 +163,40 @@ final class InviteCopy {
 	 * did not: their account still exists, their listings stay with the
 	 * organisation, and if this is wrong the organisation is who to ask.
 	 */
+	/**
+	 * What somebody can do for their organisation has changed.
+	 */
+	public static function role_changed( string $org_name, bool $is_owner, string $dashboard_url ): Message {
+		return new Message(
+			key: 'member_role_changed',
+			audience: 'member',
+			subject: $is_owner
+				/* translators: %s: organisation. */
+				? sprintf( __( 'You are now an owner at %s', 'dgl-platform' ), $org_name )
+				/* translators: %s: organisation. */
+				: sprintf( __( 'Your role at %s has changed', 'dgl-platform' ), $org_name ),
+			preheader: $is_owner
+				? __( 'You can manage members and the organisation page.', 'dgl-platform' )
+				: __( 'You can submit and edit listings.', 'dgl-platform' ),
+			heading: $is_owner ? __( 'You are now an owner', 'dgl-platform' ) : __( 'You are now a contributor', 'dgl-platform' ),
+			paragraphs: [
+				$is_owner
+					? sprintf(
+						/* translators: %s: organisation. */
+						__( 'An owner at %s has made you an owner too. As well as submitting and editing listings, you can now invite and remove colleagues, change what they can do, and edit the organisation page and its directory entry.', 'dgl-platform' ),
+						$org_name
+					)
+					: sprintf(
+						/* translators: %s: organisation. */
+						__( 'An owner at %s has changed your role to contributor. You can still submit and edit listings for them. Managing members and the organisation page is now for the owners.', 'dgl-platform' ),
+						$org_name
+					),
+			],
+			cta_label: __( 'Open the member area', 'dgl-platform' ),
+			cta_url: $dashboard_url,
+		);
+	}
+
 	public static function removed( string $org_name ): Message {
 		return new Message(
 			key: 'member_removed',

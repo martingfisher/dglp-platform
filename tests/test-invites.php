@@ -153,3 +153,11 @@ Harness::assert_same( '', Rules::password_problem( 'caf\u{e9}caf\u{e9}', 'caf\u{
 Harness::assert_same( '', Rules::password_problem( "it's \\ fine!", "it's \\ fine!" ), 'quotes and backslashes are just characters' );
 Harness::assert_true( '' !== Rules::password_problem( 'short', 'different' ), 'too short is reported before a mismatch, so the first thing fixed is the one that matters' );
 
+
+Harness::group( 'Role change email' );
+
+$up = \DGL\Email\InviteCopy::role_changed( 'Leeds Trust', true, 'https://example.test/dashboard/' );
+Harness::assert_same( 'You are now an owner at Leeds Trust', $up->subject, 'promotion subject' );
+Harness::assert_true( str_contains( $up->paragraphs[0], 'invite and remove colleagues' ), 'says what an owner can do' );
+$down = \DGL\Email\InviteCopy::role_changed( 'Leeds Trust', false, 'https://example.test/dashboard/' );
+Harness::assert_true( str_contains( $down->paragraphs[0], 'still submit and edit' ), 'and what a contributor keeps' );
