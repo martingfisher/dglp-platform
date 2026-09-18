@@ -108,9 +108,10 @@ final class Plugin {
 		\DGL\Admin\Health::watch();
 
 		// Next dates roll forward first, so a series that has run out is expired by the sweep in the same run.
-		add_action( self::EXPIRY_HOOK, [ \DGL\Events\Series::class, 'roll_forward' ], 5 );
-		add_action( self::EXPIRY_HOOK, [ \DGL\Events\Reminder::class, 'send_due' ], 7 );
-		add_action( self::EXPIRY_HOOK, [ Transition::class, 'run_expiry_sweep' ] );
+		// Zero accepted arguments: a bare do_action() passes '' otherwise, which a typed $limit refuses.
+		add_action( self::EXPIRY_HOOK, [ \DGL\Events\Series::class, 'roll_forward' ], 5, 0 );
+		add_action( self::EXPIRY_HOOK, [ \DGL\Events\Reminder::class, 'send_due' ], 7, 0 );
+		add_action( self::EXPIRY_HOOK, [ Transition::class, 'run_expiry_sweep' ], 10, 0 );
 		add_action( self::EXPIRY_HOOK, static fn() => \DGL\Dashboard\Wizard::purge_empty_drafts() );
 		add_action( self::DIGEST_HOOK, [ self::class, 'run_digests' ] );
 	}
