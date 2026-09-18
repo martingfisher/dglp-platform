@@ -67,10 +67,11 @@ final class Calendar {
 			}
 
 			$rule = Series::rule_for( $post_id );
+			$off  = Cancel::is_cancelled( $post_id );
 
 			if ( null !== $rule ) {
 				foreach ( Occurrences::between( $rule, $from, $to ) as $occurrence ) {
-					$days[ $occurrence->date() ][] = [ 'post' => $post, 'start' => $occurrence->start, 'end' => $occurrence->end, 'series' => true ];
+					$days[ $occurrence->date() ][] = [ 'post' => $post, 'start' => $occurrence->start, 'end' => $occurrence->end, 'series' => true, 'cancelled' => $off || $occurrence->cancelled ];
 				}
 				continue;
 			}
@@ -102,7 +103,7 @@ final class Calendar {
 				}
 			}
 
-			$days[ $start->format( 'Y-m-d' ) ][] = [ 'post' => $post, 'start' => $start, 'end' => $end, 'series' => false ];
+			$days[ $start->format( 'Y-m-d' ) ][] = [ 'post' => $post, 'start' => $start, 'end' => $end, 'series' => false, 'cancelled' => $off ];
 		}
 
 		ksort( $days );

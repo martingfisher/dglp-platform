@@ -18,6 +18,8 @@ final readonly class Occurrence {
 	public function __construct(
 		public DateTimeImmutable $start,
 		public ?DateTimeImmutable $end,
+		/** Was going to run on this date and will not. Listed, marked, not counted as next. */
+		public bool $cancelled = false,
 	) {}
 
 	/** The calendar date, Y-m-d, in the rule's timezone. */

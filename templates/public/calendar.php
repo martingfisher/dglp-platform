@@ -73,7 +73,7 @@ $month = '';
 					<h3 class="dgl-cal__date" id="dgl-cal-<?php echo esc_attr( $date ); ?>"><?php echo esc_html( wp_date( 'l j', $day->getTimestamp() ) ); ?></h3>
 					<ul class="dgl-cal__list">
 						<?php foreach ( $rows as $row ) : ?>
-							<li class="dgl-cal__row">
+							<li class="dgl-cal__row<?php echo ! empty( $row['cancelled'] ) ? ' dgl-cal__row--off' : ''; ?>">
 								<span class="dgl-cal__time">
 									<?php echo esc_html( wp_date( 'H:i', $row['start']->getTimestamp() ) ); ?><?php if ( null !== $row['end'] ) : ?> <?php esc_html_e( 'to', 'dgl-platform' ); ?> <?php echo esc_html( wp_date( 'H:i', $row['end']->getTimestamp() ) ); ?><?php endif; ?>
 								</span>
@@ -88,7 +88,9 @@ $month = '';
 										<span class="dgl-cal__where"><?php echo esc_html( $where ); ?></span>
 									<?php endif; ?>
 								</span>
-								<?php if ( $row['series'] ) : ?>
+								<?php if ( ! empty( $row['cancelled'] ) ) : ?>
+									<span class="dgl-cal__tag dgl-cal__tag--off"><?php esc_html_e( 'Cancelled', 'dgl-platform' ); ?></span>
+								<?php elseif ( $row['series'] ) : ?>
 									<span class="dgl-cal__tag"><?php esc_html_e( 'Repeats', 'dgl-platform' ); ?></span>
 								<?php endif; ?>
 							</li>

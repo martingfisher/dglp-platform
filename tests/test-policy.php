@@ -223,3 +223,10 @@ Harness::group( 'Featuring is the review team\'s move on live items' );
 Harness::assert_true( Policy::decide( moderator(), Policy::PIN_ITEM, item_a( Statuses::LIVE ) ), 'a moderator can feature a live item' );
 Harness::assert_false( Policy::decide( moderator(), Policy::PIN_ITEM, item_a( Statuses::PENDING ) ), 'not a pending one' );
 Harness::assert_false( Policy::decide( member_a( UserContext::ORG_OWNER ), Policy::PIN_ITEM, item_a( Statuses::LIVE ) ), 'and a member cannot feature their own' );
+
+Harness::group( 'Cancelling is the owning organisation\'s move on a live event, the same gate as its dates' );
+
+Harness::assert_true( Policy::decide( member_a( UserContext::ORG_OWNER ), Policy::CANCEL_ITEM, item_a( Statuses::LIVE ) ), 'an owner can cancel their live event' );
+Harness::assert_false( Policy::decide( member_a( UserContext::ORG_OWNER ), Policy::CANCEL_ITEM, item_a( Statuses::PENDING ) ), 'not one that is not on the site' );
+Harness::assert_false( Policy::decide( member_b( UserContext::ORG_OWNER ), Policy::CANCEL_ITEM, item_a( Statuses::LIVE ) ), 'another organisation cannot' );
+Harness::assert_false( Policy::decide( moderator(), Policy::CANCEL_ITEM, item_a( Statuses::LIVE ) ), 'a plain moderator cannot: they take things down instead' );

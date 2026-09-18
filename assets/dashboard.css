@@ -1163,6 +1163,23 @@ body.dgl-body {
 
 .dgl-schedule__form .dgl-form__actions--alone { margin-top: 8px; }
 
+.dgl-cancel__state { margin: 0 0 8px; }
+
+.dgl-cancel__date { margin-bottom: var(--dgl-gap); padding-bottom: var(--dgl-gap); border-bottom: 1px solid var(--dgl-border); }
+
+.dgl-cancel__dateslabel {
+	margin: var(--dgl-gap) 0 4px;
+	font-size: 0.78em;
+	font-weight: 600;
+	letter-spacing: 0.03em;
+	text-transform: uppercase;
+	color: var(--dgl-text-muted);
+}
+
+.dgl-cancel__dates { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+
+.dgl-cancel__dates li { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; }
+
 .dgl-extend__lead { font-size: 1.05rem; }
 
 .dgl-form__actions.dgl-form__actions--alone {

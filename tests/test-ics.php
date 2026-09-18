@@ -17,6 +17,7 @@ Harness::group( 'iCalendar: a weekly series becomes an RRULE Google and Outlook 
 $weekly = Rule::from_meta( [ 'freq' => 'weekly', 'weekdays' => [ 2, 4 ], 'until' => '2027-03-31', 'skip' => [ '2026-12-24', '2026-12-31' ] ], '2026-09-22 13:00:00', '2026-09-22 15:00:00', $tz );
 Harness::assert_same( 'FREQ=WEEKLY;BYDAY=TU,TH;UNTIL=20270331T225959Z', Ics::rrule( $weekly ), 'weekly on two days, until the end of the last day in UTC' );
 Harness::assert_same( [ 'EXDATE;TZID=Europe/London:20261224T130000', 'EXDATE;TZID=Europe/London:20261231T130000' ], Ics::exdates( $weekly, 'Europe/London' ), 'one EXDATE per skipped date, at the start time' );
+Harness::assert_same( [ 'EXDATE;TZID=Europe/London:20261224T130000', 'EXDATE;TZID=Europe/London:20261231T130000', 'EXDATE;TZID=Europe/London:20261013T130000' ], Ics::exdates( $weekly->with_cancelled( [ '2026-10-13' ] ), 'Europe/London' ), 'a cancelled date is an EXDATE too, so subscribers lose it' );
 
 $fortnightly = Rule::from_meta( [ 'freq' => 'fortnightly', 'weekdays' => [ 3 ], 'until' => '2026-12-31' ], '2026-10-07 10:00:00', '', $tz );
 Harness::assert_same( 'FREQ=WEEKLY;INTERVAL=2;WKST=MO;BYDAY=WE;UNTIL=20261231T235959Z', Ics::rrule( $fortnightly ), 'every other week counts Monday-based weeks, as the engine does' );

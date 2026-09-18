@@ -37,12 +37,16 @@ final class Series {
 			return null;
 		}
 
-		return Rule::from_meta(
+		$rule = Rule::from_meta(
 			$repeat,
 			(string) get_post_meta( $post_id, 'dgl_start_datetime', true ),
 			(string) get_post_meta( $post_id, 'dgl_end_datetime', true ),
 			wp_timezone()
 		);
+
+		$cancelled = Cancel::dates( $post_id );
+
+		return null === $rule || [] === $cancelled ? $rule : $rule->with_cancelled( $cancelled );
 	}
 
 	public static function is_series( int $post_id ): bool {
@@ -96,6 +100,10 @@ final class Series {
 				$next  = '' !== $start ? $start : null;
 			}
 		}
+
+		// A cancelled event stays up, marked, for a short while so the people
+		// who saw it learn it is off; then the ordinary sweep takes it down.
+		$expires = Cancel::cap_expiry( $post_id, $expires );
 
 		if ( null === $expires ) {
 			delete_post_meta( $post_id, Meta::ITEM_EXPIRES_AT );
@@ -190,10 +198,10 @@ final class Series {
 	 *
 	 * @return Occurrence[]
 	 */
-	public static function next_dates( int $post_id, int $count = 5 ): array {
+	public static function next_dates( int $post_id, int $count = 5, bool $with_cancelled = false ): array {
 		$rule = self::rule_for( $post_id );
 
-		return null === $rule ? [] : Occurrences::next( $rule, self::now(), $count );
+		return null === $rule ? [] : Occurrences::next( $rule, self::now(), $count, $with_cancelled );
 	}
 
 	/**

@@ -702,6 +702,34 @@
 
 .dgl-pub__when .dgl-pub__note { margin-top: 10px; }
 
+.dgl-pub__pin--off { background: var(--dgl-danger); }
+
+.dgl-pub__passed--off { border-left: 4px solid var(--dgl-danger); }
+
+.dgl-pub__passed--off strong { display: block; }
+
+.dgl-pub__date--off { color: var(--dgl-text-muted); text-decoration: line-through; }
+
+.dgl-pub__offtag,
+.dgl-cal__tag.dgl-cal__tag--off {
+	display: inline-block;
+	padding: 1px 8px;
+	border-radius: 999px;
+	background: var(--dgl-danger);
+	border-color: var(--dgl-danger);
+	color: var(--dgl-white);
+	font-size: 0.74em;
+	font-weight: 600;
+	letter-spacing: 0.03em;
+	text-transform: uppercase;
+	text-decoration: none;
+}
+
+.dgl-pub__date--off .dgl-pub__offtag { text-decoration: none; }
+
+.dgl-cal__row--off .dgl-cal__title,
+.dgl-cal__row--off .dgl-cal__time { text-decoration: line-through; color: var(--dgl-text-muted); }
+
 .dgl-pub__addcal {
 	margin: 0 0 var(--dgl-gap-lg);
 	font-size: 0.95em;

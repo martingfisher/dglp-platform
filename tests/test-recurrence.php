@@ -110,3 +110,14 @@ Harness::assert_same( 'Every Tuesday, 13:00 to 15:00', Wording::with_times( [ 'f
 Harness::assert_same( 'Every Tuesday, 13:00', Wording::with_times( [ 'freq' => 'weekly', 'weekdays' => [ 2 ] ], '2026-09-22 13:00:00', '' ), 'with a start only' );
 Harness::assert_same( 'Every Tuesday, 13:00 to 15:00, until 31 March 2027. Not on 23 December 2026, 30 December 2026.', Wording::long( [ 'freq' => 'weekly', 'weekdays' => [ 2 ], 'until' => '2027-03-31', 'skip' => [ '2026-12-23', '2026-12-30' ] ], '2026-09-22 13:00:00', '2026-09-22 15:00:00', static fn( string $d ): string => ( new DateTimeImmutable( $d ) )->format( 'j F Y' ) ), 'the long form' );
 Harness::assert_same( 'Every Tuesday, 13:00, until 31 March 2027.', Wording::long( [ 'freq' => 'weekly', 'weekdays' => [ 2 ], 'until' => '2027-03-31' ], '2026-09-22 13:00:00', '', static fn( string $d ): string => ( new DateTimeImmutable( $d ) )->format( 'j F Y' ) ), 'no skips, no end time' );
+
+Harness::group( 'A cancelled date stays in the walk, marked, and is never "next"' );
+
+$with_off = $weekly->with_cancelled( [ '2026-10-13', 'not a date', '2026-10-13' ] );
+Harness::assert_same( [ '2026-10-13' ], $with_off->cancelled, 'cancelled dates are cleaned and deduplicated' );
+Harness::assert_same( [ '2026-10-06 13:00:00', '2026-10-20 13:00:00' ], $fmt( Occurrences::next( $with_off, $at( '2026-10-01' ), 2 ) ), 'next skips the cancelled Tuesday' );
+Harness::assert_same( [ '2026-10-06 13:00:00', '2026-10-13 13:00:00' ], $fmt( Occurrences::next( $with_off, $at( '2026-10-01' ), 2, true ) ), 'unless asked to include it' );
+$oct = Occurrences::between( $with_off, $at( '2026-10-01' ), $at( '2026-10-31 23:59:59' ) );
+Harness::assert_same( [ false, true, false, false ], array_map( static fn( $o ): bool => $o->cancelled, $oct ), 'the calendar walk keeps it, flagged' );
+Harness::assert_true( str_ends_with( Wording::long( $with_off->to_meta() + [ 'cancelled' => $with_off->cancelled ], '2026-09-22 13:00:00', '2026-09-22 15:00:00', static fn( string $d ): string => $d ), 'Cancelled on 2026-10-13.' ), 'the wording says which date is cancelled' );
+Harness::assert_same( [], $weekly->with_cancelled( [] )->cancelled, 'and none by default' );

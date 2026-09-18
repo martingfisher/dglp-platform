@@ -203,6 +203,7 @@ final class Ics {
 		}
 
 		$lines[] = 'URL:' . $link;
+		$lines[] = 'STATUS:' . ( Cancel::is_cancelled( $id ) ? 'CANCELLED' : 'CONFIRMED' );
 
 		if ( null !== $rule ) {
 			$lines[] = 'RRULE:' . self::rrule( $rule );
@@ -294,14 +295,14 @@ final class Ics {
 	}
 
 	/**
-	 * One EXDATE line per skipped date, at the series' start time.
+	 * One EXDATE line per skipped or cancelled date, at the series' start time.
 	 *
 	 * @return string[]
 	 */
 	public static function exdates( Rule $rule, string $tzid ): array {
 		$out = [];
 
-		foreach ( $rule->skip as $date ) {
+		foreach ( array_unique( array_merge( $rule->skip, $rule->cancelled ) ) as $date ) {
 			$day = DateTimeImmutable::createFromFormat( '!Y-m-d', $date, $rule->start->getTimezone() );
 			if ( false === $day ) {
 				continue;

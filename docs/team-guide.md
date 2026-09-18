@@ -64,6 +64,14 @@ has "Subscribe in your own calendar": the address at `/events/calendar.ics`
 pasted into Google Calendar, Outlook or Apple Calendar keeps itself up to
 date. See `docs/events-repeat.md`.
 
+If an event is off, the organisation marks it cancelled from its item
+screen: the whole thing, or one date of a repeating one. A cancelled event
+stays on the site for a week with a Cancelled stamp so people who saw it
+know, then comes off on its own. A cancelled date shows struck through on
+the calendar. Both are undoable by the organisation and show in their
+notifications and the audit trail. You do not need to do anything; take it
+down yourself only if it should go at once.
+
 ## How long news stays up
 
 Events and training come off the site on their dates. A news story has no

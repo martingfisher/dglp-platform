@@ -50,13 +50,21 @@ final class Occurrences {
 	/**
 	 * The next occurrences that have not finished, including one running now.
 	 *
+	 * A cancelled date is not "next": the list sorts and the reminder count
+	 * by dates that will happen. Ask for them when showing the coming dates,
+	 * so a cancelled one is seen as cancelled rather than missing.
+	 *
 	 * @return Occurrence[]
 	 */
-	public static function next( Rule $rule, DateTimeImmutable $now, int $count = 1 ): array {
+	public static function next( Rule $rule, DateTimeImmutable $now, int $count = 1, bool $with_cancelled = false ): array {
 		$out = [];
 
 		foreach ( self::walk( $rule, $now->modify( '-1 day' ) ) as $occurrence ) {
 			if ( $occurrence->finish() < $now ) {
+				continue;
+			}
+
+			if ( $occurrence->cancelled && ! $with_cancelled ) {
 				continue;
 			}
 

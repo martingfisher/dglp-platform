@@ -483,6 +483,10 @@ final class Frontend {
 	public static function meta_line( WP_Post $post ): string {
 		$parts = [];
 
+		if ( \DGL\Events\Cancel::is_cancelled( (int) $post->ID ) ) {
+			$parts[] = __( 'Cancelled', 'dgl-platform' );
+		}
+
 		$rule = Series::rule_for( (int) $post->ID );
 
 		if ( null !== $rule ) {
@@ -574,12 +578,13 @@ final class Frontend {
 			return null;
 		}
 
-		$next = Series::next_dates( (int) $post->ID, 5 );
+		// Shown with the cancelled ones marked; "ended" counts only dates that will run.
+		$next = Series::next_dates( (int) $post->ID, 5, true );
 
 		return [
-			'wording' => Wording::long( $rule->to_meta(), $rule->start->format( 'Y-m-d H:i:s' ), null !== $rule->duration ? $rule->start->add( $rule->duration )->format( 'Y-m-d H:i:s' ) : '', static fn( string $d ): string => wp_date( 'j F Y', ( new \DateTimeImmutable( $d, wp_timezone() ) )->getTimestamp() ) ),
+			'wording' => Wording::long( $rule->to_meta() + [ 'cancelled' => $rule->cancelled ], $rule->start->format( 'Y-m-d H:i:s' ), null !== $rule->duration ? $rule->start->add( $rule->duration )->format( 'Y-m-d H:i:s' ) : '', static fn( string $d ): string => wp_date( 'j F Y', ( new \DateTimeImmutable( $d, wp_timezone() ) )->getTimestamp() ) ),
 			'next'    => $next,
-			'ended'   => [] === $next,
+			'ended'   => [] === Series::next_dates( (int) $post->ID, 1 ),
 			'until'   => $rule->until->format( 'Y-m-d' ),
 		];
 	}

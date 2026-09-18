@@ -33,7 +33,8 @@ $archive   = Frontend::archive_url( $type );
 $passed    = Frontend::has_passed( $post );
 $schedule  = Frontend::schedule( $post );
 $has_body  = '' !== trim( wp_strip_all_tags( $body ) );
-$ics       = ( null !== $schedule && $schedule['ended'] ) || ( $passed && null === $schedule ) ? '' : \DGL\Events\Ics::url_for( $post );
+$cancelled = \DGL\Events\Cancel::is_cancelled( (int) $post->ID );
+$ics       = $cancelled || ( null !== $schedule && $schedule['ended'] ) || ( $passed && null === $schedule ) ? '' : \DGL\Events\Ics::url_for( $post );
 
 /**
  * Whether to render the plugin's own breadcrumb.
@@ -79,7 +80,17 @@ $show_crumbs = (bool) apply_filters( 'dgl_public_breadcrumb', false, $type );
 
 		<h1 class="dgl-pub__title"><?php echo esc_html( get_the_title( $post ) ); ?></h1>
 
-		<?php if ( null !== $schedule && $schedule['ended'] ) : ?>
+		<?php if ( $cancelled ) : ?>
+			<p class="dgl-pub__passed dgl-pub__passed--off">
+				<strong><?php echo esc_html( null !== $schedule ? __( 'This series has been cancelled.', 'dgl-platform' ) : __( 'This event has been cancelled.', 'dgl-platform' ) ); ?></strong>
+				<?php $cancel_note = \DGL\Events\Cancel::note( (int) $post->ID ); ?>
+				<?php if ( '' !== $cancel_note ) : ?>
+					<?php echo esc_html( $cancel_note ); ?>
+				<?php else : ?>
+					<?php esc_html_e( 'The organisation that posted it has taken it off.', 'dgl-platform' ); ?>
+				<?php endif; ?>
+			</p>
+		<?php elseif ( null !== $schedule && $schedule['ended'] ) : ?>
 			<p class="dgl-pub__passed">
 				<?php esc_html_e( 'This series has finished. It is kept here for reference.', 'dgl-platform' ); ?>
 			</p>
@@ -89,15 +100,18 @@ $show_crumbs = (bool) apply_filters( 'dgl_public_breadcrumb', false, $type );
 			</p>
 		<?php endif; ?>
 
-		<?php if ( null !== $schedule && ! $schedule['ended'] ) : ?>
+		<?php if ( null !== $schedule && ! $schedule['ended'] && ! $cancelled ) : ?>
 			<div class="dgl-pub__when">
 				<p class="dgl-pub__whenline"><?php echo esc_html( $schedule['wording'] ); ?></p>
 				<p class="dgl-pub__nextlabel"><?php esc_html_e( 'Next dates', 'dgl-platform' ); ?></p>
 				<ul class="dgl-pub__dates">
 					<?php foreach ( $schedule['next'] as $occurrence ) : ?>
-						<li>
+						<li<?php echo $occurrence->cancelled ? ' class="dgl-pub__date--off"' : ''; ?>>
 							<?php echo esc_html( wp_date( 'l j F', $occurrence->start->getTimestamp() ) ); ?>,
 							<?php echo esc_html( wp_date( 'H:i', $occurrence->start->getTimestamp() ) ); ?><?php if ( null !== $occurrence->end ) : ?> <?php esc_html_e( 'to', 'dgl-platform' ); ?> <?php echo esc_html( wp_date( 'H:i', $occurrence->end->getTimestamp() ) ); ?><?php endif; ?>
+							<?php if ( $occurrence->cancelled ) : ?>
+								<span class="dgl-pub__offtag"><?php esc_html_e( 'Cancelled', 'dgl-platform' ); ?></span>
+							<?php endif; ?>
 						</li>
 					<?php endforeach; ?>
 				</ul>
@@ -143,7 +157,7 @@ $show_crumbs = (bool) apply_filters( 'dgl_public_breadcrumb', false, $type );
 					</div>
 				<?php endif; ?>
 
-				<?php if ( '' !== $booking && ! $passed ) : ?>
+				<?php if ( '' !== $booking && ! $passed && ! $cancelled ) : ?>
 					<div class="dgl-pub__card dgl-pub__card--action">
 						<a class="dgl-pub__button" href="<?php echo esc_url( $booking ); ?>" rel="nofollow noopener" target="_blank">
 							<?php esc_html_e( 'Book or find out more', 'dgl-platform' ); ?>

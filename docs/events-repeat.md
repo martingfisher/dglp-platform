@@ -46,6 +46,23 @@ cannot say.
   when Settings > General names one (Europe/London); with only a UTC offset
   set they go out in UTC, which is an hour out in summer. `src/Events/Ics.php`.
 
+## Cancelling
+
+The owning organisation cancels from the item screen, no review, undoable.
+`src/Events/Cancel.php`.
+
+- The whole event (a one-off or a series): `dgl_cancelled_at` and an optional
+  `dgl_cancelled_note`. It stays live with a Cancelled stamp on the list, a
+  banner with the note on its page, struck through on the calendar,
+  `STATUS:CANCELLED` in its .ics, no booking button and no download. Its
+  expiry is pulled to seven days after the cancellation so the sweep takes
+  it off; reinstating puts the expiry back.
+- One date of a series: `dgl_cancelled_dates`, a list of Y-m-d. The date
+  stays on the calendar and in the next dates, marked Cancelled, but is not
+  the "next" date for sorting, the list line or the reminder, and is an
+  EXDATE for subscribers. The item screen offers the next eight dates.
+- Both are locked while an edit is open for review, like the dates.
+
 ## Two weeks before the end
 
 The organisation's approved owners get one email: "Is this still running?"

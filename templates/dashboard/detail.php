@@ -41,6 +41,23 @@ $pending  = $revision instanceof WP_Post && Statuses::PENDING === $revision->pos
 	</div>
 <?php endif; ?>
 
+<?php if ( ! empty( $data['cancel_done'] ) ) : ?>
+	<div class="dgl-alert dgl-alert--good" role="status">
+		<p><strong>
+			<?php
+			echo esc_html(
+				match ( (string) $data['cancel_done'] ) {
+					'cancel'         => __( 'Marked cancelled. It stays on the site for a week with a Cancelled stamp, then comes off on its own.', 'dgl-platform' ),
+					'reinstate'      => __( 'Back on. The Cancelled stamp has gone.', 'dgl-platform' ),
+					'cancel_date'    => __( 'That date is cancelled. It shows as cancelled on the calendar; the other dates are unchanged.', 'dgl-platform' ),
+					default          => __( 'That date is back on.', 'dgl-platform' ),
+				}
+			);
+			?>
+		</strong></p>
+	</div>
+<?php endif; ?>
+
 <?php if ( ! empty( $data['extended'] ) ) : ?>
 	<div class="dgl-alert dgl-alert--good" role="status">
 		<p><strong><?php esc_html_e( 'Kept on the site.', 'dgl-platform' ); ?></strong>
@@ -286,6 +303,87 @@ if ( $revision instanceof WP_Post ) {
 					</button>
 				</div>
 			</form>
+		<?php endif; ?>
+	</section>
+<?php endif; ?>
+
+<?php if ( ! empty( $data['can_cancel'] ) || ! empty( $data['cancelled'] ) || [] !== (array) ( $data['cancelled_dates'] ?? [] ) ) : ?>
+	<section class="dgl-card dgl-schedule dgl-cancel" aria-labelledby="dgl-cancel-title">
+		<h2 class="dgl-section__title" id="dgl-cancel-title"><?php esc_html_e( 'Cancelled?', 'dgl-platform' ); ?></h2>
+
+		<?php if ( ! empty( $data['cancelled'] ) ) : ?>
+			<p class="dgl-cancel__state">
+				<strong><?php esc_html_e( 'Marked cancelled', 'dgl-platform' ); ?></strong>
+				<?php if ( $data['cancelled_at'] instanceof DateTimeImmutable ) : ?>
+					<?php
+					/* translators: %s: a date. */
+					echo esc_html( sprintf( __( 'on %s.', 'dgl-platform' ), wp_date( 'j F Y', $data['cancelled_at']->getTimestamp() ) ) );
+					?>
+				<?php endif; ?>
+				<?php esc_html_e( 'It stays on the site for a week with a Cancelled stamp, then comes off on its own.', 'dgl-platform' ); ?>
+			</p>
+			<?php if ( '' !== (string) ( $data['cancelled_note'] ?? '' ) ) : ?>
+				<p class="dgl-help"><?php echo esc_html( (string) $data['cancelled_note'] ); ?></p>
+			<?php endif; ?>
+			<?php if ( ! empty( $data['can_cancel'] ) && empty( $data['schedule_locked'] ) ) : ?>
+				<form method="post" class="dgl-inline-form" action="<?php echo esc_url( Router::url( 'item', (string) $post->ID ) ); ?>">
+					<?php wp_nonce_field( \DGL\Dashboard\Wizard::NONCE ); ?>
+					<button type="submit" class="dgl-button dgl-button--secondary" name="dgl_intent" value="reinstate"><?php esc_html_e( 'It is back on', 'dgl-platform' ); ?></button>
+				</form>
+			<?php endif; ?>
+		<?php elseif ( ! empty( $data['schedule_locked'] ) ) : ?>
+			<p class="dgl-help"><?php esc_html_e( 'Finish or discard your open edit first.', 'dgl-platform' ); ?></p>
+		<?php elseif ( ! empty( $data['can_cancel'] ) ) : ?>
+			<?php if ( [] !== (array) ( $data['cancel_choices'] ?? [] ) ) : ?>
+				<form method="post" class="dgl-form dgl-cancel__date" action="<?php echo esc_url( Router::url( 'item', (string) $post->ID ) ); ?>">
+					<?php wp_nonce_field( \DGL\Dashboard\Wizard::NONCE ); ?>
+					<div class="dgl-field-row">
+						<label class="dgl-label" for="dgl-cancel-date"><?php esc_html_e( 'Cancel one date', 'dgl-platform' ); ?></label>
+						<select class="dgl-field" id="dgl-cancel-date" name="dgl_date">
+							<?php foreach ( (array) $data['cancel_choices'] as $choice ) : ?>
+								<option value="<?php echo esc_attr( $choice->date() ); ?>"><?php echo esc_html( wp_date( 'l j F Y', $choice->start->getTimestamp() ) ); ?></option>
+							<?php endforeach; ?>
+						</select>
+						<p class="dgl-help"><?php esc_html_e( 'That date shows as cancelled on the calendar and on the event page. The other dates carry on.', 'dgl-platform' ); ?></p>
+					</div>
+					<div class="dgl-form__actions dgl-form__actions--alone">
+						<button type="submit" class="dgl-button dgl-button--secondary" name="dgl_intent" value="cancel_date"><?php esc_html_e( 'Cancel that date', 'dgl-platform' ); ?></button>
+					</div>
+				</form>
+			<?php endif; ?>
+
+			<form method="post" class="dgl-form dgl-cancel__all" action="<?php echo esc_url( Router::url( 'item', (string) $post->ID ) ); ?>">
+				<?php wp_nonce_field( \DGL\Dashboard\Wizard::NONCE ); ?>
+				<div class="dgl-field-row">
+					<label class="dgl-label" for="dgl-cancel-note">
+						<?php echo esc_html( [] !== (array) ( $data['cancel_choices'] ?? [] ) ? __( 'Or cancel the whole series', 'dgl-platform' ) : __( 'Cancel the event', 'dgl-platform' ) ); ?>
+					</label>
+					<textarea class="dgl-field dgl-field--area" id="dgl-cancel-note" name="dgl_note" rows="2" placeholder="<?php esc_attr_e( 'A line for visitors, if you want one: why, or what happens instead.', 'dgl-platform' ); ?>"></textarea>
+					<p class="dgl-help"><?php esc_html_e( 'It stays on the site for a week with a Cancelled stamp so people who saw it know, then comes off on its own. You can undo it.', 'dgl-platform' ); ?></p>
+				</div>
+				<div class="dgl-form__actions dgl-form__actions--alone">
+					<button type="submit" class="dgl-button dgl-button--danger" name="dgl_intent" value="cancel"><?php esc_html_e( 'Mark it cancelled', 'dgl-platform' ); ?></button>
+				</div>
+			</form>
+		<?php endif; ?>
+
+		<?php if ( [] !== (array) ( $data['cancelled_dates'] ?? [] ) ) : ?>
+			<p class="dgl-cancel__dateslabel"><?php esc_html_e( 'Cancelled dates', 'dgl-platform' ); ?></p>
+			<ul class="dgl-cancel__dates">
+				<?php foreach ( (array) $data['cancelled_dates'] as $cancelled_date ) : ?>
+					<?php $cancelled_day = DateTimeImmutable::createFromFormat( '!Y-m-d', (string) $cancelled_date, wp_timezone() ); ?>
+					<li>
+						<span><?php echo esc_html( false === $cancelled_day ? (string) $cancelled_date : wp_date( 'l j F Y', $cancelled_day->getTimestamp() ) ); ?></span>
+						<?php if ( ! empty( $data['can_cancel'] ) && empty( $data['schedule_locked'] ) && empty( $data['cancelled'] ) ) : ?>
+							<form method="post" class="dgl-inline-form" action="<?php echo esc_url( Router::url( 'item', (string) $post->ID ) ); ?>">
+								<?php wp_nonce_field( \DGL\Dashboard\Wizard::NONCE ); ?>
+								<input type="hidden" name="dgl_date" value="<?php echo esc_attr( (string) $cancelled_date ); ?>">
+								<button type="submit" class="dgl-linkish" name="dgl_intent" value="reinstate_date"><?php esc_html_e( 'Back on', 'dgl-platform' ); ?></button>
+							</form>
+						<?php endif; ?>
+					</li>
+				<?php endforeach; ?>
+			</ul>
 		<?php endif; ?>
 	</section>
 <?php endif; ?>

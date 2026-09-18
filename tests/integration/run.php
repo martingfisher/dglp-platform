@@ -3223,6 +3223,80 @@ foreach ( $ics_keys as $i => $rule_key ) {
 $ok( false !== $ics_feed_pos && false !== $ics_one_pos && false !== $ics_ev_pos && $ics_feed_pos < $ics_one_pos && $ics_one_pos < $ics_ev_pos, 'both .ics rules sit before the single-event rule (' . var_export( $ics_feed_pos, true ) . ', ' . var_export( $ics_one_pos, true ) . ', ' . var_export( $ics_ev_pos, true ) . ')' );
 $ok( ( $ics_rules['^events/([^/]+)\.ics$'] ?? '' ) === 'index.php?dgl_ics=$matches[1]', 'the slug rule hands the slug to the query var' );
 
+$group( 'Cancelled: a whole event, or one date of a series, marked and applied at once' );
+
+$cx_tz    = wp_timezone();
+$cx_today = new DateTimeImmutable( 'today', $cx_tz );
+$cx_tue   = $cx_today->modify( 'next tuesday' );
+
+$cx_one = $make_item( $org_a, $alice, Statuses::LIVE );
+wp_update_post( [ 'ID' => $cx_one, 'post_name' => 'cx-talk' ] );
+update_post_meta( $cx_one, 'dgl_start_datetime', $cx_today->modify( '+30 days' )->format( 'Y-m-d' ) . ' 19:00:00' );
+\DGL\Events\Series::stamp( $cx_one, PostTypes::EVENT );
+$cx_expiry_before = (string) get_post_meta( $cx_one, Meta::ITEM_EXPIRES_AT, true );
+
+$ok( Access::can( $alice, Policy::CANCEL_ITEM, $cx_one ) && Access::can( $aaron, Policy::CANCEL_ITEM, $cx_one ) && ! Access::can( $bella, Policy::CANCEL_ITEM, $cx_one ), 'the organisation may cancel its own, owner or contributor, as with its dates; another organisation may not' );
+$ok( ! \DGL\Events\Cancel::is_cancelled( $cx_one ) && 'CONFIRMED' === ( preg_match( '/STATUS:(\w+)/', (string) \DGL\Events\Ics::respond( 'cx-talk' )['body'], $m ) ? $m[1] : '' ), 'a live event is confirmed in its calendar file' );
+$ok( true === \DGL\Events\Cancel::cancel( $cx_one, "Venue flooded; we'll be back in the spring.", $alice ), 'the owner marks it cancelled with a note' );
+$ok( \DGL\Events\Cancel::is_cancelled( $cx_one ) && "Venue flooded; we'll be back in the spring." === \DGL\Events\Cancel::note( $cx_one ), 'it is cancelled, note kept' );
+$ok( Statuses::LIVE === get_post_status( $cx_one ), 'it stays on the site' );
+$cx_expiry_after = (string) get_post_meta( $cx_one, Meta::ITEM_EXPIRES_AT, true );
+$ok( $cx_expiry_after < $cx_expiry_before && $cx_expiry_after > $cx_today->modify( '+6 days' )->format( 'Y-m-d H:i:s' ) && $cx_expiry_after < $cx_today->modify( '+8 days' )->format( 'Y-m-d H:i:s' ), 'but now comes off a week from today, not on its date (' . $cx_expiry_after . ')' );
+$ok( (string) $wpdb->get_var( $wpdb->prepare( 'SELECT expires_at FROM ' . ItemsTable::name() . ' WHERE post_id = %d', $cx_one ) ) === $cx_expiry_after, 'the index follows' );
+$ok( str_starts_with( \DGL\Frontend\Frontend::meta_line( get_post( $cx_one ) ), 'Cancelled' ), 'the list line leads with Cancelled' );
+$ok( str_contains( (string) \DGL\Events\Ics::respond( 'cx-talk' )['body'], 'STATUS:CANCELLED' ), 'the calendar file says so too' );
+$cx_days = \DGL\Events\Calendar::days( $cx_today, $cx_today->modify( '+5 weeks' ) );
+$cx_row  = null;
+foreach ( $cx_days as $rows ) {
+	foreach ( $rows as $r ) {
+		if ( (int) $r['post']->ID === $cx_one ) {
+			$cx_row = $r;
+		}
+	}
+}
+$ok( is_array( $cx_row ) && true === $cx_row['cancelled'], 'the calendar row carries the cancellation' );
+$cx_log = array_filter( \DGL\Audit\Log::for_org( $org_a, 20 ), static fn( array $row ): bool => 'cancelled' === $row['action'] && (int) $row['object_id'] === $cx_one );
+$ok( [] !== $cx_log, 'and it is in the audit trail' );
+$ok( is_wp_error( \DGL\Events\Cancel::cancel( $cx_one, '', $alice ) ), 'cancelling twice is refused' );
+$ok( true === \DGL\Events\Cancel::reinstate( $cx_one, $alice ) && ! \DGL\Events\Cancel::is_cancelled( $cx_one ) && '' === \DGL\Events\Cancel::note( $cx_one ), 'reinstated: cancellation and note gone' );
+$ok( (string) get_post_meta( $cx_one, Meta::ITEM_EXPIRES_AT, true ) === $cx_expiry_before, 'and the expiry is back on its date' );
+
+$cx_series = $make_item( $org_a, $alice, Statuses::LIVE );
+wp_update_post( [ 'ID' => $cx_series, 'post_name' => 'cx-weekly' ] );
+update_post_meta( $cx_series, 'dgl_start_datetime', $cx_tue->format( 'Y-m-d' ) . ' 13:00:00' );
+update_post_meta( $cx_series, 'dgl_end_datetime', $cx_tue->format( 'Y-m-d' ) . ' 15:00:00' );
+update_post_meta( $cx_series, 'dgl_repeat', [ 'freq' => 'weekly', 'weekdays' => [ 2 ], 'until' => $cx_today->modify( '+3 months' )->format( 'Y-m-d' ) ] );
+\DGL\Events\Series::stamp( $cx_series, PostTypes::EVENT );
+
+$cx_first = $cx_tue->format( 'Y-m-d' );
+$cx_second = $cx_tue->modify( '+1 week' )->format( 'Y-m-d' );
+$ok( $cx_first . ' 13:00:00' === (string) get_post_meta( $cx_series, Meta::ITEM_NEXT_AT, true ), 'the next date is the first Tuesday' );
+$ok( is_wp_error( \DGL\Events\Cancel::cancel_date( $cx_series, $cx_tue->modify( '+1 day' )->format( 'Y-m-d' ), $alice ) ), 'a Wednesday is not a date it runs on' );
+$ok( is_wp_error( \DGL\Events\Cancel::cancel_date( $cx_series, $cx_tue->modify( '-1 week' )->format( 'Y-m-d' ), $alice ) ), 'nor a Tuesday that has been' );
+$ok( count( \DGL\Events\Cancel::choices( $cx_series ) ) === \DGL\Events\Cancel::CHOICES && $cx_first === \DGL\Events\Cancel::choices( $cx_series )[0]->date(), 'the item screen offers the next eight dates' );
+$ok( true === \DGL\Events\Cancel::cancel_date( $cx_series, $cx_first, $alice ), 'the owner cancels the first Tuesday' );
+$ok( [ $cx_first ] === \DGL\Events\Cancel::dates( $cx_series ), 'it is on the cancelled list' );
+$ok( $cx_second . ' 13:00:00' === (string) get_post_meta( $cx_series, Meta::ITEM_NEXT_AT, true ), 'the next date moves to the Tuesday after (' . get_post_meta( $cx_series, Meta::ITEM_NEXT_AT, true ) . ')' );
+$ok( $cx_first !== ( \DGL\Events\Cancel::choices( $cx_series )[0] ?? null )?->date(), 'and it is no longer offered for cancelling' );
+$cx_sched = \DGL\Frontend\Frontend::schedule( get_post( $cx_series ) );
+$ok( is_array( $cx_sched ) && $cx_first === $cx_sched['next'][0]->date() && true === $cx_sched['next'][0]->cancelled && false === $cx_sched['next'][1]->cancelled && ! $cx_sched['ended'], 'the event page still lists it, marked cancelled, and the series has not ended' );
+$ok( str_contains( (string) $cx_sched['wording'], 'Cancelled on ' ), 'the wording names the cancelled date' );
+$ok( str_contains( str_replace( "\r\n ", '', (string) \DGL\Events\Ics::respond( 'cx-weekly' )['body'] ), \DGL\Events\Ics::dt( 'EXDATE', new DateTimeImmutable( $cx_first . ' 13:00:00', $cx_tz ), \DGL\Events\Ics::tzid( $cx_tz ) ) ), 'the calendar file drops that date for subscribers' );
+$cx_days = \DGL\Events\Calendar::days( $cx_today, $cx_today->modify( '+3 weeks' ) );
+$cx_flags = [];
+foreach ( $cx_days as $date => $rows ) {
+	foreach ( $rows as $r ) {
+		if ( (int) $r['post']->ID === $cx_series ) {
+			$cx_flags[ $date ] = $r['cancelled'];
+		}
+	}
+}
+$ok( true === ( $cx_flags[ $cx_first ] ?? null ) && false === ( $cx_flags[ $cx_second ] ?? null ), 'the calendar shows the first Tuesday cancelled and the next one not' );
+$ok( is_wp_error( \DGL\Events\Cancel::cancel_date( $cx_series, $cx_first, $alice ) ), 'cancelling the same date twice is refused' );
+$ok( true === \DGL\Events\Cancel::reinstate_date( $cx_series, $cx_first, $alice ) && [] === \DGL\Events\Cancel::dates( $cx_series ), 'reinstating clears it' );
+$ok( $cx_first . ' 13:00:00' === (string) get_post_meta( $cx_series, Meta::ITEM_NEXT_AT, true ), 'and the next date is the first Tuesday again' );
+$ok( is_wp_error( \DGL\Events\Cancel::reinstate_date( $cx_series, $cx_first, $alice ) ), 'reinstating a date that is not cancelled is refused' );
+
 /* ----------------------------------------------------------------- report */
 
 echo "\n" . str_repeat( '-', 60 ) . "\n";

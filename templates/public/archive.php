@@ -54,7 +54,9 @@ $label = Frontend::type_label( $type, true );
 					<?php endif; ?>
 
 					<div class="dgl-pub__rowbody">
-						<?php if ( \DGL\Workflow\Pins::is_pinned( (int) $item->ID ) ) : ?>
+						<?php if ( \DGL\Events\Cancel::is_cancelled( (int) $item->ID ) ) : ?>
+							<p class="dgl-pub__pin dgl-pub__pin--off"><?php esc_html_e( 'Cancelled', 'dgl-platform' ); ?></p>
+						<?php elseif ( \DGL\Workflow\Pins::is_pinned( (int) $item->ID ) ) : ?>
 							<p class="dgl-pub__pin"><?php esc_html_e( 'Featured', 'dgl-platform' ); ?></p>
 						<?php endif; ?>
 						<h2 class="dgl-pub__rowtitle">

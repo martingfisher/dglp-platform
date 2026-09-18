@@ -90,6 +90,13 @@ final class Wording {
 			$out .= '. ' . sprintf( __( 'Not on %s', 'dgl-platform' ), implode( ', ', array_map( $date_fmt, $skip ) ) );
 		}
 
+		$cancelled = array_map( 'strval', (array) ( $repeat['cancelled'] ?? [] ) );
+
+		if ( [] !== $cancelled ) {
+			/* translators: %s: list of dates. */
+			$out .= '. ' . sprintf( __( 'Cancelled on %s', 'dgl-platform' ), implode( ', ', array_map( $date_fmt, $cancelled ) ) );
+		}
+
 		return $out . '.';
 	}
 

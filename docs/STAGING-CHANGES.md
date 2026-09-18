@@ -491,3 +491,9 @@ clean. They are the only DGLP content on staging.
   day). Unit 1794, integration 787. Staging's timezone is UTC+0, not London,
   so the files go out in UTC (correct now, an hour out in summer) until the
   setting is changed.
+- **0.13.0 deployed** (18 September): Cancelled. The owning organisation
+  marks an event cancelled (stays a week with a Cancelled stamp, banner and
+  note on its page, struck through on the calendar, STATUS:CANCELLED in its
+  .ics, then comes off) or cancels one date of a series (struck through on
+  the calendar and the event page, no longer the next date). Undoable from
+  the item screen. Unit 1805, integration 817.

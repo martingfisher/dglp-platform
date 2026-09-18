@@ -37,8 +37,10 @@ final readonly class Rule {
 	public const MAX_SKIPS = 10;
 
 	/**
-	 * @param string[] $skip Dates it does not run, Y-m-d.
-	 * @param int[]    $weekdays ISO weekdays 1 (Monday) to 7, sorted.
+	 * @param string[] $skip      Dates it does not run, Y-m-d.
+	 * @param int[]    $weekdays  ISO weekdays 1 (Monday) to 7, sorted.
+	 * @param string[] $cancelled Dates it was going to run but will not, Y-m-d.
+	 *                            Still listed, marked cancelled, unlike a skip.
 	 */
 	public function __construct(
 		public DateTimeImmutable $start,
@@ -51,6 +53,7 @@ final readonly class Rule {
 		public int $nth,
 		public DateTimeImmutable $until,
 		public array $skip,
+		public array $cancelled = [],
 	) {}
 
 	/**
@@ -144,7 +147,30 @@ final readonly class Rule {
 	}
 
 	public function with_until( DateTimeImmutable $until ): self {
-		return new self( $this->start, $this->duration, $this->freq, $this->weekdays, $this->monthly, $this->day, $this->weekday, $this->nth, $until->setTime( 23, 59, 59 ), $this->skip );
+		return new self( $this->start, $this->duration, $this->freq, $this->weekdays, $this->monthly, $this->day, $this->weekday, $this->nth, $until->setTime( 23, 59, 59 ), $this->skip, $this->cancelled );
+	}
+
+	/**
+	 * The same rule with these dates marked cancelled.
+	 *
+	 * @param string[] $dates Y-m-d.
+	 */
+	public function with_cancelled( array $dates ): self {
+		$clean = [];
+		foreach ( $dates as $date ) {
+			$parsed = self::parse_date( (string) $date, $this->start->getTimezone() );
+			if ( null !== $parsed ) {
+				$clean[] = $parsed->format( 'Y-m-d' );
+			}
+		}
+		$clean = array_values( array_unique( $clean ) );
+		sort( $clean );
+
+		return new self( $this->start, $this->duration, $this->freq, $this->weekdays, $this->monthly, $this->day, $this->weekday, $this->nth, $this->until, $this->skip, $clean );
+	}
+
+	public function is_cancelled( DateTimeImmutable $date ): bool {
+		return in_array( $date->format( 'Y-m-d' ), $this->cancelled, true );
 	}
 
 	public function is_skipped( DateTimeImmutable $date ): bool {
@@ -187,7 +213,7 @@ final readonly class Rule {
 	public function occurrence_on( DateTimeImmutable $date ): Occurrence {
 		$start = $date->setTime( (int) $this->start->format( 'G' ), (int) $this->start->format( 'i' ), (int) $this->start->format( 's' ) );
 
-		return new Occurrence( $start, null !== $this->duration ? $start->add( $this->duration ) : null );
+		return new Occurrence( $start, null !== $this->duration ? $start->add( $this->duration ) : null, $this->is_cancelled( $date ) );
 	}
 
 	/** @return string[] */

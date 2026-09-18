@@ -1154,6 +1154,35 @@ final class Controller {
 				}
 			}
 
+			/*
+			 * Cancelling is a schedule fact too: the owning organisation
+			 * marks the event, or one date of a series, and it applies at once.
+			 */
+			if ( in_array( $intent, [ 'cancel', 'reinstate', 'cancel_date', 'reinstate_date' ], true ) ) {
+				$date = isset( $_POST['dgl_date'] ) ? sanitize_text_field( wp_unslash( $_POST['dgl_date'] ) ) : '';
+				$note = isset( $_POST['dgl_note'] ) ? sanitize_textarea_field( wp_unslash( $_POST['dgl_note'] ) ) : '';
+
+				if ( ! Access::can( $user->user_id, Policy::CANCEL_ITEM, $post_id ) ) {
+					$action_error = __( 'You cannot cancel this one.', 'dgl-platform' );
+				} elseif ( Schedule::is_locked( $post_id ) ) {
+					$action_error = __( 'Finish or discard your open edit first. It carries the dates too.', 'dgl-platform' );
+				} else {
+					$result = match ( $intent ) {
+						'cancel'         => \DGL\Events\Cancel::cancel( $post_id, $note, $user->user_id ),
+						'reinstate'      => \DGL\Events\Cancel::reinstate( $post_id, $user->user_id ),
+						'cancel_date'    => \DGL\Events\Cancel::cancel_date( $post_id, $date, $user->user_id ),
+						default          => \DGL\Events\Cancel::reinstate_date( $post_id, $date, $user->user_id ),
+					};
+
+					if ( is_wp_error( $result ) ) {
+						$action_error = $result->get_error_message();
+					} else {
+						wp_safe_redirect( add_query_arg( 'cancel', $intent, Router::url( 'item', (string) $post_id ) ) );
+						exit;
+					}
+				}
+			}
+
 			if ( '' !== $action ) {
 				$result = Transition::apply( $post_id, $action, $user->user_id );
 
@@ -1214,6 +1243,14 @@ final class Controller {
 					: \DGL\Workflow\Lifetime::spell_for( (string) $post->post_type ),
 				'scheduled'       => isset( $_GET['scheduled'] ), // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 				'extended'        => isset( $_GET['extended'] ), // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+				// Cancelling: the whole event, or one date of a series.
+				'can_cancel'      => Access::can( $user->user_id, Policy::CANCEL_ITEM, $post_id ),
+				'cancelled'       => \DGL\Events\Cancel::is_cancelled( $post_id ),
+				'cancelled_note'  => \DGL\Events\Cancel::note( $post_id ),
+				'cancelled_at'    => \DGL\Events\Cancel::at( $post_id ),
+				'cancelled_dates' => \DGL\Events\Cancel::dates( $post_id ),
+				'cancel_choices'  => Series::is_series( $post_id ) ? \DGL\Events\Cancel::choices( $post_id ) : [],
+				'cancel_done'     => isset( $_GET['cancel'] ) ? sanitize_key( wp_unslash( $_GET['cancel'] ) ) : '', // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			],
 			$post->post_title !== '' ? $post->post_title : __( 'Submission', 'dgl-platform' ),
 			$user
