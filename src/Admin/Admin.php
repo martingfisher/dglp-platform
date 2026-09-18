@@ -45,6 +45,7 @@ final class Admin {
 		Columns::init();
 		Moderate::init();
 		Organisations::init();
+		Health::init();
 
 		add_action( 'admin_notices', [ MetaBoxes::class, 'notices' ] );
 		add_action( 'admin_head', [ self::class, 'styles' ] );

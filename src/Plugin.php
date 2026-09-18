@@ -105,6 +105,8 @@ final class Plugin {
 			ProbeCommand::register();
 		}
 
+		\DGL\Admin\Health::watch();
+
 		// Next dates roll forward first, so a series that has run out is expired by the sweep in the same run.
 		add_action( self::EXPIRY_HOOK, [ \DGL\Events\Series::class, 'roll_forward' ], 5 );
 		add_action( self::EXPIRY_HOOK, [ \DGL\Events\Reminder::class, 'send_due' ], 7 );

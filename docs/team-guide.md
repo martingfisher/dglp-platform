@@ -140,6 +140,13 @@ review team is emailed when an organisation change is waiting. Digests go out
 daily, weekly or monthly to members who asked for them, and never when there
 is nothing new.
 
+## System health
+
+In wp-admin, under Organisations, "System health" is one screen that says
+whether the site is doing its job: cron running, email on, the listings index
+in step, what is waiting for a decision, digest subscribers, the directory.
+Every row is Fine, Look or Broken and says what to do. It changes nothing.
+
 ## If something looks wrong
 
 - A member says they cannot submit: check the organisation's Verification is

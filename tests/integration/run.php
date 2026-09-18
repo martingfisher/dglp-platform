@@ -3101,6 +3101,16 @@ $ok( 'contributor' === \DGL\Org\Org::role_for_user( $aaron ) && ! \DGL\Access\Ac
 
 update_option( \DGL\Email\Routing::OPTION_ENABLED, $mail_was );
 
+$group( 'System health page: every check answers in words' );
+
+do_action( \DGL\Plugin::EXPIRY_HOOK );
+$health = \DGL\Admin\Health::rows();
+$ok( count( $health ) >= 10, 'a dozen or so checks (' . count( $health ) . ')' );
+$ok( [] === array_filter( $health, static fn( array $r ): bool => ! in_array( $r['status'], [ 'good', 'warn', 'bad' ], true ) || '' === $r['what'] || '' === $r['value'] ), 'each with a state, a name and a finding' );
+$sweep = array_values( array_filter( $health, static fn( array $r ): bool => 'Hourly sweep' === $r['what'] ) )[0] ?? null;
+$ok( null !== $sweep && 'good' === $sweep['status'] && str_contains( $sweep['value'], 'Last ran' ) && ! str_contains( $sweep['value'], 'never' ), 'the sweep is seen to have just run (' . ( $sweep['value'] ?? '' ) . ')' );
+$ok( [] !== array_filter( $health, static fn( array $r ): bool => 'bad' === $r['status'] && '' !== $r['todo'] ) || [] === array_filter( $health, static fn( array $r ): bool => 'bad' === $r['status'] ), 'anything broken says what to do' );
+
 /* ----------------------------------------------------------------- report */
 
 echo "\n" . str_repeat( '-', 60 ) . "\n";
