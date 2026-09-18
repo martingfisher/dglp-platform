@@ -289,3 +289,16 @@ Harness::assert_true( isset( $r['errors']['image'] ), 'a non-numeric attachment 
 $required_image = new Field( key: 'image', label: 'Image', type: Field::IMAGE, required: true );
 $r = Validator::validate( [ $required_image ], [ 'image' => '0' ] );
 Harness::assert_true( isset( $r['errors']['image'] ), 'but a required image still has to be there' );
+
+Harness::group( 'A picture needs its description' );
+
+$basics = FieldRegistry::for_step( PostTypes::EVENT, 1 );
+$with   = Validator::validate( $basics, [ 'title' => 'T', 'summary' => 'S', 'body' => 'B', 'image' => '55' ] );
+Harness::assert_true( isset( $with['errors']['image_alt'] ) && str_contains( $with['errors']['image_alt'], 'when there is a picture' ), 'an image without a description is an error' );
+$without = Validator::validate( $basics, [ 'title' => 'T', 'summary' => 'S', 'body' => 'B', 'image' => '0' ] );
+Harness::assert_false( isset( $without['errors']['image_alt'] ), 'no image, no description needed' );
+$both = Validator::validate( $basics, [ 'title' => 'T', 'summary' => 'S', 'body' => 'B', 'image' => '55', 'image_alt' => 'Volunteers planting a tree' ] );
+Harness::assert_false( isset( $both['errors']['image_alt'] ), 'image and description together validate' );
+Harness::assert_same( [ 'image_alt' => 'What the picture shows is needed when there is a picture.' ], Validator::required_with_errors( $basics, [ 'image' => 55, 'image_alt' => '' ] ), 'the after-upload check names the field' );
+Harness::assert_same( [], Validator::required_with_errors( $basics, [ 'image' => 0, 'image_alt' => '' ] ), 'and is quiet without a picture' );
+Harness::assert_false( FieldRegistry::find( PostTypes::NEWS, 'image_alt' )->public, 'the description is not a fact on the public page; the image carries it' );

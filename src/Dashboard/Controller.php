@@ -867,9 +867,24 @@ final class Controller {
 		if ( $is_post ) {
 			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.NonceVerification.Missing -- nonce checked above, escaped on output.
 			foreach ( (array) wp_unslash( $_POST[ FieldRenderer::INPUT_NAME ] ?? [] ) as $key => $raw ) {
-				if ( array_key_exists( $key, $values ) && ( is_scalar( $raw ) || is_array( $raw ) ) ) {
-					$values[ $key ] = $raw;
+				if ( ! array_key_exists( $key, $values ) || ! ( is_scalar( $raw ) || is_array( $raw ) ) ) {
+					continue;
 				}
+
+				/*
+				 * A picture that arrived with this post is already stored;
+				 * the posted hidden value still says the old one. Showing the
+				 * stored picture keeps it on screen through a failed step, so
+				 * a member asked to describe it is not also asked to upload
+				 * it again.
+				 */
+				$field = FieldRegistry::find( $schema_type, (string) $key );
+
+				if ( null !== $field && \DGL\Schema\Field::IMAGE === $field->type ) {
+					continue;
+				}
+
+				$values[ $key ] = $raw;
 			}
 		}
 

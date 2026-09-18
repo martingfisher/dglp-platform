@@ -85,6 +85,30 @@ final class Store {
 			$post_update['ID'] = $post_id;
 			wp_update_post( $post_update );
 		}
+
+		self::describe_image( $post_id, $post_type );
+	}
+
+	/**
+	 * Put the member's description on the attachment itself, as WordPress's
+	 * own alt text, so every render of the image carries it without the
+	 * templates having to know. Runs after any write, so a new picture with
+	 * an old description, or a new description for an old picture, both land.
+	 */
+	public static function describe_image( int $post_id, string $post_type ): void {
+		$image = FieldRegistry::find( $post_type, 'image' );
+		$alt   = FieldRegistry::find( $post_type, 'image_alt' );
+
+		if ( null === $image || null === $alt ) {
+			return;
+		}
+
+		$attachment_id = (int) get_post_meta( $post_id, $image->meta_key(), true );
+		$text          = trim( (string) get_post_meta( $post_id, $alt->meta_key(), true ) );
+
+		if ( $attachment_id > 0 && '' !== $text && 'attachment' === get_post_type( $attachment_id ) ) {
+			update_post_meta( $attachment_id, '_wp_attachment_image_alt', $text );
+		}
 	}
 
 	/**

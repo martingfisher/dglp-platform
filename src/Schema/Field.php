@@ -56,6 +56,9 @@ final readonly class Field {
 	 * @param bool                  $schedule  Part of an event's schedule: the
 	 *        organisation may change it on a live item at once, without review,
 	 *        because it is a fact about the world they know and the team does not.
+	 * @param string|null $required_with Required only when this other field
+	 *        holds something: the description of a picture is needed when
+	 *        there is a picture, and nothing otherwise.
 	 * @param array{field:string, value:mixed}|null $depends_on Show only when
 	 *        another field on the same step holds one of these values. Purely a
 	 *        display nicety: the field still validates and saves normally, so
@@ -75,6 +78,7 @@ final readonly class Field {
 		public bool $in_csv = true,
 		public ?array $depends_on = null,
 		public bool $schedule = false,
+		public ?string $required_with = null,
 	) {}
 
 	/**

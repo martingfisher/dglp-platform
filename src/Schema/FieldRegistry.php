@@ -107,6 +107,22 @@ final class FieldRegistry {
 				help: __( 'At least 1200 pixels wide, JPG or PNG, up to 20MB. A placeholder is used if you do not add one.', 'dgl-platform' ),
 				in_csv: false,
 			),
+			/*
+			 * The picture in words, for people who cannot see it. Not a
+			 * caption: a screen reader reads it in place of the image, so it
+			 * says what the picture shows. Required whenever there is one.
+			 */
+			new Field(
+				key: 'image_alt',
+				label: __( 'What the picture shows', 'dgl-platform' ),
+				type: Field::TEXT,
+				step: self::STEP_BASICS,
+				help: __( 'One plain sentence, read aloud to people who cannot see the picture. For example "Volunteers planting a tree in Armley Park". Needed when there is a picture.', 'dgl-platform' ),
+				max_length: 150,
+				public: false,
+				in_csv: false,
+				required_with: 'image',
+			),
 		];
 	}
 

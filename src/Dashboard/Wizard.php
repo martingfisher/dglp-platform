@@ -283,7 +283,8 @@ final class Wizard {
 		// not lose their file to an unrelated validation failure.
 		$upload_errors = Uploads::handle( $post_id, $fields, $files, $input, $result['values'] );
 
-		$errors = array_merge( $result['errors'], $upload_errors );
+		// A picture that just arrived needs its description too.
+		$errors = array_merge( $result['errors'], $upload_errors, Validator::required_with_errors( $fields, $result['values'] ) );
 
 		if ( ! empty( $errors ) ) {
 			// Persist what did validate, so nothing typed is thrown away.

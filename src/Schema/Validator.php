@@ -62,6 +62,55 @@ final class Validator {
 	}
 
 	/**
+	 * Whether a posted or stored value counts as "something there".
+	 *
+	 * An image is an attachment id, so "0" is nothing; a list is nothing when
+	 * empty; anything else is nothing when blank.
+	 */
+	public static function has_value( mixed $raw ): bool {
+		if ( is_array( $raw ) ) {
+			return [] !== array_filter( $raw, static fn( $v ): bool => '' !== (string) $v );
+		}
+
+		if ( is_numeric( $raw ) ) {
+			return (int) $raw > 0 || ( (string) $raw !== '0' && '' !== trim( (string) $raw ) );
+		}
+
+		return null !== $raw && '' !== trim( (string) $raw );
+	}
+
+	/**
+	 * The errors for fields that are required only alongside another, checked
+	 * against the values as they stand after uploads have landed. The wizard
+	 * calls this once the file control's result is known, because the posted
+	 * form only carries the previous attachment id.
+	 *
+	 * @param Field[]              $fields
+	 * @param array<string, mixed> $values
+	 * @return array<string, string>
+	 */
+	public static function required_with_errors( array $fields, array $values ): array {
+		$errors = [];
+
+		foreach ( $fields as $field ) {
+			if ( null === $field->required_with || ! $field->applies( $values ) ) {
+				continue;
+			}
+
+			if ( self::has_value( $values[ $field->required_with ] ?? null ) && ! self::has_value( $values[ $field->key ] ?? null ) ) {
+				$errors[ $field->key ] = self::required_with_message( $field );
+			}
+		}
+
+		return $errors;
+	}
+
+	private static function required_with_message( Field $field ): string {
+		/* translators: %s: field label. */
+		return sprintf( __( '%s is needed when there is a picture.', 'dgl-platform' ), $field->label );
+	}
+
+	/**
 	 * Check one field.
 	 *
 	 * @return array{0: mixed, 1: string|null} Normalised value, then error or null.
@@ -90,6 +139,10 @@ final class Validator {
 			if ( $field->required ) {
 				/* translators: %s: field label. */
 				return [ null, sprintf( __( '%s is needed.', 'dgl-platform' ), $field->label ) ];
+			}
+
+			if ( null !== $field->required_with && self::has_value( $input[ $field->required_with ] ?? null ) ) {
+				return [ null, self::required_with_message( $field ) ];
 			}
 
 			return [ '', null ];

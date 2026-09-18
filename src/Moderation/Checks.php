@@ -131,15 +131,27 @@ final class Checks {
 			return self::skip( 'image', __( 'Header image', 'dgl-platform' ) );
 		}
 
+		$alt = trim( (string) get_post_meta( $attachment_id, '_wp_attachment_image_alt', true ) );
+
+		if ( '' === $alt ) {
+			return [
+				'key'    => 'image',
+				'label'  => __( 'Header image', 'dgl-platform' ),
+				'status' => self::WARN,
+				'detail' => __( 'No description for people who cannot see it. Ask for one, or add it in the media library.', 'dgl-platform' ),
+			];
+		}
+
 		return [
 			'key'    => 'image',
 			'label'  => __( 'Header image', 'dgl-platform' ),
 			'status' => $width >= Uploads::MIN_WIDTH ? self::PASS : self::WARN,
 			'detail' => sprintf(
-				/* translators: 1: actual width, 2: minimum width. */
-				__( '%1$dpx wide. The listing wants at least %2$dpx.', 'dgl-platform' ),
+				/* translators: 1: actual width, 2: minimum width, 3: the alt text. */
+				__( '%1$dpx wide (the listing wants at least %2$dpx). Described as "%3$s".', 'dgl-platform' ),
 				$width,
-				Uploads::MIN_WIDTH
+				Uploads::MIN_WIDTH,
+				$alt
 			),
 		];
 	}

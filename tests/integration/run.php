@@ -2988,6 +2988,28 @@ $ok( in_array( 'format', $fact_keys, true ) && in_array( 'online_url', $fact_key
 $saved = \DGL\Dashboard\Wizard::save_step( $online, PostTypes::EVENT, 2, [ 'start_datetime' => '2026-11-03T18:00', 'format' => 'in_person', 'cost' => 'free', 'repeat' => [ 'posted' => '1' ] ] );
 $ok( isset( $saved['venue_name'] ) && isset( $saved['postcode'] ), 'switching to in person asks for the venue again' );
 
+$group( 'A picture carries its description as alt text' );
+
+$pic_item = $make_item( $org_a, $alice, Statuses::DRAFT );
+$pic_att  = wp_insert_attachment( [ 'post_mime_type' => 'image/png', 'post_title' => 'Fixture picture', 'post_status' => 'inherit' ], '', $pic_item );
+update_post_meta( $pic_att, DGL_FIXTURE_FLAG, '1' );
+wp_update_attachment_metadata( $pic_att, [ 'width' => 1600, 'height' => 900, 'file' => 'fixture.png' ] );
+$ok( $pic_att > 0 && 'attachment' === get_post_type( $pic_att ), 'an attachment to describe' );
+
+$saved = \DGL\Dashboard\Wizard::save_step( $pic_item, PostTypes::EVENT, 1, [ 'title' => 'Tree planting', 'summary' => 'A morning of planting.', 'body' => '<p>Bring gloves.</p>', 'image' => (string) $pic_att ] );
+$ok( isset( $saved['image_alt'] ) && str_contains( $saved['image_alt'], 'when there is a picture' ), 'a picture without a description does not pass step 1: ' . ( $saved['image_alt'] ?? '(no error)' ) );
+$ok( 'Tree planting' === get_post_field( 'post_title', $pic_item ), 'but what was typed is kept' );
+
+$saved = \DGL\Dashboard\Wizard::save_step( $pic_item, PostTypes::EVENT, 1, [ 'title' => 'Tree planting', 'summary' => 'A morning of planting.', 'body' => '<p>Bring gloves.</p>', 'image' => (string) $pic_att, 'image_alt' => 'Volunteers planting a sapling in Armley Park' ] );
+$ok( [] === $saved, 'with a description it passes: ' . implode( ' | ', $saved ) );
+$ok( 'Volunteers planting a sapling in Armley Park' === get_post_meta( $pic_att, '_wp_attachment_image_alt', true ), 'and the attachment now carries it as its alt text' );
+
+$checks = array_column( \DGL\Moderation\Checks::run( $pic_item, PostTypes::EVENT ), null, 'key' );
+$ok( str_contains( (string) ( $checks['image']['detail'] ?? '' ), 'Described as "Volunteers planting' ), 'the review check reads the description (' . ( $checks['image']['detail'] ?? '' ) . ')' );
+
+$saved = \DGL\Dashboard\Wizard::save_step( $pic_item, PostTypes::EVENT, 1, [ 'title' => 'Tree planting', 'summary' => 'A morning of planting.', 'body' => '<p>Bring gloves.</p>', 'image' => '0', 'image_alt' => '' ] );
+$ok( [] === $saved, 'no picture, no description needed: ' . implode( ' | ', $saved ) );
+
 /* ----------------------------------------------------------------- report */
 
 echo "\n" . str_repeat( '-', 60 ) . "\n";
