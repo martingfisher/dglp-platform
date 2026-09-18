@@ -458,3 +458,15 @@ clean. They are the only DGLP content on staging.
   mobile off-canvas menu. Set with `wp option patch insert` on
   `theme_mods_blocksy-child`; production needs the same item added in the
   Customizer.
+- **0.11.0 deployed** (18 September): every picture needs a description
+  ("What the picture shows", step 1, required when there is a picture,
+  written onto the attachment as alt text, warned about on the review
+  screen; a stored picture now survives a failed step); news is listed for
+  three months from approval and then asked about two weeks before the end
+  with the same one-click extend as a repeating event (schema 7 gives every
+  live story an end date, never sooner than two weeks out). Verified locally
+  in the browser: picture without a description stops step 1 with the
+  picture still on screen; the public img carries the alt; the news reminder
+  sends, the confirm page reads "still current", the item screen's "Keep it
+  listed for another 3 months" moves the date. Unit suite 1767, integration
+  732. Pinned to commit `037f8ca`.
