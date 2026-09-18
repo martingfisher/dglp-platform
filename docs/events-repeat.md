@@ -38,6 +38,13 @@ cannot say.
   window, up to a year ahead. The page is excluded from the page cache.
 - The event page shows the wording, the next five dates and a link to the
   calendar. A finished series says so.
+- `/events/<slug>.ics` downloads one event for Google, Outlook or Apple
+  Calendar. A series goes as one entry with an RRULE and an EXDATE per
+  skipped date, so it lands on every date it runs. `/events/calendar.ics` is
+  every live event as one feed people subscribe to by address; it asks
+  clients to refresh twice a day. Times carry the site's timezone as a TZID
+  when Settings > General names one (Europe/London); with only a UTC offset
+  set they go out in UTC, which is an hour out in summer. `src/Events/Ics.php`.
 
 ## Two weeks before the end
 

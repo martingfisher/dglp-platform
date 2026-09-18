@@ -3139,6 +3139,90 @@ $pin_ids = array_map( 'intval', (array) $pin_query->query( [ 'post_type' => Post
 $ok( array_search( $pin_soon, $pin_ids, true ) < array_search( $pin_late, $pin_ids, true ), 'and the list goes back to date order' );
 $ok( true === \DGL\Workflow\Pins::pin( $pin_late, 7, $mod ) && true === \DGL\Workflow\Pins::unpin( $pin_late, $mod ) && ! \DGL\Workflow\Pins::is_pinned( $pin_late ), 'a moderator can take a pin off by hand' );
 
+$group( 'Add to calendar: one event as an .ics file, and a feed of everything live' );
+
+$ics_tz    = wp_timezone();
+$ics_today = new DateTimeImmutable( 'today', $ics_tz );
+$ics_tue   = $ics_today->modify( 'next tuesday' );
+$ics_skip  = $ics_tue->modify( '+2 weeks' )->format( 'Y-m-d' );
+
+$ics_series = $make_item( $org_a, $alice, Statuses::LIVE );
+wp_update_post( [ 'ID' => $ics_series, 'post_title' => 'Knit &amp; natter, weekly', 'post_name' => 'knit-natter-weekly' ] );
+update_post_meta( $ics_series, 'dgl_start_datetime', $ics_tue->format( 'Y-m-d' ) . ' 13:00:00' );
+update_post_meta( $ics_series, 'dgl_end_datetime', $ics_tue->format( 'Y-m-d' ) . ' 15:00:00' );
+update_post_meta( $ics_series, 'dgl_repeat', [ 'freq' => 'weekly', 'weekdays' => [ 2 ], 'until' => $ics_today->modify( '+3 months' )->format( 'Y-m-d' ), 'skip' => [ $ics_skip ] ] );
+update_post_meta( $ics_series, 'dgl_summary', 'Bring wool; tea, cake provided.' );
+update_post_meta( $ics_series, 'dgl_format', 'in_person' );
+update_post_meta( $ics_series, 'dgl_venue_name', 'The Hub' );
+update_post_meta( $ics_series, 'dgl_address', '1 High Street' );
+update_post_meta( $ics_series, 'dgl_postcode', 'LS1 1AA' );
+\DGL\Events\Series::stamp( $ics_series, PostTypes::EVENT );
+
+$ics_one = $make_item( $org_a, $alice, Statuses::LIVE );
+wp_update_post( [ 'ID' => $ics_one, 'post_name' => 'online-talk' ] );
+update_post_meta( $ics_one, 'dgl_start_datetime', $ics_today->modify( '+10 days' )->format( 'Y-m-d' ) . ' 19:00:00' );
+update_post_meta( $ics_one, 'dgl_format', 'online' );
+update_post_meta( $ics_one, 'dgl_online_url', 'https://meet.example.test/talk' );
+\DGL\Events\Series::stamp( $ics_one, PostTypes::EVENT );
+
+$ics_undated = $make_item( $org_a, $alice, Statuses::LIVE );
+wp_update_post( [ 'ID' => $ics_undated, 'post_name' => 'no-date-yet' ] );
+$ics_pending = $make_item( $org_a, $alice, Statuses::PENDING );
+wp_update_post( [ 'ID' => $ics_pending, 'post_name' => 'not-yet-approved' ] );
+update_post_meta( $ics_pending, 'dgl_start_datetime', $ics_today->modify( '+5 days' )->format( 'Y-m-d' ) . ' 10:00:00' );
+
+$ok( str_ends_with( \DGL\Events\Ics::url_for( get_post( $ics_series ) ), '/events/knit-natter-weekly.ics' ), 'a dated event has a download address' );
+$ok( '' === \DGL\Events\Ics::url_for( get_post( $ics_undated ) ), 'an event with no date has none' );
+$ok( str_ends_with( \DGL\Events\Ics::feed_url(), '/events/calendar.ics' ), 'the feed lives beside the calendar' );
+
+$ics_res    = \DGL\Events\Ics::respond( 'knit-natter-weekly' );
+$ics_unfold = static fn( string $body ): string => str_replace( "\r\n ", '', $body );
+$ics_txt    = $ics_unfold( (string) ( $ics_res['body'] ?? '' ) );
+$ics_tzid   = \DGL\Events\Ics::tzid( $ics_tz );
+$ics_at     = static fn( string $wall ): DateTimeImmutable => new DateTimeImmutable( $wall, $ics_tz );
+$ok( is_array( $ics_res ) && 'knit-natter-weekly.ics' === $ics_res['filename'], 'the slug fetches the file' );
+$ok( str_contains( $ics_txt, "BEGIN:VCALENDAR\r\n" ) && str_contains( $ics_txt, "END:VCALENDAR\r\n" ) && 1 === substr_count( $ics_txt, 'BEGIN:VEVENT' ) && str_contains( $ics_txt, 'X-WR-CALNAME:Knit & natter\, weekly' ), 'one calendar, one event, named after it' );
+$ok( str_contains( $ics_txt, 'UID:dgl-' . $ics_series . '@' ), 'a stable UID from the post id' );
+$ok( str_contains( $ics_txt, \DGL\Events\Ics::dt( 'DTSTART', $ics_at( $ics_tue->format( 'Y-m-d' ) . ' 13:00:00' ), $ics_tzid ) . "\r\n" ) && str_contains( $ics_txt, \DGL\Events\Ics::dt( 'DTEND', $ics_at( $ics_tue->format( 'Y-m-d' ) . ' 15:00:00' ), $ics_tzid ) . "\r\n" ), 'start and end are the first Tuesday 13:00 to 15:00 in the site zone (' . $ics_tzid . ')' );
+$ok( str_contains( $ics_txt, 'RRULE:FREQ=WEEKLY;BYDAY=TU;UNTIL=' ), 'the series carries its rule' );
+$ok( str_contains( $ics_txt, \DGL\Events\Ics::dt( 'EXDATE', $ics_at( $ics_skip . ' 13:00:00' ), $ics_tzid ) . "\r\n" ), 'and the skipped date' );
+$ok( str_contains( $ics_txt, 'SUMMARY:Knit & natter\, weekly' ), 'the title is decoded and escaped' );
+$ok( str_contains( $ics_txt, 'LOCATION:The Hub\, 1 High Street\, LS1 1AA' ), 'venue, address and postcode make the location' );
+$ok( str_contains( $ics_txt, 'DESCRIPTION:Bring wool\; tea\, cake provided.\n\n' ) && str_contains( $ics_txt, 'URL:' . get_permalink( $ics_series ) ), 'the summary and a link back' );
+
+$ics_one_txt = $ics_unfold( (string) ( \DGL\Events\Ics::respond( 'online-talk' )['body'] ?? '' ) );
+$ok( str_contains( $ics_one_txt, 'LOCATION:Online' ) && str_contains( $ics_one_txt, 'Join online: https://meet.example.test/talk' ) && ! str_contains( $ics_one_txt, 'RRULE' ) && ! str_contains( $ics_one_txt, 'DTEND' ), 'an online one-off: Online as the place, the join link in the notes, no rule, no end' );
+
+$ok( null === \DGL\Events\Ics::respond( 'no-date-yet' ), 'no date, no file' );
+$ok( null === \DGL\Events\Ics::respond( 'not-yet-approved' ), 'nothing that is not live' );
+$ok( null === \DGL\Events\Ics::respond( 'no-such-event' ), 'an unknown slug is a 404' );
+
+$ics_feed = \DGL\Events\Ics::respond( 'calendar' );
+$ics_feed_txt = (string) ( $ics_feed['body'] ?? '' );
+$ok( is_array( $ics_feed ) && 'calendar.ics' === $ics_feed['filename'] && str_contains( $ics_feed_txt, 'X-PUBLISHED-TTL:PT12H' ), 'the feed is a subscribable calendar' );
+$ok( str_contains( $ics_feed_txt, 'UID:dgl-' . $ics_series . '@' ) && str_contains( $ics_feed_txt, 'UID:dgl-' . $ics_one . '@' ), 'with the live series and the live one-off' );
+$ok( ! str_contains( $ics_feed_txt, 'UID:dgl-' . $ics_pending . '@' ) && ! str_contains( $ics_feed_txt, 'UID:dgl-' . $ics_undated . '@' ), 'and nothing pending or undated' );
+foreach ( explode( "\r\n", rtrim( $ics_feed_txt ) ) as $ics_line ) {
+	if ( strlen( $ics_line ) > 75 ) {
+		$ok( false, 'a feed line is over 75 octets: ' . substr( $ics_line, 0, 40 ) );
+		break;
+	}
+}
+
+$ics_rules = (array) get_option( 'rewrite_rules', [] );
+$ics_keys  = array_keys( $ics_rules );
+$ics_feed_pos = array_search( '^events/calendar\.ics$', $ics_keys, true );
+$ics_one_pos  = array_search( '^events/([^/]+)\.ics$', $ics_keys, true );
+$ics_ev_pos   = false;
+foreach ( $ics_keys as $i => $rule_key ) {
+	if ( str_starts_with( (string) $rule_key, 'events/([^/]+)' ) || str_starts_with( (string) $rule_key, 'events/[^/]+' ) ) {
+		$ics_ev_pos = $i;
+		break;
+	}
+}
+$ok( false !== $ics_feed_pos && false !== $ics_one_pos && false !== $ics_ev_pos && $ics_feed_pos < $ics_one_pos && $ics_one_pos < $ics_ev_pos, 'both .ics rules sit before the single-event rule (' . var_export( $ics_feed_pos, true ) . ', ' . var_export( $ics_one_pos, true ) . ', ' . var_export( $ics_ev_pos, true ) . ')' );
+$ok( ( $ics_rules['^events/([^/]+)\.ics$'] ?? '' ) === 'index.php?dgl_ics=$matches[1]', 'the slug rule hands the slug to the query var' );
+
 /* ----------------------------------------------------------------- report */
 
 echo "\n" . str_repeat( '-', 60 ) . "\n";

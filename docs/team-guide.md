@@ -58,7 +58,11 @@ get one email asking whether it is still running, with a one-click button
 that keeps it listed for six more months. If nobody clicks, it comes off the
 site on its last date. Owners can also change a live event's dates and times
 from its screen without review: the words and pictures still come to you, the
-dates do not. See `docs/events-repeat.md`.
+dates do not. Every event page has "Add to your calendar", which downloads
+the event (a series as one entry on every date it runs). The calendar page
+has "Subscribe in your own calendar": the address at `/events/calendar.ics`
+pasted into Google Calendar, Outlook or Apple Calendar keeps itself up to
+date. See `docs/events-repeat.md`.
 
 ## How long news stays up
 

@@ -484,3 +484,10 @@ clean. They are the only DGLP content on staging.
   public list with a Featured stamp, drops back on its own by the hourly hook,
   the organisation is told. Ordering is a left join in SQL, not a meta_query
   clause, which kept the date order intact. Unit 1777, integration 766.
+- **0.12.0 deployed** (18 September): Add to calendar. Every event page has
+  "Add to your calendar" (`/events/<slug>.ics`, a series as one entry with
+  its rule and skipped dates); the calendar page has "Subscribe in your own
+  calendar" (`/events/calendar.ics`, every live event, refreshes twice a
+  day). Unit 1794, integration 787. Staging's timezone is UTC+0, not London,
+  so the files go out in UTC (correct now, an hour out in summer) until the
+  setting is changed.

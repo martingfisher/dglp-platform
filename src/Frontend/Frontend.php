@@ -46,6 +46,7 @@ final class Frontend {
 		add_action( 'init', [ self::class, 'add_rules' ] );
 		add_filter( 'query_vars', [ self::class, 'add_query_var' ] );
 		add_filter( 'pre_get_document_title', [ self::class, 'directory_title' ] );
+		add_action( 'template_redirect', [ \DGL\Events\Ics::class, 'serve' ], 5 );
 		add_action( 'template_redirect', [ self::class, 'directory_status' ] );
 		add_filter( 'blocksy:breadcrumbs:items-array', [ self::class, 'breadcrumbs' ] );
 		add_filter( 'template_include', [ self::class, 'template' ] );
@@ -70,6 +71,7 @@ final class Frontend {
 	public static function add_rules(): void {
 		// Before the post type's own rules, or 'calendar' is read as an event slug.
 		add_rewrite_rule( '^' . PostTypes::definitions()[ PostTypes::EVENT ]['slug'] . '/calendar/?$', 'index.php?' . Calendar::QUERY_VAR . '=1', 'top' );
+		\DGL\Events\Ics::add_rules();
 		add_rewrite_rule( '^' . Directory::BASE . '/?$', 'index.php?' . Directory::QUERY_VAR . '=1', 'top' );
 		add_rewrite_rule( '^' . Directory::BASE . '/([^/]+)/?$', 'index.php?' . Directory::QUERY_VAR . '=$matches[1]', 'top' );
 	}
@@ -81,6 +83,7 @@ final class Frontend {
 	public static function add_query_var( array $vars ): array {
 		$vars[] = Directory::QUERY_VAR;
 		$vars[] = Calendar::QUERY_VAR;
+		$vars[] = \DGL\Events\Ics::QUERY_VAR;
 
 		return $vars;
 	}

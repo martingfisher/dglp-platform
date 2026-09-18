@@ -49,6 +49,11 @@ $month = '';
 		<?php endif; ?>
 	</nav>
 
+	<p class="dgl-cal__subscribe">
+		<a href="<?php echo esc_url( \DGL\Events\Ics::feed_url() ); ?>"><?php esc_html_e( 'Subscribe in your own calendar', 'dgl-platform' ); ?></a>
+		<span><?php esc_html_e( 'Paste that address into Google Calendar, Outlook or Apple Calendar and new events appear on their own.', 'dgl-platform' ); ?></span>
+	</p>
+
 	<?php if ( [] === $days ) : ?>
 		<div class="dgl-pub__card dgl-pub__empty">
 			<p><?php esc_html_e( 'Nothing is listed for these weeks yet.', 'dgl-platform' ); ?></p>

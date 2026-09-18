@@ -33,6 +33,7 @@ $archive   = Frontend::archive_url( $type );
 $passed    = Frontend::has_passed( $post );
 $schedule  = Frontend::schedule( $post );
 $has_body  = '' !== trim( wp_strip_all_tags( $body ) );
+$ics       = ( null !== $schedule && $schedule['ended'] ) || ( $passed && null === $schedule ) ? '' : \DGL\Events\Ics::url_for( $post );
 
 /**
  * Whether to render the plugin's own breadcrumb.
@@ -102,6 +103,13 @@ $show_crumbs = (bool) apply_filters( 'dgl_public_breadcrumb', false, $type );
 				</ul>
 				<p class="dgl-pub__note"><a href="<?php echo esc_url( \DGL\Events\Calendar::url() ); ?>"><?php esc_html_e( 'See it on the events calendar', 'dgl-platform' ); ?></a></p>
 			</div>
+		<?php endif; ?>
+
+		<?php if ( '' !== $ics ) : ?>
+			<p class="dgl-pub__addcal">
+				<a href="<?php echo esc_url( $ics ); ?>" download><?php esc_html_e( 'Add to your calendar', 'dgl-platform' ); ?></a>
+				<span class="dgl-pub__addcal-note"><?php echo esc_html( null !== $schedule ? __( 'Every date it runs, as one entry.', 'dgl-platform' ) : __( 'Opens in Google, Outlook or Apple Calendar.', 'dgl-platform' ) ); ?></span>
+			</p>
 		<?php endif; ?>
 
 		<?php if ( '' !== trim( $summary ) ) : ?>

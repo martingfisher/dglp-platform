@@ -702,6 +702,24 @@
 
 .dgl-pub__when .dgl-pub__note { margin-top: 10px; }
 
+.dgl-pub__addcal {
+	margin: 0 0 var(--dgl-gap-lg);
+	font-size: 0.95em;
+}
+
+.dgl-pub__addcal a { font-weight: 600; color: var(--dgl-link); }
+
+.dgl-pub__addcal-note { display: block; margin-top: 2px; color: var(--dgl-text-muted); }
+
+.dgl-cal__subscribe {
+	margin: calc(-1 * var(--dgl-gap)) 0 var(--dgl-gap-lg);
+	font-size: 0.9em;
+}
+
+.dgl-cal__subscribe a { font-weight: 600; color: var(--dgl-link); }
+
+.dgl-cal__subscribe span { display: block; margin-top: 2px; color: var(--dgl-text-muted); }
+
 .dgl-pub__callink { display: inline-block; margin-left: 8px; color: var(--dgl-link); font-weight: 500; }
 
 /* ---- Calendar ---------------------------------------------------------- */

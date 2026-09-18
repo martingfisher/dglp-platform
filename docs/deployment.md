@@ -115,6 +115,13 @@ Repeating events add a column to the index and a public route:
 - `wp dgl reindex` stamps every live event's next date. Until it runs, the
   events list keeps its old order.
 - Add `/events/calendar` to the page cache exclusions alongside `/directory`.
+- `wp rewrite list --match=/events/calendar.ics` should show
+  `^events/calendar\.ics$` going to `dgl_ics=calendar`, and
+  `^events/([^/]+)\.ics$` must sit above the single-event rule. Fetch
+  `/events/calendar.ics` and expect `text/calendar`.
+- Settings > General > Timezone should be London, not UTC+0. Stored times
+  are wall clock either way, but the .ics files and the hourly sweep read
+  them in the site zone, and UTC+0 is an hour out from April to October.
 - The reminder and the roll-forward run on the existing hourly
   `dgl_run_expiry_sweep` hook, so cron must be on. `wp dgl series status <id>`
   prints every check the hook makes for one event; `wp dgl series remind <id>`

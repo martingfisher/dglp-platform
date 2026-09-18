@@ -23,6 +23,7 @@ require __DIR__ . '/test-directory.php';
 require __DIR__ . '/test-chrome.php';
 require __DIR__ . '/test-recurrence.php';
 require __DIR__ . '/test-repeat-field.php';
+require __DIR__ . '/test-ics.php';
 require __DIR__ . '/test-uploads.php';
 require __DIR__ . '/test-joining.php';
 
