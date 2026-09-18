@@ -149,6 +149,15 @@ $pending  = $revision instanceof WP_Post && Statuses::PENDING === $revision->pos
 		</a>
 	<?php endif; ?>
 
+	<?php if ( ! empty( $data['can_copy'] ) ) : ?>
+		<form method="post" class="dgl-inline-form" action="<?php echo esc_url( Router::url( 'item', (string) $post->ID ) ); ?>">
+			<?php wp_nonce_field( \DGL\Dashboard\Wizard::NONCE ); ?>
+			<button type="submit" class="dgl-button dgl-button--secondary" name="dgl_intent" value="copy">
+				<?php esc_html_e( 'Copy to a new draft', 'dgl-platform' ); ?>
+			</button>
+		</form>
+	<?php endif; ?>
+
 	<?php if ( ! empty( $data['can_archive'] ) ) : ?>
 		<form method="post" class="dgl-inline-form">
 			<?php wp_nonce_field( \DGL\Dashboard\Wizard::NONCE ); ?>

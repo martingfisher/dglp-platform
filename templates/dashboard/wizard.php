@@ -66,6 +66,13 @@ if ( FieldRegistry::STEP_DETAILS === $step ) {
 			</div>
 		</header>
 
+		<?php if ( ! empty( $data['copied'] ) ) : ?>
+			<div class="dgl-alert dgl-alert--good" role="status">
+				<p><strong><?php esc_html_e( 'Copied into a new draft.', 'dgl-platform' ); ?></strong>
+				<?php esc_html_e( 'Everything came across except the dates, which step 2 asks for. Change what you need to, then send it when it is ready.', 'dgl-platform' ); ?></p>
+			</div>
+		<?php endif; ?>
+
 		<?php if ( '' !== ( $data['notice'] ?? '' ) ) : ?>
 			<div class="dgl-alert" role="alert">
 				<p><strong><?php echo esc_html( $data['notice'] ); ?></strong></p>

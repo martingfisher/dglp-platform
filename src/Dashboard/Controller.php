@@ -904,6 +904,7 @@ final class Controller {
 				'values'    => $values,
 				'errors'    => $errors,
 				'notice'    => $notice,
+				'copied'    => isset( $_GET['copied'] ), // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 				'is_edit'   => $is_edit,
 				'parent'    => $parent,
 				'changes'   => $is_edit && FieldRegistry::STEP_REVIEW === $step ? Revisions::changed_fields( $post_id ) : [],
@@ -1080,6 +1081,18 @@ final class Controller {
 				default   => '',
 			};
 
+			// A copy is a new draft with the dates blank; the wizard opens on step 1.
+			if ( 'copy' === $intent ) {
+				$copy = Wizard::copy( $post_id, $user->user_id );
+
+				if ( is_wp_error( $copy ) ) {
+					$action_error = $copy->get_error_message();
+				} else {
+					wp_safe_redirect( add_query_arg( 'copied', '1', Router::url( 'edit', (string) $copy, '1' ) ) );
+					exit;
+				}
+			}
+
 			/*
 			 * Dates and times on a live event apply at once, no review. Both
 			 * moves are refused while an edit is open, because the edit
@@ -1147,6 +1160,8 @@ final class Controller {
 				// is an accurate model and a confusing screen.
 				'history'    => Revisions::history_for( $post_id ),
 				'can_edit'   => Access::can( $user->user_id, Policy::EDIT_ITEM, $post_id ),
+				// Anything the member can see and is not an edit can be copied into a new draft.
+				'can_copy'   => PostTypes::REVISION !== $post->post_type && Access::can( $user->user_id, Policy::CREATE_ITEM ),
 				'can_archive' => null === $revision && Access::can( $user->user_id, Policy::ARCHIVE_ITEM, $post_id ),
 				'can_restore' => Access::can( $user->user_id, Policy::RESTORE_ITEM, $post_id ),
 				'action_error' => $action_error,

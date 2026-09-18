@@ -99,6 +99,93 @@ final class Wizard {
 	}
 
 	/**
+	 * A new draft made from an existing item: the same words, picture,
+	 * venue, contact and topics, with the dates left blank.
+	 *
+	 * The expiry email tells a member to "copy it into a new submission with
+	 * the new dates". This is the copy. Dates and the repeat rule are the
+	 * one thing certain to be different next time, so they start empty and
+	 * step 2 asks for them; everything else is exactly what was typed last
+	 * time and stays editable.
+	 *
+	 * @return int|WP_Error The new draft's id.
+	 */
+	public static function copy( int $source_id, int $user_id ) {
+		$source = get_post( $source_id );
+
+		if ( ! $source instanceof \WP_Post || ! PostTypes::is_submittable( (string) $source->post_type ) ) {
+			return new WP_Error( 'dgl_bad_source', __( 'That is not something you can copy.', 'dgl-platform' ) );
+		}
+
+		if ( ! Access::can( $user_id, Policy::VIEW_ITEM, $source_id ) || ! Access::can( $user_id, Policy::CREATE_ITEM ) ) {
+			return new WP_Error( 'dgl_not_allowed', __( 'You cannot copy this one.', 'dgl-platform' ) );
+		}
+
+		$org_id = Org::for_user( $user_id );
+
+		if ( null === $org_id ) {
+			return new WP_Error( 'dgl_no_org', __( 'Your account is not linked to an organisation yet.', 'dgl-platform' ) );
+		}
+
+		$post_type = (string) $source->post_type;
+		$post_id   = wp_insert_post(
+			[
+				'post_type'    => $post_type,
+				'post_status'  => Statuses::DRAFT,
+				'post_author'  => $user_id,
+				'post_title'   => $source->post_title,
+				'post_content' => $source->post_content,
+			],
+			true
+		);
+
+		if ( is_wp_error( $post_id ) ) {
+			return $post_id;
+		}
+
+		update_post_meta( (int) $post_id, Meta::ITEM_ORG, $org_id );
+
+		foreach ( FieldRegistry::for_type( $post_type ) as $field ) {
+			if ( in_array( $field->key, [ 'title', 'body' ], true ) || $field->schedule ) {
+				continue;
+			}
+
+			// The note about timing goes with the dates it described.
+			if ( 'recurrence_note' === $field->key ) {
+				continue;
+			}
+
+			$key = $field->meta_key();
+
+			if ( metadata_exists( 'post', $source_id, $key ) ) {
+				update_post_meta( (int) $post_id, $key, get_post_meta( $source_id, $key, true ) );
+			}
+		}
+
+		$topics = wp_get_object_terms( $source_id, Taxonomies::TOPIC, [ 'fields' => 'ids' ] );
+
+		if ( is_array( $topics ) && [] !== $topics ) {
+			wp_set_object_terms( (int) $post_id, array_map( 'intval', $topics ), Taxonomies::TOPIC, false );
+		}
+
+		\DGL\Audit\Log::record(
+			'copied',
+			'item',
+			(int) $post_id,
+			$org_id,
+			sprintf(
+				/* translators: %s: the title of the item it was copied from. */
+				__( 'Copied from "%s".', 'dgl-platform' ),
+				(string) $source->post_title
+			),
+			[ 'from' => $source_id ],
+			$user_id
+		);
+
+		return (int) $post_id;
+	}
+
+	/**
 	 * The contact fields a new draft starts with.
 	 *
 	 * Typing the same name, email, phone and website into every story was

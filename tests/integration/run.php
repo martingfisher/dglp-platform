@@ -3058,6 +3058,29 @@ $ok( 0 === \DGL\Events\Reminder::send_due(), 'a dated one-off inside the window 
 
 update_option( \DGL\Email\Routing::OPTION_ENABLED, $mail_was );
 
+$group( 'Copy to a new draft: the words come across, the dates do not' );
+
+$orig = $make_item( $org_a, $alice, Statuses::LIVE );
+wp_update_post( [ 'ID' => $orig, 'post_title' => 'Summer fete', 'post_content' => '<p>Stalls and cake.</p>' ] );
+foreach ( [ 'summary' => 'A summer fete.', 'format' => 'in_person', 'venue_name' => 'The Green', 'address' => '1 Green Lane', 'postcode' => 'LS1 1AA', 'cost' => 'free', 'contact_email' => 'fete@example.test', 'start_datetime' => '2026-07-04 12:00:00', 'end_datetime' => '2026-07-04 16:00:00', 'recurrence_note' => 'Gates at 11:45' ] as $k => $v ) {
+	update_post_meta( $orig, \DGL\Schema\FieldRegistry::find( PostTypes::EVENT, $k )->meta_key(), $v );
+}
+update_post_meta( $orig, 'dgl_repeat', [ 'freq' => 'weekly', 'weekdays' => [ 6 ], 'until' => '2026-08-29' ] );
+$fete_topic = wp_insert_term( 'Fetes ' . wp_generate_password( 4, false ), \DGL\Taxonomies::TOPIC );
+if ( ! is_wp_error( $fete_topic ) ) { wp_set_object_terms( $orig, [ (int) $fete_topic['term_id'] ], \DGL\Taxonomies::TOPIC, false ); }
+
+$copy = \DGL\Dashboard\Wizard::copy( $orig, $aaron );
+$ok( ! is_wp_error( $copy ) && $copy !== $orig, 'a colleague copies it into a new draft' );
+update_post_meta( (int) $copy, DGL_FIXTURE_FLAG, '1' );
+$ok( Statuses::DRAFT === get_post_status( $copy ) && (int) get_post_field( 'post_author', $copy ) === $aaron && $org_a === \DGL\Org\Org::for_item( (int) $copy ), 'as a draft of theirs, in the organisation' );
+$ok( 'Summer fete' === get_post_field( 'post_title', $copy ) && str_contains( (string) get_post_field( 'post_content', $copy ), 'Stalls' ), 'title and body come across' );
+$ok( 'The Green' === get_post_meta( $copy, 'dgl_venue_name', true ) && 'in_person' === get_post_meta( $copy, 'dgl_format', true ) && 'fete@example.test' === get_post_meta( $copy, 'dgl_contact_email', true ), 'so do venue, format and contact' );
+$ok( '' === (string) get_post_meta( $copy, 'dgl_start_datetime', true ) && '' === (string) get_post_meta( $copy, 'dgl_end_datetime', true ) && '' === (string) get_post_meta( $copy, 'dgl_repeat', true ) && '' === (string) get_post_meta( $copy, 'dgl_recurrence_note', true ), 'the dates, the repeat rule and the timing note do not' );
+$ok( ! is_wp_error( $fete_topic ) && [ (int) $fete_topic['term_id'] ] === array_map( 'intval', (array) wp_get_object_terms( (int) $copy, \DGL\Taxonomies::TOPIC, [ 'fields' => 'ids' ] ) ), 'topics come across' );
+$ok( isset( \DGL\Dashboard\Wizard::validate_all( (int) $copy, PostTypes::EVENT )['start_datetime'] ), 'so the review step asks for a start date before it can be sent' );
+$ok( is_wp_error( \DGL\Dashboard\Wizard::copy( $orig, $bella ) ), 'another organisation cannot copy it' );
+$ok( in_array( 'Copied into a new draft', array_column( \DGL\Dashboard\Notifications::for_org( $org_a, 3 ), 'title' ), true ), 'the organisation sees the copy in notifications' );
+
 /* ----------------------------------------------------------------- report */
 
 echo "\n" . str_repeat( '-', 60 ) . "\n";
