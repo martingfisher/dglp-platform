@@ -131,13 +131,13 @@ requires a database push in either direction.
 
 ## What is not built yet
 
-Listed so nobody deploys expecting it: SSO, CSV export, the privacy exporters,
-the public templates, closing an account, removing a colleague, email on an
-organisation-change decision (the `dgl_org_change_approved` and
-`dgl_org_change_rejected` actions fire but nothing listens), and a read/unread
-store behind the notifications screen.
+Listed so nobody deploys expecting it, checked against the code on 18
+September 2026: Microsoft and Google sign-in; a CSV export of submissions
+(the schema marks fields `in_csv` but no screen or command writes the file);
+a read/unread store behind the notifications screen (it is the audit trail,
+read back); a member closing their own account; Turnstile on the join form;
+consent records at registration (consent is recorded for the digest only).
 
-What works today is accounts, invitations, submissions, the wizard, moderation,
-pending edits, transactional email, digests and their preferences, the
-member-area shell, the notifications screen, the organisation and profile
-screens, and the wp-admin moderation screens.
+Everything else in the earlier version of this list has since been built:
+the privacy exporter and eraser, the public templates, removing a colleague,
+and email on an organisation-change decision.
