@@ -512,3 +512,9 @@ clean. They are the only DGLP content on staging.
   questions people ask as open-and-close answers, and "Download as PDF"
   (`.../pdf/`). The PDF is built by the plugin's own writer, Helvetica, no
   library, and parses in an independent reader. Unit 1829, integration 841.
+- **0.16.0 deployed** (19 September): Reports under Review team
+  (`/dashboard/review/reports/?month=YYYY-MM`): the month's decisions,
+  approvals by type, median time to approve, organisations and people, the
+  site today; CSV of the month's decisions and of every listing per type
+  (`.../csv/decisions|events|news|training/`). Same from the CLI:
+  `wp dgl report`, `wp dgl export`. Unit 1829, integration 863.

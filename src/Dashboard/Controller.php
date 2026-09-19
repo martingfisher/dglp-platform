@@ -274,6 +274,11 @@ final class Controller {
 			return;
 		}
 
+		if ( 'reports' === ( $segments[1] ?? '' ) ) {
+			self::reports( array_slice( $segments, 2 ), $user );
+			return;
+		}
+
 		$post_id = (int) ( $segments[1] ?? 0 );
 
 		if ( $post_id > 0 ) {
@@ -609,6 +614,60 @@ final class Controller {
 				'active'  => $status,
 			] + $paging,
 			__( 'Decided', 'dgl-platform' ),
+			$user
+		);
+	}
+
+	/**
+	 * The month in numbers, and the CSV files.
+	 * /dashboard/review/reports[?month=Y-m], /dashboard/review/reports/csv/<slug|decisions>[?month=Y-m].
+	 *
+	 * @param string[] $rest Segments after "reports".
+	 */
+	private static function reports( array $rest, UserContext $user ): void {
+		$month = \DGL\Reports\Monthly::month_from( wp_unslash( $_GET ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+
+		if ( 'csv' === ( $rest[0] ?? '' ) ) {
+			$what = sanitize_key( (string) ( $rest[1] ?? '' ) );
+			$type = null;
+
+			foreach ( PostTypes::enabled() as $key => $def ) {
+				if ( $what === (string) $def['slug'] ) {
+					$type = $key;
+				}
+			}
+
+			if ( \DGL\Reports\Csv::DECISIONS !== $what && null === $type ) {
+				self::not_found( $user );
+				return;
+			}
+
+			$rows = null === $type ? \DGL\Reports\Csv::decisions( $month ) : \DGL\Reports\Csv::listings( $type );
+			$body = \DGL\Reports\Csv::write( $rows );
+
+			header( 'Content-Type: text/csv; charset=utf-8' );
+			header( 'Content-Disposition: attachment; filename="' . \DGL\Reports\Csv::filename( null === $type ? \DGL\Reports\Csv::DECISIONS : $type, $month ) . '"' );
+			header( 'Content-Length: ' . strlen( $body ) );
+			echo $body; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- a CSV, built by Csv::write().
+			exit;
+		}
+
+		$exports = [];
+		foreach ( PostTypes::enabled() as $key => $def ) {
+			$exports[ (string) $def['plural'] ] = Router::url( 'review', 'reports', 'csv', (string) $def['slug'] );
+		}
+
+		self::screen(
+			'review-reports',
+			[
+				'user'          => $user,
+				'report'        => \DGL\Reports\Monthly::for_month( $month ),
+				'months'        => \DGL\Reports\Monthly::months(),
+				'month'         => $month,
+				'decisions_csv' => add_query_arg( 'month', $month, Router::url( 'review', 'reports', 'csv', \DGL\Reports\Csv::DECISIONS ) ),
+				'exports'       => $exports,
+			],
+			__( 'Reports', 'dgl-platform' ),
 			$user
 		);
 	}

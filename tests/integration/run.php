@@ -3376,6 +3376,58 @@ $hg_mod_nav    = array_column( \DGL\Dashboard\Navigation::items( Access::user_co
 $ok( in_array( 'Help', $hg_member_nav, true ) && ! in_array( 'Team guide', $hg_member_nav, true ), 'a member sees Help and not the team guide' );
 $ok( in_array( 'Team guide', $hg_mod_nav, true ), 'a moderator sees the team guide' );
 
+$group( 'Reports: the month in numbers, from the audit trail, and the CSV files' );
+
+$rp_months = \DGL\Reports\Monthly::months();
+$rp_this   = (string) array_key_first( $rp_months );
+$ok( 12 === count( $rp_months ) && $rp_this === ( new DateTimeImmutable( 'today', wp_timezone() ) )->format( 'Y-m' ), 'twelve months on offer, this month first' );
+$ok( $rp_this === \DGL\Reports\Monthly::month_from( [ 'month' => '1999-01' ] ) && $rp_this === \DGL\Reports\Monthly::month_from( [] ), 'an unknown or missing month means this month' );
+$rp_w = \DGL\Reports\Monthly::window( '2026-09' );
+$ok( '2026-09-01 00:00:00' === $rp_w['from_wall'] && '2026-09-30 23:59:59' === $rp_w['to_wall'], 'the window is the whole month in the site zone' );
+
+$rp_before = \DGL\Reports\Monthly::decisions( \DGL\Reports\Monthly::window( $rp_this )['from_utc'], \DGL\Reports\Monthly::window( $rp_this )['to_utc'] );
+$rp_item   = $make_item( $org_a, $alice, Statuses::DRAFT );
+wp_update_post( [ 'ID' => $rp_item, 'post_title' => 'Report fixture, "quoted", with a comma' ] );
+update_post_meta( $rp_item, 'dgl_summary', '=SUM(A1:A9) looks like a formula' );
+update_post_meta( $rp_item, 'dgl_start_datetime', '2031-05-05 10:00:00' );
+update_post_meta( $rp_item, 'dgl_format', 'online' );
+$ok( true === Transition::apply( $rp_item, StateMachine::SUBMIT, $alice ), 'a submission' );
+$ok( true === Transition::apply( $rp_item, StateMachine::REQUEST_CHANGES, $mod, 'Add a picture' ), 'sent back' );
+$ok( true === Transition::apply( $rp_item, StateMachine::SUBMIT, $alice ), 'sent again' );
+$ok( true === Transition::apply( $rp_item, StateMachine::APPROVE, $mod ), 'approved' );
+$rp_report = \DGL\Reports\Monthly::for_month( $rp_this );
+$rp_after  = $rp_report['decisions'];
+$ok( $rp_after['submit'] - $rp_before['submit'] === 2 && $rp_after['request_changes'] - $rp_before['request_changes'] === 1 && $rp_after['approve'] - $rp_before['approve'] === 1, 'the month counts two submissions, one sent back, one approval more than before' );
+$ok( $rp_report['approved_by'][ PostTypes::EVENT ] >= 1 && isset( $rp_report['approved_by']['edits'] ), 'approvals are split by type, with edits apart' );
+$ok( $rp_report['speed']['count'] >= 1 && is_float( $rp_report['speed']['median_hours'] ) && $rp_report['speed']['median_hours'] >= 0.0, 'the time from submission to approval is measured (' . var_export( $rp_report['speed']['median_hours'], true ) . 'h)' );
+$ok( $rp_report['now']['live'][ PostTypes::EVENT ] >= 1 && $rp_report['now']['organisations'] >= 1 && $rp_report['now']['members'] >= 1, 'the site today counts live events, verified organisations and members' );
+$ok( isset( $rp_report['organisations']['verified'], $rp_report['members']['joined'] ), 'organisation and member counts are present' );
+
+$rp_rows = \DGL\Reports\Csv::listings( PostTypes::EVENT );
+$rp_head = $rp_rows[0];
+$rp_line = null;
+foreach ( array_slice( $rp_rows, 1 ) as $rp_r ) {
+	if ( (string) $rp_item === $rp_r[0] ) {
+		$rp_line = $rp_r;
+	}
+}
+$ok( [ 'ID', 'Status', 'Organisation', 'Topics', 'Submitted', 'Approved', 'Comes off', 'Link' ] === array_slice( $rp_head, 0, 8 ) && in_array( 'Headline', $rp_head, true ), 'the listings file has the fixed columns then the schema fields' );
+$ok( is_array( $rp_line ) && 'Live on site' === $rp_line[1] && '' !== $rp_line[4] && '' !== $rp_line[5] && str_contains( $rp_line[7], '/events/' ), 'the approved event has its status, dates and public link' );
+$rp_format_col = array_search( 'Where it happens', $rp_head, true );
+$ok( false !== $rp_format_col && 'Online' === $rp_line[ $rp_format_col ], 'a select is written as its label, not its key' );
+$rp_csv = \DGL\Reports\Csv::write( $rp_rows );
+$ok( str_starts_with( $rp_csv, "\xEF\xBB\xBF" ) && str_contains( $rp_csv, "\"Report fixture, \"\"quoted\"\", with a comma\"" ), 'the file has a byte order mark and quotes a title with a comma and quotes' );
+$ok( str_contains( $rp_csv, "\"'=SUM(A1:A9)" ) || str_contains( $rp_csv, "'=SUM(A1:A9)" ), 'a cell that looks like a formula is disarmed for Excel' );
+$ok( str_contains( $rp_csv, "\r\n" ), 'lines end CRLF' );
+
+$rp_dec = \DGL\Reports\Csv::decisions( $rp_this );
+$rp_mine = array_values( array_filter( array_slice( $rp_dec, 1 ), static fn( array $r ): bool => str_starts_with( $r[3], 'Report fixture' ) ) );
+$ok( [ 'When', 'Decision', 'What', 'Title', 'Organisation', 'By', 'Note' ] === $rp_dec[0] && count( $rp_mine ) === 4, 'the decisions file lists the four steps on the fixture' );
+$ok( 'Sent back' === $rp_mine[1][1] && 'Add a picture' === $rp_mine[1][6] && 'Event' === $rp_mine[1][2] && '' !== $rp_mine[1][5], 'with the decision in words, the note and who made it' );
+$ok( str_ends_with( \DGL\Reports\Csv::filename( \DGL\Reports\Csv::DECISIONS, '2026-09' ), 'dglp-decisions-2026-09.csv' ) && str_starts_with( \DGL\Reports\Csv::filename( PostTypes::EVENT ), 'dglp-events-' ), 'file names say what they are' );
+$rp_nav = array_column( \DGL\Dashboard\Navigation::items( Access::user_context( $mod ) ), 'label' );
+$ok( in_array( 'Reports', $rp_nav, true ) && ! in_array( 'Reports', array_column( \DGL\Dashboard\Navigation::items( Access::user_context( $alice ) ), 'label' ), true ), 'Reports is in the review team menu and not in a member\'s' );
+
 /* ----------------------------------------------------------------- report */
 
 echo "\n" . str_repeat( '-', 60 ) . "\n";

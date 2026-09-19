@@ -107,6 +107,17 @@ with a Featured stamp. It drops back on its own when the time is up, hourly
 by cron, and the organisation is told either way. "Stop featuring it" ends
 it early. Nothing longer than a fortnight.
 
+## Reports
+
+"Reports" under Review team shows one month in numbers, read from the audit
+trail: what was sent in, approved, sent back and refused; approvals by type
+and edits; the median time from submission to approval; organisations
+verified and refused; people joined and removed; and the site today. Pick
+any of the last twelve months. Two kinds of spreadsheet download: every
+decision in the month, and every listing of a type ever sent with all its
+fields. From the command line the same is `wp dgl report --month=YYYY-MM`
+and `wp dgl export events|news|training|decisions --file=...`.
+
 ## Taking something off the site
 
 Open any live item from the queue or from the member's list. The last section

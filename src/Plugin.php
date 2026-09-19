@@ -103,6 +103,7 @@ final class Plugin {
 			PrivacyCommand::register();
 			ImportCommand::register();
 			ProbeCommand::register();
+			\DGL\Reports\Command::register();
 		}
 
 		\DGL\Admin\Health::watch();

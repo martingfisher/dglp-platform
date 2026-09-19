@@ -141,9 +141,7 @@ requires a database push in either direction.
 ## What is not built yet
 
 Listed so nobody deploys expecting it, checked against the code on 18
-September 2026: Microsoft and Google sign-in; a CSV export of submissions
-(the schema marks fields `in_csv` but no screen or command writes the file);
-a read/unread store behind the notifications screen (it is the audit trail,
+September 2026: Microsoft and Google sign-in; a read/unread store behind the notifications screen (it is the audit trail,
 read back); a member closing their own account; Turnstile on the join form;
 consent records at registration (consent is recorded for the digest only).
 
