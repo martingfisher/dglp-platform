@@ -497,3 +497,7 @@ clean. They are the only DGLP content on staging.
   .ics, then comes off) or cancels one date of a series (struck through on
   the calendar and the event page, no longer the next date). Undoable from
   the item screen. Unit 1805, integration 817.
+- **Timezone set to London** (19 September): `timezone_string` was empty
+  (UTC+0). Now `Europe/London`, so the .ics files carry a TZID and the
+  hourly sweep reads wall-clock times in the right zone. Production needs
+  the same under Settings > General.
