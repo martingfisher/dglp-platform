@@ -39,6 +39,12 @@ $v      = static fn( string $k ): string => (string) ( $values[ $k ] ?? '' );
 	<?php if ( 'email' === $stage ) : ?>
 		<form method="post" class="dgl-form" action="<?php echo esc_url( Router::url( 'join' ) ); ?>">
 			<?php wp_nonce_field( Wizard::NONCE ); ?>
+			<input type="hidden" name="<?php echo esc_attr( \DGL\Joining\Guard::STAMP ); ?>" value="<?php echo esc_attr( (string) ( $data['stamp'] ?? '' ) ); ?>">
+			<?php /* Never shown, never announced; a robot that fills every field fills this one. */ ?>
+			<div class="dgl-nohoney" aria-hidden="true">
+				<label for="<?php echo esc_attr( \DGL\Joining\Guard::HONEYPOT ); ?>"><?php esc_html_e( 'Leave this empty', 'dgl-platform' ); ?></label>
+				<input type="text" id="<?php echo esc_attr( \DGL\Joining\Guard::HONEYPOT ); ?>" name="<?php echo esc_attr( \DGL\Joining\Guard::HONEYPOT ); ?>" value="" tabindex="-1" autocomplete="off">
+			</div>
 			<div class="dgl-field-row">
 				<label class="dgl-label" for="dgl_email"><?php esc_html_e( 'Your work email address', 'dgl-platform' ); ?> <span class="dgl-req" aria-hidden="true">*</span></label>
 				<input class="dgl-field" type="email" id="dgl_email" name="dgl_email" required autocomplete="email" value="<?php echo esc_attr( (string) ( $data['email'] ?? '' ) ); ?>">

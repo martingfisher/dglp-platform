@@ -460,8 +460,21 @@ final class Controller {
 		if ( '' === $token ) {
 			if ( 'POST' === ( $_SERVER['REQUEST_METHOD'] ?? 'GET' ) ) {
 				check_admin_referer( Wizard::NONCE );
-				$email  = isset( $_POST['dgl_email'] ) ? sanitize_email( wp_unslash( $_POST['dgl_email'] ) ) : '';
-				$result = \DGL\Joining\Joining::start( $email );
+				$email = isset( $_POST['dgl_email'] ) ? sanitize_email( wp_unslash( $_POST['dgl_email'] ) ) : '';
+
+				/*
+				 * A robot is shown "sent" and nothing is sent, so it learns
+				 * nothing. A person over the limit is told to wait. Both are
+				 * checked before an email is ever built.
+				 */
+				if ( \DGL\Joining\Guard::is_robot( wp_unslash( $_POST ) ) ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- compared, not stored.
+					\DGL\Audit\Log::record( 'join_blocked', 'signup', 0, 0, __( 'A submission that looked automated was dropped.', 'dgl-platform' ), [], 0 );
+					wp_safe_redirect( Router::url( 'join', 'sent' ) );
+					exit;
+				}
+
+				$limited = \DGL\Joining\Guard::limited( $email, \DGL\Joining\Guard::ip() );
+				$result  = '' !== $limited ? [ 'ok' => false, 'error' => $limited ] : \DGL\Joining\Joining::start( $email );
 
 				if ( $result['ok'] ) {
 					wp_safe_redirect( Router::url( 'join', 'sent' ) );
@@ -471,6 +484,8 @@ final class Controller {
 				$data['error'] = $result['error'];
 				$data['email'] = $email;
 			}
+
+			$data['stamp'] = \DGL\Joining\Guard::stamp();
 
 			self::screen( 'join', $data, $title );
 			return;

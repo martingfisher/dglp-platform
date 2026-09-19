@@ -188,6 +188,13 @@ hours; after that they ask for another. When they click it:
 Owners invite and remove colleagues themselves from the Members tab of their
 organisation profile. A removed colleague is signed out everywhere and emailed.
 
+The email form has three quiet defences: a hidden field robots fill and
+people never see, a signed clock that drops a submit made within three
+seconds of the form being drawn, and a limit of three links per address and
+ten per connection an hour. A robot is shown "sent" and nothing is sent
+(the audit trail records `join_blocked`); a person over the limit is told
+to wait an hour.
+
 ## What members are emailed
 
 Every decision above sends one email to the member: approved, sent back with

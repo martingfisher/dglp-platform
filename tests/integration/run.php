@@ -3460,6 +3460,37 @@ $ok( \DGL\Moderation\Notes::remove( $tn_item, $tn_id ) && 1 === \DGL\Moderation\
 $ok( ! \DGL\Moderation\Notes::remove( $tn_item, $tn_id ), 'removing it again is a no' );
 $ok( \DGL\Moderation\Notes::remove( $tn_item, $tn_id2 ?? '' ) && [] === \DGL\Moderation\Notes::all( $tn_item ) && ! in_array( \DGL\Moderation\Notes::META, array_keys( (array) get_post_custom( $tn_item ) ), true ), 'the last one gone, the meta goes too' );
 
+$group( 'Join form guard: honeypot, a signed clock, and a rate limit' );
+
+$gd_now   = time();
+$gd_stamp = \DGL\Joining\Guard::stamp( $gd_now - 10 );
+$ok( 1 === preg_match( '/^\d+\.[0-9a-f]{20}$/', $gd_stamp ), 'the stamp is a time and a signature' );
+$ok( ! \DGL\Joining\Guard::is_robot( [ \DGL\Joining\Guard::STAMP => $gd_stamp, \DGL\Joining\Guard::HONEYPOT => '' ], $gd_now ), 'a form drawn ten seconds ago with an empty honeypot is a person' );
+$ok( \DGL\Joining\Guard::is_robot( [ \DGL\Joining\Guard::STAMP => $gd_stamp, \DGL\Joining\Guard::HONEYPOT => 'http://spam.example' ], $gd_now ), 'anything in the honeypot is a robot' );
+$ok( \DGL\Joining\Guard::is_robot( [ \DGL\Joining\Guard::STAMP => \DGL\Joining\Guard::stamp( $gd_now - 1 ) ], $gd_now ), 'a submit one second after the form was drawn is a robot' );
+$ok( \DGL\Joining\Guard::is_robot( [], $gd_now ), 'no stamp at all is a robot' );
+$ok( \DGL\Joining\Guard::is_robot( [ \DGL\Joining\Guard::STAMP => ( $gd_now - 10 ) . '.0000000000000000dead' ], $gd_now ), 'a forged signature is a robot' );
+$ok( ! \DGL\Joining\Guard::is_robot( [ \DGL\Joining\Guard::STAMP => \DGL\Joining\Guard::stamp( $gd_now - 90000 ) ], $gd_now ), 'a tab left open all day is a person, not a robot' );
+
+$gd_email = 'ratelimit-' . wp_generate_password( 4, false ) . '@example.test';
+$gd_ip    = '203.0.113.' . wp_rand( 1, 250 );
+\DGL\Joining\Guard::reset( $gd_email, $gd_ip );
+$gd_hits = [];
+for ( $i = 0; $i < \DGL\Joining\Guard::PER_EMAIL + 1; $i++ ) {
+	$gd_hits[] = \DGL\Joining\Guard::limited( $gd_email, $gd_ip );
+}
+$ok( [] === array_filter( array_slice( $gd_hits, 0, \DGL\Joining\Guard::PER_EMAIL ) ) && '' !== end( $gd_hits ) && str_contains( (string) end( $gd_hits ), 'that address' ), 'three starts for one address go through and the fourth is told to wait' );
+$ok( '' === \DGL\Joining\Guard::limited( 'other-' . $gd_email, $gd_ip ), 'another address from the same connection is still fine' );
+\DGL\Joining\Guard::reset( $gd_email, $gd_ip );
+$gd_ip2 = '198.51.100.' . wp_rand( 1, 250 );
+$gd_last = '';
+for ( $i = 0; $i < \DGL\Joining\Guard::PER_IP + 1; $i++ ) {
+	$gd_last = \DGL\Joining\Guard::limited( 'many-' . $i . '@example.test', $gd_ip2 );
+}
+$ok( str_contains( $gd_last, 'your connection' ), 'and the eleventh address from one connection in an hour is told to wait' );
+\DGL\Joining\Guard::reset( '', $gd_ip2 );
+$ok( '' === \DGL\Joining\Guard::limited( 'again@example.test', $gd_ip2 ), 'reset clears the count' );
+
 /* ----------------------------------------------------------------- report */
 
 echo "\n" . str_repeat( '-', 60 ) . "\n";

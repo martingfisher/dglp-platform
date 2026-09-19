@@ -522,3 +522,8 @@ clean. They are the only DGLP content on staging.
   for moderators only: kept on the item through edits, counted on the queue
   rows, never in the audit trail, notifications or a copy. Unit 1829,
   integration 875.
+- **0.18.0 deployed** (19 September): join form guard. Honeypot, a signed
+  clock (under three seconds is a robot), and a rate limit of three links
+  per address and ten per connection an hour. Robots are shown "sent" and
+  nothing is sent (`join_blocked` in the audit trail). Unit 1829,
+  integration 886.
