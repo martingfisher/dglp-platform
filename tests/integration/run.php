@@ -3467,6 +3467,7 @@ $gd_stamp = \DGL\Joining\Guard::stamp( $gd_now - 10 );
 $ok( 1 === preg_match( '/^\d+\.[0-9a-f]{20}$/', $gd_stamp ), 'the stamp is a time and a signature' );
 $ok( ! \DGL\Joining\Guard::is_robot( [ \DGL\Joining\Guard::STAMP => $gd_stamp, \DGL\Joining\Guard::HONEYPOT => '' ], $gd_now ), 'a form drawn ten seconds ago with an empty honeypot is a person' );
 $ok( \DGL\Joining\Guard::is_robot( [ \DGL\Joining\Guard::STAMP => $gd_stamp, \DGL\Joining\Guard::HONEYPOT => 'http://spam.example' ], $gd_now ), 'anything in the honeypot is a robot' );
+$ok( ! str_contains( \DGL\Joining\Guard::HONEYPOT, 'url' ) && ! str_contains( \DGL\Joining\Guard::HONEYPOT, 'website' ) && ! str_contains( \DGL\Joining\Guard::HONEYPOT, 'email' ), 'the honeypot is named so no browser autofills it' );
 $ok( \DGL\Joining\Guard::is_robot( [ \DGL\Joining\Guard::STAMP => \DGL\Joining\Guard::stamp( $gd_now - 1 ) ], $gd_now ), 'a submit one second after the form was drawn is a robot' );
 $ok( \DGL\Joining\Guard::is_robot( [], $gd_now ), 'no stamp at all is a robot' );
 $ok( \DGL\Joining\Guard::is_robot( [ \DGL\Joining\Guard::STAMP => ( $gd_now - 10 ) . '.0000000000000000dead' ], $gd_now ), 'a forged signature is a robot' );
@@ -3490,6 +3491,18 @@ for ( $i = 0; $i < \DGL\Joining\Guard::PER_IP + 1; $i++ ) {
 $ok( str_contains( $gd_last, 'your connection' ), 'and the eleventh address from one connection in an hour is told to wait' );
 \DGL\Joining\Guard::reset( '', $gd_ip2 );
 $ok( '' === \DGL\Joining\Guard::limited( 'again@example.test', $gd_ip2 ), 'reset clears the count' );
+
+$group( 'Joining with an address that already has an account is sent to sign in' );
+
+$ex_user  = get_userdata( $alice );
+$ex_start = \DGL\Joining\Joining::start( (string) $ex_user->user_email );
+$ok( false === $ex_start['ok'] && 'exists' === $ex_start['code'], 'start says the account exists, with a code the screen can act on' );
+$ok( 'invalid' === \DGL\Joining\Joining::start( 'not-an-address' )['code'], 'and a code for a bad address' );
+$ok( [] === \DGL\Joining\Store::for_email( (string) $ex_user->user_email ), 'no signup row is created for an existing account' );
+$ex_fresh = 'fresh-' . wp_generate_password( 4, false ) . '@example.test';
+$ex_go    = \DGL\Joining\Joining::start( $ex_fresh );
+$ex_rows  = \DGL\Joining\Store::for_email( $ex_fresh );
+$ok( true === $ex_go['ok'] && 1 === count( $ex_rows ) && 'unverified' === $ex_rows[0]->state, 'a fresh address gets one unverified signup, listed by address' );
 
 /* ----------------------------------------------------------------- report */
 

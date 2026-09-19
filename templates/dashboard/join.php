@@ -36,6 +36,26 @@ $v      = static fn( string $k ): string => (string) ( $values[ $k ] ?? '' );
 		<div class="dgl-alert" role="alert"><p><?php echo esc_html( $error ); ?></p></div>
 	<?php endif; ?>
 
+	<?php if ( 'exists' === $stage ) : ?>
+		<div class="dgl-card dgl-join__exists">
+			<h2 class="dgl-section__title"><?php esc_html_e( 'You already have an account', 'dgl-platform' ); ?></h2>
+			<p>
+				<?php
+				printf(
+					/* translators: %s: an email address. */
+					esc_html__( 'There is already a member account for %s, so there is nothing to join. Sign in with it, or send yourself a link to set a new password.', 'dgl-platform' ),
+					'<strong>' . esc_html( (string) ( $data['email'] ?? '' ) ) . '</strong>'
+				);
+				?>
+			</p>
+			<div class="dgl-form__actions">
+				<a class="dgl-button" href="<?php echo esc_url( (string) ( $data['signin_url'] ?? Router::url() ) ); ?>"><?php esc_html_e( 'Sign in', 'dgl-platform' ); ?></a>
+				<a class="dgl-button dgl-button--secondary" href="<?php echo esc_url( (string) ( $data['reset_url'] ?? wp_lostpassword_url() ) ); ?>"><?php esc_html_e( 'Set a new password', 'dgl-platform' ); ?></a>
+			</div>
+			<p class="dgl-help"><?php esc_html_e( 'Not you? Somebody else at your organisation may have joined with this address. Ask them, or use a different work address.', 'dgl-platform' ); ?></p>
+		</div>
+	<?php endif; ?>
+
 	<?php if ( 'email' === $stage ) : ?>
 		<form method="post" class="dgl-form" action="<?php echo esc_url( Router::url( 'join' ) ); ?>">
 			<?php wp_nonce_field( Wizard::NONCE ); ?>

@@ -18,6 +18,11 @@ $flag    = isset( $_GET[ \DGL\Dashboard\SignIn::FLAG ] ) ? sanitize_key( wp_unsl
 $message = \DGL\Dashboard\SignIn::message( $flag );
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- a destination, read only and validated by wp_login_form.
 $wanted  = isset( $_GET['redirect_to'] ) ? (string) wp_unslash( $_GET['redirect_to'] ) : (string) ( $data['redirect_to'] ?? home_url() );
+// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- an address to prefill, from the join page's own link.
+$prefill = isset( $_GET['email'] ) ? sanitize_email( wp_unslash( $_GET['email'] ) ) : '';
+if ( '' === $message && '' !== $prefill ) {
+	$message = __( 'That address already has an account. Sign in with it below.', 'dgl-platform' );
+}
 ?>
 <?php /* No wrapper of its own: the shell already provides .dgl-dash, and nesting a second one nested the whole layout. */ ?>
 	<div class="dgl-signin">
@@ -34,6 +39,7 @@ $wanted  = isset( $_GET['redirect_to'] ) ? (string) wp_unslash( $_GET['redirect_
 				'redirect'       => $wanted,
 				'label_username' => __( 'Email address', 'dgl-platform' ),
 				'label_log_in'   => __( 'Sign in', 'dgl-platform' ),
+				'value_username' => $prefill,
 			]
 		);
 		?>

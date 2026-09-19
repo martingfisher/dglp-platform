@@ -162,6 +162,21 @@ final class Store {
 	}
 
 	/**
+	 * Every signup for one address, newest first. For the team's diagnosis.
+	 *
+	 * @return Signup[]
+	 */
+	public static function for_email( string $email ): array {
+		global $wpdb;
+
+		$table = self::name();
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		$rows = (array) $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$table} WHERE email = %s ORDER BY id DESC LIMIT 20", strtolower( trim( $email ) ) ), ARRAY_A );
+
+		return array_map( static fn( array $row ): Signup => Signup::from_row( $row ), $rows );
+	}
+
+	/**
 	 * @param array<string, mixed> $fields Columns to set.
 	 */
 	public static function update( int $id, array $fields ): bool {

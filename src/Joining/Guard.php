@@ -21,8 +21,12 @@ defined( 'ABSPATH' ) || exit;
 
 final class Guard {
 
-	/** The honeypot's field name: plausible to a robot, never shown to a person. */
-	public const HONEYPOT = 'dgl_website_url';
+	/**
+	 * The honeypot's field name. Plausible to a robot, never shown to a
+	 * person, and nothing a browser's autofill recognises: "website" or
+	 * "url" in the name invites Chrome to fill it from a saved address.
+	 */
+	public const HONEYPOT = 'dgl_extra_field';
 
 	/** The stamp field: when the form was drawn, signed. */
 	public const STAMP = 'dgl_form_stamp';

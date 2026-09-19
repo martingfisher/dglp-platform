@@ -220,6 +220,13 @@ Every row is Fine, Look or Broken and says what to do. It changes nothing.
 - An email did not arrive: ask the site administrator to run the mail status
   check. It reports whether sending is on, where mail is being redirected on
   staging, and whether the logo in the email header can be fetched.
+- Somebody says the join email never came: `wp dgl join status <email>`
+  says whether an account already exists, where mail is going (on staging
+  every email is redirected to one test inbox), how many links were sent
+  this hour, each signup and whether its link was used, and the audit rows.
+- Somebody who already has an account tries to join: the join page tells
+  them so and sends them to sign in with the address filled in, or to set a
+  new password. Nothing is sent and no signup is created.
 
 ## Images and contact details on submissions
 

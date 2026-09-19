@@ -527,3 +527,10 @@ clean. They are the only DGLP content on staging.
   per address and ten per connection an hour. Robots are shown "sent" and
   nothing is sent (`join_blocked` in the audit trail). Unit 1829,
   integration 886.
+- **0.19.0 deployed** (19 September): joining with an address that already
+  has an account now shows "You already have an account" with Sign in (the
+  address filled in) and Set a new password, instead of an error line. The
+  honeypot field is renamed so no browser autofills it. New
+  `wp dgl join status <email>` for "the email never came". Martin's two
+  join attempts on 19 September did send: staging redirects every email to
+  martingfisher@gmail.com (`dgl_mail_redirect`). Unit 1829, integration 891.

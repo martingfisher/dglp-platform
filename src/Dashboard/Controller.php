@@ -474,11 +474,21 @@ final class Controller {
 				}
 
 				$limited = \DGL\Joining\Guard::limited( $email, \DGL\Joining\Guard::ip() );
-				$result  = '' !== $limited ? [ 'ok' => false, 'error' => $limited ] : \DGL\Joining\Joining::start( $email );
+				$result  = '' !== $limited ? [ 'ok' => false, 'code' => 'limited', 'error' => $limited ] : \DGL\Joining\Joining::start( $email );
 
 				if ( $result['ok'] ) {
 					wp_safe_redirect( Router::url( 'join', 'sent' ) );
 					exit;
+				}
+
+				// An address that already has an account gets the way in, not an error.
+				if ( 'exists' === ( $result['code'] ?? '' ) ) {
+					$data['stage']      = 'exists';
+					$data['email']      = $email;
+					$data['signin_url'] = add_query_arg( 'email', rawurlencode( $email ), Router::url() );
+					$data['reset_url']  = wp_lostpassword_url( Router::url() );
+					self::screen( 'join', $data, $title );
+					return;
 				}
 
 				$data['error'] = $result['error'];

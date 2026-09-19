@@ -2034,3 +2034,5 @@ body.dgl-body {
 /* ---- Honeypot: off screen, out of the tab order, out of the accessibility tree. */
 
 .dgl-nohoney { position: absolute; left: -10000px; top: auto; width: 1px; height: 1px; overflow: hidden; }
+
+.dgl-join__exists .dgl-form__actions { margin: 12px 0; }

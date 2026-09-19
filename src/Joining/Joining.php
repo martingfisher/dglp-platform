@@ -42,11 +42,13 @@ final class Joining {
 		$email = strtolower( trim( $email ) );
 
 		if ( ! is_email( $email ) ) {
-			return [ 'ok' => false, 'error' => __( 'That does not look like an email address.', 'dgl-platform' ) ];
+			return [ 'ok' => false, 'code' => 'invalid', 'error' => __( 'That does not look like an email address.', 'dgl-platform' ) ];
 		}
 
+		// Somebody who already has an account is sent to sign in, not round
+		// the joining loop again. The screen turns this code into the way through.
 		if ( get_user_by( 'email', $email ) instanceof \WP_User ) {
-			return [ 'ok' => false, 'error' => __( 'There is already an account for that address. Sign in instead, or use the forgotten-password link.', 'dgl-platform' ) ];
+			return [ 'ok' => false, 'code' => 'exists', 'error' => __( 'There is already an account for that address. Sign in instead, or use the forgotten-password link.', 'dgl-platform' ) ];
 		}
 
 		$expires = gmdate( 'Y-m-d H:i:s', time() + Rules::LINK_HOURS * 3600 );
@@ -58,10 +60,10 @@ final class Joining {
 		Log::record( 'join_started', 'signup', $started['id'], 0, $email, [], 0 );
 
 		if ( ! $sent ) {
-			return [ 'ok' => false, 'error' => __( 'The confirmation email could not be sent. Try again in a minute, or contact the DGLP team.', 'dgl-platform' ) ];
+			return [ 'ok' => false, 'code' => 'unsent', 'error' => __( 'The confirmation email could not be sent. Try again in a minute, or contact the DGLP team.', 'dgl-platform' ) ];
 		}
 
-		return [ 'ok' => true, 'error' => '' ];
+		return [ 'ok' => true, 'code' => '', 'error' => '' ];
 	}
 
 	/**
