@@ -711,6 +711,24 @@ final class Controller {
 				exit;
 			}
 
+			// Team notes: for the team, on the item, never in the member's history.
+			if ( in_array( $intent, [ 'note_add', 'note_remove' ], true ) ) {
+				if ( 'note_add' === $intent ) {
+					$text   = isset( $_POST['dgl_note_text'] ) ? sanitize_textarea_field( wp_unslash( $_POST['dgl_note_text'] ) ) : '';
+					$result = \DGL\Moderation\Notes::add( $post_id, $text, $user->user_id );
+				} else {
+					$note_id = isset( $_POST['dgl_note_id'] ) ? sanitize_key( wp_unslash( $_POST['dgl_note_id'] ) ) : '';
+					$result  = \DGL\Moderation\Notes::remove( $post_id, $note_id ) ? true : new \WP_Error( 'dgl_no_note', __( 'That note has already gone.', 'dgl-platform' ) );
+				}
+
+				if ( is_wp_error( $result ) ) {
+					$error = $result->get_error_message();
+				} else {
+					wp_safe_redirect( add_query_arg( 'noted', 'note_add' === $intent ? '1' : '0', Router::url( 'review', (string) $post_id ) . '#dgl-team-notes' ) );
+					exit;
+				}
+			}
+
 			// Featuring is a moderator's move on a live item; it never touches review.
 			if ( in_array( $intent, [ 'pin', 'unpin' ], true ) ) {
 				if ( ! Access::can( $user->user_id, Policy::PIN_ITEM, $post_id ) ) {
@@ -797,6 +815,16 @@ final class Controller {
 				'pinned_until'  => \DGL\Workflow\Pins::is_pinned( $post_id ) ? (string) wp_date( (string) get_option( 'date_format', 'j F Y' ), \DGL\Workflow\Pins::until( $post_id )->getTimestamp() ) : '',
 				'featured'      => isset( $_GET['featured'] ) ? (string) $_GET['featured'] : null, // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 				'can_restore'   => ! $is_edit && Access::can( $user->user_id, Policy::RESTORE_ITEM, $post_id ),
+				// The team's own notes, with who wrote each.
+				'notes'         => array_map(
+					static function ( array $n ): array {
+						$by         = $n['by'] > 0 ? get_userdata( $n['by'] ) : null;
+						$n['by_name'] = $by instanceof \WP_User ? (string) $by->display_name : __( 'Unknown', 'dgl-platform' );
+						return $n;
+					},
+					\DGL\Moderation\Notes::all( $post_id )
+				),
+				'noted'         => isset( $_GET['noted'] ) ? (string) $_GET['noted'] : null, // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			],
 			$post->post_title !== '' ? $post->post_title : __( 'Review', 'dgl-platform' ),
 			$user
@@ -1669,6 +1697,8 @@ final class Controller {
 				? Router::url( 'review', (string) $post_id )
 				: Router::url( 'item', (string) $post_id ),
 			'can_edit' => Access::current_user_can( Policy::EDIT_ITEM, $post_id ),
+			// Only the review team's rows carry this; a member's table never sees the key.
+			'notes'    => $for_review ? \DGL\Moderation\Notes::count( $post_id ) : null,
 		];
 	}
 

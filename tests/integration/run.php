@@ -3428,6 +3428,38 @@ $ok( str_ends_with( \DGL\Reports\Csv::filename( \DGL\Reports\Csv::DECISIONS, '20
 $rp_nav = array_column( \DGL\Dashboard\Navigation::items( Access::user_context( $mod ) ), 'label' );
 $ok( in_array( 'Reports', $rp_nav, true ) && ! in_array( 'Reports', array_column( \DGL\Dashboard\Navigation::items( Access::user_context( $alice ) ), 'label' ), true ), 'Reports is in the review team menu and not in a member\'s' );
 
+$group( 'Team notes: for the review team, on the item, never in the member\'s history' );
+
+$tn_item = $make_item( $org_a, $alice, Statuses::LIVE );
+$ok( [] === \DGL\Moderation\Notes::all( $tn_item ) && 0 === \DGL\Moderation\Notes::count( $tn_item ), 'nothing to start with' );
+$ok( is_wp_error( \DGL\Moderation\Notes::add( $tn_item, '   ', $mod ) ), 'an empty note is refused' );
+$ok( is_wp_error( \DGL\Moderation\Notes::add( $tn_item, str_repeat( 'x', 2001 ), $mod ) ), 'and an overlong one' );
+$tn_id = \DGL\Moderation\Notes::add( $tn_item, "Asked the org to confirm the venue.\nSecond time with no picture.", $mod );
+$ok( is_string( $tn_id ) && 1 === \DGL\Moderation\Notes::count( $tn_item ), 'a note is added' );
+$tn_all = \DGL\Moderation\Notes::all( $tn_item );
+$ok( $mod === $tn_all[0]['by'] && str_contains( $tn_all[0]['text'], "venue.\nSecond" ) && '' !== $tn_all[0]['at'], 'with who wrote it, when, and its line breaks' );
+
+$tn_rev = \DGL\Workflow\Revisions::open( $tn_item, $alice );
+$tn_rev_id = is_int( $tn_rev ) ? $tn_rev : ( is_object( $tn_rev ) ? (int) $tn_rev->ID : (int) $tn_rev );
+if ( $tn_rev_id > 0 ) {
+	$tn_id2 = \DGL\Moderation\Notes::add( $tn_rev_id, 'Seen on the edit.', $mod );
+	$ok( is_string( $tn_id2 ) && 2 === \DGL\Moderation\Notes::count( $tn_item ) && 2 === \DGL\Moderation\Notes::count( $tn_rev_id ), 'a note written on an edit lands on the item, and both addresses read the same two' );
+} else {
+	$ok( false, 'could not open an edit for the note test (' . var_export( $tn_rev, true ) . ')' );
+}
+
+$tn_audit = array_filter( \DGL\Audit\Log::for_object( 'item', $tn_item ), static fn( array $r ): bool => str_contains( (string) ( $r['note'] ?? '' ), 'confirm the venue' ) );
+$tn_feed  = array_filter( \DGL\Dashboard\Notifications::for_org( $org_a, 100, 0 ), static fn( array $r ): bool => str_contains( wp_json_encode( $r ) ?: '', 'confirm the venue' ) );
+$ok( [] === $tn_audit && [] === $tn_feed, 'nothing about it in the audit trail or the organisation\'s notifications' );
+$tn_meta_keys = array_keys( (array) get_post_custom( $tn_item ) );
+$ok( in_array( \DGL\Moderation\Notes::META, $tn_meta_keys, true ), 'it lives in post meta on the item' );
+$tn_copy = \DGL\Dashboard\Wizard::copy( $tn_item, $alice );
+$ok( is_int( $tn_copy ) && 0 === \DGL\Moderation\Notes::count( $tn_copy ), 'a copy of the item does not carry the notes' );
+
+$ok( \DGL\Moderation\Notes::remove( $tn_item, $tn_id ) && 1 === \DGL\Moderation\Notes::count( $tn_item ), 'a note is removed' );
+$ok( ! \DGL\Moderation\Notes::remove( $tn_item, $tn_id ), 'removing it again is a no' );
+$ok( \DGL\Moderation\Notes::remove( $tn_item, $tn_id2 ?? '' ) && [] === \DGL\Moderation\Notes::all( $tn_item ) && ! in_array( \DGL\Moderation\Notes::META, array_keys( (array) get_post_custom( $tn_item ) ), true ), 'the last one gone, the meta goes too' );
+
 /* ----------------------------------------------------------------- report */
 
 echo "\n" . str_repeat( '-', 60 ) . "\n";

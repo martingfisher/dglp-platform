@@ -2007,3 +2007,26 @@ body.dgl-body {
 	.dgl-reports__pick { width: 100%; }
 	.dgl-reports__pick .dgl-field { flex: 1 1 auto; }
 }
+
+/* ---- Team notes ---------------------------------------------------------- */
+
+.dgl-notes__list { margin: 0 0 var(--dgl-gap); padding: 0; list-style: none; display: grid; gap: 10px; }
+
+.dgl-notes__note { padding: 10px 12px; border-left: 3px solid var(--dgl-navy); background: var(--dgl-surface); border-radius: 0 var(--dgl-radius-button) var(--dgl-radius-button) 0; }
+
+.dgl-notes__text { margin: 0 0 4px; white-space: pre-wrap; }
+
+.dgl-notes__meta { margin: 0; font-size: 0.85em; color: var(--dgl-text-muted); display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: center; }
+
+.dgl-note-flag {
+	display: inline-block;
+	margin-inline-start: 6px;
+	padding: 2px 7px;
+	border-radius: 999px;
+	background: var(--dgl-surface);
+	border: 1px solid var(--dgl-border);
+	color: var(--dgl-navy);
+	font-size: 0.78em;
+	font-weight: 600;
+	white-space: nowrap;
+}

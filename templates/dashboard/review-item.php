@@ -185,6 +185,44 @@ $check_word = static fn( string $status ): string => match ( $status ) {
 	</div>
 
 	<aside class="dgl-review-side">
+		<section class="dgl-card dgl-notes" id="dgl-team-notes">
+			<h2 class="dgl-section__title"><?php esc_html_e( 'Team notes', 'dgl-platform' ); ?></h2>
+			<p class="dgl-help"><?php esc_html_e( 'For the review team only. The organisation never sees these, and they stay with the listing through every edit.', 'dgl-platform' ); ?></p>
+			<?php if ( '1' === ( $data['noted'] ?? null ) ) : ?>
+				<div class="dgl-alert dgl-alert--good" role="status"><p><?php esc_html_e( 'Note added.', 'dgl-platform' ); ?></p></div>
+			<?php elseif ( '0' === ( $data['noted'] ?? null ) ) : ?>
+				<div class="dgl-alert dgl-alert--good" role="status"><p><?php esc_html_e( 'Note removed.', 'dgl-platform' ); ?></p></div>
+			<?php endif; ?>
+			<?php $team_notes = (array) ( $data['notes'] ?? [] ); ?>
+			<?php if ( [] !== $team_notes ) : ?>
+				<ul class="dgl-notes__list">
+					<?php foreach ( $team_notes as $team_note ) : ?>
+						<li class="dgl-notes__note">
+							<p class="dgl-notes__text"><?php echo esc_html( (string) $team_note['text'] ); ?></p>
+							<p class="dgl-notes__meta">
+								<?php echo esc_html( (string) $team_note['by_name'] ); ?>, <?php echo esc_html( View::date( (string) $team_note['at'], true ) ); ?>
+								<form method="post" class="dgl-inline-form" action="<?php echo esc_url( Router::url( 'review', (string) $post->ID ) ); ?>">
+									<?php wp_nonce_field( Wizard::NONCE ); ?>
+									<input type="hidden" name="dgl_note_id" value="<?php echo esc_attr( (string) $team_note['id'] ); ?>">
+									<button class="dgl-linkish" type="submit" name="dgl_intent" value="note_remove"><?php esc_html_e( 'Remove', 'dgl-platform' ); ?></button>
+								</form>
+							</p>
+						</li>
+					<?php endforeach; ?>
+				</ul>
+			<?php endif; ?>
+			<form method="post" class="dgl-form dgl-form--bare dgl-notes__add" action="<?php echo esc_url( Router::url( 'review', (string) $post->ID ) ); ?>">
+				<?php wp_nonce_field( Wizard::NONCE ); ?>
+				<div class="dgl-field-row">
+					<label class="dgl-label" for="dgl-note-text"><?php esc_html_e( 'Add a note', 'dgl-platform' ); ?></label>
+					<textarea class="dgl-field dgl-field--area" id="dgl-note-text" name="dgl_note_text" rows="2" maxlength="<?php echo esc_attr( (string) \DGL\Moderation\Notes::MAX_LENGTH ); ?>"></textarea>
+				</div>
+				<div class="dgl-form__actions dgl-form__actions--alone">
+					<button class="dgl-button dgl-button--secondary" type="submit" name="dgl_intent" value="note_add"><?php esc_html_e( 'Add note', 'dgl-platform' ); ?></button>
+				</div>
+			</form>
+		</section>
+
 		<section class="dgl-card">
 			<h2 class="dgl-section__title"><?php esc_html_e( 'Automatic checks', 'dgl-platform' ); ?></h2>
 			<p class="dgl-help"><?php esc_html_e( 'Advice, not a gate. You can publish something with every one of these complaining.', 'dgl-platform' ); ?></p>

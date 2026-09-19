@@ -118,6 +118,15 @@ decision in the month, and every listing of a type ever sent with all its
 fields. From the command line the same is `wp dgl report --month=YYYY-MM`
 and `wp dgl export events|news|training|decisions --file=...`.
 
+## Team notes
+
+Every review screen has a "Team notes" card. Write anything the next
+reviewer should know: "asked the org to confirm the venue", "second time
+with no picture". Notes stay with the listing through every edit and show
+as a count on the queue rows. The organisation never sees them: they are
+not in the audit trail, not in notifications, and a copy of the listing
+does not carry them. Any moderator can remove one.
+
 ## Taking something off the site
 
 Open any live item from the queue or from the member's list. The last section

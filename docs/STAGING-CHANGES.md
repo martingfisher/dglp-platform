@@ -518,3 +518,7 @@ clean. They are the only DGLP content on staging.
   site today; CSV of the month's decisions and of every listing per type
   (`.../csv/decisions|events|news|training/`). Same from the CLI:
   `wp dgl report`, `wp dgl export`. Unit 1829, integration 863.
+- **0.17.0 deployed** (19 September): Team notes on the review screen,
+  for moderators only: kept on the item through edits, counted on the queue
+  rows, never in the audit trail, notifications or a copy. Unit 1829,
+  integration 875.
