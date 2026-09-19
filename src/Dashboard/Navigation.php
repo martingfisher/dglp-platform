@@ -90,6 +90,16 @@ final class Navigation {
 			'current' => 'profile' === $first,
 		];
 
+		if ( $has_own_work ) {
+			$items[] = [
+				'label'   => __( 'Help', 'dgl-platform' ),
+				'url'     => Router::url( 'help' ),
+				'count'   => null,
+				'section' => __( 'Account', 'dgl-platform' ),
+				'current' => 'help' === $first && 'team' !== $second,
+			];
+		}
+
 		if ( $user->is_moderator() ) {
 			$items[] = [
 				'label'   => __( 'Review queue', 'dgl-platform' ),
@@ -107,6 +117,14 @@ final class Navigation {
 				'count'   => null,
 				'section' => __( 'Review team', 'dgl-platform' ),
 				'current' => 'review' === $first && 'decided' === $second,
+			];
+
+			$items[] = [
+				'label'   => __( 'Team guide', 'dgl-platform' ),
+				'url'     => Router::url( 'help', 'team' ),
+				'count'   => null,
+				'section' => __( 'Review team', 'dgl-platform' ),
+				'current' => 'help' === $first && 'team' === $second,
 			];
 		}
 

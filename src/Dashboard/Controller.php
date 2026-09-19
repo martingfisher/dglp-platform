@@ -120,6 +120,7 @@ final class Controller {
 			'' === $first                  => self::home( $user ),
 			'archive' === $first           => self::archive( $user ),
 			'notifications' === $first     => self::notifications( $user ),
+			'help' === $first              => self::help( $segments, $user ),
 			'profile' === $first           => self::profile( $segments, $user ),
 			'review' === $first            => self::review( $segments, $user ),
 			'new' === $first               => self::new_item( $segments[1] ?? '', $user ),
@@ -1253,6 +1254,56 @@ final class Controller {
 				'cancel_done'     => isset( $_GET['cancel'] ) ? sanitize_key( wp_unslash( $_GET['cancel'] ) ) : '', // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			],
 			$post->post_title !== '' ? $post->post_title : __( 'Submission', 'dgl-platform' ),
+			$user
+		);
+	}
+
+	/**
+	 * The help guides: one for members, one for the review team, each also
+	 * as a PDF. /dashboard/help, /dashboard/help/pdf, /dashboard/help/team,
+	 * /dashboard/help/team/pdf.
+	 *
+	 * @param string[] $segments
+	 */
+	private static function help( array $segments, UserContext $user ): void {
+		$rest  = array_slice( $segments, 1 );
+		$which = 'team' === ( $rest[0] ?? '' ) ? \DGL\Help\Content::TEAM : \DGL\Help\Content::MEMBER;
+		$pdf   = 'pdf' === end( $rest );
+
+		if ( \DGL\Help\Content::TEAM === $which && ! $user->is_moderator() ) {
+			self::screen( 'no-access', [], __( 'No access', 'dgl-platform' ), $user );
+			return;
+		}
+
+		$guide = \DGL\Help\Content::guide( $which );
+
+		if ( $pdf ) {
+			$file = sanitize_file_name( 'dglp-' . \DGL\Help\Content::slug( $which ) . '-guide.pdf' );
+			$body = \DGL\Help\Pdf::render(
+				$guide,
+				sprintf(
+					/* translators: 1: site name, 2: a date. */
+					__( '%1$s, %2$s', 'dgl-platform' ),
+					(string) get_bloginfo( 'name' ),
+					(string) wp_date( (string) get_option( 'date_format', 'j F Y' ) )
+				)
+			);
+
+			header( 'Content-Type: application/pdf' );
+			header( 'Content-Disposition: attachment; filename="' . $file . '"' );
+			header( 'Content-Length: ' . strlen( $body ) );
+			echo $body; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- a PDF, built by Pdf::render().
+			exit;
+		}
+
+		self::screen(
+			'help',
+			[
+				'user'    => $user,
+				'guide'   => $guide,
+				'pdf_url' => \DGL\Help\Content::TEAM === $which ? Router::url( 'help', 'team', 'pdf' ) : Router::url( 'help', 'pdf' ),
+			],
+			(string) $guide['title'],
 			$user
 		);
 	}

@@ -4,6 +4,14 @@ For the DGLP staff who check submissions, verify organisations and look after
 members. Two places matter: the review queue at `/dashboard/review`, which you
 reach through the member area, and the Organisations screen in wp-admin.
 
+## Help inside the member area
+
+Members have a "Help" link in the sidebar: a guide with a contents list,
+questions people ask, and "Download as PDF". You have a "Team guide" link
+under Review team with the same for this document, kept in step with the
+code (`src/Help/Content.php`), also as a PDF. Point people at those rather
+than at this file.
+
 ## The review queue
 
 The "Review" link in the member area sidebar carries a count. It is the number

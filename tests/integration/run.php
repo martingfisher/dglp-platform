@@ -3349,6 +3349,33 @@ $fl_pos_a   = array_search( $fl_soon, $fl_ordered, true );
 $fl_pos_b   = array_search( $fl_series, $fl_ordered, true );
 $ok( false !== $fl_pos_a && false !== $fl_pos_b && ( ( $fl_today->modify( '+2 days' ) < $fl_tue ) === ( $fl_pos_a < $fl_pos_b ) ), 'and the filtered list keeps date order' );
 
+$group( 'Help guides: one structure for the page and the PDF, for members and for the team' );
+
+foreach ( [ \DGL\Help\Content::MEMBER, \DGL\Help\Content::TEAM ] as $hg_which ) {
+	$hg = \DGL\Help\Content::guide( $hg_which );
+	$hg_ids = array_column( $hg['sections'], 'id' );
+	$ok( count( $hg['sections'] ) >= 8 && count( $hg['faqs'] ) >= 6, $hg_which . ': at least eight sections and six questions (' . count( $hg['sections'] ) . ', ' . count( $hg['faqs'] ) . ')' );
+	$ok( count( $hg_ids ) === count( array_unique( $hg_ids ) ) && ! in_array( 'faqs', $hg_ids, true ), $hg_which . ': section ids are unique and none clashes with the FAQ anchor' );
+	$hg_empty = 0;
+	foreach ( $hg['sections'] as $hg_section ) {
+		foreach ( $hg_section['blocks'] as $hg_block ) {
+			if ( ( is_string( $hg_block[1] ) && '' === trim( $hg_block[1] ) ) || ( is_array( $hg_block[1] ) && [] === $hg_block[1] ) ) {
+				++$hg_empty;
+			}
+		}
+	}
+	$ok( 0 === $hg_empty, $hg_which . ': no empty blocks' );
+	$hg_pdf = \DGL\Help\Pdf::render( $hg, 'x' );
+	$ok( str_starts_with( $hg_pdf, '%PDF-1.4' ) && preg_match( '/\/Count (\d+)/', $hg_pdf, $hg_m ) && (int) $hg_m[1] >= 3 && str_contains( $hg_pdf, '(' . \DGL\Help\Pdf::wrap( $hg['title'], 20.0, true, 480.0 )[0] . ') Tj' ), $hg_which . ': the PDF renders with its title over several pages (' . ( $hg_m[1] ?? '?' ) . ')' );
+}
+$ok( str_contains( \DGL\Help\Content::guide( \DGL\Help\Content::MEMBER )['sections'][5]['blocks'][1][1], 'at most 6 months ahead' ), 'the member guide quotes the real six-month limit' );
+$ok( str_contains( \DGL\Help\Content::guide( \DGL\Help\Content::TEAM )['sections'][2]['blocks'][0][1], '7 or 14 days' ), 'the team guide quotes the real featuring choices' );
+$ok( str_ends_with( \DGL\Dashboard\Router::url( 'help', 'team', 'pdf' ), '/dashboard/help/team/pdf/' ), 'the team PDF has its own address' );
+$hg_member_nav = array_column( \DGL\Dashboard\Navigation::items( Access::user_context( $alice ) ), 'label' );
+$hg_mod_nav    = array_column( \DGL\Dashboard\Navigation::items( Access::user_context( $mod ) ), 'label' );
+$ok( in_array( 'Help', $hg_member_nav, true ) && ! in_array( 'Team guide', $hg_member_nav, true ), 'a member sees Help and not the team guide' );
+$ok( in_array( 'Team guide', $hg_mod_nav, true ), 'a moderator sees the team guide' );
+
 /* ----------------------------------------------------------------- report */
 
 echo "\n" . str_repeat( '-', 60 ) . "\n";

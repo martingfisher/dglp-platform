@@ -1928,3 +1928,45 @@ body.dgl-body {
 	.dgl-form__actions > .dgl-button--secondary { width: 100%; justify-content: center; }
 	.dgl-decision__actions .dgl-button { width: 100%; justify-content: center; }
 }
+
+/* ---- Help guides -------------------------------------------------------- */
+
+.dgl-help-guide { display: grid; gap: var(--dgl-gap); max-width: 760px; }
+
+.dgl-help-guide__contents-label {
+	margin: 0 0 6px;
+	font-size: 0.78em;
+	font-weight: 600;
+	letter-spacing: 0.03em;
+	text-transform: uppercase;
+	color: var(--dgl-text-muted);
+}
+
+.dgl-help-guide__contents ol { margin: 0; padding-left: 1.2em; columns: 2; column-gap: var(--dgl-gap); }
+
+.dgl-help-guide__contents li { break-inside: avoid; margin: 0 0 4px; }
+
+.dgl-help-guide__section p,
+.dgl-help-guide__section li { line-height: 1.55; }
+
+.dgl-help-guide__section p { margin: 0 0 12px; }
+
+.dgl-help-guide__list { margin: 0 0 12px; padding-left: 1.3em; }
+
+.dgl-help-guide__list li { margin: 0 0 6px; }
+
+.dgl-help-guide__sub { margin: 18px 0 6px; font-size: 1.02em; font-weight: 600; color: var(--dgl-navy); }
+
+.dgl-help-guide__faq { padding: 10px 0; border-top: 1px solid var(--dgl-border); }
+
+.dgl-help-guide__faq:last-child { padding-bottom: 0; }
+
+.dgl-help-guide__faq summary { cursor: pointer; font-weight: 600; color: var(--dgl-navy); min-height: 28px; }
+
+.dgl-help-guide__faq[open] summary { margin-bottom: 6px; }
+
+.dgl-help-guide__faq p { margin: 0; }
+
+@media ( max-width: 560px ) {
+	.dgl-help-guide__contents ol { columns: 1; }
+}

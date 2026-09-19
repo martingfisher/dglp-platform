@@ -506,3 +506,9 @@ clean. They are the only DGLP content on staging.
   latter on events only). A series counts when its next date is in the
   window. Paging and autoload carry the filters. The phone fold script is
   now one partial shared with the directory. Unit 1816, integration 828.
+- **0.15.0 deployed** (19 September): Help. "Help" in the member sidebar
+  (`/dashboard/help/`) and "Team guide" under Review team
+  (`/dashboard/help/team/`, moderators only): contents list, sections,
+  questions people ask as open-and-close answers, and "Download as PDF"
+  (`.../pdf/`). The PDF is built by the plugin's own writer, Helvetica, no
+  library, and parses in an independent reader. Unit 1829, integration 841.
