@@ -332,6 +332,10 @@ final class Frontend {
 		// by another meta_query clause: adding one to the OR above changed how
 		// WordPress joined the date and broke the date order for everything.
 		$query->set( 'dgl_pin_first', true );
+
+		// ?topic= and ?when= narrow the list. Read here, on the main query,
+		// so the numbered pages and the autoload carry them without help.
+		Filters::apply( $query, Filters::args_from( wp_unslash( $_GET ), $type ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- a public filter; nothing is written.
 	}
 
 	/**

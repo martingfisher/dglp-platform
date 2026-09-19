@@ -72,6 +72,15 @@ the calendar. Both are undoable by the organisation and show in their
 notifications and the audit trail. You do not need to do anything; take it
 down yourself only if it should go at once.
 
+## Filters on the public lists
+
+Every public list has a Topic filter, and the events list has a When filter
+too (today, the next seven days, this weekend, this month, next month). A
+repeating event counts when its next date falls in the window. The filters
+fold behind one button on a phone. Topics come from the ones you manage
+under Organisations > Topics in wp-admin; only topics with something
+published under them are offered.
+
 ## How long news stays up
 
 Events and training come off the site on their dates. A news story has no

@@ -3297,6 +3297,58 @@ $ok( true === \DGL\Events\Cancel::reinstate_date( $cx_series, $cx_first, $alice 
 $ok( $cx_first . ' 13:00:00' === (string) get_post_meta( $cx_series, Meta::ITEM_NEXT_AT, true ), 'and the next date is the first Tuesday again' );
 $ok( is_wp_error( \DGL\Events\Cancel::reinstate_date( $cx_series, $cx_first, $alice ) ), 'reinstating a date that is not cancelled is refused' );
 
+$group( 'Topic and date filters narrow the public events list' );
+
+$fl_tz    = wp_timezone();
+$fl_today = new DateTimeImmutable( 'today', $fl_tz );
+$fl_term  = wp_insert_term( 'Walking ' . wp_generate_password( 4, false ), \DGL\Taxonomies::TOPIC );
+$fl_slug  = is_array( $fl_term ) ? (string) get_term( (int) $fl_term['term_id'] )->slug : '';
+
+$fl_soon = $make_item( $org_a, $alice, Statuses::LIVE );
+update_post_meta( $fl_soon, 'dgl_start_datetime', $fl_today->modify( '+2 days' )->format( 'Y-m-d' ) . ' 10:00:00' );
+\DGL\Events\Series::stamp( $fl_soon, PostTypes::EVENT );
+wp_set_object_terms( $fl_soon, [ (int) $fl_term['term_id'] ], \DGL\Taxonomies::TOPIC );
+$fl_far = $make_item( $org_a, $alice, Statuses::LIVE );
+update_post_meta( $fl_far, 'dgl_start_datetime', $fl_today->modify( '+45 days' )->format( 'Y-m-d' ) . ' 10:00:00' );
+\DGL\Events\Series::stamp( $fl_far, PostTypes::EVENT );
+$fl_none = $make_item( $org_a, $alice, Statuses::LIVE );
+\DGL\Events\Series::stamp( $fl_none, PostTypes::EVENT );
+
+$fl_args = \DGL\Frontend\Filters::args_from( [ 'topic' => $fl_slug, 'when' => 'week' ], PostTypes::EVENT );
+$ok( $fl_slug === $fl_args['topic'] && 'week' === $fl_args['when'], 'a real topic and a known window are kept' );
+$ok( [ 'topic' => '', 'when' => '' ] === \DGL\Frontend\Filters::args_from( [ 'topic' => 'no-such-topic', 'when' => 'someday' ], PostTypes::EVENT ), 'an unknown topic or window is dropped' );
+$ok( '' === \DGL\Frontend\Filters::args_from( [ 'when' => 'week' ], PostTypes::NEWS )['when'], 'the date window is for events only' );
+$ok( isset( \DGL\Frontend\Filters::topics()[ $fl_slug ] ), 'a topic with something under it is offered' );
+$ok( str_ends_with( \DGL\Frontend\Filters::url( 'https://x.test/events/', $fl_args ), '/events/?topic=' . $fl_slug . '&when=week' ), 'the filtered address carries both' );
+
+$fl_run = static function ( array $get ): array {
+	$_GET = $get;
+	$q    = new WP_Query();
+	$GLOBALS['wp_the_query'] = $q;
+	$ids  = array_map( 'intval', (array) $q->query( [ 'post_type' => PostTypes::EVENT, 'post_status' => Statuses::LIVE, 'posts_per_page' => 500, 'fields' => 'ids' ] ) );
+	$_GET = [];
+	return $ids;
+};
+
+$fl_all = $fl_run( [] );
+$ok( in_array( $fl_soon, $fl_all, true ) && in_array( $fl_far, $fl_all, true ) && in_array( $fl_none, $fl_all, true ), 'unfiltered, all three are listed' );
+$fl_week = $fl_run( [ 'when' => 'week' ] );
+$ok( in_array( $fl_soon, $fl_week, true ) && ! in_array( $fl_far, $fl_week, true ) && ! in_array( $fl_none, $fl_week, true ), 'the next seven days keeps the one in two days, drops the far one and the undated one' );
+$fl_topic = $fl_run( [ 'topic' => $fl_slug ] );
+$ok( [ $fl_soon ] === array_values( array_intersect( $fl_topic, [ $fl_soon, $fl_far, $fl_none ] ) ), 'the topic keeps only the tagged one' );
+$fl_both = $fl_run( [ 'topic' => $fl_slug, 'when' => 'next-month' ] );
+$ok( ! in_array( $fl_soon, $fl_both, true ) && ! in_array( $fl_far, $fl_both, true ), 'topic and window together: nothing of ours is tagged and next month' );
+$fl_series = $make_item( $org_a, $alice, Statuses::LIVE );
+$fl_tue    = $fl_today->modify( 'next tuesday' );
+update_post_meta( $fl_series, 'dgl_start_datetime', $fl_tue->format( 'Y-m-d' ) . ' 13:00:00' );
+update_post_meta( $fl_series, 'dgl_repeat', [ 'freq' => 'weekly', 'weekdays' => [ 2 ], 'until' => $fl_today->modify( '+3 months' )->format( 'Y-m-d' ) ] );
+\DGL\Events\Series::stamp( $fl_series, PostTypes::EVENT );
+$ok( in_array( $fl_series, $fl_run( [ 'when' => 'week' ] ), true ), 'a weekly series with a date in the window is in it' );
+$fl_ordered = $fl_run( [ 'when' => 'month' ] );
+$fl_pos_a   = array_search( $fl_soon, $fl_ordered, true );
+$fl_pos_b   = array_search( $fl_series, $fl_ordered, true );
+$ok( false !== $fl_pos_a && false !== $fl_pos_b && ( ( $fl_today->modify( '+2 days' ) < $fl_tue ) === ( $fl_pos_a < $fl_pos_b ) ), 'and the filtered list keeps date order' );
+
 /* ----------------------------------------------------------------- report */
 
 echo "\n" . str_repeat( '-', 60 ) . "\n";

@@ -501,3 +501,8 @@ clean. They are the only DGLP content on staging.
   (UTC+0). Now `Europe/London`, so the .ics files carry a TZID and the
   hourly sweep reads wall-clock times in the right zone. Production needs
   the same under Settings > General.
+- **0.14.0 deployed** (19 September): Topic and When filters on the public
+  lists (`?topic=<slug>`, `?when=today|week|weekend|month|next-month`, the
+  latter on events only). A series counts when its next date is in the
+  window. Paging and autoload carry the filters. The phone fold script is
+  now one partial shared with the directory. Unit 1816, integration 828.

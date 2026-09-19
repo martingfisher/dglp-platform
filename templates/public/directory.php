@@ -58,7 +58,7 @@ $page_url = static function ( int $page ) use ( $args, $base ): string {
 		 */
 		$filters_on = count( array_filter( $args['filters'] ) );
 		?>
-		<button class="dgl-dir__toggle" type="button" hidden aria-expanded="<?php echo $filters_on > 0 ? 'true' : 'false'; ?>" aria-controls="dgl-dir-filters">
+		<button class="dgl-dir__toggle" type="button" hidden data-dgl-fold aria-expanded="<?php echo $filters_on > 0 ? 'true' : 'false'; ?>" aria-controls="dgl-dir-filters">
 			<?php
 			echo $filters_on > 0
 				/* translators: %d: how many filters are set. */
@@ -89,40 +89,7 @@ $page_url = static function ( int $page ) use ( $args, $base ): string {
 		</div>
 	</form>
 
-	<script>
-	( function () {
-		var toggle = document.querySelector( '.dgl-dir__toggle' );
-		var panel  = document.getElementById( 'dgl-dir-filters' );
-		var narrow = window.matchMedia( '(max-width: 560px)' );
-
-		if ( ! toggle || ! panel || ! narrow ) {
-			return;
-		}
-
-		function apply() {
-			if ( narrow.matches ) {
-				toggle.hidden = false;
-				panel.hidden  = 'true' !== toggle.getAttribute( 'aria-expanded' );
-			} else {
-				toggle.hidden = true;
-				panel.hidden  = false;
-			}
-		}
-
-		toggle.addEventListener( 'click', function () {
-			toggle.setAttribute( 'aria-expanded', 'true' === toggle.getAttribute( 'aria-expanded' ) ? 'false' : 'true' );
-			apply();
-
-			if ( ! panel.hidden ) {
-				var first = panel.querySelector( 'select' );
-				if ( first ) { first.focus(); }
-			}
-		} );
-
-		if ( narrow.addEventListener ) { narrow.addEventListener( 'change', apply ); } else { narrow.addListener( apply ); }
-		apply();
-	}() );
-	</script>
+	<?php \DGL\Dashboard\View::output( 'public/fold-script' ); ?>
 
 	<p class="dgl-dir__count" role="status">
 		<?php
