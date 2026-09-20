@@ -12,6 +12,8 @@ namespace DGL\Email\Digest;
 use DateInterval;
 use DateTimeImmutable;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Digest cadence, and when the next one is owed.
  *

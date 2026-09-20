@@ -548,3 +548,11 @@ clean. They are the only DGLP content on staging.
   https://. The External links check fails an older listing that still
   carries one. `wp dgl links audit` lists stored http links. Help guides
   updated. Unit 1846, integration 905.
+- **0.20.1 deployed** (20 September): security sweep. Every POST handler
+  checks a nonce, every query with input is prepared, uploads go through
+  WordPress's own type check with a jpeg/png/webp allow-list, tokens are
+  hashed or random and compared in constant time, downloads use sanitised
+  file names, rich text is filtered to the toolbar's tags. Two tidy-ups
+  shipped: a direct-access guard on the 31 pure classes that lacked one,
+  and one interpolated (input-free) query rewritten with prepare. Unit
+  1845, integration 901.

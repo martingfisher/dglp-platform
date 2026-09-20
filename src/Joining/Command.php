@@ -70,7 +70,7 @@ final class Command {
 		}
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
-		$blocked = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$audit} WHERE action = 'join_blocked' AND logged_at > '" . gmdate( 'Y-m-d H:i:s', time() - 86400 ) . "'" );
+		$blocked = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$audit} WHERE action = %s AND logged_at > %s", 'join_blocked', gmdate( 'Y-m-d H:i:s', time() - 86400 ) ) );
 		$rows[]  = [ 'what' => 'Robot-looking submits dropped, last 24h (all addresses)', 'value' => (string) $blocked ];
 
 		\WP_CLI\Utils\format_items( 'table', $rows, [ 'what', 'value' ] );

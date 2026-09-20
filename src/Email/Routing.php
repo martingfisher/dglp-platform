@@ -9,6 +9,8 @@ declare( strict_types=1 );
 
 namespace DGL\Email;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * The guard between a staging site and real members' inboxes.
  *

@@ -13,6 +13,8 @@ use DateInterval;
 use DateTimeImmutable;
 use DGL\Access\UserContext;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * The rules an invitation obeys.
  *

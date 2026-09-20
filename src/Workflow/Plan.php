@@ -9,6 +9,8 @@ declare( strict_types=1 );
 
 namespace DGL\Workflow;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * The full consequence of one transition, decided in one place.
  *

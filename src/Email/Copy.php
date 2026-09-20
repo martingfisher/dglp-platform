@@ -11,6 +11,8 @@ namespace DGL\Email;
 
 use DGL\Workflow\Plan;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Every word the workflow sends, in one file.
  *

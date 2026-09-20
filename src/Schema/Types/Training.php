@@ -12,6 +12,8 @@ namespace DGL\Schema\Types;
 use DGL\Schema\Field;
 use DGL\Schema\TypeDefinition;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Training: provider, cost, dates and who it is for, per the dashboard tile.
  */

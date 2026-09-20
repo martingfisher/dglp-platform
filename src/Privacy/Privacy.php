@@ -27,6 +27,8 @@ use DGL\PostTypes;
 use DGL\Statuses;
 use WP_User;
 
+defined( 'ABSPATH' ) || exit;
+
 final class Privacy {
 
 	private const GROUP_MEMBERSHIP = 'dgl-membership';

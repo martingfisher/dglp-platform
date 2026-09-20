@@ -9,6 +9,8 @@ declare( strict_types=1 );
 
 namespace DGL\Access;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * A plain snapshot of an actor, built once per request and passed to
  * {@see Policy}. Deliberately free of WordPress calls so the policy can be

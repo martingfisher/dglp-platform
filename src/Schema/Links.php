@@ -16,6 +16,8 @@ declare( strict_types=1 );
 
 namespace DGL\Schema;
 
+defined( 'ABSPATH' ) || exit;
+
 final class Links {
 
 	/**

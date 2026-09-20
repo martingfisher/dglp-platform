@@ -11,6 +11,8 @@ namespace DGL\Privacy;
 
 use WP_CLI;
 
+defined( 'ABSPATH' ) || exit;
+
 final class Command {
 
 	public static function register(): void {

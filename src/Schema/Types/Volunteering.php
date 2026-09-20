@@ -12,6 +12,8 @@ namespace DGL\Schema\Types;
 use DGL\Schema\Field;
 use DGL\Schema\TypeDefinition;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Volunteering: role, commitment, location and contact, per the dashboard tile.
  *

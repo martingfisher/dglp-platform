@@ -11,6 +11,8 @@ namespace DGL\Schema;
 
 use DateTimeImmutable;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Checks raw input against a field set and normalises what survives.
  *

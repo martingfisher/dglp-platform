@@ -9,6 +9,8 @@ declare( strict_types=1 );
 
 namespace DGL\Schema;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * What makes each of the five types different.
  *

@@ -22,6 +22,8 @@ use DGL\Statuses;
 use WP_Error;
 use WP_Post;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * The one way a submission changes state.
  *

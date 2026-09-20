@@ -12,6 +12,8 @@ namespace DGL\Access;
 use DGL\PostTypes;
 use DGL\Statuses;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Every permission decision in the plugin resolves here.
  *

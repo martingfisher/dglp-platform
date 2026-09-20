@@ -9,6 +9,8 @@ declare( strict_types=1 );
 
 namespace DGL\Email\Digest;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Matches published items against what a subscriber asked for.
  *

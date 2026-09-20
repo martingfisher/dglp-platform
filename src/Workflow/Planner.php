@@ -12,6 +12,8 @@ namespace DGL\Workflow;
 use DGL\Org\Trust;
 use DGL\Statuses;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Turns an action into its full set of consequences.
  *

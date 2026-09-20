@@ -12,6 +12,8 @@ namespace DGL\Schema\Types;
 use DGL\Schema\Field;
 use DGL\Schema\TypeDefinition;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * News carries the least of its own, because the shared basics already cover a
  * headline, a story and an image. It never expires on its own: a story about

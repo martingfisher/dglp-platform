@@ -12,6 +12,8 @@ namespace DGL\Workflow;
 use DGL\Org\Trust;
 use DGL\Statuses;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Which status changes are legal, and what a given action produces.
  *

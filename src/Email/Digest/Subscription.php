@@ -9,6 +9,8 @@ declare( strict_types=1 );
 
 namespace DGL\Email\Digest;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * What a subscriber asked for.
  *

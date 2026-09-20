@@ -9,6 +9,8 @@ declare( strict_types=1 );
 
 namespace DGL\Access;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * A plain snapshot of a submission. Built from the `dgl_items` index rather
  * than a full post object, because the policy only needs four fields and the

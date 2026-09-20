@@ -14,6 +14,8 @@ declare( strict_types=1 );
 
 namespace DGL\Help;
 
+defined( 'ABSPATH' ) || exit;
+
 final class Pdf {
 
 	private const PAGE_W  = 595.28;

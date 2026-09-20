@@ -16,6 +16,8 @@ use DGL\Schema\Types\News;
 use DGL\Schema\Types\Training;
 use DGL\Schema\Types\Volunteering;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Resolves the full field set for a content type.
  *

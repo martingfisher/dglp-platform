@@ -11,6 +11,8 @@ namespace DGL\Email\Digest;
 
 use DGL\Email\Message;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Digest wording. Pure: takes strings, returns a {@see Message}.
  *

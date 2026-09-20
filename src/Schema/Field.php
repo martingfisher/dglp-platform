@@ -9,6 +9,8 @@ declare( strict_types=1 );
 
 namespace DGL\Schema;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * A single field definition.
  *
