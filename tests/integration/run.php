@@ -3485,14 +3485,17 @@ for ( $i = 0; $i < \DGL\Joining\Guard::PER_EMAIL + 1; $i++ ) {
 $ok( [] === array_filter( array_slice( $gd_hits, 0, \DGL\Joining\Guard::PER_EMAIL ) ) && '' !== end( $gd_hits ) && str_contains( (string) end( $gd_hits ), 'that address' ), 'three starts for one address go through and the fourth is told to wait' );
 $ok( '' === \DGL\Joining\Guard::limited( 'other-' . $gd_email, $gd_ip ), 'another address from the same connection is still fine' );
 \DGL\Joining\Guard::reset( $gd_email, $gd_ip );
-$gd_ip2 = '198.51.100.' . wp_rand( 1, 250 );
+$gd_ip2  = '198.51.100.' . wp_rand( 1, 250 );
+$gd_run  = wp_generate_password( 6, false );
+\DGL\Joining\Guard::reset( '', $gd_ip2 );
 $gd_last = '';
 for ( $i = 0; $i < \DGL\Joining\Guard::PER_IP + 1; $i++ ) {
-	$gd_last = \DGL\Joining\Guard::limited( 'many-' . $i . '@example.test', $gd_ip2 );
+	// Fresh addresses each run: the per-address counter lives an hour and would otherwise trip first.
+	$gd_last = \DGL\Joining\Guard::limited( 'many-' . $gd_run . '-' . $i . '@example.test', $gd_ip2 );
 }
 $ok( str_contains( $gd_last, 'your connection' ), 'and the eleventh address from one connection in an hour is told to wait' );
 \DGL\Joining\Guard::reset( '', $gd_ip2 );
-$ok( '' === \DGL\Joining\Guard::limited( 'again@example.test', $gd_ip2 ), 'reset clears the count' );
+$ok( '' === \DGL\Joining\Guard::limited( 'again-' . $gd_run . '@example.test', $gd_ip2 ), 'reset clears the count' );
 
 $group( 'Joining with an address that already has an account is sent to sign in' );
 
