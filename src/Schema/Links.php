@@ -4,10 +4,10 @@
  *
  * Members type "example.com". That is a web address to a person and not
  * one to a computer, so every form that takes one puts "https://" in front
- * when no scheme was given. Only when none was given: "http://" typed on
- * purpose is kept, because a few small groups' sites still have no
- * certificate and a forced https would break the link; the review team's
- * link check says when https would have worked. Pure, no WordPress.
+ * when no scheme was given. Plain "http://" is refused everywhere, by
+ * DGLP's decision of 20 September 2026: the site lists nothing served
+ * without a certificate, and the team help a group secure its hosting
+ * rather than link to it insecurely. Pure, no WordPress.
  *
  * @package DGL
  */
@@ -47,6 +47,22 @@ final class Links {
 		$scheme = parse_url( $url, PHP_URL_SCHEME );
 
 		return is_string( $scheme ) && in_array( strtolower( $scheme ), [ 'http', 'https' ], true );
+	}
+
+	/** True for https only. The site lists nothing served over plain http. */
+	public static function is_secure( string $url ): bool {
+		$scheme = parse_url( $url, PHP_URL_SCHEME );
+
+		return is_string( $scheme ) && 'https' === strtolower( $scheme );
+	}
+
+	/**
+	 * The http links in a piece of HTML, the ones the site refuses.
+	 *
+	 * @return string[]
+	 */
+	public static function insecure_hrefs( string $html ): array {
+		return array_values( array_filter( self::hrefs( $html ), static fn( string $h ): bool => 1 === preg_match( '/^http:\/\//i', $h ) ) );
 	}
 
 	/** The same address over https, or null when it is not a plain http one. */

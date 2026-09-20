@@ -231,12 +231,14 @@ Every row is Fine, Look or Broken and says what to do. It changes nothing.
 ## Web addresses
 
 Every box that takes a web address accepts "example.org.uk" and stores it
-as https://example.org.uk. An address typed with http:// is kept as typed,
-because a few small groups' sites still have no certificate and a forced
-https would break the link. The External links check on the review screen
-now also reads the links inside the words, and says when an http link
-would have worked over https, so you can ask the member to change it.
-Links inserted with the editor's link button get https:// too.
+as https://example.org.uk. Plain http:// is refused everywhere, in the
+address boxes, in the words and on the join form: DGLP decided on 20
+September 2026 that the site links to nothing served without a
+certificate, and offers to help a group secure its hosting instead. The
+editor's link button turns a typed http:// into https://. The External
+links check reads the links inside the words too and marks any http link
+on an older listing as a fail. `wp dgl links audit [--live]` lists every
+stored http link so they can be chased before go-live.
 
 ## Images and contact details on submissions
 

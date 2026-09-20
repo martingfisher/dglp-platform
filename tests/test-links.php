@@ -26,3 +26,8 @@ Harness::assert_true( Links::is_web( 'https://a.b' ) && Links::is_web( 'HTTP://a
 Harness::assert_same( 'https://a.b/c', Links::https_twin( 'http://a.b/c' ), 'the https twin of an http address' );
 Harness::assert_same( null, Links::https_twin( 'https://a.b/c' ), 'and none for one already https' );
 Harness::assert_same( [ 'https://a.b/', 'http://c.d/?x=1&y=2', '#top' ], Links::hrefs( '<p><a href="https://a.b/">a</a> <a href=\'http://c.d/?x=1&amp;y=2\'>c</a> <a href="https://a.b/">again</a> <a href="#top">t</a></p>' ), 'every href once, entities decoded' );
+
+Harness::group( 'Links: plain http is not secure, and is found in the words' );
+
+Harness::assert_true( Links::is_secure( 'https://a.b' ) && Links::is_secure( 'HTTPS://a.b' ) && ! Links::is_secure( 'http://a.b' ) && ! Links::is_secure( 'mailto:x@y.z' ), 'is_secure means https' );
+Harness::assert_same( [ 'http://c.d/' ], Links::insecure_hrefs( '<a href="https://a.b/">a</a> <a href="http://c.d/">c</a> <a href="mailto:x@y.z">m</a>' ), 'only the http links are picked out' );

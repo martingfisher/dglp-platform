@@ -226,7 +226,6 @@ foreach ( [
 
 foreach ( [
 	'https://doinggoodleeds.org.uk'        => 'https://doinggoodleeds.org.uk',
-	'http://doinggoodleeds.org.uk'         => 'http://doinggoodleeds.org.uk',
 	'doinggoodleeds.org.uk'                => 'https://doinggoodleeds.org.uk',
 	'doinggoodleeds.org.uk/events'         => 'https://doinggoodleeds.org.uk/events',
 	'//doinggoodleeds.org.uk'              => 'https://doinggoodleeds.org.uk',
@@ -235,6 +234,9 @@ foreach ( [
 	$r = Validator::validate( [ $link ], [ 'link' => $in ] );
 	Harness::assert_same( $expected, $r['values']['link'] ?? null, '"' . $in . '" accepted as ' . $expected );
 }
+
+$r = Validator::validate( [ $link ], [ 'link' => 'http://doinggoodleeds.org.uk' ] );
+Harness::assert_true( isset( $r['errors']['link'] ) && str_contains( $r['errors']['link'], 'https://' ), 'plain http is refused, with https named: the site links to nothing served without a certificate' );
 
 Harness::group( 'Meta registration defaults match their declared types' );
 

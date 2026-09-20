@@ -205,13 +205,13 @@ final class Checks {
 
 		if ( [] !== $insecure ) {
 			/* translators: %s: comma separated URLs. */
-			$detail[] = sprintf( __( 'Typed as http but https works, so worth changing: %s', 'dgl-platform' ), implode( ', ', array_map( 'esc_url_raw', $insecure ) ) );
+			$detail[] = sprintf( __( 'Plain http, which the site does not link to; send it back to be changed to https: %s', 'dgl-platform' ), implode( ', ', array_map( 'esc_url_raw', $insecure ) ) );
 		}
 
 		return [
 			'key'    => 'links',
 			'label'  => __( 'External links', 'dgl-platform' ),
-			'status' => [] === $broken && [] === $insecure ? self::PASS : self::WARN,
+			'status' => [] !== $insecure ? self::FAIL : ( [] === $broken ? self::PASS : self::WARN ),
 			'detail' => implode( ' ', $detail ),
 		];
 	}
@@ -236,18 +236,11 @@ final class Checks {
 				continue;
 			}
 
-			// An http link that would work over https is worth a word, not a
-			// silent rewrite: the member typed it, and a few sites really are
-			// http only.
-			$twin = \DGL\Schema\Links::https_twin( $url );
-
-			if ( null !== $twin ) {
-				$twin_code = self::head( $twin );
-				if ( 0 !== $twin_code && $twin_code < 400 ) {
-					$insecure[] = $url;
-				}
-			}
 		}
+
+		// The site lists nothing served over plain http. New submissions cannot
+		// carry one; an older listing can, and the reviewer should see it.
+		$insecure = array_values( array_filter( $urls, static fn( string $u ): bool => ! \DGL\Schema\Links::is_secure( $u ) ) );
 
 		$result = [
 			'checked_at' => time(),

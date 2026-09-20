@@ -536,6 +536,10 @@ final class Controller {
 
 			$problem = InviteRules::password_problem( $password, $confirm );
 
+			if ( '' === $problem && 'register' === $intent && '' !== $data['values']['org_website'] && ! \DGL\Schema\Links::is_secure( $data['values']['org_website'] ) ) {
+				$problem = __( 'The website has to start with https://. The site does not link to pages served over plain http. Leave it out for now if the site has no https, and the DGLP team can help.', 'dgl-platform' );
+			}
+
 			if ( '' !== $problem ) {
 				$data['error'] = $problem;
 			} elseif ( 'join' === $intent ) {

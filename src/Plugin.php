@@ -105,6 +105,7 @@ final class Plugin {
 			ProbeCommand::register();
 			\DGL\Reports\Command::register();
 			\DGL\Joining\Command::register();
+			\DGL\Schema\LinksCommand::register();
 		}
 
 		\DGL\Admin\Health::watch();

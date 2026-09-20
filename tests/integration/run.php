@@ -3511,7 +3511,12 @@ $group( 'Typed web addresses: https by default, http kept, body links checked' )
 $lk_fields = array_values( array_filter( \DGL\Schema\FieldRegistry::for_type( PostTypes::EVENT ), static fn( \DGL\Schema\Field $f ): bool => 'website' === $f->key ) );
 $lk_v = static fn( string $typed ): array => \DGL\Schema\Validator::validate( $lk_fields, [ 'website' => $typed ] );
 $ok( [] === $lk_v( 'example.com' )['errors'] && 'https://example.com' === $lk_v( 'example.com' )['values']['website'], 'the website field takes a bare domain and stores it as https' );
-$ok( 'http://old.example.com' === $lk_v( 'http://old.example.com' )['values']['website'], 'http typed on purpose is stored as typed' );
+$ok( [] !== $lk_v( 'http://old.example.com' )['errors'] && str_contains( (string) $lk_v( 'http://old.example.com' )['errors']['website'], 'https://' ), 'http typed on purpose is refused, with https named in the message' );
+$lk_body = array_values( array_filter( \DGL\Schema\FieldRegistry::for_type( PostTypes::EVENT ), static fn( \DGL\Schema\Field $f ): bool => 'body' === $f->key ) );
+$lk_b = static fn( string $html ): array => \DGL\Schema\Validator::validate( $lk_body, [ 'body' => $html ] );
+$ok( [] === $lk_b( '<p>See <a href="https://a.example">a</a> and <a href="mailto:x@y.z">m</a>.</p>' )['errors'], 'the words may carry https and mailto links' );
+$lk_bad = $lk_b( '<p>See <a href="http://a.example/x">a</a> and <a href="http://b.example">b</a>.</p>' )['errors'];
+$ok( isset( $lk_bad['body'] ) && str_contains( $lk_bad['body'], 'http://a.example/x' ) && str_contains( $lk_bad['body'], 'http://b.example' ), 'http links in the words are refused and named' );
 $ok( [] !== $lk_v( 'javascript:alert(1)' )['errors'], 'a javascript: address is refused, not rewritten' );
 $ok( [] !== $lk_v( 'not a web address' )['errors'], 'words are refused' );
 $lk_html = \DGL\Dashboard\FieldRenderer::render( $lk_fields[0], '', '' );
@@ -3523,6 +3528,9 @@ update_post_meta( $lk_item, 'dgl_website', 'https://site.example.test' );
 update_post_meta( $lk_item, 'dgl_booking_url', 'https://book.example.test/x' );
 $lk_urls = \DGL\Moderation\Checks::external_urls( $lk_item, PostTypes::EVENT );
 $ok( in_array( 'http://links.example.test/page', $lk_urls, true ) && in_array( 'https://site.example.test', $lk_urls, true ) && in_array( 'https://book.example.test/x', $lk_urls, true ), 'the link check sees the address fields and the links in the words' );
+update_post_meta( $lk_item, \DGL\Moderation\Checks::LINK_RESULT_META, [ 'checked_at' => time(), 'broken' => [], 'insecure' => [ 'http://links.example.test/page' ] ] );
+$lk_row = array_values( array_filter( \DGL\Moderation\Checks::run( $lk_item, PostTypes::EVENT ), static fn( array $r ): bool => 'links' === $r['key'] ) )[0] ?? [];
+$ok( \DGL\Moderation\Checks::FAIL === ( $lk_row['status'] ?? '' ) && str_contains( (string) ( $lk_row['detail'] ?? '' ), 'Plain http' ), 'an older listing with an http link fails the link check' );
 $ok( [] === array_filter( $lk_urls, static fn( string $u ): bool => str_contains( $u, 'mailto:' ) || str_contains( $u, home_url() ) ), 'and ignores mailto and our own pages' );
 
 /* ----------------------------------------------------------------- report */

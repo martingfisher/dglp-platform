@@ -171,8 +171,38 @@ final class Validator {
 			Field::MONEY    => self::check_money( $field, $value ),
 			Field::SELECT   => self::check_select( $field, $value ),
 			Field::IMAGE    => self::check_image( $field, $value ),
+			Field::RICHTEXT => self::check_richtext( $field, $value ),
 			default         => [ $value, null ],
 		};
+	}
+
+	/**
+	 * The words may carry links, and every one has to be https, like the
+	 * address fields. A pasted document is the usual way an http one arrives.
+	 *
+	 * @return array{0: mixed, 1: string|null}
+	 */
+	private static function check_richtext( Field $field, string $value ): array {
+		$insecure = Links::insecure_hrefs( $value );
+
+		if ( [] === $insecure ) {
+			return [ $value, null ];
+		}
+
+		return [
+			null,
+			sprintf(
+				/* translators: 1: field label, 2: the links. */
+				_n(
+					'%1$s has a link that starts with http:// and the site does not link to pages served over plain http. Change it to https://, or take it out: %2$s',
+					'%1$s has links that start with http:// and the site does not link to pages served over plain http. Change them to https://, or take them out: %2$s',
+					count( $insecure ),
+					'dgl-platform'
+				),
+				$field->label,
+				implode( ', ', $insecure )
+			),
+		];
 	}
 
 	/**
@@ -202,7 +232,12 @@ final class Validator {
 
 		if ( ! Links::is_web( $value ) ) {
 			/* translators: %s: field label. */
-			return [ null, sprintf( __( '%s has to be a http or https web address.', 'dgl-platform' ), $field->label ) ];
+			return [ null, sprintf( __( '%s has to be a web address.', 'dgl-platform' ), $field->label ) ];
+		}
+
+		if ( ! Links::is_secure( $value ) ) {
+			/* translators: %s: field label. */
+			return [ null, sprintf( __( '%s has to start with https://. The site does not link to pages served over plain http. If the site does not work over https, ask the DGLP team about securing it.', 'dgl-platform' ), $field->label ) ];
 		}
 
 		if ( false === filter_var( $value, FILTER_VALIDATE_URL ) ) {

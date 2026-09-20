@@ -416,6 +416,8 @@
 
 				if ( url && ! /^(?:[a-z][a-z0-9+.\-]*:|#|\?|\.|\/)/i.test( url ) ) {
 					field.value = 'https://' + url;
+				} else if ( /^http:\/\//i.test( url ) ) {
+					field.value = 'https://' + url.slice( 7 );
 				}
 			}
 
@@ -449,6 +451,21 @@
 
 			// An email address becomes a mail link; anything else a web one.
 			field.value = ( /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test( url ) ? 'mailto:' : 'https://' ) + url;
+		} );
+
+		// The site lists nothing over plain http, so a typed http:// is
+		// upgraded here rather than refused at save, where the member would
+		// have to find the link again.
+		editor.on( 'BeforeExecCommand', function ( e ) {
+			if ( 'wp_link_apply' !== e.command ) {
+				return;
+			}
+
+			var field = document.querySelector( '.wp-link-input input' );
+
+			if ( field && /^http:\/\//i.test( field.value.trim() ) ) {
+				field.value = 'https://' + field.value.trim().slice( 7 );
+			}
 		} );
 	}
 

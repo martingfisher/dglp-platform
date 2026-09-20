@@ -541,3 +541,10 @@ clean. They are the only DGLP content on staging.
   button puts https:// on a bare domain instead of http://. The External
   links check reads links in the words too and flags http links where
   https works. Unit 1842, integration 899.
+- **0.20.0 deployed** (20 September): plain http:// refused everywhere,
+  by Martin's decision: address boxes, links in the words (a pasted
+  document with an http link is sent back at save with the links named),
+  and the join form's website. The editor upgrades a typed http:// to
+  https://. The External links check fails an older listing that still
+  carries one. `wp dgl links audit` lists stored http links. Help guides
+  updated. Unit 1846, integration 905.
