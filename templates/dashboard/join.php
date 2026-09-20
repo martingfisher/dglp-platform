@@ -146,7 +146,7 @@ $v      = static fn( string $k ): string => (string) ( $values[ $k ] ?? '' );
 				</div>
 				<div class="dgl-field-row">
 					<label class="dgl-label" for="dgl_org_website"><?php esc_html_e( 'Website', 'dgl-platform' ); ?></label>
-					<input class="dgl-field" type="url" id="dgl_org_website" name="dgl_org_website" value="<?php echo esc_attr( $v( 'org_website' ) ); ?>">
+					<input class="dgl-field" type="text" inputmode="url" autocomplete="url" spellcheck="false" placeholder="example.org.uk" id="dgl_org_website" name="dgl_org_website" value="<?php echo esc_attr( $v( 'org_website' ) ); ?>">
 				</div>
 				<div class="dgl-field-row">
 					<label class="dgl-label" for="dgl_org_number"><?php esc_html_e( 'Charity or company number', 'dgl-platform' ); ?></label>

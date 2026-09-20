@@ -127,8 +127,12 @@ final class FieldRenderer {
 			Field::SELECT   => self::select( $field, $id, $name, $value, $aria ),
 			Field::IMAGE    => self::image( $field, $id, $name, $value, $aria ),
 			default         => sprintf(
-				'<input class="dgl-field" type="%s"%s value="%s"%s%s%s%s>',
+				'<input class="dgl-field" type="%s"%s%s value="%s"%s%s%s%s>',
 				esc_attr( self::input_type( $field->type ) ),
+				// A web address is a text box with a URL keyboard, not type="url":
+				// the browser's own check refuses "example.com" before our
+				// validator can put "https://" in front of it.
+				Field::URL === $field->type ? ' inputmode="url" autocomplete="url" spellcheck="false" placeholder="example.org.uk"' : '',
 				$common,
 				esc_attr( is_scalar( $value ) ? (string) $value : '' ),
 				$required,
@@ -206,7 +210,6 @@ final class FieldRenderer {
 			Field::DATE     => 'date',
 			Field::DATETIME => 'datetime-local',
 			Field::EMAIL    => 'email',
-			Field::URL      => 'url',
 			Field::TEL      => 'tel',
 			Field::NUMBER,
 			Field::MONEY    => 'number',

@@ -3347,7 +3347,9 @@ $ok( in_array( $fl_series, $fl_run( [ 'when' => 'week' ] ), true ), 'a weekly se
 $fl_ordered = $fl_run( [ 'when' => 'month' ] );
 $fl_pos_a   = array_search( $fl_soon, $fl_ordered, true );
 $fl_pos_b   = array_search( $fl_series, $fl_ordered, true );
-$ok( false !== $fl_pos_a && false !== $fl_pos_b && ( ( $fl_today->modify( '+2 days' ) < $fl_tue ) === ( $fl_pos_a < $fl_pos_b ) ), 'and the filtered list keeps date order' );
+$fl_next_a  = (string) get_post_meta( $fl_soon, Meta::ITEM_NEXT_AT, true );
+$fl_next_b  = (string) get_post_meta( $fl_series, Meta::ITEM_NEXT_AT, true );
+$ok( false !== $fl_pos_a && false !== $fl_pos_b && ( ( $fl_next_a < $fl_next_b ) === ( $fl_pos_a < $fl_pos_b ) ), 'and the filtered list keeps date order (' . $fl_next_a . ' vs ' . $fl_next_b . ')' );
 
 $group( 'Help guides: one structure for the page and the PDF, for members and for the team' );
 
@@ -3503,6 +3505,25 @@ $ex_fresh = 'fresh-' . wp_generate_password( 4, false ) . '@example.test';
 $ex_go    = \DGL\Joining\Joining::start( $ex_fresh );
 $ex_rows  = \DGL\Joining\Store::for_email( $ex_fresh );
 $ok( true === $ex_go['ok'] && 1 === count( $ex_rows ) && 'unverified' === $ex_rows[0]->state, 'a fresh address gets one unverified signup, listed by address' );
+
+$group( 'Typed web addresses: https by default, http kept, body links checked' );
+
+$lk_fields = array_values( array_filter( \DGL\Schema\FieldRegistry::for_type( PostTypes::EVENT ), static fn( \DGL\Schema\Field $f ): bool => 'website' === $f->key ) );
+$lk_v = static fn( string $typed ): array => \DGL\Schema\Validator::validate( $lk_fields, [ 'website' => $typed ] );
+$ok( [] === $lk_v( 'example.com' )['errors'] && 'https://example.com' === $lk_v( 'example.com' )['values']['website'], 'the website field takes a bare domain and stores it as https' );
+$ok( 'http://old.example.com' === $lk_v( 'http://old.example.com' )['values']['website'], 'http typed on purpose is stored as typed' );
+$ok( [] !== $lk_v( 'javascript:alert(1)' )['errors'], 'a javascript: address is refused, not rewritten' );
+$ok( [] !== $lk_v( 'not a web address' )['errors'], 'words are refused' );
+$lk_html = \DGL\Dashboard\FieldRenderer::render( $lk_fields[0], '', '' );
+$ok( str_contains( $lk_html, 'type="text"' ) && str_contains( $lk_html, 'inputmode="url"' ) && ! str_contains( $lk_html, 'type="url"' ), 'the input is a text box with a URL keyboard, so the browser does not refuse a bare domain first' );
+
+$lk_item = $make_item( $org_a, $alice, Statuses::DRAFT );
+wp_update_post( [ 'ID' => $lk_item, 'post_content' => '<p>See <a href="http://links.example.test/page">this</a> and <a href="' . home_url( '/events/' ) . '">ours</a> and <a href="mailto:x@y.z">mail</a>.</p>' ] );
+update_post_meta( $lk_item, 'dgl_website', 'https://site.example.test' );
+update_post_meta( $lk_item, 'dgl_booking_url', 'https://book.example.test/x' );
+$lk_urls = \DGL\Moderation\Checks::external_urls( $lk_item, PostTypes::EVENT );
+$ok( in_array( 'http://links.example.test/page', $lk_urls, true ) && in_array( 'https://site.example.test', $lk_urls, true ) && in_array( 'https://book.example.test/x', $lk_urls, true ), 'the link check sees the address fields and the links in the words' );
+$ok( [] === array_filter( $lk_urls, static fn( string $u ): bool => str_contains( $u, 'mailto:' ) || str_contains( $u, home_url() ) ), 'and ignores mailto and our own pages' );
 
 /* ----------------------------------------------------------------- report */
 

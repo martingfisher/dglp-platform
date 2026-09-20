@@ -394,6 +394,82 @@
 
 	if ( 'loading' === document.readyState ) {
 		document.addEventListener( 'DOMContentLoaded', init );
+
+	/*
+	 * WordPress's link dialog puts "http://" in front of a bare domain. Every
+	 * other address on the site gets "https://", so this one does too: the
+	 * scheme goes on before WordPress looks, and WordPress then leaves it.
+	 * Typed "http://" is kept, as everywhere else.
+	 */
+	function preferHttps() {
+		if ( ! window.wpLink || 'function' !== typeof window.wpLink.correctURL ) {
+			return;
+		}
+
+		var original = window.wpLink.correctURL;
+
+		window.wpLink.correctURL = function () {
+			var field = document.getElementById( 'wp-link-url' );
+
+			if ( field ) {
+				var url = field.value.trim();
+
+				if ( url && ! /^(?:[a-z][a-z0-9+.\-]*:|#|\?|\.|\/)/i.test( url ) ) {
+					field.value = 'https://' + url;
+				}
+			}
+
+			return original.apply( this, arguments );
+		};
+	}
+
+	/*
+	 * The editor's inline link box (the small one under the toolbar) is a
+	 * TinyMCE plugin with the same "http://" habit and no setting for it.
+	 * Just before it applies the link, the address in its box gets the
+	 * scheme, so the plugin finds one and leaves it alone.
+	 */
+	function preferHttpsInline( editor ) {
+		editor.on( 'BeforeExecCommand', function ( e ) {
+			if ( 'wp_link_apply' !== e.command ) {
+				return;
+			}
+
+			var field = document.querySelector( '.wp-link-input input' );
+
+			if ( ! field ) {
+				return;
+			}
+
+			var url = field.value.trim();
+
+			if ( ! url || /^(?:[a-z][a-z0-9+.\-]*:|#|\?|\.|\/)/i.test( url ) ) {
+				return;
+			}
+
+			// An email address becomes a mail link; anything else a web one.
+			field.value = ( /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test( url ) ? 'mailto:' : 'https://' ) + url;
+		} );
+	}
+
+	function watchEditors() {
+		if ( ! window.tinymce ) {
+			return;
+		}
+
+		window.tinymce.on( 'AddEditor', function ( e ) {
+			preferHttpsInline( e.editor );
+		} );
+
+		( window.tinymce.editors || [] ).forEach( preferHttpsInline );
+	}
+
+	if ( 'loading' === document.readyState ) {
+		document.addEventListener( 'DOMContentLoaded', function () { preferHttps(); watchEditors(); } );
+	} else {
+		preferHttps();
+		watchEditors();
+	}
 	} else {
 		init();
 	}

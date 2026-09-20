@@ -200,7 +200,6 @@ final class MetaBoxes {
 				$types = [
 					Field::DATE     => 'date',
 					Field::DATETIME => 'datetime-local',
-					Field::URL      => 'url',
 					Field::EMAIL    => 'email',
 					Field::TEL      => 'tel',
 					Field::NUMBER   => 'number',

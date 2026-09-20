@@ -191,23 +191,28 @@ final class Checks {
 			];
 		}
 
-		$broken = (array) ( $cached['broken'] ?? [] );
+		$broken   = (array) ( $cached['broken'] ?? [] );
+		$insecure = (array) ( $cached['insecure'] ?? [] );
+		$detail   = [];
+
+		if ( [] === $broken ) {
+			/* translators: %d: number of links. */
+			$detail[] = sprintf( _n( '%d link responded.', 'All %d links responded.', count( $urls ), 'dgl-platform' ), count( $urls ) );
+		} else {
+			/* translators: %s: comma separated URLs. */
+			$detail[] = sprintf( __( 'No response from: %s', 'dgl-platform' ), implode( ', ', array_map( 'esc_url_raw', $broken ) ) );
+		}
+
+		if ( [] !== $insecure ) {
+			/* translators: %s: comma separated URLs. */
+			$detail[] = sprintf( __( 'Typed as http but https works, so worth changing: %s', 'dgl-platform' ), implode( ', ', array_map( 'esc_url_raw', $insecure ) ) );
+		}
 
 		return [
 			'key'    => 'links',
 			'label'  => __( 'External links', 'dgl-platform' ),
-			'status' => empty( $broken ) ? self::PASS : self::WARN,
-			'detail' => empty( $broken )
-				? sprintf(
-					/* translators: %d: number of links. */
-					_n( '%d link responded.', 'All %d links responded.', count( $urls ), 'dgl-platform' ),
-					count( $urls )
-				)
-				: sprintf(
-					/* translators: %s: comma separated URLs. */
-					__( 'No response from: %s', 'dgl-platform' ),
-					implode( ', ', array_map( 'esc_url_raw', $broken ) )
-				),
+			'status' => [] === $broken && [] === $insecure ? self::PASS : self::WARN,
+			'detail' => implode( ' ', $detail ),
 		];
 	}
 
@@ -217,31 +222,37 @@ final class Checks {
 	 * @return array{checked_at:int, broken:string[]}
 	 */
 	public static function check_links_now( int $post_id, string $post_type ): array {
-		$urls   = array_slice( self::external_urls( $post_id, $post_type ), 0, self::LINK_MAX );
-		$broken = [];
+		$urls     = array_slice( self::external_urls( $post_id, $post_type ), 0, self::LINK_MAX );
+		$broken   = [];
+		$insecure = [];
 
 		foreach ( $urls as $url ) {
-			$response = wp_safe_remote_head(
-				$url,
-				[
-					'timeout'     => self::LINK_TIMEOUT,
-					'redirection' => 3,
-					'user-agent'  => 'DGLP Platform link check',
-				]
-			);
-
-			$code = is_wp_error( $response ) ? 0 : (int) wp_remote_retrieve_response_code( $response );
+			$code = self::head( $url );
 
 			// A HEAD refusal is common and not the same as a dead link, so only
 			// a real failure or a 4xx/5xx counts.
 			if ( 0 === $code || $code >= 400 ) {
 				$broken[] = $url;
+				continue;
+			}
+
+			// An http link that would work over https is worth a word, not a
+			// silent rewrite: the member typed it, and a few sites really are
+			// http only.
+			$twin = \DGL\Schema\Links::https_twin( $url );
+
+			if ( null !== $twin ) {
+				$twin_code = self::head( $twin );
+				if ( 0 !== $twin_code && $twin_code < 400 ) {
+					$insecure[] = $url;
+				}
 			}
 		}
 
 		$result = [
 			'checked_at' => time(),
 			'broken'     => $broken,
+			'insecure'   => $insecure,
 		];
 
 		update_post_meta( $post_id, self::LINK_RESULT_META, $result );
@@ -306,30 +317,51 @@ final class Checks {
 		];
 	}
 
+	/** The response code for one address, 0 when it did not answer. */
+	private static function head( string $url ): int {
+		$response = wp_safe_remote_head(
+			$url,
+			[
+				'timeout'     => self::LINK_TIMEOUT,
+				'redirection' => 3,
+				'user-agent'  => 'DGLP Platform link check',
+			]
+		);
+
+		return is_wp_error( $response ) ? 0 : (int) wp_remote_retrieve_response_code( $response );
+	}
+
 	/**
-	 * Every external URL on the item.
+	 * Every external URL on the item: the address fields, and every link in
+	 * the words, which is where an editor-inserted "http://" ends up.
 	 *
 	 * @return string[]
 	 */
-	private static function external_urls( int $post_id, string $post_type ): array {
+	public static function external_urls( int $post_id, string $post_type ): array {
 		$home = wp_parse_url( home_url(), PHP_URL_HOST );
 		$urls = [];
+		$post = get_post( $post_id );
 
 		foreach ( FieldRegistry::for_type( $post_type ) as $field ) {
-			if ( Field::URL !== $field->type ) {
+			if ( Field::URL === $field->type ) {
+				$candidates = [ (string) get_post_meta( $post_id, $field->meta_key(), true ) ];
+			} elseif ( Field::RICHTEXT === $field->type ) {
+				$html       = 'body' === $field->key && null !== $post ? (string) $post->post_content : (string) get_post_meta( $post_id, $field->meta_key(), true );
+				$candidates = \DGL\Schema\Links::hrefs( $html );
+			} else {
 				continue;
 			}
 
-			$value = (string) get_post_meta( $post_id, $field->meta_key(), true );
+			foreach ( $candidates as $value ) {
+				if ( '' === $value || ! \DGL\Schema\Links::is_web( $value ) ) {
+					continue;
+				}
 
-			if ( '' === $value ) {
-				continue;
-			}
+				$host = wp_parse_url( $value, PHP_URL_HOST );
 
-			$host = wp_parse_url( $value, PHP_URL_HOST );
-
-			if ( is_string( $host ) && $host !== $home ) {
-				$urls[] = $value;
+				if ( is_string( $host ) && $host !== $home ) {
+					$urls[] = $value;
+				}
 			}
 		}
 

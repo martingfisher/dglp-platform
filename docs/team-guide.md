@@ -228,6 +228,16 @@ Every row is Fine, Look or Broken and says what to do. It changes nothing.
   them so and sends them to sign in with the address filled in, or to set a
   new password. Nothing is sent and no signup is created.
 
+## Web addresses
+
+Every box that takes a web address accepts "example.org.uk" and stores it
+as https://example.org.uk. An address typed with http:// is kept as typed,
+because a few small groups' sites still have no certificate and a forced
+https would break the link. The External links check on the review screen
+now also reads the links inside the words, and says when an http link
+would have worked over https, so you can ask the member to change it.
+Links inserted with the editor's link button get https:// too.
+
 ## Images and contact details on submissions
 
 A photo is shrunk to 1600px and stripped of its camera data in the

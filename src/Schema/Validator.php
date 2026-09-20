@@ -191,21 +191,16 @@ final class Validator {
 	 * @return array{0: mixed, 1: string|null}
 	 */
 	private static function check_url( Field $field, string $value ): array {
-		$scheme = parse_url( $value, PHP_URL_SCHEME );
-
 		/*
-		 * Only supply a scheme when there genuinely is not one. Prepending
-		 * blindly turns "javascript:alert(1)" into "https://javascript:alert(1)",
-		 * which passes a naive scheme check and stores the original payload. A
-		 * bare domain is what members actually type, so that case is still met
-		 * halfway.
+		 * One rule for every typed address: a bare domain gets "https://",
+		 * anything with a scheme keeps it. "javascript:alert(1)" therefore
+		 * arrives here with its own scheme and is refused on the next line
+		 * rather than hidden behind "https://".
 		 */
-		if ( ! is_string( $scheme ) || '' === $scheme ) {
-			$value  = 'https://' . ltrim( $value, '/' );
-			$scheme = 'https';
-		}
+		$value  = Links::normalise( $value );
+		$scheme = (string) parse_url( $value, PHP_URL_SCHEME );
 
-		if ( ! in_array( strtolower( $scheme ), [ 'http', 'https' ], true ) ) {
+		if ( ! Links::is_web( $value ) ) {
 			/* translators: %s: field label. */
 			return [ null, sprintf( __( '%s has to be a http or https web address.', 'dgl-platform' ), $field->label ) ];
 		}

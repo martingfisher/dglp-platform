@@ -26,6 +26,7 @@ require __DIR__ . '/test-repeat-field.php';
 require __DIR__ . '/test-ics.php';
 require __DIR__ . '/test-filters.php';
 require __DIR__ . '/test-help-pdf.php';
+require __DIR__ . '/test-links.php';
 require __DIR__ . '/test-uploads.php';
 require __DIR__ . '/test-joining.php';
 

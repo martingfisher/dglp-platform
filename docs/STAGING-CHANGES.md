@@ -534,3 +534,10 @@ clean. They are the only DGLP content on staging.
   `wp dgl join status <email>` for "the email never came". Martin's two
   join attempts on 19 September did send: staging redirects every email to
   martingfisher@gmail.com (`dgl_mail_redirect`). Unit 1829, integration 891.
+- **0.19.1 deployed** (20 September): one rule for typed web addresses.
+  Every address box (wizard, organisation profile, join form, wp-admin)
+  is a text box with a URL keyboard, takes "example.com" and stores
+  https://example.com; http:// typed on purpose is kept. The editor's link
+  button puts https:// on a bare domain instead of http://. The External
+  links check reads links in the words too and flags http links where
+  https works. Unit 1842, integration 899.

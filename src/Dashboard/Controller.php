@@ -527,7 +527,7 @@ final class Controller {
 			$data['values'] = [
 				'name'            => $name,
 				'org_name'        => sanitize_text_field( (string) ( $post['dgl_org_name'] ?? '' ) ),
-				'org_website'     => esc_url_raw( (string) ( $post['dgl_org_website'] ?? '' ) ),
+				'org_website'     => esc_url_raw( \DGL\Schema\Links::normalise( (string) ( $post['dgl_org_website'] ?? '' ) ) ),
 				'org_email'       => sanitize_email( (string) ( $post['dgl_org_email'] ?? '' ) ),
 				'org_phone'       => sanitize_text_field( (string) ( $post['dgl_org_phone'] ?? '' ) ),
 				'org_number'      => sanitize_text_field( (string) ( $post['dgl_org_number'] ?? '' ) ),
