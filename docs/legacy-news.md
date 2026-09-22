@@ -105,3 +105,15 @@ old categories it carried, and a count by category set. A story with no
 topic shows "News item" where the chip would be, and no topic filter finds
 it. The team gives it one from the item's edit screen (step 3, Topics), from
 the Topics box in wp-admin, or by asking the owning organisation to.
+
+## Suggesting topics from the words
+
+`wp dgl news suggest-topics` reads each topic-less story's headline and
+summary against a list of phrases per topic (`src/News/TopicSuggest.php`:
+"grant", "fund" and "crowdfunder" mean Grants and Funding, "survey" and
+"consultation" mean Have your Say, and so on; whole words, case blind). It
+prints what it would file where and changes nothing. `--apply --actor=<id>`
+sets the suggested topics on the items that still have none and writes a
+`topics_suggested` audit row on each, worded "worth a check", so the review
+team can see which topics were guessed rather than chosen. A story that
+matches no phrase is listed as "no suggestion" and left for a person.

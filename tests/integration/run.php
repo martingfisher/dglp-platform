@@ -3706,6 +3706,7 @@ wp_set_object_terms( $legacy_bare, [ 'news' ], 'category' );
 \DGL\News\LegacyImport::convert( $legacy_bare, $legacy_org, [], $mod );
 $legacy_none = \DGL\News\LegacyImport::topicless();
 $ok( isset( $legacy_none[ $legacy_bare ] ) && [ 'news' ] === $legacy_none[ $legacy_bare ] && ! isset( $legacy_none[ $legacy_post ] ) && ! isset( $legacy_none[ $legacy_ev ] ), 'the topicless report lists the live story with no topic and its old category, not the topiced one, not the archived one' );
+$ok( [ 'grants-and-funding' ] === \DGL\News\TopicSuggest::suggest( get_the_title( $legacy_bare ) . ' Small grants round' ), 'the suggestion engine reads a converted story\'s words' );
 
 /* ------------------------------------------- featured from wp-admin */
 

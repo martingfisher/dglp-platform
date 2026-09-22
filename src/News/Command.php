@@ -235,4 +235,105 @@ final class Command {
 
 		WP_CLI::line( count( $items ) . ' live news item(s) without a topic.' );
 	}
+
+	/**
+	 * Suggest topics for the live news items that have none, from their
+	 * headline and summary. Prints the suggestions; applies them only with
+	 * --apply, and only to items that still have no topic.
+	 *
+	 * ## OPTIONS
+	 *
+	 * [--apply]
+	 * : Set the suggested topics. Without it, a report only.
+	 *
+	 * [--actor=<user-id>]
+	 * : Who is applying them; the audit rows carry them. Required with --apply.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp dgl news suggest-topics
+	 *     wp dgl news suggest-topics --apply --actor=1
+	 *
+	 * @subcommand suggest-topics
+	 */
+	public function suggest_topics( array $args, array $assoc ): void {
+		$apply = isset( $assoc['apply'] );
+		$actor = (int) ( $assoc['actor'] ?? 0 );
+
+		if ( $apply && ( $actor <= 0 || ! get_userdata( $actor ) ) ) {
+			WP_CLI::error( 'Give --actor=<user-id> with --apply.' );
+		}
+
+		$items = LegacyImport::topicless();
+
+		if ( [] === $items ) {
+			WP_CLI::success( 'Every live news item has a topic.' );
+			return;
+		}
+
+		$names   = \DGL\Topics\Topics::all();
+		$matched = 0;
+		$applied = 0;
+		$none    = [];
+
+		foreach ( array_keys( $items ) as $post_id ) {
+			$post = get_post( $post_id );
+			$text = (string) $post->post_title . ' ' . (string) get_post_meta( $post_id, 'dgl_summary', true );
+			$slugs = TopicSuggest::suggest( $text );
+
+			if ( [] === $slugs ) {
+				$none[] = $post_id;
+				WP_CLI::line( sprintf( '#%d  %s', $post_id, $post->post_title ) );
+				WP_CLI::line( '      -> no suggestion' );
+				continue;
+			}
+
+			++$matched;
+			WP_CLI::line( sprintf( '#%d  %s', $post_id, $post->post_title ) );
+			WP_CLI::line( '      -> ' . implode( ', ', array_map( static fn( string $s ): string => $names[ $s ] ?? $s, $slugs ) ) );
+
+			if ( ! $apply ) {
+				continue;
+			}
+
+			$term_ids = [];
+
+			foreach ( $slugs as $slug ) {
+				$term = get_term_by( 'slug', $slug, \DGL\Taxonomies::TOPIC );
+
+				if ( $term instanceof \WP_Term ) {
+					$term_ids[] = (int) $term->term_id;
+				}
+			}
+
+			if ( [] === $term_ids ) {
+				continue;
+			}
+
+			wp_set_object_terms( $post_id, $term_ids, \DGL\Taxonomies::TOPIC, false );
+			\DGL\Audit\Log::record(
+				'topics_suggested',
+				'item',
+				$post_id,
+				Org::for_item( $post_id ),
+				sprintf(
+					/* translators: %s: topic names. */
+					__( 'Topics set from the headline: %s. Worth a check.', 'dgl-platform' ),
+					implode( ', ', array_map( static fn( string $s ): string => $names[ $s ] ?? $s, $slugs ) )
+				),
+				[ 'topics' => $slugs ],
+				$actor
+			);
+			++$applied;
+		}
+
+		WP_CLI::line( '' );
+		WP_CLI::line( sprintf( '%d item(s): %d with a suggestion, %d without.', count( $items ), $matched, count( $none ) ) );
+
+		if ( $apply ) {
+			WP_CLI::success( sprintf( 'Applied to %d item(s).', $applied ) );
+		} else {
+			WP_CLI::line( 'Nothing changed. Add --apply --actor=<id> to set them.' );
+		}
+	}
 }
