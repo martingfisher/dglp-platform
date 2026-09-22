@@ -26,26 +26,30 @@ final class TopicSuggest {
 	 */
 	public static function rules(): array {
 		return [
+			// Subject topics first: with --first, the more specific reading wins.
 			'grants-and-funding'               => [ 'grant', 'grants', 'fund', 'funds', 'funding', 'funder', 'crowdfunder', 'crowdfunding', 'award', 'awards', 'bursary', 'bursaries', 'share offer', 'fundraiser', 'in kind direct' ],
 			'volunteering'                     => [ 'volunteer', 'volunteers', 'volunteering', 'trustee', 'trustees', 'trusteeship' ],
 			'have-your-say'                    => [ 'survey', 'consultation', 'have your say', 'have you say', 'share your thoughts', 'your views', 'panel', 'nominate', 'nominations', 'research project', 'take part' ],
-			'professional-development'         => [ 'training', 'course', 'courses', 'webinar', 'workshop', 'workshops', 'guide', 'guides', 'skills', 'sessions', 'podcast', 'learning' ],
-			'support-for-vcse-organisations'   => [ 'charity', 'charities', 'vcse', 'civil society', 'third sector', 'governance', 'national insurance', 'tender', 'welcome spaces', 'uk shared prosperity', 'ukspf', 'covenant', 'community centre', 'organisations' ],
-			'mental-health'                    => [ 'mental health', 'suicide', 'unmasked', 'safeguarding' ],
+			'mens-health'                      => [ 'mens health', 'men and boys', 'men', 'mens' ],
+			'mental-health'                    => [ 'mental health', 'suicide', 'unmasked' ],
 			'older-people'                     => [ 'older people', 'older', 'elders', 'seniors', 'menopause', 'mae care' ],
 			'children-and-young-people'        => [ 'children', 'young people', 'young', 'youth', 'baby', 'babies', 'families', 'healthy holidays', 'healthy start' ],
-			'health-and-social-care'           => [ 'nhs', 'health', 'care', 'domestic abuse', 'safeguarding adults' ],
-			'equality-diversity-and-inclusion' => [ 'race equality', 'lgbtq', 'inclusion', 'inclusive', 'neurodiversity', 'autism', 'disabled', 'disability', 'evisa', 'evisas' ],
+			'learning-disability'              => [ 'learning disability', 'learning disabilities' ],
 			'cultural-diverse-communities'     => [ 'culturally diverse', 'black histories', 'black history', 'refugee', 'refugees', 'asylum' ],
+			'equality-diversity-and-inclusion' => [ 'race equality', 'lgbtq', 'inclusion', 'inclusive', 'neurodiversity', 'autism', 'disabled', 'disability', 'evisa', 'evisas' ],
 			'environment-and-nature'           => [ 'seeds', 'gardening', 'compost', 'food growing', 'community energy', 'energy', 'feed leeds', 'growing' ],
-			'data-and-digital'                 => [ 'digital', 'online', 'zoom' ],
 			'arts-culture-and-heritage'        => [ 'art', 'arts', 'film', 'creative', 'history', 'heritage', 'philosophical and literary', 'sound system', 'culture' ],
-			'wellbeing'                        => [ 'wellbeing', 'sauna', 'healthy', 'loneliness' ],
-			'leadership'                       => [ 'leaders', 'leadership', 'board directors' ],
-			'workforce'                        => [ 'recruitment', 'recruiting', 'vacancy', 'vacancies', 'job', 'jobs', 'interns', 'convener' ],
-			'insight-learning-and-evaluation'  => [ 'report', 'research', 'evaluation', 'summary', 'overview' ],
 			'community-power'                  => [ 'community share', 'crowdfunder for', 'community project', 'community-led', 'roadblock' ],
 			'third-sector-leeds'               => [ 'tsl', 'third sector leeds' ],
+			'workforce'                        => [ 'recruitment', 'recruiting', 'vacancy', 'vacancies', 'job', 'jobs', 'interns', 'convener' ],
+			'leadership'                       => [ 'leaders', 'leadership', 'board directors' ],
+			'data-and-digital'                 => [ 'digital', 'online', 'zoom' ],
+			// Then the broader ones, which many stories brush against.
+			'professional-development'         => [ 'training', 'course', 'courses', 'webinar', 'workshop', 'workshops', 'guide', 'guides', 'skills', 'sessions', 'podcast', 'learning' ],
+			'support-for-vcse-organisations'   => [ 'charity', 'charities', 'vcse', 'civil society', 'third sector', 'governance', 'national insurance', 'tender', 'welcome spaces', 'uk shared prosperity', 'ukspf', 'covenant', 'community centre', 'organisations' ],
+			'health-and-social-care'           => [ 'nhs', 'health', 'care', 'domestic abuse', 'safeguarding', 'safeguarding adults' ],
+			'wellbeing'                        => [ 'wellbeing', 'sauna', 'healthy', 'loneliness' ],
+			'insight-learning-and-evaluation'  => [ 'report', 'research', 'evaluation', 'summary', 'overview' ],
 			'local-place-based'                => [ 'armley', 'bramley', 'woodhouse', 'harehills', 'seacroft', 'chapeltown', 'holbeck', 'gipton', 'morley', 'otley', 'wetherby', 'high rise', 'highrise' ],
 		];
 	}

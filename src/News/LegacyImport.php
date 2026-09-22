@@ -355,4 +355,28 @@ final class LegacyImport {
 
 		return $out;
 	}
+
+	/**
+	 * Live converted stories whose old categories were all within the given
+	 * slugs (and not empty). The rule that tells VAL's stories apart: VAL's
+	 * site files under news and blog only, so a story with nothing else came
+	 * from there.
+	 *
+	 * @param string[] $only Old category slugs.
+	 * @return int[]
+	 */
+	public static function converted_only( array $only ): array {
+		$allowed = array_values( array_filter( array_map( 'sanitize_title', $only ) ) );
+		$out     = [];
+
+		foreach ( self::converted_in( $allowed ) as $post_id ) {
+			$had = array_values( array_filter( explode( ',', (string) get_post_meta( $post_id, self::META_CATEGORIES, true ) ) ) );
+
+			if ( [] !== $had && [] === array_diff( $had, $allowed ) ) {
+				$out[] = $post_id;
+			}
+		}
+
+		return $out;
+	}
 }

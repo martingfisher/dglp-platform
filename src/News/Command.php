@@ -249,15 +249,19 @@ final class Command {
 	 * [--actor=<user-id>]
 	 * : Who is applying them; the audit rows carry them. Required with --apply.
 	 *
+	 * [--first]
+	 * : Keep only the first suggestion for each story, the most specific reading.
+	 *
 	 * ## EXAMPLES
 	 *
 	 *     wp dgl news suggest-topics
-	 *     wp dgl news suggest-topics --apply --actor=1
+	 *     wp dgl news suggest-topics --first --apply --actor=1
 	 *
 	 * @subcommand suggest-topics
 	 */
 	public function suggest_topics( array $args, array $assoc ): void {
 		$apply = isset( $assoc['apply'] );
+		$first = isset( $assoc['first'] );
 		$actor = (int) ( $assoc['actor'] ?? 0 );
 
 		if ( $apply && ( $actor <= 0 || ! get_userdata( $actor ) ) ) {
@@ -280,6 +284,10 @@ final class Command {
 			$post = get_post( $post_id );
 			$text = (string) $post->post_title . ' ' . (string) get_post_meta( $post_id, 'dgl_summary', true );
 			$slugs = TopicSuggest::suggest( $text );
+
+			if ( $first && [] !== $slugs ) {
+				$slugs = [ $slugs[0] ];
+			}
 
 			if ( [] === $slugs ) {
 				$none[] = $post_id;
@@ -335,5 +343,88 @@ final class Command {
 		} else {
 			WP_CLI::line( 'Nothing changed. Add --apply --actor=<id> to set them.' );
 		}
+	}
+
+	/**
+	 * Move converted stories whose old categories were only the given ones
+	 * to another organisation.
+	 *
+	 * ## OPTIONS
+	 *
+	 * --only=<slugs>
+	 * : Old category slugs, comma separated. A story qualifies when every old
+	 *   category it had is in this list. Example: news,blog
+	 *
+	 * --to=<org-id>
+	 * : The organisation that should own them.
+	 *
+	 * --actor=<user-id>
+	 * : The moderator or administrator doing it; the audit rows carry them.
+	 *
+	 * [--dry-run]
+	 * : List what would move and change nothing.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp dgl news move-legacy --only=news,blog --to=8803 --actor=1 --dry-run
+	 *
+	 * @subcommand move-legacy
+	 */
+	public function move_legacy( array $args, array $assoc ): void {
+		$only    = array_filter( array_map( 'trim', explode( ',', (string) ( $assoc['only'] ?? '' ) ) ) );
+		$to      = (int) ( $assoc['to'] ?? 0 );
+		$actor   = (int) ( $assoc['actor'] ?? 0 );
+		$dry_run = isset( $assoc['dry-run'] );
+
+		if ( [] === $only ) {
+			WP_CLI::error( 'Give --only=<slugs>.' );
+		}
+
+		if ( $to <= 0 || ! Org::is_approved( $to ) ) {
+			WP_CLI::error( 'Give --to=<org-id>: an approved organisation.' );
+		}
+
+		if ( $actor <= 0 || ! get_userdata( $actor ) ) {
+			WP_CLI::error( 'Give --actor=<user-id>.' );
+		}
+
+		$ids = LegacyImport::converted_only( $only );
+
+		if ( [] === $ids ) {
+			WP_CLI::success( 'Nothing qualifies. Nothing to do.' );
+			return;
+		}
+
+		$moved   = 0;
+		$already = 0;
+		$failed  = 0;
+
+		foreach ( $ids as $post_id ) {
+			$from = Org::for_item( $post_id );
+
+			if ( $from === $to ) {
+				++$already;
+				continue;
+			}
+
+			WP_CLI::line( sprintf( '#%d  %s  (%s -> %s)', $post_id, get_the_title( $post_id ), $from > 0 ? get_the_title( $from ) : 'none', get_the_title( $to ) ) );
+
+			if ( $dry_run ) {
+				++$moved;
+				continue;
+			}
+
+			$result = Org::reassign( $post_id, $to, $actor );
+
+			if ( is_wp_error( $result ) ) {
+				++$failed;
+				WP_CLI::warning( sprintf( '#%d: %s', $post_id, $result->get_error_message() ) );
+			} else {
+				++$moved;
+			}
+		}
+
+		WP_CLI::line( '' );
+		WP_CLI::line( sprintf( '%s %d; already there %d; failed %d.', $dry_run ? 'Would move' : 'Moved', $moved, $already, $failed ) );
 	}
 }

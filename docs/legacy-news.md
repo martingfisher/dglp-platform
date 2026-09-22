@@ -112,8 +112,18 @@ the Topics box in wp-admin, or by asking the owning organisation to.
 summary against a list of phrases per topic (`src/News/TopicSuggest.php`:
 "grant", "fund" and "crowdfunder" mean Grants and Funding, "survey" and
 "consultation" mean Have your Say, and so on; whole words, case blind). It
-prints what it would file where and changes nothing. `--apply --actor=<id>`
+prints what it would file where and changes nothing. `--first` keeps only
+the first, most specific, suggestion per story. `--apply --actor=<id>`
 sets the suggested topics on the items that still have none and writes a
 `topics_suggested` audit row on each, worded "worth a check", so the review
 team can see which topics were guessed rather than chosen. A story that
 matches no phrase is listed as "no suggestion" and left for a person.
+
+## Moving VAL's stories to VAL
+
+VAL's site files under news and blog only, and Forum Central's copies carry
+Forum Central's subject categories, so a converted story whose old
+categories were only news or blog came from VAL. `wp dgl news move-legacy
+--only=news,blog --to=<VAL id> --actor=<id>` moves those to VAL through the
+same reassign the review screen uses (audit row, index row, status kept).
+`--dry-run` lists them first.

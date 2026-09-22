@@ -573,6 +573,13 @@ clean. They are the only DGLP content on staging.
   Also on staging today, by Martin's decision: 83 draft posts deleted and
   the MailChimp category (51) deleted; see `docs/topics.md`. Unit 1932,
   integration 912.
+- **0.28.0 deployed** (22 September): `wp dgl news move-legacy` (converted
+  stories whose old categories were only the given ones, to another
+  organisation) and `--first` on `suggest-topics`; the phrase rules
+  reordered so subject topics outrank the broad ones and Men's Health is
+  on the list. Run on staging on Martin's decision, dry runs first: see the
+  two entries below this one's date in `docs/legacy-news.md`. Unit 1963,
+  integration 965.
 - **0.27.1 deployed** (22 September): `wp dgl probe page` accepts an
   absolute https address, so the server can read a partner site the
   console's operator cannot reach. Used to compare the topic-less stories
