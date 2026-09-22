@@ -3700,6 +3700,12 @@ $ok( in_array( $legacy_ev, $legacy_arch['archived'], true ) && [] === $legacy_ar
 $ok( Statuses::ARCHIVED === get_post_status( $legacy_ev ) && Statuses::LIVE === get_post_status( $legacy_post ), 'the announcement is archived; the story is still live' );
 $ok( [] === \DGL\News\LegacyImport::converted_in( [ 'events', 'events-2' ] ), 'a second run finds nothing live' );
 $ok( in_array( 'archive', array_column( Log::for_object( 'item', $legacy_ev ), 'action' ), true ), 'the archive is in the audit trail' );
+$legacy_bare = wp_insert_post( [ 'post_type' => 'post', 'post_status' => 'publish', 'post_title' => 'Bare legacy', 'post_name' => 'bare-' . wp_generate_password( 6, false ), 'post_content' => '<p>Words.</p>', 'post_author' => $alice ] );
+update_post_meta( $legacy_bare, DGL_FIXTURE_FLAG, '1' );
+wp_set_object_terms( $legacy_bare, [ 'news' ], 'category' );
+\DGL\News\LegacyImport::convert( $legacy_bare, $legacy_org, [], $mod );
+$legacy_none = \DGL\News\LegacyImport::topicless();
+$ok( isset( $legacy_none[ $legacy_bare ] ) && [ 'news' ] === $legacy_none[ $legacy_bare ] && ! isset( $legacy_none[ $legacy_post ] ) && ! isset( $legacy_none[ $legacy_ev ] ), 'the topicless report lists the live story with no topic and its old category, not the topiced one, not the archived one' );
 
 /* ------------------------------------------- featured from wp-admin */
 

@@ -200,4 +200,39 @@ final class Command {
 
 		WP_CLI::success( sprintf( 'Archived %d item(s); %d failed.', count( $result['archived'] ), count( $result['failed'] ) ) );
 	}
+
+	/**
+	 * List the live news items that have no topic, with their old categories.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp dgl news topicless
+	 *
+	 * @subcommand topicless
+	 */
+	public function topicless( array $args, array $assoc ): void {
+		$items = LegacyImport::topicless();
+
+		if ( [] === $items ) {
+			WP_CLI::success( 'Every live news item has a topic.' );
+			return;
+		}
+
+		$by_cats = [];
+
+		foreach ( $items as $post_id => $cats ) {
+			WP_CLI::line( sprintf( '#%d  %s  (%s)  [%s]', $post_id, get_the_title( $post_id ), get_the_date( 'Y-m-d', $post_id ), [] === $cats ? 'not from the old site' : implode( ', ', $cats ) ) );
+			$key             = [] === $cats ? '(none)' : implode( ', ', $cats );
+			$by_cats[ $key ] = ( $by_cats[ $key ] ?? 0 ) + 1;
+		}
+
+		arsort( $by_cats );
+		WP_CLI::line( '' );
+
+		foreach ( $by_cats as $key => $count ) {
+			WP_CLI::line( sprintf( '  %-40s %d', $key, $count ) );
+		}
+
+		WP_CLI::line( count( $items ) . ' live news item(s) without a topic.' );
+	}
 }

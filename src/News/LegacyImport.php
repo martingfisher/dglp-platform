@@ -323,4 +323,36 @@ final class LegacyImport {
 
 		return $result;
 	}
+
+	/**
+	 * Live news items with no topic, id => old category slugs (empty for a
+	 * story that was never a post on the old site). The list the review team
+	 * works through.
+	 *
+	 * @return array<int,string[]>
+	 */
+	public static function topicless(): array {
+		$ids = get_posts(
+			[
+				'post_type'        => PostTypes::NEWS,
+				'post_status'      => Statuses::LIVE,
+				'fields'           => 'ids',
+				'numberposts'      => -1,
+				'orderby'          => 'date',
+				'order'            => 'DESC',
+				'suppress_filters' => true,
+				'tax_query'        => [ // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
+					[ 'taxonomy' => Taxonomies::TOPIC, 'operator' => 'NOT EXISTS' ],
+				],
+			]
+		);
+
+		$out = [];
+
+		foreach ( array_map( 'intval', (array) $ids ) as $post_id ) {
+			$out[ $post_id ] = array_values( array_filter( explode( ',', (string) get_post_meta( $post_id, self::META_CATEGORIES, true ) ) ) );
+		}
+
+		return $out;
+	}
 }

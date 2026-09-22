@@ -97,3 +97,11 @@ It finds converted stories whose old categories (kept in
 changes the list) and archives each through the ordinary transition, so the
 audit rows carry the actor and the index and dashboards follow. Archived
 items can be restored from the review team's Decided screen like any other.
+
+## Stories with no topic
+
+`wp dgl news topicless` lists every live news item with no topic, with the
+old categories it carried, and a count by category set. A story with no
+topic shows "News item" where the chip would be, and no topic filter finds
+it. The team gives it one from the item's edit screen (step 3, Topics), from
+the Topics box in wp-admin, or by asking the owning organisation to.
