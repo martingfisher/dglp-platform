@@ -2614,8 +2614,22 @@ foreach ( [ 'Import Test Trust', 'Gmail Only Group' ] as $stale_name ) {
 	}
 }
 
-$run_import = static function ( string $flags ) use ( $csv_path ): string {
-	$cmd = sprintf( 'php %s --path=%s --allow-root dgl org import %s %s 2>&1', escapeshellarg( '/home/claude/wp-test/wp-cli.phar' ), escapeshellarg( ABSPATH ), escapeshellarg( $csv_path ), $flags );
+/*
+ * The import is a WP-CLI command, so it runs in a second process and needs
+ * the WP-CLI binary. `Phar::running()` names the phar this very suite is
+ * running under, which is the right one wherever the suite is run;
+ * DGL_WP_CLI overrides it for a non-phar install.
+ */
+$wp_cli_bin = (string) getenv( 'DGL_WP_CLI' );
+if ( '' === $wp_cli_bin ) {
+	$wp_cli_bin = \Phar::running( false );
+}
+if ( '' === $wp_cli_bin ) {
+	$wp_cli_bin = '/home/claude/wp-test/wp-cli.phar';
+}
+
+$run_import = static function ( string $flags ) use ( $csv_path, $wp_cli_bin ): string {
+	$cmd = sprintf( 'php %s --path=%s --allow-root dgl org import %s %s 2>&1', escapeshellarg( $wp_cli_bin ), escapeshellarg( ABSPATH ), escapeshellarg( $csv_path ), $flags );
 	$result = (string) shell_exec( $cmd );
 	// The import ran in another process; this one's query cache does not know.
 	wp_cache_flush();
@@ -3339,9 +3353,12 @@ $ok( [ $fl_soon ] === array_values( array_intersect( $fl_topic, [ $fl_soon, $fl_
 $fl_both = $fl_run( [ 'topic' => $fl_slug, 'when' => 'next-month' ] );
 $ok( ! in_array( $fl_soon, $fl_both, true ) && ! in_array( $fl_far, $fl_both, true ), 'topic and window together: nothing of ours is tagged and next month' );
 $fl_series = $make_item( $org_a, $alice, Statuses::LIVE );
-$fl_tue    = $fl_today->modify( 'next tuesday' );
+// Starts tomorrow and repeats on tomorrow's weekday, whatever day the suite
+// runs. "next tuesday" was here once, and on a Tuesday that is seven days
+// out, one past the six-day window, so the suite failed one day in seven.
+$fl_tue    = $fl_today->modify( '+1 day' );
 update_post_meta( $fl_series, 'dgl_start_datetime', $fl_tue->format( 'Y-m-d' ) . ' 13:00:00' );
-update_post_meta( $fl_series, 'dgl_repeat', [ 'freq' => 'weekly', 'weekdays' => [ 2 ], 'until' => $fl_today->modify( '+3 months' )->format( 'Y-m-d' ) ] );
+update_post_meta( $fl_series, 'dgl_repeat', [ 'freq' => 'weekly', 'weekdays' => [ (int) $fl_tue->format( 'N' ) ], 'until' => $fl_today->modify( '+3 months' )->format( 'Y-m-d' ) ] );
 \DGL\Events\Series::stamp( $fl_series, PostTypes::EVENT );
 $ok( in_array( $fl_series, $fl_run( [ 'when' => 'week' ] ), true ), 'a weekly series with a date in the window is in it' );
 $fl_ordered = $fl_run( [ 'when' => 'month' ] );

@@ -85,8 +85,16 @@ if ! $WP core is-installed >/dev/null 2>&1; then
 		--admin_email=test@example.com --skip-email
 fi
 
+# Pretty permalinks and the London zone, as on the real site. Without a
+# permalink structure WordPress writes no rewrite rules at all, and every
+# test that reads them (member area routes, calendar, .ics) fails for that
+# reason alone.
+$WP rewrite structure '/%postname%/' >/dev/null
+$WP option update timezone_string 'Europe/London' >/dev/null
+
 ln -sfn "$PLUGIN_DIR" wp-content/plugins/dgl-platform
 $WP plugin activate dgl-platform
+$WP rewrite flush >/dev/null
 
 echo
 echo "Ready. Run the integration suite with:"
