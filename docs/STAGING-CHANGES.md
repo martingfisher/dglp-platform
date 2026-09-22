@@ -556,3 +556,11 @@ clean. They are the only DGLP content on staging.
   shipped: a direct-access guard on the 31 pure classes that lacked one,
   and one interpolated (input-free) query rewritten with prepare. Unit
   1845, integration 901.
+- **0.21.0 deployed** (22 September): the topic list. Twenty-eight topics
+  decided by DGLP, carried in `src/Topics/Topics.php` and seeded on the
+  first load after deploy (`dgl_topics_version` now 1). `wp dgl topics
+  list` on staging shows all twenty-eight present, none hand-added before
+  it, every count 0. The old site's core categories are untouched; what
+  happens to the legacy posts is still to be decided. Unit 1932,
+  integration 879 (the same 29 environment failures as before). Merged
+  from PR #1, rebased on to `main` at `8521423`.
