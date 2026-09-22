@@ -26,6 +26,8 @@ use DGL\PostTypes;
 use DGL\Statuses;
 use DGL\Taxonomies;
 use DGL\Topics\Topics;
+use DGL\Workflow\StateMachine;
+use DGL\Workflow\Transition;
 use WP_Error;
 use WP_Post;
 
@@ -261,5 +263,64 @@ final class LegacyImport {
 		);
 
 		return [] === $found ? null : (int) $found[0];
+	}
+
+	/**
+	 * Converted stories whose old categories included any of the given slugs.
+	 *
+	 * @param string[] $categories Old category slugs.
+	 * @return int[]
+	 */
+	public static function converted_in( array $categories, string $status = Statuses::LIVE ): array {
+		$ids = get_posts(
+			[
+				'post_type'        => PostTypes::NEWS,
+				'post_status'      => $status,
+				'fields'           => 'ids',
+				'numberposts'      => -1,
+				'orderby'          => 'date',
+				'order'            => 'ASC',
+				'meta_key'         => self::META_FROM, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+				'meta_value'       => '1', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
+				'suppress_filters' => true,
+			]
+		);
+
+		$wanted = array_values( array_filter( array_map( 'sanitize_title', $categories ) ) );
+		$out    = [];
+
+		foreach ( array_map( 'intval', (array) $ids ) as $post_id ) {
+			$had = array_filter( explode( ',', (string) get_post_meta( $post_id, self::META_CATEGORIES, true ) ) );
+
+			if ( [] !== array_intersect( $had, $wanted ) ) {
+				$out[] = $post_id;
+			}
+		}
+
+		return $out;
+	}
+
+	/**
+	 * Archive the converted stories that were filed under the given old
+	 * categories, through the ordinary transition so the audit trail, the
+	 * index and the dashboards all follow. The actor has to be somebody the
+	 * policy lets archive: a moderator or an administrator.
+	 *
+	 * @return array{archived:int[],failed:array<int,string>}
+	 */
+	public static function archive_in( array $categories, int $actor_id, string $note ): array {
+		$result = [ 'archived' => [], 'failed' => [] ];
+
+		foreach ( self::converted_in( $categories ) as $post_id ) {
+			$done = Transition::apply( $post_id, StateMachine::ARCHIVE, $actor_id, $note );
+
+			if ( is_wp_error( $done ) ) {
+				$result['failed'][ $post_id ] = $done->get_error_message();
+			} else {
+				$result['archived'][] = $post_id;
+			}
+		}
+
+		return $result;
 	}
 }

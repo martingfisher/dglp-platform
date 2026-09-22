@@ -573,6 +573,12 @@ clean. They are the only DGLP content on staging.
   Also on staging today, by Martin's decision: 83 draft posts deleted and
   the MailChimp category (51) deleted; see `docs/topics.md`. Unit 1932,
   integration 912.
+- **0.26.1 deployed** (22 September): `wp dgl news archive-legacy`, and run
+  on staging on Martin's decision: the 66 imported stories that the old
+  site filed under its Events categories (event announcements, all past)
+  archived through the ordinary transition as user 1, so each has an
+  `archived` audit row and can be restored from the Decided screen. Live
+  news on staging: 529 before, 463 after. Details in `docs/legacy-news.md`.
 - **0.26.0 deployed** (22 September): an Organisation filter on /news/ and
   /events/ beside Topic (and When): every approved organisation with
   something live on that list, from the index in one query; `?org=<id>`

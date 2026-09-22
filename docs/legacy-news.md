@@ -41,7 +41,7 @@ that guess is filterable and some plugins switch it off, so the plugin adds an
 explicit one: a 404 whose last path segment names a converted, live story is
 sent to the story with a 301 (`LegacyRedirect`). Anything else stays a 404.
 
-## The command
+## The commands
 
 ```
 wp dgl news import --org=<id> --dry-run
@@ -79,3 +79,21 @@ categories were retired ones (news, blog, events); the review team can add
 topics from the item's edit screen. One has no picture. /news/ went from 2
 live stories to 529. Where the mapping put a story under the wrong name, the
 review screen's "Move it to another organisation" control corrects it.
+
+## The old event announcements
+
+The old site had no events plugin. It announced events as posts under two
+Events categories with the date in the title ("3 July | Leeds Petitions
+Community event"). 66 came over in the import, all past, and sat on /news/
+with no topic. On Martin's decision they were archived:
+
+```
+wp dgl news archive-legacy --actor=<user-id> --dry-run
+wp dgl news archive-legacy --actor=<user-id>
+```
+
+It finds converted stories whose old categories (kept in
+`dgl_legacy_categories`) include `events` or `events-2` (`--categories`
+changes the list) and archives each through the ordinary transition, so the
+audit rows carry the actor and the index and dashboards follow. Archived
+items can be restored from the review team's Decided screen like any other.

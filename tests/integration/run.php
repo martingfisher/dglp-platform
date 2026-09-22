@@ -3688,6 +3688,19 @@ $ok( $legacy_post === \DGL\News\LegacyImport::live_by_slug( get_post( $legacy_po
 $ok( null === \DGL\News\LegacyImport::live_by_slug( 'no-such-story-ever' ), 'and finds nothing for a stranger' );
 $ok( is_wp_error( \DGL\News\LegacyImport::convert( $legacy_post, $legacy_org ) ), 'a second conversion refuses: it is no longer a post of the old kind' );
 
+$legacy_ev = wp_insert_post( [ 'post_type' => 'post', 'post_status' => 'publish', 'post_title' => '3 July | Old event', 'post_name' => 'old-event-' . wp_generate_password( 6, false ), 'post_content' => '<p>Come along.</p>', 'post_author' => $alice ] );
+update_post_meta( $legacy_ev, DGL_FIXTURE_FLAG, '1' );
+if ( ! term_exists( 'events-2', 'category' ) ) { wp_insert_term( 'events-2', 'category', [ 'slug' => 'events-2' ] ); }
+wp_set_object_terms( $legacy_ev, [ 'events-2', 'news' ], 'category' );
+\DGL\News\LegacyImport::convert( $legacy_ev, $legacy_org, [], $mod );
+$legacy_in = \DGL\News\LegacyImport::converted_in( [ 'events', 'events-2' ] );
+$ok( in_array( $legacy_ev, $legacy_in, true ) && ! in_array( $legacy_post, $legacy_in, true ), 'the old Events categories pick out the event announcements and nothing else' );
+$legacy_arch = \DGL\News\LegacyImport::archive_in( [ 'events', 'events-2' ], $mod, 'Past.' );
+$ok( in_array( $legacy_ev, $legacy_arch['archived'], true ) && [] === $legacy_arch['failed'], 'archived through the transition' );
+$ok( Statuses::ARCHIVED === get_post_status( $legacy_ev ) && Statuses::LIVE === get_post_status( $legacy_post ), 'the announcement is archived; the story is still live' );
+$ok( [] === \DGL\News\LegacyImport::converted_in( [ 'events', 'events-2' ] ), 'a second run finds nothing live' );
+$ok( in_array( 'archive', array_column( Log::for_object( 'item', $legacy_ev ), 'action' ), true ), 'the archive is in the audit trail' );
+
 /* ------------------------------------------- featured from wp-admin */
 
 $box_item = $make_item( $org_a, $alice, Statuses::LIVE );

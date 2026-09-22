@@ -135,4 +135,69 @@ final class Command {
 
 		return $out;
 	}
+
+	/**
+	 * Archive converted stories that were filed under old categories.
+	 *
+	 * The old site announced events as posts under its Events categories,
+	 * with the date in the title. They are all past. This takes them off
+	 * /news/ through the ordinary archive transition.
+	 *
+	 * ## OPTIONS
+	 *
+	 * --actor=<user-id>
+	 * : The moderator or administrator doing it; the audit rows carry them.
+	 *
+	 * [--categories=<slugs>]
+	 * : Old category slugs, comma separated. Default: events,events-2
+	 *
+	 * [--dry-run]
+	 * : List what would be archived and change nothing.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp dgl news archive-legacy --actor=1 --dry-run
+	 *     wp dgl news archive-legacy --actor=1
+	 *
+	 * @subcommand archive-legacy
+	 */
+	public function archive_legacy( array $args, array $assoc ): void {
+		$actor      = (int) ( $assoc['actor'] ?? 0 );
+		$categories = array_filter( array_map( 'trim', explode( ',', (string) ( $assoc['categories'] ?? 'events,events-2' ) ) ) );
+		$dry_run    = isset( $assoc['dry-run'] );
+
+		if ( $actor <= 0 || ! get_userdata( $actor ) ) {
+			WP_CLI::error( 'Give --actor=<user-id>: a moderator or administrator who exists.' );
+		}
+
+		if ( [] === $categories ) {
+			WP_CLI::error( 'Give at least one old category slug.' );
+		}
+
+		$ids = LegacyImport::converted_in( $categories );
+
+		if ( [] === $ids ) {
+			WP_CLI::success( 'Nothing live from those categories. Nothing to do.' );
+			return;
+		}
+
+		if ( $dry_run ) {
+			foreach ( $ids as $post_id ) {
+				WP_CLI::line( sprintf( '#%d  %s  (%s)', $post_id, get_the_title( $post_id ), get_the_date( 'Y-m-d', $post_id ) ) );
+			}
+
+			WP_CLI::line( 'Would archive ' . count( $ids ) . ' item(s).' );
+			return;
+		}
+
+		wp_set_current_user( $actor );
+
+		$result = LegacyImport::archive_in( $categories, $actor, __( 'An event announcement from the old site, now past.', 'dgl-platform' ) );
+
+		foreach ( $result['failed'] as $post_id => $why ) {
+			WP_CLI::warning( sprintf( '#%d: %s', $post_id, $why ) );
+		}
+
+		WP_CLI::success( sprintf( 'Archived %d item(s); %d failed.', count( $result['archived'] ), count( $result['failed'] ) ) );
+	}
 }
