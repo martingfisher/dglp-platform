@@ -593,7 +593,13 @@ clean. They are the only DGLP content on staging.
   meta key the wizard never writes (the story lives in post_content), so
   every item page on staging rendered with `dgl-pub__layout--nobody`.
   Verified on /news/demo-story-three/ before the fix. Unit 1932, integration
-  945.
+  945. Dry run of the import on staging after the deploy (owner set to the
+  demo organisation only to make the run possible; nothing was changed):
+  527 posts would convert, 71 with no mapped topic (their old categories
+  are all on the retired list), 1 without a picture; health-and-social-care
+  389, communities-of-interest 142, mental-health 69, featured 58, the rest
+  under 50 each. The real run waits on Martin naming the owning
+  organisations.
 - **0.23.1 deployed** (22 September): the featured block on /news/ and
   /events/ now appears from two live items (one large, up to three
   beside), not four; staging has two live stories, so the pattern was
