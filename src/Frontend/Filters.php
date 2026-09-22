@@ -17,8 +17,11 @@ declare( strict_types=1 );
 namespace DGL\Frontend;
 
 use DateTimeImmutable;
+use DGL\Index\ItemsTable;
 use DGL\Meta;
+use DGL\Org\Org;
 use DGL\PostTypes;
+use DGL\Statuses;
 use DGL\Taxonomies;
 use WP_Query;
 
@@ -28,6 +31,7 @@ final class Filters {
 
 	public const PARAM_TOPIC = 'topic';
 	public const PARAM_WHEN  = 'when';
+	public const PARAM_ORG   = 'org';
 
 	/**
 	 * The date windows on offer, in order.
@@ -88,7 +92,39 @@ final class Filters {
 			$when = '';
 		}
 
-		return [ 'topic' => $topic, 'when' => $when ];
+		$org = isset( $request[ self::PARAM_ORG ] ) && is_scalar( $request[ self::PARAM_ORG ] ) ? (int) $request[ self::PARAM_ORG ] : 0;
+
+		if ( $org > 0 && ( PostTypes::ORG !== get_post_type( $org ) || ! Org::is_approved( $org ) ) ) {
+			$org = 0;
+		}
+
+		return [ 'topic' => $topic, 'when' => $when, 'org' => $org ];
+	}
+
+	/**
+	 * Organisations with something live of this type, id => name, in name
+	 * order. From the index, so one query however many items there are.
+	 *
+	 * @return array<int,string>
+	 */
+	public static function orgs( string $post_type ): array {
+		global $wpdb;
+
+		$table = ItemsTable::name();
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$ids = $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT org_id FROM {$table} WHERE post_type = %s AND status = %s AND org_id > 0", $post_type, Statuses::LIVE ) );
+
+		$out = [];
+
+		foreach ( array_map( 'intval', (array) $ids ) as $org_id ) {
+			if ( Org::is_approved( $org_id ) ) {
+				$out[ $org_id ] = (string) get_the_title( $org_id );
+			}
+		}
+
+		natcasesort( $out );
+
+		return $out;
 	}
 
 	/**
@@ -117,6 +153,18 @@ final class Filters {
 	 * @param array{topic: string, when: string} $args
 	 */
 	public static function apply( WP_Query $query, array $args ): void {
+		if ( ( $args['org'] ?? 0 ) > 0 ) {
+			$existing = $query->get( 'meta_query' );
+			$owner    = [ 'key' => Meta::ITEM_ORG, 'value' => (int) $args['org'], 'compare' => '=' ];
+
+			$query->set(
+				'meta_query',
+				is_array( $existing ) && [] !== $existing
+					? [ 'relation' => 'AND', 'dgl_owner' => $owner, $existing ]
+					: [ 'dgl_owner' => $owner ]
+			);
+		}
+
 		if ( '' !== $args['topic'] ) {
 			$query->set(
 				'tax_query',
@@ -158,13 +206,16 @@ final class Filters {
 	 * @param array{topic: string, when: string} $args
 	 */
 	public static function url( string $base, array $args ): string {
-		$query = array_filter( [ self::PARAM_TOPIC => $args['topic'], self::PARAM_WHEN => $args['when'] ], static fn( string $v ): bool => '' !== $v );
+		$query = array_filter(
+			[ self::PARAM_TOPIC => $args['topic'], self::PARAM_WHEN => $args['when'], self::PARAM_ORG => ( $args['org'] ?? 0 ) > 0 ? (string) (int) $args['org'] : '' ],
+			static fn( string $v ): bool => '' !== $v
+		);
 
 		return [] === $query ? $base : add_query_arg( array_map( 'rawurlencode', $query ), $base );
 	}
 
 	/** @param array{topic: string, when: string} $args */
 	public static function is_active( array $args ): bool {
-		return '' !== $args['topic'] || '' !== $args['when'];
+		return '' !== $args['topic'] || '' !== $args['when'] || ( $args['org'] ?? 0 ) > 0;
 	}
 }

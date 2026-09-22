@@ -98,7 +98,10 @@ too (today, the next seven days, this weekend, this month, next month). A
 repeating event counts when its next date falls in the window. The filters
 fold behind one button on a phone. Topics come from the ones you manage
 under Organisations > Topics in wp-admin; only topics with something
-published under them are offered.
+published under them are offered. Both lists also have an Organisation
+filter: every approved organisation with something live on that list, so a
+member of the public can see everything one organisation has posted. The
+address carries it (`/news/?org=123`), so it can be linked to.
 
 ## How long news stays up
 

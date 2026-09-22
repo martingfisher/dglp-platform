@@ -25,10 +25,11 @@ $label = Frontend::type_label( $type, true );
 $filter_args = \DGL\Frontend\Filters::args_from( wp_unslash( $_GET ), $type );
 $topics      = \DGL\Frontend\Filters::topics();
 $whens       = \DGL\PostTypes::EVENT === $type ? \DGL\Frontend\Filters::whens() : [];
+$orgs        = \DGL\Frontend\Filters::orgs( $type );
 $filtering   = \DGL\Frontend\Filters::is_active( $filter_args );
 $filters_on  = count( array_filter( $filter_args ) );
 $list_base   = Frontend::archive_url( $type );
-$show_form   = [] !== $topics || [] !== $whens;
+$show_form   = [] !== $topics || [] !== $whens || [] !== $orgs;
 
 global $wp_query;
 $found     = (int) $wp_query->found_posts;
@@ -145,6 +146,17 @@ $meta_line = static function ( WP_Post $item ): string {
 								<option value=""><?php esc_html_e( 'Any time', 'dgl-platform' ); ?></option>
 								<?php foreach ( $whens as $spell => $when_label ) : ?>
 									<option value="<?php echo esc_attr( $spell ); ?>"<?php selected( $filter_args['when'], $spell ); ?>><?php echo esc_html( $when_label ); ?></option>
+								<?php endforeach; ?>
+							</select>
+						</label>
+					<?php endif; ?>
+					<?php if ( [] !== $orgs ) : ?>
+						<label class="dgl-listing__filter">
+							<span class="dgl-listing__filterlabel"><?php esc_html_e( 'Organisation', 'dgl-platform' ); ?></span>
+							<select class="dgl-listing__select" name="<?php echo esc_attr( \DGL\Frontend\Filters::PARAM_ORG ); ?>">
+								<option value=""><?php esc_html_e( 'Any organisation', 'dgl-platform' ); ?></option>
+								<?php foreach ( $orgs as $org_id => $org_name ) : ?>
+									<option value="<?php echo (int) $org_id; ?>"<?php selected( (int) $filter_args['org'], (int) $org_id ); ?>><?php echo esc_html( $org_name ); ?></option>
 								<?php endforeach; ?>
 							</select>
 						</label>

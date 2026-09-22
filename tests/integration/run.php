@@ -3334,7 +3334,14 @@ $fl_none = $make_item( $org_a, $alice, Statuses::LIVE );
 
 $fl_args = \DGL\Frontend\Filters::args_from( [ 'topic' => $fl_slug, 'when' => 'week' ], PostTypes::EVENT );
 $ok( $fl_slug === $fl_args['topic'] && 'week' === $fl_args['when'], 'a real topic and a known window are kept' );
-$ok( [ 'topic' => '', 'when' => '' ] === \DGL\Frontend\Filters::args_from( [ 'topic' => 'no-such-topic', 'when' => 'someday' ], PostTypes::EVENT ), 'an unknown topic or window is dropped' );
+$ok( [ 'topic' => '', 'when' => '', 'org' => 0 ] === \DGL\Frontend\Filters::args_from( [ 'topic' => 'no-such-topic', 'when' => 'someday', 'org' => '999999' ], PostTypes::EVENT ), 'an unknown topic, window or organisation is dropped' );
+$ok( $org_a === \DGL\Frontend\Filters::args_from( [ 'org' => (string) $org_a ], PostTypes::EVENT )['org'], 'an approved organisation is kept' );
+$ok( isset( \DGL\Frontend\Filters::orgs( PostTypes::EVENT )[ $org_a ] ), 'an organisation with something live is offered' );
+$ok( str_ends_with( \DGL\Frontend\Filters::url( 'https://x.test/events/', [ 'topic' => '', 'when' => '', 'org' => $org_a ] ), '/events/?org=' . $org_a ), 'the filtered address carries the organisation' );
+$fl_org_q = new WP_Query( [ 'post_type' => PostTypes::EVENT, 'post_status' => Statuses::LIVE, 'fields' => 'ids', 'posts_per_page' => 200 ] );
+\DGL\Frontend\Filters::apply( $fl_org_q, [ 'topic' => '', 'when' => '', 'org' => $org_a ] );
+$fl_org_ids = array_map( 'intval', get_posts( array_merge( $fl_org_q->query_vars, [ 'suppress_filters' => true ] ) ) );
+$ok( [] !== $fl_org_ids && [] === array_filter( $fl_org_ids, static fn( int $id ): bool => \DGL\Org\Org::for_item( $id ) !== $org_a ), 'the organisation filter returns only that organisation\'s items' );
 $ok( '' === \DGL\Frontend\Filters::args_from( [ 'when' => 'week' ], PostTypes::NEWS )['when'], 'the date window is for events only' );
 $ok( isset( \DGL\Frontend\Filters::topics()[ $fl_slug ] ), 'a topic with something under it is offered' );
 $ok( str_ends_with( \DGL\Frontend\Filters::url( 'https://x.test/events/', $fl_args ), '/events/?topic=' . $fl_slug . '&when=week' ), 'the filtered address carries both' );

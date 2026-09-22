@@ -294,46 +294,51 @@ final class Frontend {
 		$sort_field = self::sort_key( $type );
 		$field      = null === $sort_field ? null : \DGL\Schema\FieldRegistry::find( $type, $sort_field );
 
-		if ( null === $field ) {
-			return;
-		}
-
-		// The stored key, not the field key: 'dgl_start_datetime', not
-		// 'start_datetime'. The listing had been sorting on a key that no
-		// row has ever carried.
-		$date_key = $field->meta_key();
-
-		// Events sort by their next occurrence, so a weekly group sits where
-		// its next date belongs rather than where its first one was.
-		if ( PostTypes::EVENT === $type ) {
-			$date_key = \DGL\Meta::ITEM_NEXT_AT;
-		}
-
 		/*
-		 * Items with no date still have to appear. Setting `meta_key` makes
-		 * WordPress inner-join postmeta on that key, whatever the meta_query
-		 * says, so every row without the key vanished: the client's demo
-		 * event, saved without a start date, made the public listing say
-		 * "no events" while the member area said "live on site". Ordering by
-		 * a named clause needs no `meta_key`; a row with no date sorts as
-		 * null, first, rather than not at all.
+		 * A dated type (events) sorts by its date; news and the rest keep the
+		 * newest-first default. This block used to end with a return for the
+		 * undated types, which quietly skipped the filters and the featured
+		 * ordering below for every news list: ?topic= and ?org= on /news/
+		 * changed the heading and nothing else.
 		 */
-		$query->set(
-			'meta_query',
-			[
-				'relation'    => 'OR',
-				'dgl_when'    => [ 'key' => $date_key, 'compare' => 'EXISTS' ],
-				'dgl_undated' => [ 'key' => $date_key, 'compare' => 'NOT EXISTS' ],
-			]
-		);
-		$query->set( 'orderby', [ 'dgl_when' => 'ASC', 'date' => 'DESC' ] );
+		if ( null !== $field ) {
+			// The stored key, not the field key: 'dgl_start_datetime', not
+			// 'start_datetime'. The listing had been sorting on a key that no
+			// row has ever carried.
+			$date_key = $field->meta_key();
+
+			// Events sort by their next occurrence, so a weekly group sits where
+			// its next date belongs rather than where its first one was.
+			if ( PostTypes::EVENT === $type ) {
+				$date_key = \DGL\Meta::ITEM_NEXT_AT;
+			}
+
+			/*
+			 * Items with no date still have to appear. Setting `meta_key` makes
+			 * WordPress inner-join postmeta on that key, whatever the meta_query
+			 * says, so every row without the key vanished: the client's demo
+			 * event, saved without a start date, made the public listing say
+			 * "no events" while the member area said "live on site". Ordering by
+			 * a named clause needs no `meta_key`; a row with no date sorts as
+			 * null, first, rather than not at all.
+			 */
+			$query->set(
+				'meta_query',
+				[
+					'relation'    => 'OR',
+					'dgl_when'    => [ 'key' => $date_key, 'compare' => 'EXISTS' ],
+					'dgl_undated' => [ 'key' => $date_key, 'compare' => 'NOT EXISTS' ],
+				]
+			);
+			$query->set( 'orderby', [ 'dgl_when' => 'ASC', 'date' => 'DESC' ] );
+		}
 
 		// A featured item sits first. That is done in SQL by pin_first(), not
 		// by another meta_query clause: adding one to the OR above changed how
 		// WordPress joined the date and broke the date order for everything.
 		$query->set( 'dgl_pin_first', true );
 
-		// ?topic= and ?when= narrow the list. Read here, on the main query,
+		// ?topic=, ?when= and ?org= narrow the list. Read here, on the main query,
 		// so the numbered pages and the autoload carry them without help.
 		Filters::apply( $query, Filters::args_from( wp_unslash( $_GET ), $type ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- a public filter; nothing is written.
 	}
