@@ -582,6 +582,12 @@ clean. They are the only DGLP content on staging.
   there is no picture. `src/Frontend/Cards.php`. AAA contrast walk clean.
   Theme, staging only: main menu gains "News and Events" (item 8798, to
   /news/) with children News (8799) and Events (8800). The "News and
-  Events" mega menu block (1323) still links to "#": it is a Blocksy
-  content block, which the content tools refuse to edit, so it is
-  unchanged pending Martin's say on the route.
+  Events" mega menu block (1323) is a Blocksy content block the content
+  tools refuse to edit, so on Martin's go-ahead its links were changed by
+  scoped `wp search-replace` on `wp_posts.post_content` (regex lookaheads,
+  because the console blocks `<`, `>`, `\` and `$` in commands): All News
+  and Forum Central News to /news/, Events to /events/, in both the block
+  markup and the block's JSON attributes. Each pattern matched exactly two
+  rows: the block and its one revision (8235). "Newsletter Sign up" still
+  links to "#": it has nowhere to go yet. The block is not yet attached to
+  the new menu item; that is a customiser setting.
