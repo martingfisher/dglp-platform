@@ -33,8 +33,8 @@ $show_form   = [] !== $topics || [] !== $whens;
 global $wp_query;
 $found     = (int) $wp_query->found_posts;
 $paged     = max( 1, (int) get_query_var( 'paged' ) );
-// The featured block: page one, unfiltered, four or more items to choose from.
-$with_hero = 1 === $paged && ! $filtering && $found >= 4;
+// The featured block: page one, unfiltered, two or more items (one large, up to three beside).
+$with_hero = 1 === $paged && ! $filtering && $found >= 2;
 
 /** The slash-separated meta line. */
 $meta_line = static function ( WP_Post $item ): string {
@@ -82,7 +82,12 @@ $meta_line = static function ( WP_Post $item ): string {
 				</article>
 
 				<div class="dgl-hero__side">
-					<?php for ( $i = 0; $i < 3 && have_posts(); $i++ ) : ?>
+					<?php
+					// Counted, not probed: have_posts() rewinds the loop when it runs
+					// out, which would repeat the featured items as rows below.
+					$side_count = min( 3, (int) $wp_query->post_count - 1 );
+					for ( $i = 0; $i < $side_count; $i++ ) :
+						?>
 						<?php the_post(); $item = get_post(); ?>
 						<article class="dgl-hero__item">
 							<a class="dgl-card__pic" href="<?php the_permalink(); ?>" tabindex="-1" aria-hidden="true"><?php echo Cards::picture( $item, 'medium' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside. ?></a>

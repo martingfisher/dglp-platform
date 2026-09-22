@@ -573,6 +573,16 @@ clean. They are the only DGLP content on staging.
   Also on staging today, by Martin's decision: 83 draft posts deleted and
   the MailChimp category (51) deleted; see `docs/topics.md`. Unit 1932,
   integration 912.
+- **0.23.1 deployed** (22 September): the featured block on /news/ and
+  /events/ now appears from two live items (one large, up to three
+  beside), not four; staging has two live stories, so the pattern was
+  invisible there. With it, a latent loop bug fixed: with fewer than four
+  items the side loop probed `have_posts()` past the end, WordPress
+  rewound the loop and the featured items repeated as rows. Checked
+  locally in a browser with 2, 3, 4 and 5 stories (lead 1; side 1, 2, 3,
+  3; rows 0, 0, 0, 1). Unit 1932, integration 920. Pinning is unchanged:
+  moderators and administrators use "Feature for 7 days" or "14 days" on
+  the item's review screen; a featured item takes the large slot.
 - **0.23.0 deployed** (22 September): the news and events pages restyled
   to Martin's pattern: one featured item large (pinned, else first in the
   list) with three beside it, then rows of a square rounded picture, topic
