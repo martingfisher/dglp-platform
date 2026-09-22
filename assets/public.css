@@ -489,28 +489,29 @@
 	gap: var(--dgl-gap);
 }
 
+/*
+ * Side cards and rows are open, not boxed: picture on the left, words on
+ * the right, a hairline between rows. The picture and the title carry the
+ * hover; a box around each row only ever competed with the featured card.
+ */
 .dgl-hero__item,
 .dgl-card {
 	display: grid;
 	grid-template-columns: auto minmax(0, 1fr);
 	gap: var(--dgl-gap);
 	align-items: center;
-	padding: 12px;
-	background: var(--dgl-white);
-	border: 1px solid var(--dgl-border);
-	border-radius: var(--dgl-radius-card);
-	box-shadow: var(--dgl-shadow-rest);
-	transition: box-shadow var(--dgl-motion), border-color var(--dgl-motion);
 	position: relative;
 }
 
-.dgl-hero__item:hover,
-.dgl-card:hover {
-	border-color: var(--dgl-border-strong);
-	box-shadow: var(--dgl-shadow-raised, 0 2px 4px rgb(30 50 50 / 5%), 0 10px 28px rgb(30 50 50 / 9%));
+.dgl-pub__list .dgl-card {
+	padding: 22px 0;
+	border-bottom: 1px solid var(--dgl-border);
+	align-items: start;
 }
 
-.dgl-card { padding: 14px; }
+.dgl-pub__list .dgl-card:first-child { padding-top: 6px; }
+
+.dgl-pub__list .dgl-card:last-child { border-bottom: 0; }
 
 .dgl-card__pic {
 	display: block;
@@ -574,6 +575,16 @@
 
 .dgl-hero__item .dgl-card__title { font-size: 1.02rem; }
 
+.dgl-pub__list .dgl-card__title { font-size: 1.25rem; }
+
+.dgl-card__summary {
+	margin: 0 0 8px;
+	font-size: 0.98rem;
+	line-height: 1.5;
+	color: var(--dgl-text-muted, var(--dgl-text));
+	max-width: 68ch;
+}
+
 .dgl-card__title a { color: var(--dgl-navy); text-decoration: none; }
 
 /* The whole card is the way in; the title carries the name for keyboards and readers. */
@@ -583,7 +594,9 @@
 .dgl-card__title a:focus { text-decoration: underline; text-underline-offset: 3px; }
 
 .dgl-card:focus-within,
-.dgl-hero__item:focus-within { outline: 3px solid var(--dgl-focus); outline-offset: 2px; }
+.dgl-hero__item:focus-within { outline: 3px solid var(--dgl-focus); outline-offset: 2px; border-radius: var(--dgl-radius-card); }
+
+.dgl-card:hover .dgl-card__img { filter: brightness(0.94); }
 
 .dgl-card__title a:focus-visible { outline: none; }
 
@@ -669,7 +682,9 @@ h2.dgl-listing__heading:only-child,
 	.dgl-hero__body { padding: var(--dgl-gap); }
 	.dgl-card__pic { width: 96px; height: 96px; border-radius: 12px; }
 	.dgl-hero__item .dgl-card__pic { width: 84px; height: 84px; }
-	.dgl-card { padding: 12px; gap: 12px; }
+	.dgl-pub__list .dgl-card { padding: 16px 0; gap: 12px; }
+	.dgl-pub__list .dgl-card__title { font-size: 1.05rem; }
+	.dgl-card__summary { font-size: 0.92rem; }
 	.dgl-card__title { font-size: 1.02rem; }
 	.dgl-listing__filterrow { display: grid; gap: 12px; }
 	.dgl-listing__filterrow[hidden] { display: none; }

@@ -116,6 +116,11 @@ with a Featured stamp. It drops back on its own when the time is up, hourly
 by cron, and the organisation is told either way. "Stop featuring it" ends
 it early. Nothing longer than a fortnight.
 
+You can also do it from wp-admin: open the item under News or Events, find
+the **Featured** box on the right, pick "Feature for 7 days" or "14 days"
+(or "Stop featuring it") and press Update. Same seven or fourteen days, same
+audit row, same people: moderators and administrators, on live items only.
+
 ## Reports
 
 "Reports" under Review team shows one month in numbers, read from the audit

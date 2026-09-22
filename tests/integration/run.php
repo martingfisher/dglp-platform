@@ -3632,6 +3632,76 @@ $ok( str_starts_with( $cd_smeta[0], 'Next ' ) && str_contains( $cd_smeta[0], '13
 \DGL\Events\Cancel::cancel( $cd_event, '', $alice );
 $ok( 'Cancelled' === \DGL\Frontend\Cards::meta( get_post( $cd_event ) )[0], 'a cancelled event says so first' );
 
+
+/* ------------------------------------------------- legacy posts come over */
+
+$legacy_org = $make_org( 'Legacy owner' );
+$legacy_alt = $make_org( 'Legacy alt owner' );
+foreach ( [ 'forumcentral', 'mental-health', 'news', 'featured-2' ] as $legacy_slug ) {
+	if ( ! term_exists( $legacy_slug, 'category' ) ) {
+		wp_insert_term( $legacy_slug, 'category', [ 'slug' => $legacy_slug ] );
+	}
+}
+$legacy_post = wp_insert_post( [ 'post_type' => 'post', 'post_status' => 'publish', 'post_title' => 'Legacy story', 'post_name' => 'legacy-story-' . wp_generate_password( 6, false ), 'post_content' => '<p>' . str_repeat( 'word ', 60 ) . '</p>', 'post_date' => '2024-05-06 10:00:00', 'post_author' => $alice ] );
+update_post_meta( $legacy_post, DGL_FIXTURE_FLAG, '1' );
+wp_set_object_terms( $legacy_post, [ 'forumcentral', 'mental-health', 'news', 'featured-2' ], 'category' );
+$legacy_draft = wp_insert_post( [ 'post_type' => 'post', 'post_status' => 'draft', 'post_title' => 'Legacy draft', 'post_author' => $alice ] );
+update_post_meta( $legacy_draft, DGL_FIXTURE_FLAG, '1' );
+
+$ok( [ 'health-and-social-care', 'mental-health', 'featured' ] === \DGL\News\LegacyImport::topics_for( [ 'forumcentral', 'mental-health', 'news', 'featured-2', 'featured' ] ), 'categories map to topics, retired ones drop, duplicates fold' );
+$ok( $legacy_alt === \DGL\News\LegacyImport::owner_for( [ 'news', 'forumcentral' ], $legacy_org, [ 'forumcentral' => $legacy_alt ] ), 'the first category with an owner wins' );
+$ok( $legacy_org === \DGL\News\LegacyImport::owner_for( [ 'news' ], $legacy_org, [ 'forumcentral' => $legacy_alt ] ), 'else the default owner' );
+$ok( [ 'forumcentral' => 12, 'val' => 13 ] === \DGL\News\Command::owners( 'forumcentral:12, val:13, bad, x:0' ), 'the owner option parses and drops rubbish' );
+$ok( 'legacy-story' === \DGL\News\LegacyRedirect::slug_from_path( '/forumcentral/legacy-story/?utm=1' ), 'the old address gives its slug' );
+
+$legacy_plan = \DGL\News\LegacyImport::plan( $legacy_post, $legacy_org );
+$legacy_plan_topics = is_array( $legacy_plan ) ? $legacy_plan['topics'] : [];
+sort( $legacy_plan_topics );
+$ok( is_array( $legacy_plan ) && [ 'featured', 'health-and-social-care', 'mental-health' ] === $legacy_plan_topics && $legacy_org === $legacy_plan['org'] && str_starts_with( $legacy_plan['summary'], 'word word' ) && str_ends_with( $legacy_plan['summary'], '…' ), 'the plan says what it would do' );
+$ok( is_wp_error( \DGL\News\LegacyImport::plan( $legacy_draft, $legacy_org ) ), 'a draft is not brought over' );
+$ok( 'post' === get_post_type( $legacy_post ), 'planning changes nothing' );
+$ok( is_wp_error( \DGL\News\LegacyImport::convert( $legacy_post, 999999 ) ), 'no such owner, no conversion' );
+
+$legacy_old_url = get_permalink( $legacy_post );
+$legacy_done    = \DGL\News\LegacyImport::convert( $legacy_post, $legacy_org, [], $mod );
+$ok( is_array( $legacy_done ) && PostTypes::NEWS === get_post_type( $legacy_post ) && Statuses::LIVE === get_post_status( $legacy_post ), 'converted in place: same id, now a live news item' );
+$ok( '2024-05-06 10:00:00' === get_post( $legacy_post )->post_date, 'its date is untouched' );
+$ok( $legacy_org === (int) get_post_meta( $legacy_post, Meta::ITEM_ORG, true ) && '1' === (string) get_post_meta( $legacy_post, \DGL\News\LegacyImport::META_FROM, true ), 'owner and origin recorded' );
+$legacy_kept = explode( ',', (string) get_post_meta( $legacy_post, \DGL\News\LegacyImport::META_CATEGORIES, true ) );
+sort( $legacy_kept );
+$ok( [ 'featured-2', 'forumcentral', 'mental-health', 'news' ] === $legacy_kept && $legacy_old_url === (string) get_post_meta( $legacy_post, \DGL\News\LegacyImport::META_URL, true ), 'the old categories and address are kept for the record' );
+$legacy_topics = wp_get_object_terms( $legacy_post, \DGL\Taxonomies::TOPIC, [ 'fields' => 'slugs' ] );
+sort( $legacy_topics );
+$ok( [ 'featured', 'health-and-social-care', 'mental-health' ] === $legacy_topics, 'it carries the mapped topics' );
+$ok( [] === wp_get_object_terms( $legacy_post, 'category', [ 'fields' => 'slugs' ] ) || is_wp_error( wp_get_object_terms( $legacy_post, 'category' ) ), 'and no old categories' );
+$ok( str_starts_with( (string) get_post_meta( $legacy_post, 'dgl_summary', true ), 'word word' ), 'the listing summary is filled from the words' );
+$ok( in_array( $legacy_post, array_map( 'intval', ItemsTable::for_org( $legacy_org, [ PostTypes::NEWS ], [ Statuses::LIVE ] ) ), true ), 'it is in the index as live, under its owner' );
+$ok( in_array( 'imported', array_column( Log::for_object( 'item', $legacy_post ), 'action' ), true ), 'the import is in the audit trail' );
+$ok( $legacy_post === \DGL\News\LegacyImport::live_by_slug( get_post( $legacy_post )->post_name ), 'the redirect can find it by its old slug' );
+$ok( null === \DGL\News\LegacyImport::live_by_slug( 'no-such-story-ever' ), 'and finds nothing for a stranger' );
+$ok( is_wp_error( \DGL\News\LegacyImport::convert( $legacy_post, $legacy_org ) ), 'a second conversion refuses: it is no longer a post of the old kind' );
+
+/* ------------------------------------------- featured from wp-admin */
+
+$box_item = $make_item( $org_a, $alice, Statuses::LIVE );
+wp_set_current_user( $mod );
+$_POST = [ 'dgl_admin_feature' => wp_create_nonce( 'dgl_admin_feature' ), 'dgl_feature' => '14' ];
+\DGL\Admin\MetaBoxes::save( $box_item, get_post( $box_item ) );
+$ok( \DGL\Workflow\Pins::is_pinned( $box_item ), 'a moderator features an item from the edit screen' );
+$_POST = [ 'dgl_admin_feature' => wp_create_nonce( 'dgl_admin_feature' ), 'dgl_feature' => 'stop' ];
+\DGL\Admin\MetaBoxes::save( $box_item, get_post( $box_item ) );
+$ok( ! \DGL\Workflow\Pins::is_pinned( $box_item ), 'and stops featuring it the same way' );
+wp_set_current_user( $alice );
+$_POST = [ 'dgl_admin_feature' => wp_create_nonce( 'dgl_admin_feature' ), 'dgl_feature' => '7' ];
+\DGL\Admin\MetaBoxes::save( $box_item, get_post( $box_item ) );
+$ok( ! \DGL\Workflow\Pins::is_pinned( $box_item ), 'a member cannot, whatever the form says' );
+wp_set_current_user( $mod );
+$_POST = [ 'dgl_feature' => '7' ];
+\DGL\Admin\MetaBoxes::save( $box_item, get_post( $box_item ) );
+$ok( ! \DGL\Workflow\Pins::is_pinned( $box_item ), 'no nonce, no change' );
+$_POST = [];
+wp_set_current_user( 0 );
+
 /* ----------------------------------------------------------------- report */
 
 echo "\n" . str_repeat( '-', 60 ) . "\n";

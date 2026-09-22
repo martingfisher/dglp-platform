@@ -573,6 +573,27 @@ clean. They are the only DGLP content on staging.
   Also on staging today, by Martin's decision: 83 draft posts deleted and
   the MailChimp category (51) deleted; see `docs/topics.md`. Unit 1932,
   integration 912.
+- **0.24.0 deployed** (22 September): four things. (1) The rows under the
+  featured block on /news/ and /events/ are open, not boxed: square picture
+  left, chip, title, a summary line, then the slash-separated meta, a
+  hairline between rows; the side cards beside the featured item lose their
+  boxes too. The summary is the one the member wrote, else the story's first
+  words. Autoload unchanged. (2) A **Featured** box on the wp-admin edit
+  screen of any item: "Feature for 7 days", "14 days" or "Stop featuring
+  it", applied on Update, same rule as the dashboard (moderators and
+  administrators, live items only), same audit rows. Driven in a browser
+  locally: feature, then stop, both reflected in the box and the audit.
+  (3) `wp dgl news import`: converts the old site's published posts into
+  news items in place, keeping id, slug, dates, author, picture and words;
+  categories become topics by DGLP's mapping; owner from `--org` and
+  `--owner`; old `/category/story/` addresses answer 301. Doc:
+  `docs/legacy-news.md`. Not yet run on staging: the owning organisations
+  need deciding first (see the note below). (4) A bug found on the way and
+  fixed: the item page never showed the story body. The template read a
+  meta key the wizard never writes (the story lives in post_content), so
+  every item page on staging rendered with `dgl-pub__layout--nobody`.
+  Verified on /news/demo-story-three/ before the fix. Unit 1932, integration
+  945.
 - **0.23.1 deployed** (22 September): the featured block on /news/ and
   /events/ now appears from two live items (one large, up to three
   beside), not four; staging has two live stories, so the pattern was

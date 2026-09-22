@@ -83,6 +83,7 @@ final class Plugin {
 		SignIn::init();
 		Admin::init();
 		Frontend::init();
+		\DGL\News\LegacyRedirect::init();
 
 		/*
 		 * Not inside Admin::init(). A status can be changed from WP-CLI, from a
@@ -109,6 +110,7 @@ final class Plugin {
 			\DGL\Reports\Command::register();
 			\DGL\Joining\Command::register();
 			\DGL\Schema\LinksCommand::register();
+			\DGL\News\Command::register();
 		}
 
 		\DGL\Admin\Health::watch();

@@ -9,12 +9,16 @@ declare( strict_types=1 );
 
 namespace DGL\Admin;
 
+use DGL\Access\Access;
+use DGL\Access\Policy;
 use DGL\Org\Org;
 use DGL\PostTypes;
 use DGL\Schema\Field;
 use DGL\Schema\FieldRegistry;
 use DGL\Schema\Store;
 use DGL\Schema\Validator;
+use DGL\Statuses;
+use DGL\Workflow\Pins;
 use WP_Post;
 
 defined( 'ABSPATH' ) || exit;
@@ -38,6 +42,8 @@ defined( 'ABSPATH' ) || exit;
 final class MetaBoxes {
 
 	private const NONCE = 'dgl_admin_fields';
+
+	private const PIN_NONCE = 'dgl_admin_feature';
 
 	public static function init(): void {
 		add_action( 'add_meta_boxes', [ self::class, 'register' ] );
@@ -73,7 +79,66 @@ final class MetaBoxes {
 				'side',
 				'default'
 			);
+
+			add_meta_box(
+				'dgl-featured-' . $post_type,
+				__( 'Featured', 'dgl-platform' ),
+				[ self::class, 'render_featured' ],
+				$post_type,
+				'side',
+				'default'
+			);
 		}
+	}
+
+	/**
+	 * Feature an item from wp-admin: the same seven or fourteen days the review
+	 * screen offers, for the team who never open the dashboard. The choice is
+	 * applied on Update, so it goes through the ordinary save.
+	 */
+	public static function render_featured( WP_Post $post ): void {
+		$post_id = (int) $post->ID;
+		$until   = Pins::until( $post_id );
+		$live    = Statuses::LIVE === (string) $post->post_status;
+		$can     = Access::can( get_current_user_id(), Policy::PIN_ITEM, $post_id );
+
+		if ( Pins::is_pinned( $post_id ) && null !== $until ) {
+			echo '<p>' . esc_html( sprintf(
+				/* translators: %s: a date. */
+				__( 'At the top of its list until %s.', 'dgl-platform' ),
+				(string) wp_date( (string) get_option( 'date_format', 'j F Y' ), $until->getTimestamp() )
+			) ) . '</p>';
+		} else {
+			echo '<p>' . esc_html__( 'Not featured. A featured item takes the large slot at the top of its list and drops back on its own.', 'dgl-platform' ) . '</p>';
+		}
+
+		if ( ! $live ) {
+			echo '<p class="description">' . esc_html__( 'Only something on the site can be featured.', 'dgl-platform' ) . '</p>';
+			return;
+		}
+
+		if ( ! $can ) {
+			echo '<p class="description">' . esc_html__( 'Moderators and administrators can feature items.', 'dgl-platform' ) . '</p>';
+			return;
+		}
+
+		wp_nonce_field( self::PIN_NONCE, self::PIN_NONCE );
+
+		echo '<p><label class="screen-reader-text" for="dgl-feature">' . esc_html__( 'Feature this item', 'dgl-platform' ) . '</label>';
+		echo '<select id="dgl-feature" name="dgl_feature" style="width:100%">';
+		echo '<option value="">' . esc_html__( 'Leave as it is', 'dgl-platform' ) . '</option>';
+
+		foreach ( Pins::choices() as $days ) {
+			/* translators: %d: days. */
+			echo '<option value="' . (int) $days . '">' . esc_html( sprintf( __( 'Feature for %d days', 'dgl-platform' ), $days ) ) . '</option>';
+		}
+
+		if ( Pins::is_pinned( $post_id ) ) {
+			echo '<option value="stop">' . esc_html__( 'Stop featuring it', 'dgl-platform' ) . '</option>';
+		}
+
+		echo '</select></p>';
+		echo '<p class="description">' . esc_html__( 'Applied when you press Update.', 'dgl-platform' ) . '</p>';
 	}
 
 	/**
@@ -259,6 +324,8 @@ final class MetaBoxes {
 			return;
 		}
 
+		self::save_featured( $post_id );
+
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.NonceVerification.Missing
 		$nonce = isset( $_POST[ self::NONCE ] ) ? sanitize_text_field( wp_unslash( $_POST[ self::NONCE ] ) ) : '';
 
@@ -302,6 +369,42 @@ final class MetaBoxes {
 
 		// Dates changed here would otherwise wait for the hourly roll-forward.
 		\DGL\Events\Series::stamp( $post_id, (string) $post->post_type );
+	}
+
+	/**
+	 * The Featured box's choice, if one was made. Its own nonce, so a save
+	 * from a screen without the box (quick edit, the REST editor) is ignored.
+	 */
+	private static function save_featured( int $post_id ): void {
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		$nonce = isset( $_POST[ self::PIN_NONCE ] ) ? sanitize_text_field( wp_unslash( $_POST[ self::PIN_NONCE ] ) ) : '';
+
+		if ( '' === $nonce || ! wp_verify_nonce( $nonce, self::PIN_NONCE ) ) {
+			return;
+		}
+
+		$choice = isset( $_POST['dgl_feature'] ) ? sanitize_text_field( wp_unslash( $_POST['dgl_feature'] ) ) : '';
+
+		if ( '' === $choice ) {
+			return;
+		}
+
+		$user_id = get_current_user_id();
+
+		if ( ! Access::can( $user_id, Policy::PIN_ITEM, $post_id ) ) {
+			return;
+		}
+
+		if ( 'stop' === $choice ) {
+			Pins::unpin( $post_id, $user_id );
+			return;
+		}
+
+		$result = Pins::pin( $post_id, (int) $choice, $user_id );
+
+		if ( is_wp_error( $result ) ) {
+			set_transient( 'dgl_admin_errors_' . $post_id, [ $result->get_error_message() ], 60 );
+		}
 	}
 
 	/**

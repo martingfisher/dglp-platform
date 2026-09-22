@@ -175,6 +175,10 @@ $meta_line = static function ( WP_Post $item ): string {
 							<?php endif; ?>
 						</p>
 						<h2 class="dgl-card__title"><a href="<?php the_permalink(); ?>"><?php echo esc_html( get_the_title() ); ?></a></h2>
+						<?php $summary = Cards::summary( $item ); ?>
+						<?php if ( '' !== $summary ) : ?>
+							<p class="dgl-card__summary"><?php echo esc_html( $summary ); ?></p>
+						<?php endif; ?>
 						<?php echo $meta_line( $item ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside. ?>
 					</div>
 				</li>

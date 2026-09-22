@@ -122,6 +122,10 @@ Repeating events add a column to the index and a public route:
 - Settings > General > Timezone should be London, not UTC+0. Stored times
   are wall clock either way, but the .ics files and the hourly sweep read
   them in the site zone, and UTC+0 is an hour out from April to October.
+- The old site's stories: `wp dgl news import --org=<id> --dry-run` reports
+  what would convert; the real run needs the owning organisation ids agreed
+  first. See `docs/legacy-news.md`. Afterwards `/news/` lists them and an
+  old `/category/story/` address answers 301 to `/news/story/`.
 - The reminder and the roll-forward run on the existing hourly
   `dgl_run_expiry_sweep` hook, so cron must be on. `wp dgl series status <id>`
   prints every check the hook makes for one event; `wp dgl series remind <id>`

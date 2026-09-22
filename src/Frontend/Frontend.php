@@ -403,6 +403,12 @@ final class Frontend {
 	 * and every fixture in the tests.
 	 */
 	public static function value( WP_Post $post, string $key ): mixed {
+		// The story itself lives in post_content (Store writes it there, so the
+		// editor, revisions and search see it). No meta row carries it.
+		if ( 'body' === $key ) {
+			return (string) $post->post_content;
+		}
+
 		$field = FieldRegistry::find( (string) $post->post_type, $key );
 
 		return get_post_meta( (int) $post->ID, null === $field ? 'dgl_' . $key : $field->meta_key(), true );

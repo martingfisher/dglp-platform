@@ -137,6 +137,24 @@ final class Cards {
 		return '<span class="dgl-card__img dgl-card__img--none" aria-hidden="true"><span>' . esc_html( $word ) . '</span></span>';
 	}
 
+	/**
+	 * The summary the member wrote, else the story's own first words. Trimmed
+	 * to a listing's worth either way, so a pasted essay cannot run the row.
+	 */
+	public static function summary( WP_Post $post, int $words = 32 ): string {
+		$text = trim( wp_strip_all_tags( (string) Frontend::value( $post, 'summary' ) ) );
+
+		if ( '' === $text ) {
+			$text = trim( wp_strip_all_tags( (string) $post->post_excerpt ) );
+		}
+
+		if ( '' === $text ) {
+			$text = trim( wp_strip_all_tags( strip_shortcodes( (string) $post->post_content ) ) );
+		}
+
+		return '' === $text ? '' : (string) wp_trim_words( $text, $words, '…' );
+	}
+
 	public static function has_picture( WP_Post $post ): bool {
 		return (int) Frontend::value( $post, 'image' ) > 0;
 	}
