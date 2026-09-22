@@ -573,6 +573,19 @@ clean. They are the only DGLP content on staging.
   Also on staging today, by Martin's decision: 83 draft posts deleted and
   the MailChimp category (51) deleted; see `docs/topics.md`. Unit 1932,
   integration 912.
+- **0.27.1 deployed** (22 September): `wp dgl probe page` accepts an
+  absolute https address, so the server can read a partner site the
+  console's operator cannot reach. Used to compare the topic-less stories
+  with their sources: forumcentral.org.uk files its news under the same
+  subject categories the old partnership site had (Health and Care 679,
+  Communities of Interest 237, Mental Health 124, and so on), so Forum
+  Central's stories arrived with topics; doinggoodleeds.org.uk (VAL) has
+  only News (1786), Blog (196) and Good news (8), so VAL's stories arrived
+  with none. "Volunteer Drivers Needed", "Jimbo's Fund" and the Bramley
+  Baths stories are all on doinggoodleeds.org.uk under News or Blog, and
+  none is on forumcentral.org.uk. The 67 topic-less stories whose only old
+  categories were news or blog are therefore VAL's, and the import gave
+  them to Forum Central by default. Not yet moved; Martin's call.
 - **0.27.0 deployed** (22 September): `wp dgl news suggest-topics`, a
   keyword pass over the topic-less stories' headlines and summaries against
   DGLP's topic list; report by default, `--apply --actor=<id>` sets them
