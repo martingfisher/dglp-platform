@@ -399,7 +399,7 @@ $check_word = static fn( string $status ): string => match ( $status ) {
 			<h2 class="dgl-section__title"><?php esc_html_e( 'Who sent it', 'dgl-platform' ); ?></h2>
 			<dl class="dgl-review__list">
 				<dt><?php esc_html_e( 'Organisation', 'dgl-platform' ); ?></dt>
-				<dd><?php echo esc_html( $data['org'] ? get_the_title( $data['org'] ) : '' ); ?></dd>
+				<dd><?php echo esc_html( $data['org'] ? get_the_title( $data['org'] ) : __( 'None', 'dgl-platform' ) ); ?></dd>
 				<dt><?php esc_html_e( 'Trust level', 'dgl-platform' ); ?></dt>
 				<dd><?php echo esc_html( (string) $data['org_trust'] ); ?></dd>
 				<dt><?php esc_html_e( 'Live on site', 'dgl-platform' ); ?></dt>
@@ -407,6 +407,27 @@ $check_word = static fn( string $status ): string => match ( $status ) {
 				<dt><?php esc_html_e( 'Previously refused', 'dgl-platform' ); ?></dt>
 				<dd><?php echo esc_html( (string) $data['rejected'] ); ?></dd>
 			</dl>
+
+			<?php if ( ! empty( $data['can_reassign'] ) && ! empty( $data['orgs'] ) ) : ?>
+				<?php if ( ! empty( $data['moved'] ) ) : ?>
+					<div class="dgl-alert dgl-alert--good" role="status"><p><?php esc_html_e( 'Moved. It now sits under that organisation, on the site and in their dashboard.', 'dgl-platform' ); ?></p></div>
+				<?php endif; ?>
+				<form method="post" class="dgl-form dgl-form--bare" id="dgl-reassign">
+					<?php wp_nonce_field( Wizard::NONCE ); ?>
+					<div class="dgl-field-row">
+						<label class="dgl-label" for="dgl-org"><?php esc_html_e( 'Move it to another organisation', 'dgl-platform' ); ?></label>
+						<select class="dgl-field" id="dgl-org" name="dgl_org">
+							<?php foreach ( $data['orgs'] as $org_id => $org_name ) : ?>
+								<option value="<?php echo (int) $org_id; ?>"<?php selected( $data['org'] && (int) $data['org']->ID === (int) $org_id ); ?>><?php echo esc_html( $org_name ); ?></option>
+							<?php endforeach; ?>
+						</select>
+						<p class="dgl-help"><?php esc_html_e( 'For a story filed under the wrong name. The item keeps its status; the audit trail records the move.', 'dgl-platform' ); ?></p>
+					</div>
+					<div class="dgl-decision__actions">
+						<button class="dgl-button dgl-button--secondary" type="submit" name="dgl_intent" value="reassign"><?php esc_html_e( 'Move it', 'dgl-platform' ); ?></button>
+					</div>
+				</form>
+			<?php endif; ?>
 		</section>
 
 		<section class="dgl-card">

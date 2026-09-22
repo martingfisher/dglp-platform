@@ -141,6 +141,18 @@ as a count on the queue rows. The organisation never sees them: they are
 not in the audit trail, not in notifications, and a copy of the listing
 does not carry them. Any moderator can remove one.
 
+## Moving an item to another organisation
+
+Every item belongs to one organisation, and that name is what the public
+see on it and what the organisation's members see in their dashboard. The
+old site's stories came over under Forum Central or Voluntary Action Leeds
+by their old category, which is not always right. On any item's review
+screen, the "Who sent it" card has "Move it to another organisation": pick
+the right one from the list of approved organisations and press "Move it".
+The item keeps its status (a live story stays live), the new organisation's
+dashboard lists it and the old one's does not, and the audit trail records
+the move with both names. Moderators and administrators only.
+
 ## Taking something off the site
 
 Open any live item from the queue or from the member's list. The last section

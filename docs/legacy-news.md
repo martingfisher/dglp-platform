@@ -62,3 +62,20 @@ picture, and the count per owner and per topic. On the Wordify console the
   is whoever the options said. Members of that organisation can edit the
   story from the dashboard like any other.
 - No review: they were published on the old site, so they are live.
+
+## Done on staging, 22 September 2026
+
+Three organisations were created for the purpose, approved and kept out of
+the directory: Forum Central (8802), Voluntary Action Leeds (8803) and
+Leeds Older People's Forum (8804). A backup was taken first. Then:
+
+```
+wp dgl news import --org=8802 --owner=forumcentral:8802,val:8803,lopf:8804
+```
+
+527 converted, none skipped: Forum Central 435, Voluntary Action Leeds 92
+(nothing was filed under LOPF). 71 carry no topic because their only
+categories were retired ones (news, blog, events); the review team can add
+topics from the item's edit screen. One has no picture. /news/ went from 2
+live stories to 529. Where the mapping put a story under the wrong name, the
+review screen's "Move it to another organisation" control corrects it.

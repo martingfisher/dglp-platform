@@ -3702,6 +3702,22 @@ $ok( ! \DGL\Workflow\Pins::is_pinned( $box_item ), 'no nonce, no change' );
 $_POST = [];
 wp_set_current_user( 0 );
 
+
+/* ------------------------------------------ moving an item between orgs */
+
+$move_item = $make_item( $org_a, $alice, Statuses::LIVE );
+$move_to   = $make_org( 'Move target' );
+$move_pend = $make_org( 'Move pending', Meta::ORG_PENDING );
+$ok( isset( \DGL\Org\Org::approved()[ $move_to ] ) && ! isset( \DGL\Org\Org::approved()[ $move_pend ] ), 'the picker lists approved organisations only' );
+$ok( Access::can( $mod, Policy::REASSIGN_ITEM, $move_item ) && ! Access::can( $alice, Policy::REASSIGN_ITEM, $move_item ), 'the review team can move an item; a member cannot' );
+$ok( is_wp_error( \DGL\Org\Org::reassign( $move_item, $move_pend, $mod ) ), 'not to an organisation that is not approved' );
+$ok( is_wp_error( \DGL\Org\Org::reassign( $move_item, $org_a, $mod ) ), 'not to the one it already has' );
+$ok( true === \DGL\Org\Org::reassign( $move_item, $move_to, $mod ), 'moved' );
+$ok( $move_to === \DGL\Org\Org::for_item( $move_item ) && Statuses::LIVE === get_post_status( $move_item ), 'it belongs to the new organisation and keeps its status' );
+$ok( in_array( $move_item, array_map( 'intval', ItemsTable::for_org( $move_to, null, [ Statuses::LIVE ] ) ), true ) && ! in_array( $move_item, array_map( 'intval', ItemsTable::for_org( $org_a, null, [ Statuses::LIVE ] ) ), true ), 'the index row followed' );
+$move_log = array_values( array_filter( Log::for_object( 'item', $move_item ), static fn( array $r ): bool => 'reassigned' === $r['action'] ) );
+$ok( [] !== $move_log && str_contains( (string) $move_log[0]['note'], 'Move target' ), 'the audit row names the new owner' );
+
 /* ----------------------------------------------------------------- report */
 
 echo "\n" . str_repeat( '-', 60 ) . "\n";

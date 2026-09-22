@@ -9,6 +9,8 @@ declare( strict_types=1 );
 
 namespace DGL\Org;
 
+use DGL\Audit\Log;
+use DGL\Index\Sync;
 use DGL\Meta;
 use DGL\PostTypes;
 
@@ -334,5 +336,80 @@ final class Org {
 
 	public static function exists( int $org_id ): bool {
 		return $org_id > 0 && PostTypes::ORG === get_post_type( $org_id );
+	}
+
+	/**
+	 * Every approved organisation, as id => name, in name order. For a
+	 * picker: the review team moving an item to the organisation it belongs to.
+	 *
+	 * @return array<int,string>
+	 */
+	public static function approved(): array {
+		$ids = get_posts(
+			[
+				'post_type'        => PostTypes::ORG,
+				'post_status'      => 'publish',
+				'fields'           => 'ids',
+				'numberposts'      => -1,
+				'orderby'          => 'title',
+				'order'            => 'ASC',
+				'meta_key'         => Meta::ORG_STATUS, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+				'meta_value'       => Meta::ORG_APPROVED, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
+				'suppress_filters' => true,
+			]
+		);
+
+		$out = [];
+
+		foreach ( array_map( 'intval', (array) $ids ) as $id ) {
+			$out[ $id ] = (string) get_the_title( $id );
+		}
+
+		return $out;
+	}
+
+	/**
+	 * Move an item to another organisation. The index row follows, so the
+	 * new owner's dashboard lists it and the old one's does not; the audit
+	 * row names both. The item's status is untouched.
+	 *
+	 * @return true|\WP_Error
+	 */
+	public static function reassign( int $post_id, int $org_id, int $actor_id ) {
+		$post = get_post( $post_id );
+
+		if ( ! $post instanceof \WP_Post || ! PostTypes::is_submittable( (string) $post->post_type ) ) {
+			return new \WP_Error( 'dgl_not_item', __( 'Not an item.', 'dgl-platform' ) );
+		}
+
+		if ( ! self::is_approved( $org_id ) ) {
+			return new \WP_Error( 'dgl_org_not_approved', __( 'Pick an approved organisation.', 'dgl-platform' ) );
+		}
+
+		$from = self::for_item( $post_id );
+
+		if ( $from === $org_id ) {
+			return new \WP_Error( 'dgl_same_org', __( 'It already belongs to that organisation.', 'dgl-platform' ) );
+		}
+
+		update_post_meta( $post_id, Meta::ITEM_ORG, $org_id );
+		Sync::sync( $post_id );
+
+		Log::record(
+			'reassigned',
+			'item',
+			$post_id,
+			$org_id,
+			sprintf(
+				/* translators: 1: the old organisation, 2: the new one. */
+				__( 'Moved from %1$s to %2$s.', 'dgl-platform' ),
+				$from > 0 ? (string) get_the_title( $from ) : __( 'no organisation', 'dgl-platform' ),
+				(string) get_the_title( $org_id )
+			),
+			[ 'from' => $from, 'to' => $org_id ],
+			$actor_id
+		);
+
+		return true;
 	}
 }

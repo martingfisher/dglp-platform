@@ -762,6 +762,24 @@ final class Controller {
 				}
 			}
 
+			// Moving an item to the organisation it belongs to. Any status, moderators only.
+			if ( 'reassign' === $intent ) {
+				$target = $is_edit ? (int) $parent->ID : $post_id;
+
+				if ( ! Access::can( $user->user_id, Policy::REASSIGN_ITEM, $target ) ) {
+					$error = __( 'Only the review team can move an item to another organisation.', 'dgl-platform' );
+				} else {
+					$result = \DGL\Org\Org::reassign( $target, isset( $_POST['dgl_org'] ) ? (int) $_POST['dgl_org'] : 0, $user->user_id );
+
+					if ( is_wp_error( $result ) ) {
+						$error = $result->get_error_message();
+					} else {
+						wp_safe_redirect( add_query_arg( 'moved', '1', Router::url( 'review', (string) $post_id ) ) );
+						exit;
+					}
+				}
+			}
+
 			// Featuring is a moderator's move on a live item; it never touches review.
 			if ( in_array( $intent, [ 'pin', 'unpin' ], true ) ) {
 				if ( ! Access::can( $user->user_id, Policy::PIN_ITEM, $post_id ) ) {
@@ -845,6 +863,10 @@ final class Controller {
 				// A refusal or an archive can be sent back through the queue.
 				'can_reopen'    => Access::can( $user->user_id, Policy::REOPEN_ITEM, $post_id ),
 				'can_pin'       => ! $is_edit && Access::can( $user->user_id, Policy::PIN_ITEM, $post_id ),
+				// The team can put an item under the organisation it belongs to.
+				'can_reassign'  => Access::can( $user->user_id, Policy::REASSIGN_ITEM, $is_edit ? (int) $parent->ID : $post_id ),
+				'orgs'          => Access::can( $user->user_id, Policy::REASSIGN_ITEM, $is_edit ? (int) $parent->ID : $post_id ) ? \DGL\Org\Org::approved() : [],
+				'moved'         => isset( $_GET['moved'] ), // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 				'pinned_until'  => \DGL\Workflow\Pins::is_pinned( $post_id ) ? (string) wp_date( (string) get_option( 'date_format', 'j F Y' ), \DGL\Workflow\Pins::until( $post_id )->getTimestamp() ) : '',
 				'featured'      => isset( $_GET['featured'] ) ? (string) $_GET['featured'] : null, // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 				'can_restore'   => ! $is_edit && Access::can( $user->user_id, Policy::RESTORE_ITEM, $post_id ),

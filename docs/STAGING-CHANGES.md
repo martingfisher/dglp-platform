@@ -573,6 +573,22 @@ clean. They are the only DGLP content on staging.
   Also on staging today, by Martin's decision: 83 draft posts deleted and
   the MailChimp category (51) deleted; see `docs/topics.md`. Unit 1932,
   integration 912.
+- **0.25.0 deployed** (22 September): the review screen's "Who sent it"
+  card gains "Move it to another organisation": a list of approved
+  organisations and a "Move it" button, moderators and administrators, any
+  status. The item keeps its status, the index row follows so the new
+  owner's dashboard lists it, and the audit row names both organisations.
+  Driven in a browser locally: moved a story from one organisation to
+  another, the alert and the audit row agreed. Unit 1932, integration 953.
+  Also on staging today, on Martin's go-ahead: three organisations created
+  (Forum Central 8802, Voluntary Action Leeds 8803, Leeds Older People's
+  Forum 8804; approved, not in the directory), a backup taken, then
+  `wp dgl news import --org=8802 --owner=forumcentral:8802,val:8803,lopf:8804`:
+  527 old posts converted in place (Forum Central 435, VAL 92), none
+  skipped, 71 without a topic (retired categories only), 1 without a
+  picture. `dgl_news` live count 529; the `post` type has one row left, a
+  Yoast Duplicate Post rewrite draft (5831), untouched. Details in
+  `docs/legacy-news.md`.
 - **0.24.0 deployed** (22 September): four things. (1) The rows under the
   featured block on /news/ and /events/ are open, not boxed: square picture
   left, chip, title, a summary line, then the slash-separated meta, a

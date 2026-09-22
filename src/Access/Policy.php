@@ -52,6 +52,7 @@ final class Policy {
 	public const EXTEND_ITEM     = 'extend_item';
 	public const PIN_ITEM        = 'pin_item';
 	public const CANCEL_ITEM     = 'cancel_item';
+	public const REASSIGN_ITEM   = 'reassign_item';
 
 	/**
 	 * Decide whether an actor may perform an action, optionally on an item.
@@ -86,6 +87,7 @@ final class Policy {
 			self::EXTEND_ITEM    => self::can_extend_item( $user, $item ),
 			self::PIN_ITEM       => self::can_take_down_item( $user, $item ), // The same people, the same live items.
 			self::CANCEL_ITEM    => self::can_change_schedule( $user, $item ), // Cancelling is a schedule fact, so the same gate.
+			self::REASSIGN_ITEM  => null !== $item && $user->is_moderator() && $user->can_write(), // Any item, any status: the team put it under the wrong name.
 			default              => false,
 		};
 	}
