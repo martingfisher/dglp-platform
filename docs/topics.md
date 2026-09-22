@@ -72,5 +72,13 @@ news-mailchimp, news.
 
 On staging on 22 September those categories carried between 0 and 310 posts
 each (`wp term list category`). Merging or deleting them is a change to the
-legacy content, needs a decision on whether that content is kept, and is a
-WP-CLI job on the site, not plugin code.
+legacy content and is a WP-CLI job on the site, not plugin code.
+
+Done on staging, 22 September, by Martin's decision: the 83 draft posts
+deleted (newsletter items never published, half of them duplicates of
+published posts, eight dated 1970), and the MailChimp category (term 51)
+deleted: it was a flag for an email feed that no longer exists. Its eight
+child categories moved to the top level. Permalinks are
+`/%category%/%postname%/`, so the 94 published posts whose first category
+was MailChimp now have a different address; WordPress's 404 guess redirects
+the old one by post name. Not yet done on production.

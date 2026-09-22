@@ -140,6 +140,17 @@ The topic list ships in the plugin and seeds itself:
 - The old site's categories are untouched. `wp dgl topics legacy` shows what
   DGLP's decision would do to them; it changes nothing.
 
+## After 0.22.0
+
+- `wp option get dgl_platform_db_version` should print `8`. Schema 8 withdraws
+  the three-month spell on news: every story loses its end date and expiry
+  stamp, and a story the sweep had taken off for running out of days is put
+  back on the site with a `listing_restored` line in the audit trail.
+- Imported organisations now carry a "please check these details" prompt on
+  the dashboard and the Organisation tab until an owner saves that tab. Check
+  one: `wp post meta get <org id> dgl_org_checked_at` is empty before, a UTC
+  datetime after.
+
 ## Staging to production
 
 Do **not** use Wordify's `push_staging` to move the plugin. That pushes the whole

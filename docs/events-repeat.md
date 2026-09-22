@@ -91,11 +91,14 @@ notifications.
 
 ## Undated listings
 
-The same reminder, token and confirm page serve news, which has no date and
-is listed for three months from approval (`Workflow\Lifetime`). The end date
-is `dgl_listed_until` on the post; the expiry stamp follows it; extending
-moves it to three months from today. A dated one-off inside the reminder
-window is not asked anything.
+The same reminder, token and confirm page can serve an undated type with a
+fixed spell (`Workflow\Lifetime`): the end date is `dgl_listed_until` on the
+post, the expiry stamp follows it, and extending moves it on by the spell.
+No type has a spell since 0.22.0. News had one of three months from 0.10.0;
+Martin withdrew it on 22 September 2026 because a story that comes off after
+three months forfeits the search value the site is built for. Schema 8 clears
+the end dates and puts back any story the sweep had taken off. A dated
+one-off inside the reminder window is not asked anything.
 
 ## Timezone
 

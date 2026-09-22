@@ -314,6 +314,24 @@ final class Org {
 		);
 	}
 
+	/**
+	 * Whether the organisation's details came from Forum Central's file and
+	 * nobody at the organisation has been through them yet.
+	 *
+	 * The file was all there was: descriptions were cut at 400 characters and
+	 * some address lines sat in the wrong column. Martin confirmed on
+	 * 22 September 2026 that nothing fuller is coming, so members tidy their
+	 * own record. This is what asks them to.
+	 */
+	public static function needs_check( int $org_id ): bool {
+		if ( $org_id <= 0 ) {
+			return false;
+		}
+
+		return '' !== trim( (string) get_post_meta( $org_id, Meta::ORG_IMPORTED_AT, true ) )
+			&& '' === trim( (string) get_post_meta( $org_id, Meta::ORG_CHECKED_AT, true ) );
+	}
+
 	public static function exists( int $org_id ): bool {
 		return $org_id > 0 && PostTypes::ORG === get_post_type( $org_id );
 	}

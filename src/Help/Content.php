@@ -43,8 +43,6 @@ final class Content {
 	/* ---- Members ---------------------------------------------------------- */
 
 	private static function member(): array {
-		$news_months = max( 1, (int) round( ( Lifetime::days_for( \DGL\PostTypes::NEWS ) ?? 90 ) / 30 ) );
-
 		return [
 			'title'       => __( 'Member guide', 'dgl-platform' ),
 			'lede'        => __( 'How to post news, events and training for your organisation, what happens after you send something, and how to keep it right. Everything here is for people at member organisations of the Doing Good Leeds Partnership.', 'dgl-platform' ),
@@ -140,11 +138,7 @@ final class Content {
 					'id'      => 'news',
 					'heading' => __( 'How long news stays up', 'dgl-platform' ),
 					'blocks'  => [
-						[ 'p', sprintf(
-							/* translators: %d: months. */
-							__( 'Events and training come off the site on their dates. A news story has no date, so it is listed for %d months from the day it is approved. Two weeks before the end your organisation\'s owners get one email with a button that keeps it up for the same again; the same button is on the story\'s screen once the end is near. Nobody presses it, it comes off on its last day and stays in your archive.', 'dgl-platform' ),
-							$news_months
-						) ],
+						[ 'p', __( 'Events and training come off the site on their dates. A news story has no date and stays on the site until you archive it, so it keeps being found in search long after the week it was posted. When a story is no longer current, open it and choose "Take off the site" or "Archive"; it stays in your archive either way.', 'dgl-platform' ) ],
 					],
 				],
 				[
@@ -253,7 +247,7 @@ final class Content {
 					'heading' => __( 'Events: what members do without you', 'dgl-platform' ),
 					'blocks'  => [
 						[ 'p', __( 'A repeating event is one listing. Two weeks before its end date the organisation\'s owners are emailed a one-click button that keeps it listed for six more months; if nobody clicks, it comes off on its last date. Owners change a live event\'s dates and times from its screen without review, and mark it cancelled (it stays a week with a Cancelled stamp, then comes off) or cancel one date of a series. The words and pictures still come to you; the dates and cancellations do not. Take something down yourself only if it should go at once.', 'dgl-platform' ) ],
-						[ 'p', __( 'News is listed for three months and then comes off unless the organisation extends it from the reminder email or the story\'s screen. Nothing about this comes to you.', 'dgl-platform' ) ],
+						[ 'p', __( 'News stays on the site until its organisation archives it, or until you take it down from the review screen. Nothing comes off on its own.', 'dgl-platform' ) ],
 					],
 				],
 				[

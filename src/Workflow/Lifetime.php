@@ -38,10 +38,67 @@ final class Lifetime {
 	 * Days on the site per type. A type not listed here expires on its dates
 	 * or not at all.
 	 *
+	 * Empty since 0.22.0. News carried a 90-day spell from 0.10.0; Martin
+	 * withdrew it on 22 September 2026 because a story that comes off after
+	 * three months forfeits the long-tail search value the site is built
+	 * for. A story now stays up until its organisation archives it. The
+	 * machinery stays so a spell can be given back to a type in one line.
+	 *
 	 * @return array<string, int>
 	 */
 	public static function days(): array {
-		return [ PostTypes::NEWS => 90 ];
+		return [];
+	}
+
+	/**
+	 * Withdraw a spell a type used to have. Run once by the schema upgrade.
+	 *
+	 * Every item of a type with no spell loses its end date, its reminder
+	 * marks and its expiry stamp; one the sweep had already taken off for
+	 * running out of days is put back on the site, because that was the
+	 * only thing that ever expired it. Idempotent: a second run finds
+	 * nothing to do.
+	 *
+	 * @param list<string> $post_types Types to release; default news.
+	 * @return array{released: int, restored: int}
+	 */
+	public static function release( array $post_types = [ PostTypes::NEWS ] ): array {
+		$done = [ 'released' => 0, 'restored' => 0 ];
+
+		foreach ( $post_types as $post_type ) {
+			if ( null !== self::days_for( $post_type ) ) {
+				continue;
+			}
+
+			// Named statuses, not 'any': 'any' skips statuses hidden from search,
+			// and the expired one is, so the very items to restore would be missed.
+			$ids = get_posts( [ 'post_type' => $post_type, 'post_status' => Statuses::all(), 'posts_per_page' => -1, 'fields' => 'ids', 'no_found_rows' => true ] );
+
+			foreach ( $ids as $id ) {
+				$id       = (int) $id;
+				$had_end  = '' !== trim( (string) get_post_meta( $id, self::META_UNTIL, true ) );
+				$expired  = Statuses::EXPIRED === get_post_status( $id );
+
+				if ( ! $had_end && ! $expired ) {
+					continue;
+				}
+
+				delete_post_meta( $id, self::META_UNTIL );
+				delete_post_meta( $id, Reminder::META_TOKEN );
+				delete_post_meta( $id, Reminder::META_REMINDED_FOR );
+
+				if ( $expired ) {
+					wp_update_post( [ 'ID' => $id, 'post_status' => Statuses::LIVE ] );
+					Log::record( 'listing_restored', 'item', $id, Org::for_item( $id ), __( 'Back on the site: news no longer comes off after a fixed spell.', 'dgl-platform' ), [], 0 );
+					++$done['restored'];
+				}
+
+				Series::stamp( $id, $post_type );
+				++$done['released'];
+			}
+		}
+
+		return $done;
 	}
 
 	public static function days_for( string $post_type ): ?int {

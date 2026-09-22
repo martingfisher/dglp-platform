@@ -92,12 +92,10 @@ published under them are offered.
 ## How long news stays up
 
 Events and training come off the site on their dates. A news story has no
-date, so it is listed for three months from the day it is approved. Two weeks
-before the end the organisation's owners get one email asking whether it is
-still current, with a one-click button that keeps it for another three
-months; the same button is on the story's screen in the member area once the
-end is within eight weeks. Nobody clicks, it comes off on its last day and
-stays in their dashboard. Nothing about this comes to you.
+date and stays on the site until its organisation archives it or you take it
+down from the review screen. Nothing comes off on its own. (Until 0.22.0 a
+story was listed for three months and then asked about; Martin withdrew that
+on 22 September 2026 so stories keep their long-tail search value.)
 
 ## Featuring an item
 

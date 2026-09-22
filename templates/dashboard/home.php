@@ -59,6 +59,21 @@ $tiles = [
  * number among four.
  */
 ?>
+<?php if ( ! empty( $data['org_check'] ) ) : ?>
+	<div class="dgl-alert dgl-alert--edit" role="status">
+		<p>
+			<strong><?php esc_html_e( 'Please check your organisation\'s details.', 'dgl-platform' ); ?></strong>
+			<?php esc_html_e( 'They came across from Forum Central\'s records and some were cut short. Read them through, update your overview, and save.', 'dgl-platform' ); ?>
+			<?php if ( empty( $data['is_owner'] ) ) : ?>
+				<?php esc_html_e( 'An owner of your organisation can make the changes.', 'dgl-platform' ); ?>
+			<?php endif; ?>
+		</p>
+		<ul class="dgl-alert__list">
+			<li><a href="<?php echo esc_url( Router::url( 'profile', 'organisation' ) ); ?>"><?php esc_html_e( 'Check and update the organisation\'s details', 'dgl-platform' ); ?></a></li>
+		</ul>
+	</div>
+<?php endif; ?>
+
 <?php if ( ! empty( $attention ) ) : ?>
 	<div class="dgl-alert dgl-alert--edit" role="status">
 		<p>

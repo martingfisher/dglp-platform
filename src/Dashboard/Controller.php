@@ -189,6 +189,10 @@ final class Controller {
 				'attention'=> $org_id > 0 && ( $counts[ Statuses::CHANGES ] ?? 0 ) > 0
 					? array_map( [ self::class, 'row' ], ItemsTable::for_org( $org_id, null, [ Statuses::CHANGES ], 5 ) )
 					: [],
+				// Imported details nobody has read through yet: asked for once, on
+				// the first screen, until an owner saves the Organisation tab.
+				'org_check'=> $org_id > 0 && Org::needs_check( $org_id ),
+				'is_owner' => $user->is_org_owner(),
 			],
 			__( 'Your dashboard', 'dgl-platform' ),
 			$user
@@ -1542,6 +1546,7 @@ final class Controller {
 				'directory_notice' => 'organisation' === $tab ? self::flash_notice() : '',
 				'directory_error'  => 'organisation' === $tab ? self::flash_error() : '',
 				'imported_facts' => $org_id > 0 ? \DGL\Org\Directory::imported_facts( $org_id ) : [],
+				'needs_check'    => $org_id > 0 && Org::needs_check( $org_id ),
 				// The form shows what was asked for; the panel above it shows
 				// what is live. Swapping those round makes the field look as if
 				// it rejected the member's edit.
