@@ -127,3 +127,19 @@ categories were only news or blog came from VAL. `wp dgl news move-legacy
 --only=news,blog --to=<VAL id> --actor=<id>` moves those to VAL through the
 same reassign the review screen uses (audit row, index row, status kept).
 `--dry-run` lists them first.
+
+## Done on staging, 22 September 2026, second pass
+
+On Martin's decision, dry runs first:
+
+```
+wp dgl news move-legacy --only=news,blog --to=8803 --actor=1
+wp dgl news suggest-topics --first --apply --actor=1
+```
+
+The first moved 67 stories from Forum Central to Voluntary Action Leeds
+(none failed). The second set one topic on 66 stories from the first
+suggestion each, with a "worth a check" audit row; 5 got no suggestion and
+still have none: the two demo stories, "Leeds Prevent Communities November
+Newsletter", "How to help the fight against loan sharks" and "Can you help
+find a new home for Imagine Leeds". Those five are the review team's.
