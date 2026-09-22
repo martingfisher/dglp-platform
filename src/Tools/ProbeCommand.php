@@ -184,7 +184,10 @@ final class ProbeCommand {
 			WP_CLI::error( 'Give a phrase to look for.' );
 		}
 
-		$url  = home_url( $path );
+		// An absolute https address is fetched as given: the server can reach
+		// sites the console's operator cannot, such as a partner's own site.
+		$raw  = (string) ( $args[0] ?? '/' );
+		$url  = str_starts_with( $raw, 'https://' ) ? $raw : home_url( $path );
 		$post = isset( $assoc['post'] ) ? (string) $assoc['post'] : null;
 
 		if ( null === $post ) {
