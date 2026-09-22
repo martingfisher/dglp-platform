@@ -589,5 +589,7 @@ clean. They are the only DGLP content on staging.
   and Forum Central News to /news/, Events to /events/, in both the block
   markup and the block's JSON attributes. Each pattern matched exactly two
   rows: the block and its one revision (8235). "Newsletter Sign up" still
-  links to "#": it has nowhere to go yet. The block is not yet attached to
-  the new menu item; that is a customiser setting.
+  links to "#": it has nowhere to go yet. The block is attached to the new
+  "News and Events" menu item (8798) by the setting the customiser writes,
+  `blocksy_post_meta_options` = has_mega_menu yes, mega_menu_content_type
+  hook, mega_menu_hook 1323.
