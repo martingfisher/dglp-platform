@@ -564,3 +564,12 @@ clean. They are the only DGLP content on staging.
   happens to the legacy posts is still to be decided. Unit 1932,
   integration 879 (the same 29 environment failures as before). Merged
   from PR #1, rebased on to `main` at `8521423`.
+- **0.22.0 deployed** (22 September): news stays up, imported organisations
+  asked to check their details, integration suite passes anywhere. Schema 8
+  ran on the first plugin-loaded command: `dgl_platform_db_version` 8, and
+  the two demo stories (8441, 8443) lost `dgl_listed_until` and
+  `dgl_expires_at`; none had been expired. Organisation 8768 (imported
+  17 September) has no `dgl_org_checked_at`, so it carries the prompt.
+  Also on staging today, by Martin's decision: 83 draft posts deleted and
+  the MailChimp category (51) deleted; see `docs/topics.md`. Unit 1932,
+  integration 912.
