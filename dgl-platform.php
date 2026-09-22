@@ -19,7 +19,7 @@ namespace DGL;
 
 defined( 'ABSPATH' ) || exit;
 
-const VERSION    = '0.23.0';
+const VERSION    = '0.23.1';
 const DB_VERSION = 8;
 
 define( 'DGL\\PLUGIN_FILE', __FILE__ );
