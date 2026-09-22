@@ -86,6 +86,13 @@ jointly, that Forum Central's permission to publish carries. So the 146 are
 listed and the other 183 wait for a member to switch them on. The import
 ran with `--approve`, so the list is treated as verified.
 
+## Decision taken, 22 September 2026
+
+The file is all there is. Where a value was cut in the export (descriptions,
+address lines in the wrong column) nothing fuller is coming from Forum
+Central. Members tidy their own organisation's record from the Organisation
+tab once they have signed up; the import is not re-run for it.
+
 ## Two decisions that were open before that
 
 1. **Permission.** 146 of 329 ticked "I am happy for the information I have

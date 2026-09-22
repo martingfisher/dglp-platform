@@ -3536,6 +3536,31 @@ $lk_row = array_values( array_filter( \DGL\Moderation\Checks::run( $lk_item, Pos
 $ok( \DGL\Moderation\Checks::FAIL === ( $lk_row['status'] ?? '' ) && str_contains( (string) ( $lk_row['detail'] ?? '' ), 'Plain http' ), 'an older listing with an http link fails the link check' );
 $ok( [] === array_filter( $lk_urls, static fn( string $u ): bool => str_contains( $u, 'mailto:' ) || str_contains( $u, home_url() ) ), 'and ignores mailto and our own pages' );
 
+$group( 'Topics: the list the plugin carries is created once, renamed when it changes, never deleted' );
+
+$tp_before = get_terms( [ 'taxonomy' => \DGL\Taxonomies::TOPIC, 'hide_empty' => false, 'fields' => 'slugs' ] );
+$tp_first  = \DGL\Topics\Topics::sync();
+$ok( [] === $tp_first['errors'], 'the sync writes without error' );
+$tp_after = get_terms( [ 'taxonomy' => \DGL\Taxonomies::TOPIC, 'hide_empty' => false, 'fields' => 'slugs' ] );
+$ok( [] === array_diff( array_keys( \DGL\Topics\Topics::all() ), $tp_after ), 'every listed topic exists afterwards' );
+$tp_again = \DGL\Topics\Topics::sync();
+$ok( [] === $tp_again['created'] && [] === $tp_again['renamed'] && count( $tp_again['unchanged'] ) === count( \DGL\Topics\Topics::all() ), 'a second run changes nothing' );
+
+$tp_term = get_term_by( 'slug', 'mens-health', \DGL\Taxonomies::TOPIC );
+wp_update_term( $tp_term->term_id, \DGL\Taxonomies::TOPIC, [ 'name' => 'Mens Health (old wording)' ] );
+$tp_fix = \DGL\Topics\Topics::sync();
+$ok( [ 'mens-health' ] === $tp_fix['renamed'] && "Men's Health" === get_term_by( 'slug', 'mens-health', \DGL\Taxonomies::TOPIC )->name, 'a renamed term is put back to the listed name, by slug' );
+
+$tp_extra = wp_insert_term( 'Safeguarding (added by the team)', \DGL\Taxonomies::TOPIC, [ 'slug' => 'safeguarding-test' ] );
+$tp_keep  = \DGL\Topics\Topics::sync();
+$ok( in_array( 'safeguarding-test', $tp_keep['extra'], true ) && get_term_by( 'slug', 'safeguarding-test', \DGL\Taxonomies::TOPIC ) instanceof WP_Term, 'a topic the team added is reported and left alone' );
+wp_delete_term( (int) $tp_extra['term_id'], \DGL\Taxonomies::TOPIC );
+
+delete_option( \DGL\Topics\Topics::OPTION );
+\DGL\Topics\Topics::maybe_sync();
+$ok( \DGL\Topics\Topics::LIST_VERSION === (int) get_option( \DGL\Topics\Topics::OPTION, 0 ), 'the page-load sync stamps the list version once it has run clean' );
+$ok( in_array( 'mens-health', get_terms( [ 'taxonomy' => \DGL\Taxonomies::TOPIC, 'hide_empty' => false, 'fields' => 'slugs' ] ), true ), 'and the terms are there for the wizard and the digest preferences' );
+
 /* ----------------------------------------------------------------- report */
 
 echo "\n" . str_repeat( '-', 60 ) . "\n";
