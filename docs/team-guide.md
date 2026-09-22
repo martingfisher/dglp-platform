@@ -80,6 +80,17 @@ the calendar. Both are undoable by the organisation and show in their
 notifications and the audit trail. You do not need to do anything; take it
 down yourself only if it should go at once.
 
+## The public news and events pages
+
+Both open with one item large on the left and three beside it, then the
+rest as rows that keep loading as the visitor scrolls. The large one is the
+featured item if you have featured one (see below), otherwise the first in
+the list: the newest story, or the soonest event. Every card shows the
+item's first topic as a chip, its title, and one line: for news the
+organisation, date and reading time; for events when, where and the
+organisation. An item with no picture gets a plain navy tile, so ask for a
+picture when one is missing.
+
 ## Filters on the public lists
 
 Every public list has a Topic filter, and the events list has a When filter

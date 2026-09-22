@@ -3599,6 +3599,39 @@ $ok( [] === $chk_ok['errors'] && ! \DGL\Org\Org::needs_check( $chk_org ), 'a goo
 $ok( '' !== (string) get_post_meta( $chk_org, Meta::ORG_CHECKED_AT, true ), 'with the moment recorded' );
 $ok( in_array( 'org_checked', array_column( Log::for_object( 'org', $chk_org ), 'action' ), true ), 'and in the audit trail' );
 
+$group( 'List cards: chip, picture and meta line' );
+
+$cd_story = wp_insert_post( [ 'post_type' => PostTypes::NEWS, 'post_title' => 'Card story', 'post_status' => Statuses::LIVE, 'post_author' => $alice, 'post_content' => '<p>' . str_repeat( 'word ', 450 ) . '</p>', 'post_date' => '2026-09-10 09:00:00' ] );
+update_post_meta( $cd_story, DGL_FIXTURE_FLAG, '1' );
+update_post_meta( $cd_story, Meta::ITEM_ORG, $org_a );
+$cd_post = get_post( $cd_story );
+$ok( \DGL\Frontend\Frontend::type_label( PostTypes::NEWS ) === \DGL\Frontend\Cards::chip( $cd_post ), 'with no topic the chip says what it is (' . \DGL\Frontend\Cards::chip( $cd_post ) . ')' );
+$cd_term = wp_insert_term( 'Zebra topic ' . wp_generate_password( 4, false ), \DGL\Taxonomies::TOPIC );
+$cd_term2 = wp_insert_term( 'Apple topic ' . wp_generate_password( 4, false ), \DGL\Taxonomies::TOPIC );
+wp_set_object_terms( $cd_story, [ (int) $cd_term['term_id'], (int) $cd_term2['term_id'] ], \DGL\Taxonomies::TOPIC );
+$ok( str_starts_with( \DGL\Frontend\Cards::chip( $cd_post ), 'Apple topic' ), 'with topics the chip is the first by name' );
+$ok( '3 min read' === \DGL\Frontend\Cards::reading_time( $cd_post ), '450 words is a three-minute read (' . \DGL\Frontend\Cards::reading_time( $cd_post ) . ')' );
+$cd_meta = \DGL\Frontend\Cards::meta( $cd_post );
+$ok( 3 === count( $cd_meta ) && 'Org A' === $cd_meta[0] && '10 Sep 2026' === $cd_meta[1] && '3 min read' === $cd_meta[2], 'a story: organisation, date, reading time (' . implode( ' / ', $cd_meta ) . ')' );
+$ok( str_contains( \DGL\Frontend\Cards::picture( $cd_post ), 'dgl-card__img--none' ) && str_contains( \DGL\Frontend\Cards::picture( $cd_post ), '>News<' ) && ! \DGL\Frontend\Cards::has_picture( $cd_post ), 'no picture: a tile with one word for what it is' );
+
+$cd_event = $make_item( $org_a, $alice, Statuses::LIVE );
+update_post_meta( $cd_event, 'dgl_start_datetime', '2031-03-04 18:30:00' );
+update_post_meta( $cd_event, 'dgl_format', 'in_person' );
+update_post_meta( $cd_event, 'dgl_venue_name', 'The Hub' );
+\DGL\Events\Series::stamp( $cd_event, PostTypes::EVENT );
+$cd_emeta = \DGL\Frontend\Cards::meta( get_post( $cd_event ) );
+$ok( 3 === count( $cd_emeta ) && str_contains( $cd_emeta[0], '2031' ) && str_contains( $cd_emeta[0], '18:30' ) && 'The Hub' === $cd_emeta[1] && 'Org A' === $cd_emeta[2], 'a one-off event: when, where, organisation (' . implode( ' / ', $cd_emeta ) . ')' );
+$cd_series = $make_item( $org_a, $alice, Statuses::LIVE );
+$cd_tue = ( new DateTimeImmutable( 'today', wp_timezone() ) )->modify( '+1 day' );
+update_post_meta( $cd_series, 'dgl_start_datetime', $cd_tue->format( 'Y-m-d' ) . ' 13:00:00' );
+update_post_meta( $cd_series, 'dgl_repeat', [ 'freq' => 'weekly', 'weekdays' => [ (int) $cd_tue->format( 'N' ) ], 'until' => $cd_tue->modify( '+2 months' )->format( 'Y-m-d' ) ] );
+\DGL\Events\Series::stamp( $cd_series, PostTypes::EVENT );
+$cd_smeta = \DGL\Frontend\Cards::meta( get_post( $cd_series ) );
+$ok( str_starts_with( $cd_smeta[0], 'Next ' ) && str_contains( $cd_smeta[0], '13:00' ), 'a series: its next date (' . $cd_smeta[0] . ')' );
+\DGL\Events\Cancel::cancel( $cd_event, '', $alice );
+$ok( 'Cancelled' === \DGL\Frontend\Cards::meta( get_post( $cd_event ) )[0], 'a cancelled event says so first' );
+
 /* ----------------------------------------------------------------- report */
 
 echo "\n" . str_repeat( '-', 60 ) . "\n";

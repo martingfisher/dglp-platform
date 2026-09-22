@@ -573,3 +573,15 @@ clean. They are the only DGLP content on staging.
   Also on staging today, by Martin's decision: 83 draft posts deleted and
   the MailChimp category (51) deleted; see `docs/topics.md`. Unit 1932,
   integration 912.
+- **0.23.0 deployed** (22 September): the news and events pages restyled
+  to Martin's pattern: one featured item large (pinned, else first in the
+  list) with three beside it, then rows of a square rounded picture, topic
+  chip, title and a slash-separated meta line (news: organisation / date /
+  reading time; events: when / where / organisation); filters as one quiet
+  line under the featured block; autoload unchanged; a navy tile where
+  there is no picture. `src/Frontend/Cards.php`. AAA contrast walk clean.
+  Theme, staging only: main menu gains "News and Events" (item 8798, to
+  /news/) with children News (8799) and Events (8800). The "News and
+  Events" mega menu block (1323) still links to "#": it is a Blocksy
+  content block, which the content tools refuse to edit, so it is
+  unchanged pending Martin's say on the route.

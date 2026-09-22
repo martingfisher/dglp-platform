@@ -338,6 +338,23 @@ shadows, no gradients, no icons unless the label needs one.
 - **Top bar:** white, 1px divider, logo left with a "Member area" label, text links right, the "Back to the website" link in Partnership Purple.
 - **Tabs:** text tabs on a 1px rule; the open tab is a filled Council Navy block with white bold text and 8px top corners. `aria-current="page"` on the open one.
 
+### Public list cards
+The news and events pages open with one item large and three beside it,
+then rows, all built from the same three lines: a topic chip (12px, 700,
+0.08em tracking, uppercase, teal text), the title (Council Navy, 1.15rem
+in a row, 1.02rem beside the lead, clamp to 2.2rem on the lead in white),
+and one meta line in Slate Muted at 0.86em with segments separated by a
+slash at 55% (news: organisation, date, reading time; events: when, where,
+organisation). Pictures are square and rounded: 140px in a row, 104px
+beside the lead, 96px and 84px on a phone. The lead's picture fills its
+block under a navy gradient (92% at the foot to 8% at the top), the one
+gradient the world allows because the brief asked for it, with a white
+"Read more" pill. No picture: a Council Navy tile with one uppercase word
+for the type. The whole card is the way in (the title link is stretched
+over it); focus draws the card's ring. Filters sit under the lead as one
+quiet line on a hairline: an "All news" heading left, small selects and a
+40px outlined Show right; under 560px they fold behind "Filters".
+
 ### Status stamp
 The chip is the system's signature: every list, every detail header and every
 email carries the same six words in the same six tints. A member learns them

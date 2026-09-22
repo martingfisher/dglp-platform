@@ -2,10 +2,10 @@
 /**
  * A public listing of one content type.
  *
- * Follows the wireframe's list pattern: a thumbnail, the title, and one line
- * saying when and where. That line is what somebody decides on, so it is built
- * from the two facts they are deciding with rather than from the first fields
- * in the schema.
+ * The first page opens with one featured item large and three beside it,
+ * then the rest as rows: a square picture, a topic chip, the title and one
+ * meta line. The rows keep loading on scroll. Every later page is rows only,
+ * which is what the autoload appends.
  *
  * @var array<string,mixed> $data
  * @package DGL
@@ -13,6 +13,7 @@
 
 declare( strict_types=1 );
 
+use DGL\Frontend\Cards;
 use DGL\Frontend\Frontend;
 
 defined( 'ABSPATH' ) || exit;
@@ -28,8 +29,25 @@ $filtering   = \DGL\Frontend\Filters::is_active( $filter_args );
 $filters_on  = count( array_filter( $filter_args ) );
 $list_base   = Frontend::archive_url( $type );
 $show_form   = [] !== $topics || [] !== $whens;
+
+global $wp_query;
+$found     = (int) $wp_query->found_posts;
+$paged     = max( 1, (int) get_query_var( 'paged' ) );
+// The featured block: page one, unfiltered, four or more items to choose from.
+$with_hero = 1 === $paged && ! $filtering && $found >= 4;
+
+/** The slash-separated meta line. */
+$meta_line = static function ( WP_Post $item ): string {
+	$parts = Cards::meta( $item );
+
+	if ( [] === $parts ) {
+		return '';
+	}
+
+	return '<p class="dgl-card__meta">' . implode( '', array_map( static fn( string $p ): string => '<span>' . esc_html( $p ) . '</span>', $parts ) ) . '</p>';
+};
 ?>
-<div class="dgl-pub">
+<div class="dgl-pub dgl-listing">
 	<header class="dgl-pub__head">
 		<h1 class="dgl-pub__title"><?php echo esc_html( $label ); ?></h1>
 		<p class="dgl-pub__lede">
@@ -40,111 +58,119 @@ $show_form   = [] !== $topics || [] !== $whens;
 		</p>
 	</header>
 
-	<?php if ( $show_form ) : ?>
-		<form class="dgl-pub__filterbar" method="get" action="<?php echo esc_url( $list_base ); ?>">
-			<button class="dgl-dir__toggle" type="button" hidden data-dgl-fold aria-expanded="<?php echo $filters_on > 0 ? 'true' : 'false'; ?>" aria-controls="dgl-list-filters">
-				<?php
-				echo $filters_on > 0
-					/* translators: %d: how many filters are set. */
-					? esc_html( sprintf( _n( 'Filters (%d set)', 'Filters (%d set)', $filters_on, 'dgl-platform' ), $filters_on ) )
-					: esc_html__( 'Filters', 'dgl-platform' );
-				?>
-			</button>
+	<?php if ( have_posts() ) : ?>
 
-			<div class="dgl-pub__filters" id="dgl-list-filters">
-				<?php if ( [] !== $topics ) : ?>
-					<div class="dgl-pub__filter">
-						<label class="dgl-dir__label" for="dgl-filter-topic"><?php esc_html_e( 'Topic', 'dgl-platform' ); ?></label>
-						<select class="dgl-dir__input" id="dgl-filter-topic" name="<?php echo esc_attr( \DGL\Frontend\Filters::PARAM_TOPIC ); ?>">
-							<option value=""><?php esc_html_e( 'Any topic', 'dgl-platform' ); ?></option>
-							<?php foreach ( $topics as $slug => $name ) : ?>
-								<option value="<?php echo esc_attr( $slug ); ?>"<?php selected( $filter_args['topic'], $slug ); ?>><?php echo esc_html( $name ); ?></option>
-							<?php endforeach; ?>
-						</select>
+		<?php if ( $with_hero ) : ?>
+			<?php
+			the_post();
+			$lead = get_post();
+			?>
+			<section class="dgl-hero" aria-label="<?php esc_attr_e( 'Featured', 'dgl-platform' ); ?>">
+				<article class="dgl-hero__lead<?php echo Cards::has_picture( $lead ) ? '' : ' dgl-hero__lead--nopic'; ?>">
+					<?php echo Cards::picture( $lead, 'large', true ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside. ?>
+					<div class="dgl-hero__body">
+						<?php if ( \DGL\Workflow\Pins::is_pinned( (int) $lead->ID ) ) : ?>
+							<p class="dgl-pub__pin dgl-pub__pin--onpic"><?php esc_html_e( 'Featured', 'dgl-platform' ); ?></p>
+						<?php elseif ( \DGL\Events\Cancel::is_cancelled( (int) $lead->ID ) ) : ?>
+							<p class="dgl-pub__pin dgl-pub__pin--off"><?php esc_html_e( 'Cancelled', 'dgl-platform' ); ?></p>
+						<?php endif; ?>
+						<p class="dgl-card__chip dgl-card__chip--onpic"><?php echo esc_html( Cards::chip( $lead ) ); ?></p>
+						<h2 class="dgl-hero__title"><a href="<?php the_permalink(); ?>"><?php echo esc_html( get_the_title() ); ?></a></h2>
+						<?php echo $meta_line( $lead ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside. ?>
+						<a class="dgl-hero__more" href="<?php the_permalink(); ?>" tabindex="-1" aria-hidden="true"><?php esc_html_e( 'Read more', 'dgl-platform' ); ?></a>
 					</div>
-				<?php endif; ?>
+				</article>
 
-				<?php if ( [] !== $whens ) : ?>
-					<div class="dgl-pub__filter">
-						<label class="dgl-dir__label" for="dgl-filter-when"><?php esc_html_e( 'When', 'dgl-platform' ); ?></label>
-						<select class="dgl-dir__input" id="dgl-filter-when" name="<?php echo esc_attr( \DGL\Frontend\Filters::PARAM_WHEN ); ?>">
-							<option value=""><?php esc_html_e( 'Any time', 'dgl-platform' ); ?></option>
-							<?php foreach ( $whens as $spell => $when_label ) : ?>
-								<option value="<?php echo esc_attr( $spell ); ?>"<?php selected( $filter_args['when'], $spell ); ?>><?php echo esc_html( $when_label ); ?></option>
-							<?php endforeach; ?>
-						</select>
-					</div>
-				<?php endif; ?>
+				<div class="dgl-hero__side">
+					<?php for ( $i = 0; $i < 3 && have_posts(); $i++ ) : ?>
+						<?php the_post(); $item = get_post(); ?>
+						<article class="dgl-hero__item">
+							<a class="dgl-card__pic" href="<?php the_permalink(); ?>" tabindex="-1" aria-hidden="true"><?php echo Cards::picture( $item, 'medium' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside. ?></a>
+							<div class="dgl-card__body">
+								<p class="dgl-card__chip"><?php echo esc_html( Cards::chip( $item ) ); ?></p>
+								<h3 class="dgl-card__title"><a href="<?php the_permalink(); ?>"><?php echo esc_html( get_the_title() ); ?></a></h3>
+								<?php echo $meta_line( $item ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside. ?>
+							</div>
+						</article>
+					<?php endfor; ?>
+				</div>
+			</section>
+		<?php endif; ?>
 
-				<div class="dgl-dir__actions">
-					<button class="dgl-pub__button dgl-dir__button" type="submit"><?php esc_html_e( 'Show', 'dgl-platform' ); ?></button>
+		<?php if ( $show_form ) : ?>
+			<form class="dgl-listing__filters" method="get" action="<?php echo esc_url( $list_base ); ?>">
+				<button class="dgl-dir__toggle" type="button" hidden data-dgl-fold aria-expanded="<?php echo $filters_on > 0 ? 'true' : 'false'; ?>" aria-controls="dgl-list-filters">
+					<?php
+					echo $filters_on > 0
+						/* translators: %d: how many filters are set. */
+						? esc_html( sprintf( _n( 'Filters (%d set)', 'Filters (%d set)', $filters_on, 'dgl-platform' ), $filters_on ) )
+						: esc_html__( 'Filters', 'dgl-platform' );
+					?>
+				</button>
+
+				<div class="dgl-listing__filterrow" id="dgl-list-filters">
+					<h2 class="dgl-listing__heading">
+						<?php
+						echo esc_html(
+							$filtering
+								? ( 0 === $found
+									? __( 'Nothing matches', 'dgl-platform' )
+									/* translators: 1: a number, 2: lower-case plural type label. */
+									: sprintf( _n( '%1$s %2$s', '%1$s %2$s', $found, 'dgl-platform' ), number_format_i18n( $found ), strtolower( 1 === $found ? Frontend::type_label( $type ) : $label ) ) )
+								/* translators: %s: plural type label. */
+								: sprintf( __( 'All %s', 'dgl-platform' ), strtolower( $label ) )
+						);
+						?>
+					</h2>
+					<?php if ( [] !== $topics ) : ?>
+						<label class="dgl-listing__filter">
+							<span class="dgl-listing__filterlabel"><?php esc_html_e( 'Topic', 'dgl-platform' ); ?></span>
+							<select class="dgl-listing__select" name="<?php echo esc_attr( \DGL\Frontend\Filters::PARAM_TOPIC ); ?>">
+								<option value=""><?php esc_html_e( 'Any topic', 'dgl-platform' ); ?></option>
+								<?php foreach ( $topics as $slug => $name ) : ?>
+									<option value="<?php echo esc_attr( $slug ); ?>"<?php selected( $filter_args['topic'], $slug ); ?>><?php echo esc_html( $name ); ?></option>
+								<?php endforeach; ?>
+							</select>
+						</label>
+					<?php endif; ?>
+					<?php if ( [] !== $whens ) : ?>
+						<label class="dgl-listing__filter">
+							<span class="dgl-listing__filterlabel"><?php esc_html_e( 'When', 'dgl-platform' ); ?></span>
+							<select class="dgl-listing__select" name="<?php echo esc_attr( \DGL\Frontend\Filters::PARAM_WHEN ); ?>">
+								<option value=""><?php esc_html_e( 'Any time', 'dgl-platform' ); ?></option>
+								<?php foreach ( $whens as $spell => $when_label ) : ?>
+									<option value="<?php echo esc_attr( $spell ); ?>"<?php selected( $filter_args['when'], $spell ); ?>><?php echo esc_html( $when_label ); ?></option>
+								<?php endforeach; ?>
+							</select>
+						</label>
+					<?php endif; ?>
+					<button class="dgl-listing__apply" type="submit"><?php esc_html_e( 'Show', 'dgl-platform' ); ?></button>
 					<?php if ( $filtering ) : ?>
 						<a class="dgl-dir__clear" href="<?php echo esc_url( $list_base ); ?>"><?php esc_html_e( 'Clear', 'dgl-platform' ); ?></a>
 					<?php endif; ?>
 				</div>
-			</div>
-		</form>
-		<?php \DGL\Dashboard\View::output( 'public/fold-script' ); ?>
-
-		<?php if ( $filtering ) : ?>
-			<p class="dgl-dir__count" role="status">
-				<?php
-				global $wp_query;
-				$found = (int) $wp_query->found_posts;
-				echo esc_html(
-					0 === $found
-						? __( 'Nothing matches. Try a wider window or another topic.', 'dgl-platform' )
-						/* translators: 1: a number, 2: lower-case plural type label. */
-						: sprintf( _n( '%1$s %2$s matches.', '%1$s %2$s match.', $found, 'dgl-platform' ), number_format_i18n( $found ), strtolower( $found === 1 ? Frontend::type_label( $type ) : $label ) )
-				);
-				?>
-			</p>
+			</form>
+			<?php \DGL\Dashboard\View::output( 'public/fold-script' ); ?>
+		<?php elseif ( $with_hero ) : ?>
+			<h2 class="dgl-listing__heading"><?php echo esc_html( sprintf( /* translators: %s: plural type label. */ __( 'All %s', 'dgl-platform' ), strtolower( $label ) ) ); ?></h2>
 		<?php endif; ?>
-	<?php endif; ?>
-
-	<?php if ( have_posts() ) : ?>
 
 		<ul class="dgl-pub__list" data-dgl-autoload="li">
-			<?php
-			while ( have_posts() ) :
-				the_post();
-
-				$item     = get_post();
-				$meta     = Frontend::meta_line( $item );
-				$org      = Frontend::organisation( $item );
-				$summary  = (string) Frontend::value( $item, 'summary' );
-				$image_id = (int) Frontend::value( $item, 'image' );
-				?>
-				<li class="dgl-pub__row">
-					<?php if ( $image_id > 0 ) : ?>
-						<div class="dgl-pub__thumb">
-							<a href="<?php the_permalink(); ?>" tabindex="-1" aria-hidden="true">
-								<?php echo wp_get_attachment_image( $image_id, 'medium', false, [ 'loading' => 'lazy', 'alt' => '' ] ); ?>
-							</a>
-						</div>
-					<?php endif; ?>
-
-					<div class="dgl-pub__rowbody">
-						<?php if ( \DGL\Events\Cancel::is_cancelled( (int) $item->ID ) ) : ?>
-							<p class="dgl-pub__pin dgl-pub__pin--off"><?php esc_html_e( 'Cancelled', 'dgl-platform' ); ?></p>
-						<?php elseif ( \DGL\Workflow\Pins::is_pinned( (int) $item->ID ) ) : ?>
-							<p class="dgl-pub__pin"><?php esc_html_e( 'Featured', 'dgl-platform' ); ?></p>
-						<?php endif; ?>
-						<h2 class="dgl-pub__rowtitle">
-							<a href="<?php the_permalink(); ?>"><?php echo esc_html( get_the_title() ); ?></a>
-						</h2>
-
-						<?php if ( '' !== $meta ) : ?>
-							<p class="dgl-pub__rowmeta"><?php echo esc_html( $meta ); ?></p>
-						<?php endif; ?>
-
-						<?php if ( '' !== trim( $summary ) ) : ?>
-							<p class="dgl-pub__rowsummary"><?php echo esc_html( wp_trim_words( $summary, 32 ) ); ?></p>
-						<?php endif; ?>
-
-						<?php if ( '' !== $org['name'] ) : ?>
-							<p class="dgl-pub__roworg"><?php echo esc_html( $org['name'] ); ?></p>
-						<?php endif; ?>
+			<?php while ( have_posts() ) : ?>
+				<?php the_post(); $item = get_post(); ?>
+				<li class="dgl-card">
+					<a class="dgl-card__pic" href="<?php the_permalink(); ?>" tabindex="-1" aria-hidden="true"><?php echo Cards::picture( $item, 'medium' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside. ?></a>
+					<div class="dgl-card__body">
+						<p class="dgl-card__chip">
+							<?php echo esc_html( Cards::chip( $item ) ); ?>
+							<?php if ( \DGL\Events\Cancel::is_cancelled( (int) $item->ID ) ) : ?>
+								<span class="dgl-pub__pin dgl-pub__pin--off"><?php esc_html_e( 'Cancelled', 'dgl-platform' ); ?></span>
+							<?php elseif ( \DGL\Workflow\Pins::is_pinned( (int) $item->ID ) ) : ?>
+								<span class="dgl-pub__pin"><?php esc_html_e( 'Featured', 'dgl-platform' ); ?></span>
+							<?php endif; ?>
+						</p>
+						<h2 class="dgl-card__title"><a href="<?php the_permalink(); ?>"><?php echo esc_html( get_the_title() ); ?></a></h2>
+						<?php echo $meta_line( $item ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside. ?>
 					</div>
 				</li>
 			<?php endwhile; ?>
@@ -167,6 +193,17 @@ $show_form   = [] !== $topics || [] !== $whens;
 		<?php endif; ?>
 
 	<?php else : ?>
+
+		<?php if ( $show_form ) : ?>
+			<form class="dgl-listing__filters" method="get" action="<?php echo esc_url( $list_base ); ?>">
+				<div class="dgl-listing__filterrow">
+					<h2 class="dgl-listing__heading"><?php echo esc_html( $filtering ? __( 'Nothing matches', 'dgl-platform' ) : sprintf( /* translators: %s: plural type label. */ __( 'All %s', 'dgl-platform' ), strtolower( $label ) ) ); ?></h2>
+					<?php if ( $filtering ) : ?>
+						<a class="dgl-dir__clear" href="<?php echo esc_url( $list_base ); ?>"><?php esc_html_e( 'Show everything', 'dgl-platform' ); ?></a>
+					<?php endif; ?>
+				</div>
+			</form>
+		<?php endif; ?>
 
 		<div class="dgl-pub__card dgl-pub__empty">
 			<p>

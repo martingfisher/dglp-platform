@@ -385,6 +385,301 @@
 	.dgl-pub__thumb img { height: 180px; }
 }
 
+/* ---- Listing: featured block, quiet filters, card rows ------------------ */
+
+/*
+ * The news and events pages open with one item large and three beside it,
+ * then rows. Every row is the same three lines beside a square picture, so
+ * the eye runs down the titles; the chip names the topic in one word.
+ */
+.dgl-hero {
+	display: grid;
+	grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+	gap: var(--dgl-gap-lg);
+	margin: 0 0 var(--dgl-gap-xl, 40px);
+}
+
+.dgl-hero__lead {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	min-height: 420px;
+	border-radius: var(--dgl-radius-card);
+	overflow: hidden;
+	background: var(--dgl-navy);
+	box-shadow: var(--dgl-shadow-rest);
+}
+
+.dgl-hero__lead .dgl-card__img {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	display: block;
+}
+
+.dgl-hero__lead .dgl-card__img--none { display: block; }
+
+.dgl-hero__lead .dgl-card__img--none > span { display: none; }
+
+.dgl-hero__lead::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(to top, rgb(20 27 52 / 92%) 0%, rgb(20 27 52 / 55%) 45%, rgb(20 27 52 / 8%) 100%);
+	pointer-events: none;
+}
+
+/* Fills the lead however tall the side column makes it; grows the lead when its own words need more. */
+.dgl-hero__body {
+	position: relative;
+	z-index: 1;
+	flex: 1 1 auto;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	justify-content: flex-end;
+	gap: 10px;
+	padding: var(--dgl-gap-lg);
+	color: var(--dgl-white);
+}
+
+.dgl-hero__title {
+	margin: 0;
+	font-size: clamp(1.5rem, 1.1rem + 1.6vw, 2.2rem);
+	font-weight: var(--dgl-weight-heading);
+	line-height: 1.15;
+	text-wrap: balance;
+	max-width: 24ch;
+}
+
+.dgl-hero__title a { color: var(--dgl-white); text-decoration: none; }
+
+.dgl-hero__title a::after { content: ""; position: absolute; inset: 0; }
+
+.dgl-hero__title a:hover,
+.dgl-hero__title a:focus { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px; }
+
+.dgl-hero__body .dgl-card__meta { color: rgb(255 255 255 / 88%); }
+
+.dgl-hero__body .dgl-card__meta span::before { color: rgb(255 255 255 / 60%); }
+
+.dgl-hero__more {
+	display: inline-flex;
+	align-items: center;
+	min-height: 44px;
+	margin-top: 4px;
+	padding: 0 20px;
+	border-radius: var(--dgl-radius-button);
+	background: var(--dgl-white);
+	color: var(--dgl-navy);
+	font-weight: var(--dgl-weight-button);
+	font-size: 15px;
+	text-decoration: none;
+}
+
+.dgl-hero__lead:hover .dgl-hero__more { background: var(--dgl-page); }
+
+.dgl-hero__lead:focus-within { outline: 3px solid var(--dgl-focus); outline-offset: 2px; }
+
+.dgl-hero__side {
+	display: grid;
+	grid-template-rows: repeat(3, minmax(0, 1fr));
+	gap: var(--dgl-gap);
+}
+
+.dgl-hero__item,
+.dgl-card {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr);
+	gap: var(--dgl-gap);
+	align-items: center;
+	padding: 12px;
+	background: var(--dgl-white);
+	border: 1px solid var(--dgl-border);
+	border-radius: var(--dgl-radius-card);
+	box-shadow: var(--dgl-shadow-rest);
+	transition: box-shadow var(--dgl-motion), border-color var(--dgl-motion);
+	position: relative;
+}
+
+.dgl-hero__item:hover,
+.dgl-card:hover {
+	border-color: var(--dgl-border-strong);
+	box-shadow: var(--dgl-shadow-raised, 0 2px 4px rgb(30 50 50 / 5%), 0 10px 28px rgb(30 50 50 / 9%));
+}
+
+.dgl-card { padding: 14px; }
+
+.dgl-card__pic {
+	display: block;
+	flex: none;
+	width: 140px;
+	height: 140px;
+	border-radius: 14px;
+	overflow: hidden;
+	background: var(--dgl-surface);
+}
+
+.dgl-hero__item .dgl-card__pic { width: 104px; height: 104px; border-radius: 12px; }
+
+.dgl-card__pic .dgl-card__img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.dgl-card__img--none,
+.dgl-card__pic .dgl-card__img--none {
+	display: grid;
+	place-items: center;
+	width: 100%;
+	height: 100%;
+	background: var(--dgl-navy);
+	color: var(--dgl-white);
+	font-size: 0.72em;
+	font-weight: 600;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+
+.dgl-card__body { min-width: 0; }
+
+.dgl-card__chip {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px;
+	margin: 0 0 6px;
+	font-size: 12px;
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--dgl-teal-text);
+}
+
+.dgl-card__chip--onpic { color: var(--dgl-white); opacity: 0.92; }
+
+.dgl-card__chip .dgl-pub__pin { margin: 0; font-size: 11px; }
+
+.dgl-card__title {
+	margin: 0 0 6px;
+	font-size: 1.15rem;
+	font-weight: var(--dgl-weight-heading);
+	line-height: 1.3;
+	text-wrap: balance;
+}
+
+.dgl-hero__item .dgl-card__title { font-size: 1.02rem; }
+
+.dgl-card__title a { color: var(--dgl-navy); text-decoration: none; }
+
+/* The whole card is the way in; the title carries the name for keyboards and readers. */
+.dgl-card__title a::after { content: ""; position: absolute; inset: 0; border-radius: var(--dgl-radius-card); }
+
+.dgl-card__title a:hover,
+.dgl-card__title a:focus { text-decoration: underline; text-underline-offset: 3px; }
+
+.dgl-card:focus-within,
+.dgl-hero__item:focus-within { outline: 3px solid var(--dgl-focus); outline-offset: 2px; }
+
+.dgl-card__title a:focus-visible { outline: none; }
+
+.dgl-card__meta {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 2px 0;
+	margin: 0;
+	font-size: 0.86em;
+	line-height: 1.5;
+	color: var(--dgl-text-muted);
+}
+
+.dgl-card__meta span + span::before {
+	content: "/";
+	margin: 0 8px;
+	color: var(--dgl-text-muted);
+	opacity: 0.55;
+}
+
+.dgl-pub__pin--onpic { background: var(--dgl-white); color: var(--dgl-navy); }
+
+/* The filters sit under the featured block as one quiet line: a heading, two selects, Show. */
+.dgl-listing__filters { margin: 0 0 var(--dgl-gap); }
+
+.dgl-listing__filterrow {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 10px 14px;
+	padding: 0 0 12px;
+	border-bottom: 1px solid var(--dgl-border);
+}
+
+.dgl-listing__heading {
+	margin: 0 auto 0 0;
+	font-size: 1.15rem;
+	font-weight: var(--dgl-weight-heading);
+	color: var(--dgl-navy);
+}
+
+h2.dgl-listing__heading:only-child,
+.dgl-listing > h2.dgl-listing__heading { padding-bottom: 12px; border-bottom: 1px solid var(--dgl-border); margin-bottom: var(--dgl-gap); }
+
+.dgl-listing__filter { display: inline-flex; align-items: center; gap: 8px; font-size: 0.86em; color: var(--dgl-text-muted); }
+
+.dgl-listing__filterlabel { font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; font-size: 12px; }
+
+.dgl-pub .dgl-listing__select {
+	min-height: 40px;
+	padding: 0 32px 0 12px;
+	border: var(--dgl-field-border) solid var(--dgl-field-outline);
+	border-radius: var(--dgl-radius-field);
+	background: var(--dgl-white);
+	color: var(--dgl-text);
+	font: var(--dgl-weight-body) 14px / 1.2 var(--dgl-font);
+}
+
+.dgl-pub .dgl-listing__select:focus-visible { outline: 3px solid var(--dgl-focus); outline-offset: 2px; }
+
+.dgl-pub .dgl-listing__apply {
+	min-height: 40px;
+	padding: 0 16px;
+	border: var(--dgl-field-border) solid var(--dgl-field-outline);
+	border-radius: var(--dgl-radius-button);
+	background: var(--dgl-white);
+	color: var(--dgl-navy);
+	font: var(--dgl-weight-button) 14px / 1 var(--dgl-font);
+	cursor: pointer;
+}
+
+.dgl-pub .dgl-listing__apply:hover { background: var(--dgl-surface); }
+
+.dgl-pub .dgl-listing__apply:focus-visible { outline: 3px solid var(--dgl-focus); outline-offset: 2px; }
+
+@media ( max-width: 900px ) {
+	.dgl-hero { grid-template-columns: minmax(0, 1fr); }
+	.dgl-hero__lead { min-height: 340px; }
+}
+
+@media ( max-width: 560px ) {
+	.dgl-hero__lead { min-height: 300px; }
+	.dgl-hero__body { padding: var(--dgl-gap); }
+	.dgl-card__pic { width: 96px; height: 96px; border-radius: 12px; }
+	.dgl-hero__item .dgl-card__pic { width: 84px; height: 84px; }
+	.dgl-card { padding: 12px; gap: 12px; }
+	.dgl-card__title { font-size: 1.02rem; }
+	.dgl-listing__filterrow { display: grid; gap: 12px; }
+	.dgl-listing__filterrow[hidden] { display: none; }
+	.dgl-listing__filterrow .dgl-listing__heading { display: none; }
+	.dgl-listing__filter { display: grid; gap: 4px; }
+	.dgl-pub .dgl-listing__select { width: 100%; min-height: 44px; }
+	.dgl-pub .dgl-listing__apply { min-height: 44px; }
+	.dgl-listing__filters .dgl-dir__toggle { width: 100%; }
+}
+
 /* ---- Directory --------------------------------------------------------- */
 
 /*
