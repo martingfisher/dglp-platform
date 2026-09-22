@@ -59,6 +59,8 @@ final class Plugin {
 		// And on the front end: joining creates rows before anybody has opened
 		// wp-admin on a fresh install. The check is one option read.
 		add_action( 'init', [ Install::class, 'maybe_migrate' ], 3 );
+		// The topic list, once per version of it, after the taxonomy exists (priority 5).
+		add_action( 'init', [ \DGL\Topics\Topics::class, 'maybe_sync' ], 7 );
 
 		/*
 		 * On `init`, not `admin_init`. Cron fires on the front end, and a site
@@ -102,6 +104,7 @@ final class Plugin {
 			InviteCommand::register();
 			PrivacyCommand::register();
 			ImportCommand::register();
+			\DGL\Topics\Command::register();
 			ProbeCommand::register();
 			\DGL\Reports\Command::register();
 			\DGL\Joining\Command::register();

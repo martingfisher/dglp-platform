@@ -129,6 +129,17 @@ Repeating events add a column to the index and a public route:
   Wordify console runs `wp cron event run` without plugins loaded, so it
   cannot exercise the hook; the server cron can.
 
+## After 0.21.0
+
+The topic list ships in the plugin and seeds itself:
+
+- `wp option get dgl_topics_version` should print `1` after any page has
+  loaded. If it prints nothing, load a page, then check again.
+- `wp dgl topics list` should show all twenty-eight as `present`. Anything
+  the team added by hand shows as "not on the list" and is kept.
+- The old site's categories are untouched. `wp dgl topics legacy` shows what
+  DGLP's decision would do to them; it changes nothing.
+
 ## Staging to production
 
 Do **not** use Wordify's `push_staging` to move the plugin. That pushes the whole
