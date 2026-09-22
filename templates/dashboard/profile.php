@@ -93,6 +93,18 @@ $is_owner = $user instanceof UserContext && $user->is_org_owner();
 			</p>
 		<?php endif; ?>
 
+		<?php if ( ! empty( $data['needs_check'] ) ) : ?>
+			<div class="dgl-alert dgl-alert--edit" role="status" id="dgl-check-details">
+				<p>
+					<strong><?php esc_html_e( 'Please check these details.', 'dgl-platform' ); ?></strong>
+					<?php esc_html_e( 'They came across from Forum Central\'s records, and some were cut short on the way. Read them through, update anything that is out of date or missing, and save.', 'dgl-platform' ); ?>
+					<?php if ( ! $is_owner ) : ?>
+						<?php esc_html_e( 'An owner of your organisation can make the changes.', 'dgl-platform' ); ?>
+					<?php endif; ?>
+				</p>
+			</div>
+		<?php endif; ?>
+
 		<?php $section_shown = 0; ?>
 		<?php foreach ( $data['fields'] as $field ) : ?>
 			<?php if ( $field->step !== $section_shown && isset( $data['sections'][ $field->step ] ) ) : ?>
@@ -108,6 +120,9 @@ $is_owner = $user instanceof UserContext && $user->is_org_owner();
 			?>
 			<?php if ( Schema::needs_approval( $field->key ) ) : ?>
 				<p class="dgl-help dgl-help--gated"><?php esc_html_e( 'Changing this goes to the review team first.', 'dgl-platform' ); ?></p>
+			<?php endif; ?>
+			<?php if ( 'org_description' === $field->key && ! empty( $data['needs_check'] ) ) : ?>
+				<p class="dgl-help"><?php esc_html_e( 'This may have been cut short in the transfer. Please write your organisation\'s overview in your own words: what you do, who for, and where.', 'dgl-platform' ); ?></p>
 			<?php endif; ?>
 		<?php endforeach; ?>
 

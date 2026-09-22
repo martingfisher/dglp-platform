@@ -55,6 +55,9 @@ final class Meta {
 	public const ORG_LNG            = 'dgl_org_lng';
 	public const ORG_IMPORTED_AT    = 'dgl_org_imported_at';
 
+	/** UTC datetime an owner first saved the organisation's details after they were imported. Empty until then. */
+	public const ORG_CHECKED_AT     = 'dgl_org_checked_at';
+
 	/* Submission post meta. */
 
 	/** Owning organisation post ID. Mirrored into the items index. */

@@ -238,6 +238,13 @@ final class Profile {
 			Log::record( 'org_updated', 'org', $org_id, $org_id, '', $changed, $actor_id );
 		}
 
+		// An owner has read the imported details through and saved them, changed
+		// or not: the "please check these" prompt has done its job.
+		if ( Org::needs_check( $org_id ) ) {
+			update_post_meta( $org_id, Meta::ORG_CHECKED_AT, current_time( 'mysql', true ) );
+			Log::record( 'org_checked', 'org', $org_id, $org_id, __( 'Imported details checked.', 'dgl-platform' ), [], $actor_id );
+		}
+
 		if ( [] !== $held ) {
 			Log::record(
 				'org_change_requested',

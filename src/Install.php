@@ -140,6 +140,8 @@ final class Install {
 		SignupStore::create();
 		self::backfill_event_format();
 		\DGL\Workflow\Lifetime::backfill();
+		// Schema 8: news no longer has a spell. Clears the end dates 7 gave it.
+		\DGL\Workflow\Lifetime::release();
 
 		update_option( self::DB_VERSION_OPTION, DB_VERSION, false );
 	}

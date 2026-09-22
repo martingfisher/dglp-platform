@@ -3024,45 +3024,49 @@ $ok( str_contains( (string) ( $checks['image']['detail'] ?? '' ), 'Described as 
 $saved = \DGL\Dashboard\Wizard::save_step( $pic_item, PostTypes::EVENT, 1, [ 'title' => 'Tree planting', 'summary' => 'A morning of planting.', 'body' => '<p>Bring gloves.</p>', 'image' => '0', 'image_alt' => '' ] );
 $ok( [] === $saved, 'no picture, no description needed: ' . implode( ' | ', $saved ) );
 
-$group( 'News stays up for three months, then asks, then comes off' );
+$group( 'News stays up until its organisation archives it: no spell, no reminder, no expiry' );
 
 $mail_was = get_option( \DGL\Email\Routing::OPTION_ENABLED, false );
 update_option( \DGL\Email\Routing::OPTION_ENABLED, 1 );
+
+$ok( [] === \DGL\Workflow\Lifetime::days(), 'no content type has a fixed spell' );
 
 $story = wp_insert_post( [ 'post_type' => PostTypes::NEWS, 'post_title' => 'Grant round opens', 'post_status' => Statuses::DRAFT, 'post_author' => $alice ] );
 update_post_meta( $story, DGL_FIXTURE_FLAG, '1' );
 update_post_meta( $story, Meta::ITEM_ORG, $org_a );
 Transition::apply( $story, StateMachine::SUBMIT, $alice );
-$ok( '' === (string) get_post_meta( $story, \DGL\Workflow\Lifetime::META_UNTIL, true ), 'a pending story has no end date yet' );
 Transition::apply( $story, StateMachine::APPROVE, $mod );
 $today_wall = new DateTimeImmutable( 'today', wp_timezone() );
-$expect_until = $today_wall->modify( '+90 days' )->format( 'Y-m-d' );
-$ok( $expect_until === (string) get_post_meta( $story, \DGL\Workflow\Lifetime::META_UNTIL, true ), 'approval gives it ninety days (' . get_post_meta( $story, \DGL\Workflow\Lifetime::META_UNTIL, true ) . ')' );
-$ok( $expect_until . ' 23:59:59' === (string) get_post_meta( $story, Meta::ITEM_EXPIRES_AT, true ), 'and the expiry stamp follows' );
-$ok( \DGL\Access\Access::can( $alice, Policy::EXTEND_ITEM, $story ) && ! \DGL\Workflow\Lifetime::can_extend( $story ), 'the owner may extend, but nothing is offered while the end is far off' );
-
-update_post_meta( $story, \DGL\Workflow\Lifetime::META_UNTIL, $today_wall->modify( '+10 days' )->format( 'Y-m-d' ) );
-\DGL\Events\Series::stamp( $story, PostTypes::NEWS );
-$ok( \DGL\Workflow\Lifetime::can_extend( $story ), 'with ten days left the item screen offers an extension' );
+$ok( '' === (string) get_post_meta( $story, \DGL\Workflow\Lifetime::META_UNTIL, true ), 'approval gives a story no end date' );
+$ok( '' === (string) get_post_meta( $story, Meta::ITEM_EXPIRES_AT, true ), 'and no expiry stamp' );
+$ok( ! \DGL\Workflow\Lifetime::can_extend( $story ), 'so there is nothing to extend' );
+$ok( is_wp_error( \DGL\Workflow\Lifetime::extend( $story, 0, 'test' ) ), 'and an extension is refused, not faked' );
 
 $sent_to = []; $sent_links = []; $sent_bodies = [];
-$ok( 1 === \DGL\Events\Reminder::send_due(), 'the reminder goes' );
-$ok( [] !== array_filter( $sent_bodies, static fn( string $b ): bool => str_contains( $b, 'still current' ) || str_contains( $b, 'Nothing stays up forever' ) ), 'and it is the listing wording, not the repeating-event wording' );
-$story_link = (string) end( $sent_links );
-$ok( str_contains( $story_link, '/dashboard/extend/' . $story . '/' ), 'with the one-click link' );
-$story_token = trim( (string) substr( $story_link, strrpos( rtrim( $story_link, '/' ), '/' ) + 1 ), '/' );
-$ok( \DGL\Events\Reminder::token_is_valid( $story, $story_token ), 'whose token is live for a news item too' );
-$ok( true === \DGL\Workflow\Lifetime::extend( $story, 0, 'test' ), 'the link extends it' );
-$ok( $expect_until === (string) get_post_meta( $story, \DGL\Workflow\Lifetime::META_UNTIL, true ), 'to ninety days from today' );
-$feed_titles = array_column( \DGL\Dashboard\Notifications::for_org( $org_a, 5 ), 'title' );
-$ok( in_array( 'Kept on the site for another three months', $feed_titles, true ), 'and the owners see it in notifications' );
-
-$sent_bodies = [];
-update_post_meta( $story, \DGL\Workflow\Lifetime::META_UNTIL, $today_wall->modify( '-1 day' )->format( 'Y-m-d' ) );
-\DGL\Events\Series::stamp( $story, PostTypes::NEWS );
+$ok( 0 === \DGL\Events\Reminder::send_due(), 'no reminder goes for a story' );
 Transition::run_expiry_sweep();
-$ok( Statuses::EXPIRED === get_post_status( $story ), 'past its end date the sweep takes it off' );
-$ok( [] !== array_filter( $sent_bodies, static fn( string $b ): bool => str_contains( $b, 'listed for 3 months' ) ), 'with the expired email in listing words' );
+$ok( Statuses::LIVE === get_post_status( $story ), 'the sweep leaves it on the site' );
+
+// A story from before 0.22.0 carries the old spell and may already have been
+// taken off by it. The schema upgrade releases it.
+$old_story = wp_insert_post( [ 'post_type' => PostTypes::NEWS, 'post_title' => 'From the old rule', 'post_status' => Statuses::EXPIRED, 'post_author' => $alice ] );
+update_post_meta( $old_story, DGL_FIXTURE_FLAG, '1' );
+update_post_meta( $old_story, Meta::ITEM_ORG, $org_a );
+update_post_meta( $old_story, \DGL\Workflow\Lifetime::META_UNTIL, $today_wall->modify( '-1 day' )->format( 'Y-m-d' ) );
+update_post_meta( $old_story, Meta::ITEM_EXPIRES_AT, $today_wall->modify( '-1 day' )->format( 'Y-m-d' ) . ' 23:59:59' );
+update_post_meta( $old_story, \DGL\Events\Reminder::META_REMINDED_FOR, $today_wall->modify( '-1 day' )->format( 'Y-m-d' ) );
+$live_story = wp_insert_post( [ 'post_type' => PostTypes::NEWS, 'post_title' => 'Still up, dated by the old rule', 'post_status' => Statuses::LIVE, 'post_author' => $alice ] );
+update_post_meta( $live_story, DGL_FIXTURE_FLAG, '1' );
+update_post_meta( $live_story, Meta::ITEM_ORG, $org_a );
+update_post_meta( $live_story, \DGL\Workflow\Lifetime::META_UNTIL, $today_wall->modify( '+40 days' )->format( 'Y-m-d' ) );
+update_post_meta( $live_story, Meta::ITEM_EXPIRES_AT, $today_wall->modify( '+40 days' )->format( 'Y-m-d' ) . ' 23:59:59' );
+$released = \DGL\Workflow\Lifetime::release();
+$ok( $released['released'] >= 2 && $released['restored'] >= 1, 'the release finds both (' . $released['released'] . ' released, ' . $released['restored'] . ' restored)' );
+$ok( Statuses::LIVE === get_post_status( $old_story ) && '' === (string) get_post_meta( $old_story, \DGL\Workflow\Lifetime::META_UNTIL, true ) && '' === (string) get_post_meta( $old_story, Meta::ITEM_EXPIRES_AT, true ) && '' === (string) get_post_meta( $old_story, \DGL\Events\Reminder::META_REMINDED_FOR, true ), 'the expired one is back on the site with every mark of the old rule gone' );
+$ok( '' === (string) get_post_meta( $live_story, \DGL\Workflow\Lifetime::META_UNTIL, true ) && '' === (string) get_post_meta( $live_story, Meta::ITEM_EXPIRES_AT, true ), 'the live one loses its end date and stamp' );
+$ok( in_array( 'listing_restored', array_column( Log::for_object( 'item', $old_story ), 'action' ), true ), 'the restoration is in the audit trail' );
+$again = \DGL\Workflow\Lifetime::release();
+$ok( 0 === $again['released'] && 0 === $again['restored'], 'a second run finds nothing to do' );
 
 $dated = $make_item( $org_a, $alice, Statuses::LIVE );
 update_post_meta( $dated, 'dgl_start_datetime', $today_wall->modify( '+5 days' )->format( 'Y-m-d' ) . ' 10:00:00' );
@@ -3577,6 +3581,23 @@ delete_option( \DGL\Topics\Topics::OPTION );
 \DGL\Topics\Topics::maybe_sync();
 $ok( \DGL\Topics\Topics::LIST_VERSION === (int) get_option( \DGL\Topics\Topics::OPTION, 0 ), 'the page-load sync stamps the list version once it has run clean' );
 $ok( in_array( 'mens-health', get_terms( [ 'taxonomy' => \DGL\Taxonomies::TOPIC, 'hide_empty' => false, 'fields' => 'slugs' ] ), true ), 'and the terms are there for the wizard and the digest preferences' );
+
+$group( 'Imported organisations are asked to check their details, once' );
+
+$chk_org = $make_org( 'Imported Check Org' );
+$ok( ! \DGL\Org\Org::needs_check( $chk_org ), 'an organisation that was not imported is not asked' );
+update_post_meta( $chk_org, Meta::ORG_IMPORTED_AT, '2026-09-17 10:00:00' );
+$ok( \DGL\Org\Org::needs_check( $chk_org ), 'an imported one is, until an owner saves' );
+$chk_owner = wp_insert_user( [ 'user_login' => 'chk_owner_' . wp_generate_password( 6, false ), 'user_email' => 'chk-' . wp_generate_password( 6, false ) . '@example.test', 'user_pass' => wp_generate_password(), 'role' => Roles::MEMBER ] );
+update_user_meta( $chk_owner, DGL_FIXTURE_FLAG, '1' );
+update_user_meta( $chk_owner, Meta::USER_ORG, $chk_org );
+update_user_meta( $chk_owner, Meta::USER_ORG_ROLE, \DGL\Access\UserContext::ORG_OWNER );
+$chk_bad = \DGL\Org\Profile::save( $chk_org, [ 'org_name' => 'Imported Check Org', 'org_email' => 'not an address' ], $chk_owner );
+$ok( [] !== $chk_bad['errors'] && \DGL\Org\Org::needs_check( $chk_org ), 'a save that fails validation does not count as checked' );
+$chk_ok = \DGL\Org\Profile::save( $chk_org, [ 'org_name' => 'Imported Check Org', 'org_email' => 'hello@example.test', 'org_description' => 'Written in our own words.' ], $chk_owner );
+$ok( [] === $chk_ok['errors'] && ! \DGL\Org\Org::needs_check( $chk_org ), 'a good save marks the details checked: ' . implode( ' | ', $chk_ok['errors'] ) );
+$ok( '' !== (string) get_post_meta( $chk_org, Meta::ORG_CHECKED_AT, true ), 'with the moment recorded' );
+$ok( in_array( 'org_checked', array_column( Log::for_object( 'org', $chk_org ), 'action' ), true ), 'and in the audit trail' );
 
 /* ----------------------------------------------------------------- report */
 

@@ -91,7 +91,11 @@ ran with `--approve`, so the list is treated as verified.
 The file is all there is. Where a value was cut in the export (descriptions,
 address lines in the wrong column) nothing fuller is coming from Forum
 Central. Members tidy their own organisation's record from the Organisation
-tab once they have signed up; the import is not re-run for it.
+tab once they have signed up; the import is not re-run for it. From 0.22.0
+the site asks them to: an imported organisation carries a "please check
+these details" prompt on the dashboard and the Organisation tab, with a line
+under the short description saying it may have been cut short, until an
+owner saves that tab (`Org::needs_check()`, `dgl_org_checked_at`).
 
 ## Two decisions that were open before that
 

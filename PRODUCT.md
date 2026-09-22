@@ -76,6 +76,13 @@ resubmitting it is a stateful document, not a form entry.
   with four filters and one page per organisation.
 - Built 22 September 2026: the topic list DGLP decided on, twenty-eight topics
   shared by every content type, carried in the plugin and seeded on load.
+- Decided 22 September 2026: news does not expire. The three-month spell from
+  0.10.0 is withdrawn (0.22.0) so stories keep their long-tail search value;
+  a story stays up until its organisation archives it or the team takes it
+  down.
+- Built 22 September 2026: an imported organisation is asked, on the dashboard
+  and the Organisation tab, to check its details and rewrite its overview,
+  until an owner saves the tab.
 - Not yet built, and known: Microsoft and Google sign-in; consent records at
   registration; Turnstile on the join form; member-initiated account closure.
 - Constraint: the plugin must not depend on the theme's markup. Theme updates
