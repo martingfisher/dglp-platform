@@ -59,7 +59,10 @@ cd <target>/core && wp eval-file <plugin>/tests/integration/run.php
 ```
 
 The setup script builds a throwaway WordPress on SQLite, so it needs neither a database server nor a
-web server. It is repeatable: the suite clears its own fixtures before each run.
+web server. It is repeatable: the suite clears its own fixtures before each run. It sets pretty
+permalinks and the London timezone, as on the real site, because the route tests read the rewrite
+rules and without a permalink structure WordPress writes none. The import test shells out to WP-CLI
+and finds the phar it is running under; set `DGL_WP_CLI` to point it elsewhere.
 
 This suite is not optional decoration. It caught a live bug the standalone tests could not see: the
 `map_meta_cap` filter receives `edit_post`, never the post type's own `edit_dgl_item`, so the
