@@ -580,16 +580,19 @@ clean. They are the only DGLP content on staging.
   reading time; events: when / where / organisation); filters as one quiet
   line under the featured block; autoload unchanged; a navy tile where
   there is no picture. `src/Frontend/Cards.php`. AAA contrast walk clean.
-  Theme, staging only: main menu gains "News and Events" (item 8798, to
-  /news/) with children News (8799) and Events (8800). The "News and
-  Events" mega menu block (1323) is a Blocksy content block the content
-  tools refuse to edit, so on Martin's go-ahead its links were changed by
-  scoped `wp search-replace` on `wp_posts.post_content` (regex lookaheads,
+  Theme, staging only: the Top Bar menu (23), which already had "News"
+  (5056, to /news/) and "Jobs", gains "Events" (8801, to /events/) between
+  them; Jobs moves to third. That is where Martin wanted the two lists.
+  Earlier the same day a "News and Events" item with a mega menu had been
+  added to the main menu by mistake and rendered wrongly (the Blocksy
+  content-block option only applies to items below the top level); those
+  three items (8798, 8799, 8800) were deleted. The "News and Events" mega
+  menu block (1323) is a Blocksy content block the content tools refuse
+  to edit, so on Martin's go-ahead its links were changed by scoped
+  `wp search-replace` on `wp_posts.post_content` (regex lookaheads,
   because the console blocks `<`, `>`, `\` and `$` in commands): All News
   and Forum Central News to /news/, Events to /events/, in both the block
   markup and the block's JSON attributes. Each pattern matched exactly two
   rows: the block and its one revision (8235). "Newsletter Sign up" still
-  links to "#": it has nowhere to go yet. The block is attached to the new
-  "News and Events" menu item (8798) by the setting the customiser writes,
-  `blocksy_post_meta_options` = has_mega_menu yes, mega_menu_content_type
-  hook, mega_menu_hook 1323.
+  links to "#": it has nowhere to go yet. The block is attached to no
+  menu item.
