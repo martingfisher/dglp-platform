@@ -586,7 +586,14 @@ clean. They are the only DGLP content on staging.
   Martin's decision: `dgl_mail_redirect` still sends every email to his
   Gmail, and the demo and test content (demo stories, demo organisation,
   expired demo event, "TEST - IFG") is live. Staging is to be suspended
-  and deleted; from here on the record is production.
+  and deleted; from here on the record is production. Production's page
+  cache (SmartCache, TTL a day) excludes /dashboard, /wp-login.php,
+  /wp-admin and /wp-json only; adding /directory, /events/calendar and
+  the search and filter query parameters was refused by the host:
+  "Cache exclusions are not enabled for this team yet, contact support".
+  Also seen: a large number of the imported stories exist twice, same
+  title and same date under two ids (the old site held a copy under its
+  own categories and a MailChimp copy); worth a dedupe pass.
 - **0.29.0 deployed** (23 September): five things from Martin's list.
   (1) Site search: a `?s=` request now renders the plugin's results page,
   organisations, news, events and training in their own sections with
