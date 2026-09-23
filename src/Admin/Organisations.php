@@ -204,7 +204,7 @@ final class Organisations {
 		echo '</tbody></table>';
 
 		echo '<p class="description">'
-			. esc_html__( 'The organisation edits these themselves in the member area. Changes to the name and the logo come to you first.', 'dgl-platform' )
+			. esc_html__( 'The organisation edits these themselves in the user area. Changes to the name and the logo come to you first.', 'dgl-platform' )
 			. '</p>';
 	}
 

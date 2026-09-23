@@ -112,7 +112,7 @@ final class Navigation {
 			];
 
 			$items[] = [
-				'label'   => __( 'Decided', 'dgl-platform' ),
+				'label'   => __( 'Approved', 'dgl-platform' ),
 				'url'     => Router::url( 'review', 'decided' ),
 				'count'   => null,
 				'section' => __( 'Review team', 'dgl-platform' ),

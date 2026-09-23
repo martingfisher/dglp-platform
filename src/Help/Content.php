@@ -52,12 +52,12 @@ final class Content {
 					'id'      => 'getting-in',
 					'heading' => __( 'Getting in', 'dgl-platform' ),
 					'blocks'  => [
-						[ 'p', __( 'The member area is at the "Sign in" link in the site header. Sign in with the email address and password you set when you joined.', 'dgl-platform' ) ],
-						[ 'p', __( 'Not a member yet? Press "Join the member area" on the sign-in page and give your work email address. We send a link that works once, for 48 hours. When you click it:', 'dgl-platform' ) ],
+						[ 'p', __( 'The user area is at the "Sign in" link in the site header. Sign in with the email address and password you set when you joined.', 'dgl-platform' ) ],
+						[ 'p', __( 'Not a member yet? Press "Join the user area" on the sign-in page and give your work email address. We send a link that works once, for 48 hours. When you click it:', 'dgl-platform' ) ],
 						[ 'ul', [
 							__( 'If your address is at an organisation already on the list, you are offered that organisation and join it with one click. Its owner is told.', 'dgl-platform' ),
 							__( 'If it matches nothing, describe your organisation. The DGLP team check every new organisation before it can post. You can draft in the meantime.', 'dgl-platform' ),
-							__( 'If a colleague already uses the member area, the quickest way in is to ask them to invite you from their Members page.', 'dgl-platform' ),
+							__( 'If a colleague already uses the user area, the quickest way in is to ask them to invite you from their Members page.', 'dgl-platform' ),
 						] ],
 						[ 'p', __( 'Forgotten your password? The link under the sign-in form sends a reset email.', 'dgl-platform' ) ],
 					],
@@ -195,7 +195,7 @@ final class Content {
 	private static function team(): array {
 		return [
 			'title'       => __( 'Review team guide', 'dgl-platform' ),
-			'lede'        => __( 'For the DGLP, Voluntary Action Leeds and Forum Central staff who check submissions, verify organisations and look after members. Two places matter: the review queue in the member area, and the Organisations screen in wp-admin.', 'dgl-platform' ),
+			'lede'        => __( 'For the DGLP, Voluntary Action Leeds and Forum Central staff who check submissions, verify organisations and look after members. Two places matter: the review queue in the user area, and the Organisations screen in wp-admin.', 'dgl-platform' ),
 			'faq_heading' => __( 'Questions the team ask', 'dgl-platform' ),
 			'sections'    => [
 				[
@@ -220,7 +220,7 @@ final class Content {
 					'id'      => 'decided',
 					'heading' => __( 'Decided: changing a decision', 'dgl-platform' ),
 					'blocks'  => [
-						[ 'p', __( '"Decided" in the sidebar lists everything already decided, newest first, filtered by outcome. Open one to check it again. A live item can be taken off the site (it goes back in the queue), a refusal can be reopened (back in the queue, the member is told), an archived item can be restored (back in the queue). Nothing goes straight back on the site from here; it is decided again.', 'dgl-platform' ) ],
+						[ 'p', __( '"Approved" in the sidebar opens what is on the site, newest first; its filters show refusals, expired and archived items too. Open one to check it again. A live item can be taken off the site (it goes back in the queue), a refusal can be reopened (back in the queue, the member is told), an archived item can be restored (back in the queue). Nothing goes straight back on the site from here; it is decided again.', 'dgl-platform' ) ],
 					],
 				],
 				[
@@ -274,7 +274,7 @@ final class Content {
 					'id'      => 'joining',
 					'heading' => __( 'How people join', 'dgl-platform' ),
 					'blocks'  => [
-						[ 'p', __( 'The sign-in page links to "Join the member area". The person gives an email address and we send a link that works once, for 48 hours. A domain match joins them to that organisation and emails its owner; no match lands in your queue under "New organisations to verify". Owners invite and remove colleagues themselves from the Members tab. A removed colleague is signed out everywhere and emailed.', 'dgl-platform' ) ],
+						[ 'p', __( 'The sign-in page links to "Join the user area". The person gives an email address and we send a link that works once, for 48 hours. A domain match joins them to that organisation and emails its owner; no match lands in your queue under "New organisations to verify". Owners invite and remove colleagues themselves from the Members tab. A removed colleague is signed out everywhere and emailed.', 'dgl-platform' ) ],
 					],
 				],
 				[

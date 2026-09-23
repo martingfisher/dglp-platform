@@ -573,6 +573,21 @@ clean. They are the only DGLP content on staging.
   Also on staging today, by Martin's decision: 83 draft posts deleted and
   the MailChimp category (51) deleted; see `docs/topics.md`. Unit 1932,
   integration 912.
+- **0.29.0 deployed** (23 September): five things from Martin's list.
+  (1) Site search: a `?s=` request now renders the plugin's results page,
+  organisations, news, events and training in their own sections with
+  counts and "See all" links; matches title, body and summary (name and
+  description for an organisation); live and listed only. The header
+  search box needs no change for the results page; its live dropdown is a
+  theme setting (see the note in the reply). (2) "Member area" is "User
+  area" in the user-facing strings: the top bar, the sign-in and join
+  pages, the help pages, the privacy policy text. Roles and the Members
+  tab keep their names. (3) The review team's "Decided" screen is
+  "Approved": it opens on what is on the site, and its filters (All,
+  Refused, Expired, Archived) still reach the rest. (4) The organisation
+  form's ward question reads "What ward is your primary location in?".
+  (5) Two partials extracted so the lists, the directory and the search
+  render the same rows and cards: `public/card-row`, `public/org-card`.
 - **0.28.1 deployed** (23 September): `wp dgl news set-topics`, a by-hand
   topic change with an audit row, because the console cannot run core
   taxonomy commands with the plugin loaded. Used to correct the four guessed

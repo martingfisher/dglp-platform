@@ -375,3 +375,15 @@ once.
 - **Don't** declare tokens in `dashboard.css`; the duplicate block there overrode `tokens.css` for weeks.
 - **Don't** let a theme rule decide a control's edge; the field border is `!important` for that reason and nothing else is.
 - **Don't** add gradients, glass, sparklines or a hero metric; the surface is an office, not a launch page.
+
+## Search results
+
+`/?s=term` renders `templates/public/search.php` inside the public wrapper.
+Four sections in a fixed order (organisations, news, events, training), each
+with a heading, a muted count and a "See all N" link when the overview holds
+back (six per section). Items use the same `public/card-row` partial as the
+lists; organisations use the same `public/org-card` partial as the directory,
+so a result looks like the thing it opens. The search form at the top repeats
+the term for refining. Nothing found: one sentence and the four lists as
+links. `?type=news` narrows to one section, up to 100, with an "All results"
+link back.

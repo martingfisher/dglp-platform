@@ -63,7 +63,16 @@ final class Frontend {
 	 * work without anybody remembering to change this.
 	 */
 	public static function is_ours(): bool {
-		return self::single_type() !== null || self::archive_type() !== null || self::directory_request() !== null || self::calendar_request();
+		return self::search_request() || self::single_type() !== null || self::archive_type() !== null || self::directory_request() !== null || self::calendar_request();
+	}
+
+	/**
+	 * A `?s=` request on the front end. The theme's own search template only
+	 * looked through posts; ours answers with organisations, news, events and
+	 * training in their own sections.
+	 */
+	public static function search_request(): bool {
+		return ! is_admin() && is_search() && ! is_feed();
 	}
 
 	/* ---- The organisation directory ------------------------------------ */

@@ -50,7 +50,7 @@ final class Privacy {
 	 */
 	public static function register_exporter( array $exporters ): array {
 		$exporters['dgl-platform'] = [
-			'exporter_friendly_name' => __( 'DGLP member area', 'dgl-platform' ),
+			'exporter_friendly_name' => __( 'DGLP user area', 'dgl-platform' ),
 			'callback'               => [ self::class, 'export' ],
 		];
 
@@ -63,7 +63,7 @@ final class Privacy {
 	 */
 	public static function register_eraser( array $erasers ): array {
 		$erasers['dgl-platform'] = [
-			'eraser_friendly_name' => __( 'DGLP member area', 'dgl-platform' ),
+			'eraser_friendly_name' => __( 'DGLP user area', 'dgl-platform' ),
 			'callback'             => [ self::class, 'erase' ],
 		];
 
@@ -435,11 +435,11 @@ final class Privacy {
 			return;
 		}
 
-		$content = '<p>' . __( 'When you join the member area we store your name, email address, the organisation you belong to and your role in it, and whether your account is pending, approved or suspended. We store the date your email address was verified and, if you registered a new organisation, the details you gave about it and the review team\'s decision.', 'dgl-platform' ) . '</p>'
+		$content = '<p>' . __( 'When you join the user area we store your name, email address, the organisation you belong to and your role in it, and whether your account is pending, approved or suspended. We store the date your email address was verified and, if you registered a new organisation, the details you gave about it and the review team\'s decision.', 'dgl-platform' ) . '</p>'
 			. '<p>' . __( 'If you ask for email digests we store which content types and topics you asked for, how often, and the date you agreed. You can change or withdraw this at any time from your profile or from the link in any digest.', 'dgl-platform' ) . '</p>'
 			. '<p>' . __( 'Invitations record the email address invited, the organisation, who sent it and whether it was accepted. Unused invitations are removed after 90 days.', 'dgl-platform' ) . '</p>'
-			. '<p>' . __( 'Actions in the member area, such as submitting a listing or a review decision, are recorded in an audit log with the date, the action and a one-way hash of the IP address. Listings you write belong to your organisation and stay published under its name if you leave.', 'dgl-platform' ) . '</p>';
+			. '<p>' . __( 'Actions in the user area, such as submitting a listing or a review decision, are recorded in an audit log with the date, the action and a one-way hash of the IP address. Listings you write belong to your organisation and stay published under its name if you leave.', 'dgl-platform' ) . '</p>';
 
-		wp_add_privacy_policy_content( __( 'DGLP member area', 'dgl-platform' ), wp_kses_post( $content ) );
+		wp_add_privacy_policy_content( __( 'DGLP user area', 'dgl-platform' ), wp_kses_post( $content ) );
 	}
 }

@@ -175,25 +175,7 @@ $meta_line = static function ( WP_Post $item ): string {
 		<ul class="dgl-pub__list" data-dgl-autoload="li">
 			<?php while ( have_posts() ) : ?>
 				<?php the_post(); $item = get_post(); ?>
-				<li class="dgl-card">
-					<a class="dgl-card__pic" href="<?php the_permalink(); ?>" tabindex="-1" aria-hidden="true"><?php echo Cards::picture( $item, 'medium' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside. ?></a>
-					<div class="dgl-card__body">
-						<p class="dgl-card__chip">
-							<?php echo esc_html( Cards::chip( $item ) ); ?>
-							<?php if ( \DGL\Events\Cancel::is_cancelled( (int) $item->ID ) ) : ?>
-								<span class="dgl-pub__pin dgl-pub__pin--off"><?php esc_html_e( 'Cancelled', 'dgl-platform' ); ?></span>
-							<?php elseif ( \DGL\Workflow\Pins::is_pinned( (int) $item->ID ) ) : ?>
-								<span class="dgl-pub__pin"><?php esc_html_e( 'Featured', 'dgl-platform' ); ?></span>
-							<?php endif; ?>
-						</p>
-						<h2 class="dgl-card__title"><a href="<?php the_permalink(); ?>"><?php echo esc_html( get_the_title() ); ?></a></h2>
-						<?php $summary = Cards::summary( $item ); ?>
-						<?php if ( '' !== $summary ) : ?>
-							<p class="dgl-card__summary"><?php echo esc_html( $summary ); ?></p>
-						<?php endif; ?>
-						<?php echo $meta_line( $item ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside. ?>
-					</div>
-				</li>
+				<?php \DGL\Dashboard\View::output( 'public/card-row', [ 'item' => $item ] ); ?>
 			<?php endwhile; ?>
 		</ul>
 

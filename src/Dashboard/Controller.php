@@ -629,8 +629,10 @@ final class Controller {
 	 * restore an archived one.
 	 */
 	private static function decided( UserContext $user ): void {
-		$status = isset( $_GET['status'] ) ? sanitize_key( wp_unslash( $_GET['status'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		// Opens on what is on the site; "all" and the other outcomes are a filter away.
+		$status = isset( $_GET['status'] ) ? sanitize_key( wp_unslash( $_GET['status'] ) ) : Statuses::LIVE; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$filter = in_array( $status, ItemsTable::decided_statuses(), true ) ? [ $status ] : ItemsTable::decided_statuses();
+		$status = in_array( $status, ItemsTable::decided_statuses(), true ) ? $status : 'all';
 		$paging = self::page_args( ItemsTable::decided_count( $filter ), 50 );
 
 		$counts = [];
@@ -646,7 +648,7 @@ final class Controller {
 				'counts'  => $counts,
 				'active'  => $status,
 			] + $paging,
-			__( 'Decided', 'dgl-platform' ),
+			__( 'Approved', 'dgl-platform' ),
 			$user
 		);
 	}

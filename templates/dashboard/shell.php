@@ -55,7 +55,7 @@ $alerts = (int) ( $data['alerts'] ?? 0 );
 	<div class="dgl-topbar__inner">
 		<a class="dgl-topbar__brand" href="<?php echo esc_url( null !== $user ? Router::url() : home_url() ); ?>">
 			<?php echo \DGL\Logo::dashboard_html( 'medium', [ 'class' => 'dgl-topbar__logo' ] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
-			<span class="dgl-topbar__label"><?php esc_html_e( 'Member area', 'dgl-platform' ); ?></span>
+			<span class="dgl-topbar__label"><?php esc_html_e( 'User area', 'dgl-platform' ); ?></span>
 		</a>
 
 		<div class="dgl-topbar__end">
@@ -108,7 +108,7 @@ $alerts = (int) ( $data['alerts'] ?? 0 );
 			<details class="dgl-dash__sidebar" id="dgl-menu" open>
 				<summary class="dgl-dash__menu-toggle"><?php esc_html_e( 'Menu', 'dgl-platform' ); ?></summary>
 
-				<nav class="dgl-nav" aria-label="<?php esc_attr_e( 'Member area', 'dgl-platform' ); ?>">
+				<nav class="dgl-nav" aria-label="<?php esc_attr_e( 'User area', 'dgl-platform' ); ?>">
 					<?php foreach ( $sections as $heading => $items ) : ?>
 						<?php if ( '' !== $heading ) : ?>
 							<p class="dgl-nav__heading"><?php echo esc_html( $heading ); ?></p>

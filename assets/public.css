@@ -1251,3 +1251,93 @@ h2.dgl-listing__heading:only-child,
 	.dgl-org__list a,
 	.dgl-org__contact a { display: inline-block; padding: 10px 0; }
 }
+
+/* ---- Search results ------------------------------------------------------ */
+
+/*
+ * One section per kind of thing, in a fixed order, each with its count and a
+ * "See all" when the overview holds back. Rows and organisation cards are the
+ * same partials the lists and the directory use, so a result looks like the
+ * thing it links to.
+ */
+.dgl-search__form {
+	display: flex;
+	gap: 8px;
+	max-width: 640px;
+	margin: 12px 0 8px;
+}
+
+.dgl-search__input {
+	flex: 1 1 auto;
+	min-width: 0;
+	min-height: 44px;
+	padding: 8px 14px;
+	font: inherit;
+	color: var(--dgl-text);
+	background: var(--dgl-white);
+	border: var(--dgl-field-border) solid var(--dgl-field-outline);
+	border-radius: var(--dgl-radius-field, 10px);
+}
+
+.dgl-search__input:focus { outline: 3px solid var(--dgl-focus); outline-offset: 2px; }
+
+.dgl-search__go {
+	flex: none;
+	min-height: 44px;
+	padding: 8px 18px;
+	font: inherit;
+	font-weight: 600;
+	color: var(--dgl-white);
+	background: var(--dgl-navy);
+	border: 0;
+	border-radius: 10px;
+	cursor: pointer;
+}
+
+.dgl-search__go:hover { background: var(--dgl-navy-deep, var(--dgl-navy)); }
+
+.dgl-search__go:focus-visible { outline: 3px solid var(--dgl-focus); outline-offset: 2px; }
+
+.dgl-search__group { margin-top: 36px; }
+
+.dgl-search__grouphead {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 16px;
+	padding-bottom: 10px;
+	border-bottom: 1px solid var(--dgl-border);
+}
+
+.dgl-search__grouphead .dgl-listing__heading { margin: 0; }
+
+.dgl-search__count {
+	margin-left: 8px;
+	font-size: 0.85em;
+	font-weight: 600;
+	color: var(--dgl-text-muted, var(--dgl-text));
+}
+
+.dgl-search__more { white-space: nowrap; font-weight: 600; text-decoration-thickness: 2px; text-underline-offset: 3px; }
+
+.dgl-search__orgs { margin-top: 16px; }
+
+.dgl-search__back { margin: 4px 0 0; }
+
+.dgl-search__empty { margin-top: 20px; max-width: 60ch; }
+
+.dgl-search__browse {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px 18px;
+	margin: 8px 0 0;
+	padding: 0;
+	list-style: none;
+}
+
+.dgl-search__browse a { font-weight: 600; }
+
+@media ( max-width: 560px ) {
+	.dgl-search__form { flex-direction: column; }
+	.dgl-search__grouphead { flex-direction: column; align-items: flex-start; gap: 4px; }
+}

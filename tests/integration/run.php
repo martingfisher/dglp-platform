@@ -3760,6 +3760,44 @@ $ok( in_array( $move_item, array_map( 'intval', ItemsTable::for_org( $move_to, n
 $move_log = array_values( array_filter( Log::for_object( 'item', $move_item ), static fn( array $r ): bool => 'reassigned' === $r['action'] ) );
 $ok( [] !== $move_log && str_contains( (string) $move_log[0]['note'], 'Move target' ), 'the audit row names the new owner' );
 
+
+/* ------------------------------------------------------------ site search */
+
+$sw   = 'zqxsearchword' . strtolower( wp_generate_password( 4, false ) );
+$s_t  = $make_item( $org_a, $alice, Statuses::LIVE );
+wp_update_post( [ 'ID' => $s_t, 'post_title' => 'Coffee morning ' . $sw ] );
+$s_b  = $make_item( $org_a, $alice, Statuses::LIVE );
+wp_update_post( [ 'ID' => $s_b, 'post_content' => '<p>Bring a friend, ' . $sw . ' welcome.</p>' ] );
+$s_s  = $make_item( $org_a, $alice, Statuses::LIVE );
+update_post_meta( $s_s, 'dgl_summary', 'A short one about ' . $sw . '.' );
+$s_x  = $make_item( $org_a, $alice, Statuses::EXPIRED );
+wp_update_post( [ 'ID' => $s_x, 'post_title' => 'Gone ' . $sw ] );
+$s_n  = wp_insert_post( [ 'post_type' => PostTypes::NEWS, 'post_status' => Statuses::LIVE, 'post_title' => 'Story about ' . $sw, 'post_author' => $alice ] );
+update_post_meta( $s_n, DGL_FIXTURE_FLAG, '1' );
+update_post_meta( $s_n, Meta::ITEM_ORG, $org_a );
+$s_o  = $make_org( 'Group ' . $sw );
+update_post_meta( $s_o, Meta::ORG_IN_DIRECTORY, '1' );
+$s_o2 = $make_org( 'Hidden group' );
+update_post_meta( $s_o2, 'dgl_org_description', 'We do ' . $sw . ' things.' );
+$s_o3 = $make_org( 'Unlisted ' . $sw );
+
+$ok( 'grant  round' === \DGL\Frontend\Search::term_from( [ 's' => "  grant <b> round \n" ] ) || 'grant round' === \DGL\Frontend\Search::term_from( [ 's' => "  grant <b> round \n" ] ), 'the term is trimmed and stripped of tags' );
+$ok( '' === \DGL\Frontend\Search::type_from( [ 'type' => 'pages' ] ) && 'news' === \DGL\Frontend\Search::type_from( [ 'type' => 'news' ] ), 'only a known group narrows the search' );
+$ok( [] === \DGL\Frontend\Search::results( '   ' ), 'nothing to look for, nothing back' );
+
+$s_hits = \DGL\Frontend\Search::results( $sw );
+$s_ev   = $s_hits['events']['ids'] ?? [];
+$ok( in_array( $s_t, $s_ev, true ) && in_array( $s_b, $s_ev, true ) && in_array( $s_s, $s_ev, true ), 'an event is found by its title, its body and its summary' );
+$ok( ! in_array( $s_x, $s_ev, true ), 'an expired event is not found' );
+$ok( ( $s_hits['events']['total'] ?? 0 ) === 3, 'the count is the live ones' );
+$ok( in_array( $s_n, $s_hits['news']['ids'] ?? [], true ), 'a story is found in its own group' );
+$s_orgs = $s_hits['organisations']['ids'] ?? [];
+$ok( in_array( $s_o, $s_orgs, true ) && ! in_array( $s_o2, $s_orgs, true ) && ! in_array( $s_o3, $s_orgs, true ), 'a listed organisation is found by name; one not in the directory is not, whatever its description says' );
+$ok( [ 'organisations', 'news', 'events' ] === array_keys( $s_hits ), 'groups come in a fixed order and an empty group is left out' );
+$s_only = \DGL\Frontend\Search::results( $sw, 'news' );
+$ok( [ 'news' ] === array_keys( $s_only ) && [ $s_n ] === $s_only['news']['ids'], 'narrowed to one group' );
+$ok( str_contains( \DGL\Frontend\Search::url( 'two words', 'events' ), 's=two%20words' ) && str_contains( \DGL\Frontend\Search::url( 'two words', 'events' ), 'type=events' ), 'the address carries the term and the group' );
+
 /* ----------------------------------------------------------------- report */
 
 echo "\n" . str_repeat( '-', 60 ) . "\n";

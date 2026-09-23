@@ -31,7 +31,7 @@ if ( '' === $message && '' !== $prefill ) {
 		<?php if ( '' !== $message ) : ?>
 			<div class="dgl-alert" role="alert"><p><?php echo esc_html( $message ); ?></p></div>
 		<?php endif; ?>
-		<p class="dgl-page-head__lede"><?php esc_html_e( 'Sign in to the member area.', 'dgl-platform' ); ?></p>
+		<p class="dgl-page-head__lede"><?php esc_html_e( 'Sign in to the user area.', 'dgl-platform' ); ?></p>
 
 		<?php
 		wp_login_form(
@@ -49,6 +49,6 @@ if ( '' === $message && '' !== $prefill ) {
 		</p>
 		<p class="dgl-signin__foot">
 			<?php esc_html_e( 'Not a member yet?', 'dgl-platform' ); ?>
-			<a href="<?php echo esc_url( \DGL\Dashboard\Router::url( 'join' ) ); ?>"><?php esc_html_e( 'Join the member area', 'dgl-platform' ); ?></a>
+			<a href="<?php echo esc_url( \DGL\Dashboard\Router::url( 'join' ) ); ?>"><?php esc_html_e( 'Join the user area', 'dgl-platform' ); ?></a>
 		</p>
 	</div>

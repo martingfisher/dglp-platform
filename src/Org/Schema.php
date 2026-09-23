@@ -79,7 +79,7 @@ final class Schema {
 			new Field( key: 'org_postcode', label: __( 'Postcode', 'dgl-platform' ), type: Field::POSTCODE, step: 2 ),
 			new Field(
 				key: 'org_ward',
-				label: __( 'Ward you are based in', 'dgl-platform' ),
+				label: __( 'What ward is your primary location in?', 'dgl-platform' ),
 				type: Field::SELECT,
 				step: 2,
 				options: Options::wards(),

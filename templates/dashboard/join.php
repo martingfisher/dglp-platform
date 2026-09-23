@@ -25,7 +25,7 @@ $v      = static fn( string $k ): string => (string) ( $values[ $k ] ?? '' );
 <div class="dgl-signin">
 	<header class="dgl-page-head">
 		<div>
-			<h1 class="dgl-page-head__title"><?php esc_html_e( 'Join the member area', 'dgl-platform' ); ?></h1>
+			<h1 class="dgl-page-head__title"><?php esc_html_e( 'Join the user area', 'dgl-platform' ); ?></h1>
 			<?php if ( 'email' === $stage ) : ?>
 				<p class="dgl-page-head__lede"><?php esc_html_e( 'For people at organisations in the Doing Good Leeds Partnership. Start with your work email address: it is how we tell which organisation you are part of.', 'dgl-platform' ); ?></p>
 			<?php endif; ?>

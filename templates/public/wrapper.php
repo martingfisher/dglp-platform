@@ -21,7 +21,9 @@ get_header();
 $dgl_single  = Frontend::single_type();
 $dgl_archive = Frontend::archive_type();
 
-if ( null !== $dgl_single ) {
+if ( Frontend::search_request() ) {
+	View::output( 'public/search', \DGL\Frontend\Search::view_data( wp_unslash( $_GET ) ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+} elseif ( null !== $dgl_single ) {
 	View::output( 'public/single', [ 'post' => get_post(), 'type' => $dgl_single ] );
 } elseif ( null !== $dgl_archive ) {
 	View::output( 'public/archive', [ 'type' => $dgl_archive ] );

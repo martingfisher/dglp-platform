@@ -2,9 +2,9 @@
 
 For the DGLP staff who check submissions, verify organisations and look after
 members. Two places matter: the review queue at `/dashboard/review`, which you
-reach through the member area, and the Organisations screen in wp-admin.
+reach through the user area, and the Organisations screen in wp-admin.
 
-## Help inside the member area
+## Help inside the user area
 
 Members have a "Help" link in the sidebar: a guide with a contents list,
 questions people ask, and "Download as PDF". You have a "Team guide" link
@@ -14,11 +14,11 @@ than at this file.
 
 ## The review queue
 
-The "Review" link in the member area sidebar carries a count. It is the number
+The "Review" link in the user area sidebar carries a count. It is the number
 of things waiting for a decision, not unread items. The queue has three parts,
 oldest first.
 
-**Decided.** The second entry under Review team lists everything already
+**Approved.** The second entry under Review team opens what is on the site; its filters show refusals, expired and archived items too. It lists everything already
 decided, newest first, filtered by outcome. Open one to check it again. What
 you can change depends on where it is: a live item can be taken off the site
 (it goes back in the queue), a refusal can be reopened (back in the queue,
@@ -91,6 +91,15 @@ organisation, date and reading time; for events when, where and the
 organisation. An item with no picture gets a plain navy tile, so ask for a
 picture when one is missing.
 
+## Site search
+
+The search box in the site header looks through organisations, news, events
+and training, and the results page shows each kind in its own section, in
+that order, with a count and a "See all" link when there are more than six.
+A word is matched in the title, the body and the summary of an item, and in
+the name and description of an organisation. Only live items and listed,
+approved organisations appear. Nothing found offers the four lists to browse.
+
 ## Filters on the public lists
 
 Every public list has a Topic filter, and the events list has a When filter
@@ -113,7 +122,7 @@ on 22 September 2026 so stories keep their long-tail search value.)
 
 ## Featuring an item
 
-Open any live event or news story from the queue or the Decided screen. The
+Open any live event or news story from the queue or the Approved screen. The
 "Feature it" section holds it at the top of its public list for 7 or 14 days
 with a Featured stamp. It drops back on its own when the time is up, hourly
 by cron, and the organisation is told either way. "Stop featuring it" ends
@@ -204,7 +213,7 @@ never show whatever the switch says.
 
 ## How people join
 
-The sign-in page links to "Join the member area". The person gives their email
+The sign-in page links to "Join the user area". The person gives their email
 address first and nothing else. We send a link. It works once and for 48
 hours; after that they ask for another. When they click it:
 

@@ -22,15 +22,15 @@ $order  = [ Statuses::LIVE, Statuses::REJECTED, Statuses::EXPIRED, Statuses::ARC
 	<div>
 		<p class="dgl-crumbs">
 			<a href="<?php echo esc_url( Router::url( 'review' ) ); ?>"><?php esc_html_e( 'Review queue', 'dgl-platform' ); ?></a>
-			<span aria-hidden="true">/</span> <?php esc_html_e( 'Decided', 'dgl-platform' ); ?>
+			<span aria-hidden="true">/</span> <?php esc_html_e( 'Approved', 'dgl-platform' ); ?>
 		</p>
-		<h1 class="dgl-page-head__title"><?php esc_html_e( 'Decided', 'dgl-platform' ); ?></h1>
-		<p class="dgl-page-head__lede"><?php esc_html_e( 'Everything the team have already decided on, newest first. Open one to check it again, take it off the site, or reopen a refusal.', 'dgl-platform' ); ?></p>
+		<h1 class="dgl-page-head__title"><?php esc_html_e( 'Approved', 'dgl-platform' ); ?></h1>
+		<p class="dgl-page-head__lede"><?php esc_html_e( 'What is on the site, newest first. Open one to check it again or take it off the site. The filters show refusals, expired and archived items, which can be reopened or restored.', 'dgl-platform' ); ?></p>
 	</div>
 </header>
 
 <nav class="dgl-filters" aria-label="<?php esc_attr_e( 'Filter by outcome', 'dgl-platform' ); ?>">
-	<a class="dgl-filter<?php echo '' === $active ? ' dgl-filter--on' : ''; ?>" href="<?php echo esc_url( Router::url( 'review', 'decided' ) ); ?>">
+	<a class="dgl-filter<?php echo 'all' === $active ? ' dgl-filter--on' : ''; ?>" href="<?php echo esc_url( add_query_arg( 'status', 'all', Router::url( 'review', 'decided' ) ) ); ?>">
 		<?php esc_html_e( 'All', 'dgl-platform' ); ?>
 	</a>
 	<?php foreach ( $order as $status ) : ?>
