@@ -1,3 +1,5 @@
+> From 23 September 2026 the site is production, partnership.doinggoodleeds.org.uk.
+
 # Getting this on to a server
 
 The plugin is self-contained. It needs no Composer install, no build step and no

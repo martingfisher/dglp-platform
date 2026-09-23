@@ -573,6 +573,20 @@ clean. They are the only DGLP content on staging.
   Also on staging today, by Martin's decision: 83 draft posts deleted and
   the MailChimp category (51) deleted; see `docs/topics.md`. Unit 1932,
   integration 912.
+- **Production** (23 September, afternoon): DGLP pushed the staging site
+  over its parent, partnership.doinggoodleeds.org.uk. The push carried
+  the plugin at 0.28.1 and every data change made on staging: the 527
+  converted stories, the archive of the 66 event announcements, the three
+  owner organisations and the moves to VAL, every topic (the report says
+  all live news items have one), the Top Bar menu with Events, the London
+  timezone, `dgl_platform_db_version` 8. Checked by wp-cli on production:
+  463 live news, 133 under VAL, legacy addresses rewritten to the new
+  domain. On Martin's instruction 0.29.0 was then installed on production
+  and the cache cleared. Two staging leftovers are on production and need
+  Martin's decision: `dgl_mail_redirect` still sends every email to his
+  Gmail, and the demo and test content (demo stories, demo organisation,
+  expired demo event, "TEST - IFG") is live. Staging is to be suspended
+  and deleted; from here on the record is production.
 - **0.29.0 deployed** (23 September): five things from Martin's list.
   (1) Site search: a `?s=` request now renders the plugin's results page,
   organisations, news, events and training in their own sections with
