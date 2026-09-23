@@ -47,7 +47,9 @@ final class LegacyRedirect {
 			return;
 		}
 
-		$post_id = LegacyImport::live_by_slug( $slug );
+		// A converted story at its new address, else the kept copy of an
+		// archived duplicate whose address this was.
+		$post_id = LegacyImport::live_by_slug( $slug ) ?? LegacyImport::duplicate_target_by_slug( $slug );
 
 		if ( null === $post_id ) {
 			return;

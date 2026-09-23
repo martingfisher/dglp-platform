@@ -160,3 +160,16 @@ the loan sharks guidance to Support for VCSE Organisations (where Cost of
 Living went), the Imagine Leeds climate hub to Environment and Nature, and
 the two demo stories to Doing Good Leeds Partnership. `wp dgl news
 topicless` now reports every live news item has a topic.
+
+## Stories that came over twice
+
+The old site held most stories twice: once under its subject categories
+and once as a newsletter copy. Both converted. `wp dgl news duplicates`
+lists every live converted story whose title (case, dashes and entities
+ignored) and publish minute match another's, says which copy it would keep
+(more topics, then a picture, then more words, then the older id) and which
+it would drop, and separately lists same-title stories on different dates,
+which it never touches. `--apply --actor=<id>` archives each spare copy
+through the ordinary transition and marks it with the kept copy's id, so
+its old address sends people to the kept one (a 301, like the other legacy
+addresses). A second run finds nothing.

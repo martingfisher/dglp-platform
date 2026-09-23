@@ -500,4 +500,75 @@ final class Command {
 		$now = wp_get_object_terms( $post_id, \DGL\Taxonomies::TOPIC, [ 'fields' => 'names' ] );
 		WP_CLI::success( sprintf( '#%d %s: %s -> %s', $post_id, get_the_title( $post_id ), [] === $before ? 'none' : implode( ', ', $before ), is_array( $now ) && [] !== $now ? implode( ', ', $now ) : 'none' ) );
 	}
+
+	/**
+	 * Find the stories that exist twice and, with --apply, archive the spare
+	 * copy of each. Same title and same publish date, to the minute. The
+	 * kept copy is the one with more topics, then a picture, then more
+	 * words. The archived copy's address sends people to the kept one.
+	 *
+	 * ## OPTIONS
+	 *
+	 * [--apply]
+	 * : Archive the spare copies. Without it, a report only.
+	 *
+	 * [--actor=<user-id>]
+	 * : The moderator or administrator doing it. Required with --apply.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp dgl news duplicates
+	 *     wp dgl news duplicates --apply --actor=1
+	 *
+	 * @subcommand duplicates
+	 */
+	public function duplicates( array $args, array $assoc ): void {
+		$apply = isset( $assoc['apply'] );
+		$actor = (int) ( $assoc['actor'] ?? 0 );
+
+		if ( $apply && ( $actor <= 0 || ! get_userdata( $actor ) ) ) {
+			WP_CLI::error( 'Give --actor=<user-id> with --apply.' );
+		}
+
+		$groups = LegacyImport::duplicates();
+
+		foreach ( $groups as $group ) {
+			WP_CLI::line( sprintf( 'keep #%d  %s  (%s)', $group['keep'], get_the_title( $group['keep'] ), get_the_date( 'Y-m-d H:i', $group['keep'] ) ) );
+
+			foreach ( $group['drop'] as $drop ) {
+				WP_CLI::line( sprintf( '  drop #%d', $drop ) );
+			}
+		}
+
+		$spare = array_sum( array_map( static fn( array $g ): int => count( $g['drop'] ), $groups ) );
+		WP_CLI::line( '' );
+		WP_CLI::line( sprintf( '%d story(ies) exist more than once; %d spare copy(ies).', count( $groups ), $spare ) );
+
+		$near = LegacyImport::near_duplicates();
+
+		if ( [] !== $near ) {
+			WP_CLI::line( '' );
+			WP_CLI::line( 'Same title, different date; left alone, worth a look:' );
+
+			foreach ( $near as $ids ) {
+				WP_CLI::line( sprintf( '  %s: #%s', get_the_title( (int) $ids[0] ), implode( ', #', $ids ) ) );
+			}
+		}
+
+		if ( ! $apply ) {
+			WP_CLI::line( '' );
+			WP_CLI::line( 'Nothing changed. Add --apply --actor=<id> to archive the spare copies.' );
+			return;
+		}
+
+		wp_set_current_user( $actor );
+
+		$result = LegacyImport::dedupe( $actor, __( 'A second copy of the same story from the old site; the other copy stays on the site.', 'dgl-platform' ) );
+
+		foreach ( $result['failed'] as $post_id => $why ) {
+			WP_CLI::warning( sprintf( '#%d: %s', $post_id, $why ) );
+		}
+
+		WP_CLI::success( sprintf( 'Archived %d spare copy(ies); %d failed.', count( $result['archived'] ), count( $result['failed'] ) ) );
+	}
 }

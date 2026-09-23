@@ -573,6 +573,11 @@ clean. They are the only DGLP content on staging.
   Also on staging today, by Martin's decision: 83 draft posts deleted and
   the MailChimp category (51) deleted; see `docs/topics.md`. Unit 1932,
   integration 912.
+- **0.30.0 deployed to production** (23 September): `wp dgl news
+  duplicates`, and run on production on Martin's decision, dry run first.
+  Same title and same publish minute means the same story twice; the
+  richer copy is kept, the spare is archived with a pointer to the kept
+  one so its address redirects. Numbers in `docs/legacy-news.md`.
 - **Production** (23 September, afternoon): DGLP pushed the staging site
   over its parent, partnership.doinggoodleeds.org.uk. The push carried
   the plugin at 0.28.1 and every data change made on staging: the 527

@@ -44,6 +44,9 @@ final class LegacyImport {
 	/** The address the story had on the old site. */
 	public const META_URL = 'dgl_legacy_url';
 
+	/** On an archived duplicate: the id of the copy that was kept. */
+	public const META_DUPLICATE_OF = 'dgl_duplicate_of';
+
 	/** Summary length the schema allows. */
 	private const SUMMARY_MAX = 300;
 
@@ -378,5 +381,174 @@ final class LegacyImport {
 		}
 
 		return $out;
+	}
+
+	/** A title as a grouping key: entities decoded, case and spacing flattened. */
+	public static function title_key( string $title ): string {
+		$t = html_entity_decode( $title, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+		$t = mb_strtolower( $t );
+		$t = (string) preg_replace( '/[^\p{L}\p{N}]+/u', ' ', $t );
+
+		return trim( (string) preg_replace( '/\s+/', ' ', $t ) );
+	}
+
+	/**
+	 * Live converted stories that exist more than once: the same title and
+	 * the same publish date, to the minute. The old site held each story
+	 * twice, once under its subject categories and once as a newsletter
+	 * copy, and both came over.
+	 *
+	 * @return array<int,array{keep:int,drop:int[]}> Keyed by the kept id.
+	 */
+	public static function duplicates(): array {
+		$ids = get_posts(
+			[
+				'post_type'        => PostTypes::NEWS,
+				'post_status'      => Statuses::LIVE,
+				'fields'           => 'ids',
+				'numberposts'      => -1,
+				'meta_key'         => self::META_FROM, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+				'meta_value'       => '1', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
+				'suppress_filters' => true,
+			]
+		);
+
+		$groups = [];
+
+		foreach ( array_map( 'intval', (array) $ids ) as $post_id ) {
+			$post = get_post( $post_id );
+
+			if ( ! $post instanceof WP_Post ) {
+				continue;
+			}
+
+			$key            = self::title_key( (string) $post->post_title ) . '|' . substr( (string) $post->post_date, 0, 16 );
+			$groups[ $key ][] = $post_id;
+		}
+
+		$out = [];
+
+		foreach ( $groups as $members ) {
+			if ( count( $members ) < 2 ) {
+				continue;
+			}
+
+			usort( $members, [ self::class, 'rank' ] );
+			$keep = (int) array_shift( $members );
+
+			$out[ $keep ] = [ 'keep' => $keep, 'drop' => array_map( 'intval', $members ) ];
+		}
+
+		ksort( $out );
+
+		return $out;
+	}
+
+	/**
+	 * Which copy to keep: the one with more topics, then the one with a
+	 * picture, then the one with the longer body, then the older id.
+	 */
+	public static function rank( int $a, int $b ): int {
+		$score = static function ( int $id ): array {
+			$topics = wp_get_object_terms( $id, Taxonomies::TOPIC, [ 'fields' => 'ids' ] );
+			$post   = get_post( $id );
+
+			return [
+				is_array( $topics ) ? count( $topics ) : 0,
+				(int) get_post_meta( $id, 'dgl_image', true ) > 0 ? 1 : 0,
+				$post instanceof WP_Post ? mb_strlen( (string) $post->post_content ) : 0,
+				-$id,
+			];
+		};
+
+		return $score( $b ) <=> $score( $a );
+	}
+
+	/**
+	 * Same title, different date: possibly a repeat, possibly a genuine
+	 * update. Reported, never touched.
+	 *
+	 * @return array<string,int[]> Title key => ids.
+	 */
+	public static function near_duplicates(): array {
+		$ids = get_posts(
+			[
+				'post_type'        => PostTypes::NEWS,
+				'post_status'      => Statuses::LIVE,
+				'fields'           => 'ids',
+				'numberposts'      => -1,
+				'suppress_filters' => true,
+			]
+		);
+
+		$by_title = [];
+		$exact    = [];
+
+		foreach ( self::duplicates() as $group ) {
+			foreach ( $group['drop'] as $d ) {
+				$exact[ $d ] = true;
+			}
+		}
+
+		foreach ( array_map( 'intval', (array) $ids ) as $post_id ) {
+			if ( isset( $exact[ $post_id ] ) ) {
+				continue;
+			}
+
+			$by_title[ self::title_key( (string) get_the_title( $post_id ) ) ][] = $post_id;
+		}
+
+		return array_filter( $by_title, static fn( array $members ): bool => count( $members ) > 1 );
+	}
+
+	/**
+	 * Archive the spare copies, marking each with the id it duplicates so
+	 * its old address can send people to the kept one.
+	 *
+	 * @return array{archived:int[],failed:array<int,string>}
+	 */
+	public static function dedupe( int $actor_id, string $note ): array {
+		$result = [ 'archived' => [], 'failed' => [] ];
+
+		foreach ( self::duplicates() as $group ) {
+			foreach ( $group['drop'] as $post_id ) {
+				update_post_meta( $post_id, self::META_DUPLICATE_OF, $group['keep'] );
+
+				$done = Transition::apply( $post_id, StateMachine::ARCHIVE, $actor_id, $note );
+
+				if ( is_wp_error( $done ) ) {
+					delete_post_meta( $post_id, self::META_DUPLICATE_OF );
+					$result['failed'][ $post_id ] = $done->get_error_message();
+				} else {
+					$result['archived'][] = $post_id;
+				}
+			}
+		}
+
+		return $result;
+	}
+
+	/** The live copy an archived duplicate with this slug points at, or null. */
+	public static function duplicate_target_by_slug( string $slug ): ?int {
+		$found = get_posts(
+			[
+				'post_type'        => PostTypes::NEWS,
+				// 'any' skips a status registered as excluded from search, which the archived one is.
+				'post_status'      => array_keys( get_post_stati() ),
+				'name'             => $slug,
+				'fields'           => 'ids',
+				'numberposts'      => 1,
+				'meta_key'         => self::META_DUPLICATE_OF, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+				'suppress_filters' => true,
+			]
+		);
+
+		if ( [] === $found ) {
+			return null;
+		}
+
+		$target = (int) get_post_meta( (int) $found[0], self::META_DUPLICATE_OF, true );
+
+		return $target > 0 && Statuses::LIVE === get_post_status( $target ) ? $target : null;
 	}
 }

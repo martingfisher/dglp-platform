@@ -3720,6 +3720,27 @@ sort( $legacy_set );
 $ok( [ 'have-your-say', 'older-people' ] === $legacy_set, 'set-topics replaces the topics' );
 $ok( in_array( 'topics_set', array_column( Log::for_object( 'item', $legacy_bare ), 'action' ), true ), 'and records the change' );
 wp_set_object_terms( $legacy_bare, [], \DGL\Taxonomies::TOPIC, false );
+$dup_a = wp_insert_post( [ 'post_type' => 'post', 'post_status' => 'publish', 'post_title' => 'Twice told &#8211; story', 'post_name' => 'twice-a-' . wp_generate_password( 4, false ), 'post_content' => '<p>Short.</p>', 'post_date' => '2025-02-03 10:15:00', 'post_author' => $alice ] );
+$dup_b = wp_insert_post( [ 'post_type' => 'post', 'post_status' => 'publish', 'post_title' => 'Twice Told - Story', 'post_name' => 'twice-b-' . wp_generate_password( 4, false ), 'post_content' => '<p>' . str_repeat( 'Longer. ', 20 ) . '</p>', 'post_date' => '2025-02-03 10:15:40', 'post_author' => $alice ] );
+$dup_c = wp_insert_post( [ 'post_type' => 'post', 'post_status' => 'publish', 'post_title' => 'Twice told - story', 'post_name' => 'twice-c-' . wp_generate_password( 4, false ), 'post_content' => '<p>Later repeat.</p>', 'post_date' => '2025-03-09 09:00:00', 'post_author' => $alice ] );
+foreach ( [ $dup_a, $dup_b, $dup_c ] as $d ) {
+	update_post_meta( $d, DGL_FIXTURE_FLAG, '1' );
+	wp_set_object_terms( $d, [ 'news' ], 'category' );
+	\DGL\News\LegacyImport::convert( $d, $legacy_org, [], $mod );
+}
+$ok( 'twice told story' === \DGL\News\LegacyImport::title_key( 'Twice Told &#8211; Story ' ), 'a title key ignores case, dashes and entities' );
+$dups = \DGL\News\LegacyImport::duplicates();
+$ok( isset( $dups[ $dup_b ] ) && [ $dup_a ] === $dups[ $dup_b ]['drop'], 'same title and minute: the copy with more words is kept and the other dropped' );
+$ok( ! isset( $dups[ $dup_c ] ) && ! in_array( $dup_c, $dups[ $dup_b ]['drop'] ?? [], true ), 'a later repeat is not a duplicate' );
+$ok( [] !== array_filter( \DGL\News\LegacyImport::near_duplicates(), static fn( array $ids ): bool => in_array( $dup_c, $ids, true ) ), 'but it is reported as a near duplicate' );
+wp_set_object_terms( $dup_a, [ (int) get_term_by( 'slug', 'mental-health', \DGL\Taxonomies::TOPIC )->term_id ], \DGL\Taxonomies::TOPIC, false );
+$dups = \DGL\News\LegacyImport::duplicates();
+$ok( isset( $dups[ $dup_a ] ) && [ $dup_b ] === $dups[ $dup_a ]['drop'], 'a topic outranks words: now the other copy is kept' );
+$dedupe = \DGL\News\LegacyImport::dedupe( $mod, 'Spare.' );
+$ok( [ $dup_b ] === $dedupe['archived'] && [] === $dedupe['failed'] && Statuses::ARCHIVED === get_post_status( $dup_b ) && Statuses::LIVE === get_post_status( $dup_a ), 'the spare copy is archived, the kept one is live' );
+$ok( $dup_a === (int) get_post_meta( $dup_b, \DGL\News\LegacyImport::META_DUPLICATE_OF, true ), 'the archived copy remembers which one was kept' );
+$ok( $dup_a === \DGL\News\LegacyImport::duplicate_target_by_slug( get_post( $dup_b )->post_name ), 'its old address resolves to the kept copy' );
+$ok( [] === \DGL\News\LegacyImport::duplicates(), 'a second pass finds nothing' );
 $legacy_only = \DGL\News\LegacyImport::converted_only( [ 'news', 'blog' ] );
 $ok( in_array( $legacy_bare, $legacy_only, true ) && ! in_array( $legacy_post, $legacy_only, true ), 'only-news-or-blog picks the bare story and not one that also had a Forum Central category' );
 
