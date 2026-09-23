@@ -13,6 +13,7 @@ use DGL\Audit\Log;
 use DGL\News\LegacyImport;
 use DGL\Org\Org;
 use DGL\PostTypes;
+use DGL\Statuses;
 use WP_CLI;
 
 defined( 'ABSPATH' ) || exit;
@@ -100,8 +101,7 @@ final class LinksCommand {
 			// The old host no longer resolves, so every link to it is dead
 			// whether or not the list happens to name it.
 			if ( self::DEAD_HOST === DeadLinks::host_of( $href ) ) {
-				$slug = DeadLinks::slug_of( $href );
-				$live = '' !== $slug ? LegacyImport::live_by_slug( $slug ) : null;
+				$live = self::story_for( DeadLinks::slug_of( $href ) );
 
 				return null !== $live ? (string) get_permalink( $live ) : '';
 			}
@@ -194,5 +194,34 @@ final class LinksCommand {
 			$posts,
 			count( $dead )
 		) );
+	}
+
+	/**
+	 * The live story here for an old address's slug: a migrated story, the
+	 * survivor of a de-duplicated pair, or any live story with that slug.
+	 */
+	private static function story_for( string $slug ): ?int {
+		if ( '' === $slug ) {
+			return null;
+		}
+
+		$found = LegacyImport::live_by_slug( $slug ) ?? LegacyImport::duplicate_target_by_slug( $slug );
+
+		if ( null !== $found ) {
+			return $found;
+		}
+
+		$plain = get_posts(
+			[
+				'post_type'        => PostTypes::NEWS,
+				'post_status'      => Statuses::LIVE,
+				'name'             => $slug,
+				'fields'           => 'ids',
+				'numberposts'      => 1,
+				'suppress_filters' => true,
+			]
+		);
+
+		return [] === $plain ? null : (int) $plain[0];
 	}
 }
