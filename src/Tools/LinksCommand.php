@@ -97,20 +97,16 @@ final class LinksCommand {
 				return $empty ? '' : null;
 			}
 
-			if ( ! isset( $dead[ $href ] ) ) {
-				return null;
-			}
-
+			// The old host no longer resolves, so every link to it is dead
+			// whether or not the list happens to name it.
 			if ( self::DEAD_HOST === DeadLinks::host_of( $href ) ) {
 				$slug = DeadLinks::slug_of( $href );
 				$live = '' !== $slug ? LegacyImport::live_by_slug( $slug ) : null;
 
-				if ( null !== $live ) {
-					return (string) get_permalink( $live );
-				}
+				return null !== $live ? (string) get_permalink( $live ) : '';
 			}
 
-			return '';
+			return isset( $dead[ $href ] ) ? '' : null;
 		};
 
 		$types    = [ PostTypes::NEWS, PostTypes::EVENT, PostTypes::TRAINING, PostTypes::VOLUNTEERING, 'page', 'post' ];
