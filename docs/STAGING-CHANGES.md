@@ -821,8 +821,14 @@ clean. They are the only DGLP content on staging.
   Pure stripper `Tools\DeadLinks` with unit tests (2053 passed). Seeded
   local story proved unlink, rewrite and leave-alone. Production dry run
   then apply: 193 links in 103 posts, 5 rewritten, 188 unlinked, an audit
-  row `links_unlinked` per post with each address. Stories containing the
-  dead host afterwards: 0 (was 50). 0.33.1 and 0.33.2 were the same
+  row `links_unlinked` per post with each address. Four stories still
+  carried the dead host afterwards as plain text in the body (an address
+  written out, not a link), and a dry run showed 58 occurrences across
+  `wp_posts.post_content` counting revisions and image or document paths,
+  so `wp search-replace https://forumcentral.wordifysites.com/
+  https://forumcentral.org.uk/ wp_posts --include-columns=post_content`
+  swapped them for the live Forum Central domain: 58 replacements. Stories
+  containing the dead host afterwards: 0 (was 50). 0.33.1 and 0.33.2 were the same
   command before two fixes found by the local seed test; 0.33.3 is what
   ran. Three partner records (Forum Central 8802, VAL 8803, LOPF 8804)
   filled earlier the same day from their own websites, fetched through the
