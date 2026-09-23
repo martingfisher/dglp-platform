@@ -803,3 +803,29 @@ clean. They are the only DGLP content on staging.
   plugin command prints table columns. The same dbDelta added it on the
   local site, and the first real claim or registration will show it in
   the review queue.
+- **0.33.3 deployed and run** (23 September, production): dead links taken
+  out of the content. Martin exported the Broken Link Notifier results (780
+  rows, 1 July to 31 August, front-end visits to the old pages): 552 were
+  empty anchors, 77 pointed at Forum Central's old hosting address
+  forumcentral.wordifysites.com (no longer resolves), 71 were 404s on other
+  sites, 4 were 404s on this site, the rest timeouts. The plugin only scans
+  posts and pages, so the migrated stories were never checked; its settings
+  still need the platform's post types ticked. New `wp dgl links unlink
+  --from=<url> [--apply] [--empty] [--actor]` reads a list of dead
+  addresses (dist/dead-links-2026-09-23.txt, 164 addresses; the 4
+  Cloudflare email-protection ones are skipped because they work), unlinks
+  each one in every story, event, training item, page and post with the
+  text kept, and treats every link to the dead host as dead whether listed
+  or not: pointed at the migrated story here when there is one (legacy
+  slug, de-duplicated survivor, or any live story), unlinked otherwise.
+  Pure stripper `Tools\DeadLinks` with unit tests (2053 passed). Seeded
+  local story proved unlink, rewrite and leave-alone. Production dry run
+  then apply: 193 links in 103 posts, 5 rewritten, 188 unlinked, an audit
+  row `links_unlinked` per post with each address. Stories containing the
+  dead host afterwards: 0 (was 50). 0.33.1 and 0.33.2 were the same
+  command before two fixes found by the local seed test; 0.33.3 is what
+  ran. Three partner records (Forum Central 8802, VAL 8803, LOPF 8804)
+  filled earlier the same day from their own websites, fetched through the
+  site's probe because the sandbox proxy blocks them: website, description,
+  email, phone, address, postcode, email domain; LOPF's charity and company
+  numbers; the other two print none.
