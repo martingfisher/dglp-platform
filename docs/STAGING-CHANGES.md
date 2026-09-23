@@ -573,6 +573,16 @@ clean. They are the only DGLP content on staging.
   Also on staging today, by Martin's decision: 83 draft posts deleted and
   the MailChimp category (51) deleted; see `docs/topics.md`. Unit 1932,
   integration 912.
+- **0.31.0 deployed to production** (23 September): the picture
+  description in the wizard is filled from the attachment's own alt text
+  (which AltText.ai writes on upload) whenever the member left it blank,
+  on the step after an upload and whenever the step is shown; a typed
+  description is never replaced; cut to the field's 150 characters. Also
+  on production today: `wp dgl news duplicates --apply` archived 115
+  spare copies (the console timed out after 60 seconds but the run
+  completed: 463 live before, 348 after, a second pass finds nothing);
+  an archived copy's address answers 301 to the kept story, checked on
+  one. Two same-title stories on different dates were left alone.
 - **0.30.0 deployed to production** (23 September): `wp dgl news
   duplicates`, and run on production on Martin's decision, dry run first.
   Same title and same publish minute means the same story twice; the

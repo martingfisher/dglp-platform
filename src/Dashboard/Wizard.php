@@ -352,6 +352,9 @@ final class Wizard {
 			};
 		}
 
+		// A picture with no description yet shows the one its file carries.
+		\DGL\Uploads::adopt_alt( FieldRegistry::for_type( $post_type ), $values );
+
 		return $values;
 	}
 

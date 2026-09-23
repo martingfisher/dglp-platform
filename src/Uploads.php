@@ -117,7 +117,59 @@ final class Uploads {
 			$values[ $field->key ] = $attachment_id;
 		}
 
+		self::adopt_alt( $fields, $values );
+
 		return $errors;
+	}
+
+	/**
+	 * Fill a blank picture description from the attachment's own alt text.
+	 *
+	 * AltText.ai writes a description into WordPress's alt field when a
+	 * picture is uploaded. A member who left "What the picture shows" empty
+	 * gets that description put in front of them, to keep or to change,
+	 * rather than an error. A description they typed is never overwritten.
+	 *
+	 * @param Field[]              $fields The step's fields.
+	 * @param array<string, mixed> $values Values, changed in place.
+	 */
+	public static function adopt_alt( array $fields, array &$values ): void {
+		foreach ( $fields as $field ) {
+			if ( null === $field->required_with || Field::TEXT !== $field->type ) {
+				continue;
+			}
+
+			$image = null;
+
+			foreach ( $fields as $candidate ) {
+				if ( $candidate->key === $field->required_with && Field::IMAGE === $candidate->type ) {
+					$image = $candidate;
+					break;
+				}
+			}
+
+			if ( null === $image ) {
+				continue;
+			}
+
+			$attachment_id = (int) ( $values[ $image->key ] ?? 0 );
+
+			if ( $attachment_id <= 0 || '' !== trim( (string) ( $values[ $field->key ] ?? '' ) ) ) {
+				continue;
+			}
+
+			$alt = trim( wp_strip_all_tags( (string) get_post_meta( $attachment_id, '_wp_attachment_image_alt', true ) ) );
+
+			if ( '' === $alt ) {
+				continue;
+			}
+
+			if ( null !== $field->max_length && mb_strlen( $alt ) > $field->max_length ) {
+				$alt = rtrim( mb_substr( $alt, 0, $field->max_length - 1 ) ) . '…';
+			}
+
+			$values[ $field->key ] = $alt;
+		}
 	}
 
 	/**

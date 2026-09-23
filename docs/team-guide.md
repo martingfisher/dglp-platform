@@ -285,3 +285,10 @@ member's browser before it is sent, and anything over 20MB is refused
 there with a message. A new submission starts with the contact name,
 email, phone and website the organisation used last time; every one can
 be changed on the Contact and links step.
+
+**The picture's description.** The AltText.ai plugin writes a description
+into every uploaded picture. When a member leaves "What the picture shows"
+blank, the wizard puts that description in the box for them to keep or
+change; a description they typed is never replaced. If AltText.ai has not
+finished by the time the step is saved, the member is asked for one as
+before, and the box is pre-filled when the step reloads.

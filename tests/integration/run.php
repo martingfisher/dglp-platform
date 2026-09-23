@@ -3819,6 +3819,35 @@ $s_only = \DGL\Frontend\Search::results( $sw, 'news' );
 $ok( [ 'news' ] === array_keys( $s_only ) && [ $s_n ] === $s_only['news']['ids'], 'narrowed to one group' );
 $ok( str_contains( \DGL\Frontend\Search::url( 'two words', 'events' ), 's=two%20words' ) && str_contains( \DGL\Frontend\Search::url( 'two words', 'events' ), 'type=events' ), 'the address carries the term and the group' );
 
+
+/* ------------------------------------------ alt text from the picture */
+
+$alt_att = wp_insert_post( [ 'post_type' => 'attachment', 'post_status' => 'inherit', 'post_title' => 'A picture', 'post_mime_type' => 'image/jpeg' ] );
+update_post_meta( $alt_att, DGL_FIXTURE_FLAG, '1' );
+update_post_meta( $alt_att, '_wp_attachment_image_alt', '  Volunteers <b>planting</b> a tree in Armley Park ' );
+$alt_fields = \DGL\Schema\FieldRegistry::for_type( PostTypes::NEWS );
+$alt_vals   = [ 'image' => $alt_att, 'image_alt' => '' ];
+\DGL\Uploads::adopt_alt( $alt_fields, $alt_vals );
+$ok( 'Volunteers planting a tree in Armley Park' === $alt_vals['image_alt'], 'a blank description takes the picture\'s own alt text, tags stripped' );
+$alt_vals = [ 'image' => $alt_att, 'image_alt' => 'My own words' ];
+\DGL\Uploads::adopt_alt( $alt_fields, $alt_vals );
+$ok( 'My own words' === $alt_vals['image_alt'], 'a description the member typed is left alone' );
+$alt_vals = [ 'image' => 0, 'image_alt' => '' ];
+\DGL\Uploads::adopt_alt( $alt_fields, $alt_vals );
+$ok( '' === $alt_vals['image_alt'], 'no picture, nothing adopted' );
+update_post_meta( $alt_att, '_wp_attachment_image_alt', str_repeat( 'word ', 60 ) );
+$alt_vals = [ 'image' => $alt_att, 'image_alt' => '' ];
+\DGL\Uploads::adopt_alt( $alt_fields, $alt_vals );
+$ok( mb_strlen( $alt_vals['image_alt'] ) <= 150 && str_ends_with( $alt_vals['image_alt'], '…' ), 'a long one is cut to the field\'s limit' );
+update_post_meta( $alt_att, '_wp_attachment_image_alt', 'From the file' );
+$alt_item = wp_insert_post( [ 'post_type' => PostTypes::NEWS, 'post_status' => Statuses::DRAFT, 'post_title' => 'Alt story', 'post_author' => $alice ] );
+update_post_meta( $alt_item, DGL_FIXTURE_FLAG, '1' );
+update_post_meta( $alt_item, Meta::ITEM_ORG, $org_a );
+update_post_meta( $alt_item, 'dgl_image', $alt_att );
+$ok( 'From the file' === \DGL\Dashboard\Wizard::values( $alt_item, PostTypes::NEWS )['image_alt'], 'the wizard shows the picture\'s description when the story has none' );
+update_post_meta( $alt_item, 'dgl_image_alt', 'Typed' );
+$ok( 'Typed' === \DGL\Dashboard\Wizard::values( $alt_item, PostTypes::NEWS )['image_alt'], 'and the story\'s own when it has one' );
+
 /* ----------------------------------------------------------------- report */
 
 echo "\n" . str_repeat( '-', 60 ) . "\n";

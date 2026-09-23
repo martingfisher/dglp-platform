@@ -119,7 +119,7 @@ final class FieldRegistry {
 				label: __( 'What the picture shows', 'dgl-platform' ),
 				type: Field::TEXT,
 				step: self::STEP_BASICS,
-				help: __( 'One plain sentence, read aloud to people who cannot see the picture. For example "Volunteers planting a tree in Armley Park". Needed when there is a picture.', 'dgl-platform' ),
+				help: __( 'One plain sentence, read aloud to people who cannot see the picture. For example "Volunteers planting a tree in Armley Park". We suggest one from the picture where we can; change it if it does not say what the picture shows.', 'dgl-platform' ),
 				max_length: 150,
 				public: false,
 				in_csv: false,
