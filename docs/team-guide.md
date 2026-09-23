@@ -6,6 +6,9 @@ reach through the user area, and the Organisations screen in wp-admin.
 
 ## Help inside the user area
 
+The review team see the same screens under the name "Admin area"; members
+see "User area". It is one place with two labels, not two places.
+
 Members have a "Help" link in the sidebar: a guide with a contents list,
 questions people ask, and "Download as PDF". You have a "Team guide" link
 under Review team with the same for this document, kept in step with the
