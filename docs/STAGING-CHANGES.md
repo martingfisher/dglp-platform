@@ -759,3 +759,47 @@ clean. They are the only DGLP content on staging.
   rows: the block and its one revision (8235). "Newsletter Sign up" still
   links to "#": it has nowhere to go yet. The block is attached to no
   menu item.
+- **0.33.0 deployed** (23 September, production): joining redesigned so
+  anyone with a proven address can pick their organisation from the list,
+  and so the same organisation can never be recorded twice. After the link
+  is used the page offers three routes: the domain match (as before, straight
+  in), an organisation picked from the full list with a search-as-you-type
+  picker over a plain select (a claim: pending contributor, queue row "Wants
+  to join X", the team approve as owner if nobody is in it or contributor
+  otherwise, or refuse without touching the organisation; owners emailed),
+  or a registration for one not on the list. A registration is checked by
+  the new pure `Org\Duplicates` against every live and binned organisation
+  before anything is created: the same name once The, Ltd, CIC and the like
+  are set aside, the same website or email domain, the same charity number,
+  or the same postcode with a similar name is refused and offered as a
+  claim instead ("Join X instead"); a similar name or the same postcode is
+  shown once as "Is it one of these?" and the answer recorded. The same
+  check runs while the person types (`MatchEndpoint`, keyed to the sign-up
+  token, 60 asks an hour), refuses an approved name change that would
+  duplicate, stops `wp dgl invite org` and warns on the import. The review
+  screen shows a claim's note, how close the address is to the organisation
+  and who is in it; a registration's likely matches with reasons, the bin
+  included, and an Attach action that moves the person into the existing
+  organisation, fills gaps in its record, records the domain and deletes the
+  empty duplicate. Sign-ups carry a `kind` column (schema 9, backfilled on
+  migrate). Four new emails, report counters, help and team guide copy,
+  `docs/joining.md` records the reversal of the 16 September must-match
+  rule. This replaces "ask a colleague to invite you" everywhere.
+  Unit 2038, integration 1063. Walked locally in a browser: the picker
+  (keyboard and mouse), a claim through to the pending dashboard, a hard
+  block by website with "Join instead", a soft "Is it one of these?" with
+  "No, none of these", the live check while typing, JavaScript off (the
+  select carries 365 names and a claim submits), the queue rows, the claim
+  review screen and approve, the registration review screen with likely
+  matches, "It is this one" and Attach; AAA contrast walk clean over 13
+  routes. A fresh backup was requested before the install but sat queued
+  for seven minutes without starting, so the install went ahead on the
+  manual backup of 15:48 the same day (1.1 GB, ready) plus the nightly
+  automatic one; the change is one added column. Production after: version
+  0.33.0 (`wp plugin get`), `dgl_platform_db_version` 9 (`wp option get`,
+  written only after dbDelta and the backfill ran), the join page serving
+  "Join the user area", cache cleared. The `kind` column itself is NOT
+  VERIFIED directly on production: the console blocks `wp db` and no
+  plugin command prints table columns. The same dbDelta added it on the
+  local site, and the first real claim or registration will show it in
+  the review queue.
