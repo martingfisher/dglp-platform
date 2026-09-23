@@ -143,3 +143,13 @@ suggestion each, with a "worth a check" audit row; 5 got no suggestion and
 still have none: the two demo stories, "Leeds Prevent Communities November
 Newsletter", "How to help the fight against loan sharks" and "Can you help
 find a new home for Imagine Leeds". Those five are the review team's.
+
+## Setting a topic by hand from the console
+
+The console runs core `wp post term` commands without the plugin loaded, so
+it cannot see the topic taxonomy. `wp dgl news set-topics <id> <slug,slug>
+--actor=<id>` replaces an item's topics and writes a `topics_set` audit row
+naming before and after. On 23 September four guessed topics were corrected
+this way: GIPSIL's relaunch to Support for VCSE Organisations, the council
+budget consultation to Have your Say, HelloHope's board appointments to
+Leadership, the creative health tender to Arts, Culture and Heritage.

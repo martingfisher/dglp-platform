@@ -573,6 +573,10 @@ clean. They are the only DGLP content on staging.
   Also on staging today, by Martin's decision: 83 draft posts deleted and
   the MailChimp category (51) deleted; see `docs/topics.md`. Unit 1932,
   integration 912.
+- **0.28.1 deployed** (23 September): `wp dgl news set-topics`, a by-hand
+  topic change with an audit row, because the console cannot run core
+  taxonomy commands with the plugin loaded. Used to correct the four guessed
+  topics flagged on 22 September (see `docs/legacy-news.md`).
 - **0.28.0 deployed** (22 September): `wp dgl news move-legacy` (converted
   stories whose old categories were only the given ones, to another
   organisation) and `--first` on `suggest-topics`; the phrase rules

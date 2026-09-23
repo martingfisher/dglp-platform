@@ -427,4 +427,77 @@ final class Command {
 		WP_CLI::line( '' );
 		WP_CLI::line( sprintf( '%s %d; already there %d; failed %d.', $dry_run ? 'Would move' : 'Moved', $moved, $already, $failed ) );
 	}
+
+	/**
+	 * Set an item's topics by hand, replacing what it had, with an audit row.
+	 *
+	 * ## OPTIONS
+	 *
+	 * <id>
+	 * : The item.
+	 *
+	 * <slugs>
+	 * : Topic slugs, comma separated. Every one has to be on the list.
+	 *
+	 * --actor=<user-id>
+	 * : The moderator or administrator doing it; the audit row carries them.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp dgl news set-topics 5317 have-your-say --actor=1
+	 *
+	 * @subcommand set-topics
+	 */
+	public function set_topics( array $args, array $assoc ): void {
+		$post_id = (int) ( $args[0] ?? 0 );
+		$slugs   = array_values( array_filter( array_map( 'sanitize_title', explode( ',', (string) ( $args[1] ?? '' ) ) ) ) );
+		$actor   = (int) ( $assoc['actor'] ?? 0 );
+		$post    = get_post( $post_id );
+
+		if ( ! $post instanceof \WP_Post || ! \DGL\PostTypes::is_submittable( (string) $post->post_type ) ) {
+			WP_CLI::error( 'Not an item.' );
+		}
+
+		if ( $actor <= 0 || ! get_userdata( $actor ) ) {
+			WP_CLI::error( 'Give --actor=<user-id>.' );
+		}
+
+		$names    = \DGL\Topics\Topics::all();
+		$term_ids = [];
+
+		foreach ( $slugs as $slug ) {
+			$term = get_term_by( 'slug', $slug, \DGL\Taxonomies::TOPIC );
+
+			if ( ! $term instanceof \WP_Term ) {
+				WP_CLI::error( sprintf( 'No topic with the slug %s.', $slug ) );
+			}
+
+			$term_ids[] = (int) $term->term_id;
+		}
+
+		$before = wp_get_object_terms( $post_id, \DGL\Taxonomies::TOPIC, [ 'fields' => 'names' ] );
+		$before = is_array( $before ) ? $before : [];
+
+		wp_set_object_terms( $post_id, $term_ids, \DGL\Taxonomies::TOPIC, false );
+
+		$after = array_map( static fn( string $s ): string => $names[ $s ] ?? $s, $slugs );
+
+		\DGL\Audit\Log::record(
+			'topics_set',
+			'item',
+			$post_id,
+			Org::for_item( $post_id ),
+			sprintf(
+				/* translators: 1: topics before, 2: topics after. */
+				__( 'Topics changed from %1$s to %2$s.', 'dgl-platform' ),
+				[] === $before ? __( 'none', 'dgl-platform' ) : implode( ', ', $before ),
+				[] === $after ? __( 'none', 'dgl-platform' ) : implode( ', ', $after )
+			),
+			[ 'before' => $before, 'after' => $slugs ],
+			$actor
+		);
+
+		$now = wp_get_object_terms( $post_id, \DGL\Taxonomies::TOPIC, [ 'fields' => 'names' ] );
+		WP_CLI::success( sprintf( '#%d %s: %s -> %s', $post_id, get_the_title( $post_id ), [] === $before ? 'none' : implode( ', ', $before ), is_array( $now ) && [] !== $now ? implode( ', ', $now ) : 'none' ) );
+	}
 }

@@ -3707,6 +3707,19 @@ wp_set_object_terms( $legacy_bare, [ 'news' ], 'category' );
 $legacy_none = \DGL\News\LegacyImport::topicless();
 $ok( isset( $legacy_none[ $legacy_bare ] ) && [ 'news' ] === $legacy_none[ $legacy_bare ] && ! isset( $legacy_none[ $legacy_post ] ) && ! isset( $legacy_none[ $legacy_ev ] ), 'the topicless report lists the live story with no topic and its old category, not the topiced one, not the archived one' );
 $ok( [ 'grants-and-funding' ] === \DGL\News\TopicSuggest::suggest( get_the_title( $legacy_bare ) . ' Small grants round' ), 'the suggestion engine reads a converted story\'s words' );
+$legacy_cmd = new \DGL\News\Command();
+ob_start();
+try {
+	$legacy_cmd->set_topics( [ (string) $legacy_bare, 'have-your-say,older-people' ], [ 'actor' => $mod ] );
+} catch ( \Throwable $e ) {
+	// WP_CLI::success outside the CLI may throw; the terms are set before it.
+}
+ob_end_clean();
+$legacy_set = wp_get_object_terms( $legacy_bare, \DGL\Taxonomies::TOPIC, [ 'fields' => 'slugs' ] );
+sort( $legacy_set );
+$ok( [ 'have-your-say', 'older-people' ] === $legacy_set, 'set-topics replaces the topics' );
+$ok( in_array( 'topics_set', array_column( Log::for_object( 'item', $legacy_bare ), 'action' ), true ), 'and records the change' );
+wp_set_object_terms( $legacy_bare, [], \DGL\Taxonomies::TOPIC, false );
 $legacy_only = \DGL\News\LegacyImport::converted_only( [ 'news', 'blog' ] );
 $ok( in_array( $legacy_bare, $legacy_only, true ) && ! in_array( $legacy_post, $legacy_only, true ), 'only-news-or-blog picks the bare story and not one that also had a Forum Central category' );
 
