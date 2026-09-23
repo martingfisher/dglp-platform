@@ -153,3 +153,10 @@ naming before and after. On 23 September four guessed topics were corrected
 this way: GIPSIL's relaunch to Support for VCSE Organisations, the council
 budget consultation to Have your Say, HelloHope's board appointments to
 Leadership, the creative health tender to Arts, Culture and Heritage.
+
+The last five were given topics by hand on 23 September, from their
+summaries: the Prevent Communities newsletter to Communities of Interest,
+the loan sharks guidance to Support for VCSE Organisations (where Cost of
+Living went), the Imagine Leeds climate hub to Environment and Nature, and
+the two demo stories to Doing Good Leeds Partnership. `wp dgl news
+topicless` now reports every live news item has a topic.
