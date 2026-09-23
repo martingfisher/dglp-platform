@@ -296,11 +296,14 @@ Harness::group( 'A picture needs its description' );
 
 $basics = FieldRegistry::for_step( PostTypes::EVENT, 1 );
 $with   = Validator::validate( $basics, [ 'title' => 'T', 'summary' => 'S', 'body' => 'B', 'image' => '55' ] );
-Harness::assert_true( isset( $with['errors']['image_alt'] ) && str_contains( $with['errors']['image_alt'], 'when there is a picture' ), 'an image without a description is an error' );
+Harness::assert_false( isset( $with['errors']['image_alt'] ), 'an image without a description is not an error: the description is suggested from the picture' );
 $without = Validator::validate( $basics, [ 'title' => 'T', 'summary' => 'S', 'body' => 'B', 'image' => '0' ] );
 Harness::assert_false( isset( $without['errors']['image_alt'] ), 'no image, no description needed' );
 $both = Validator::validate( $basics, [ 'title' => 'T', 'summary' => 'S', 'body' => 'B', 'image' => '55', 'image_alt' => 'Volunteers planting a tree' ] );
 Harness::assert_false( isset( $both['errors']['image_alt'] ), 'image and description together validate' );
-Harness::assert_same( [ 'image_alt' => 'What the picture shows is needed when there is a picture.' ], Validator::required_with_errors( $basics, [ 'image' => 55, 'image_alt' => '' ] ), 'the after-upload check names the field' );
-Harness::assert_same( [], Validator::required_with_errors( $basics, [ 'image' => 0, 'image_alt' => '' ] ), 'and is quiet without a picture' );
+Harness::assert_same( [], Validator::required_with_errors( $basics, [ 'image' => 55, 'image_alt' => '' ] ), 'a picture without words is not refused: the description is suggested from the picture, not demanded' );
+Harness::assert_same( [], Validator::required_with_errors( $basics, [ 'image' => 0, 'image_alt' => '' ] ), 'and quiet without a picture' );
+$alt_field = null;
+foreach ( $basics as $f ) { if ( 'image_alt' === $f->key ) { $alt_field = $f; } }
+Harness::assert_same( 'image', $alt_field ? $alt_field->suggested_from : null, 'the description knows which picture it describes' );
 Harness::assert_false( FieldRegistry::find( PostTypes::NEWS, 'image_alt' )->public, 'the description is not a fact on the public page; the image carries it' );

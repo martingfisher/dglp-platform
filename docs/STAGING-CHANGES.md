@@ -573,6 +573,15 @@ clean. They are the only DGLP content on staging.
   Also on staging today, by Martin's decision: 83 draft posts deleted and
   the MailChimp category (51) deleted; see `docs/topics.md`. Unit 1932,
   integration 912.
+- **0.32.0 deployed to production** (23 September): the picture is
+  uploaded as soon as it is chosen (an admin-ajax endpoint the wizard's
+  script posts to, same nonce and permission as the step), so AltText.ai's
+  description reaches "What the picture shows" while the member is still
+  on the step; a preview appears and the hidden id is set so the save keeps
+  the picture. The description is no longer demanded: `image_alt` is
+  suggested from the picture, not required with it; the review team's
+  checks still flag a picture with no words. Without JavaScript the old
+  path is unchanged.
 - **0.31.0 deployed to production** (23 September): the picture
   description in the wizard is filled from the attachment's own alt text
   (which AltText.ai writes on upload) whenever the member left it blank,

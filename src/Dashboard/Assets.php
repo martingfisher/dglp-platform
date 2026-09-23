@@ -25,6 +25,21 @@ final class Assets {
 	public static function enqueue( bool $with_editor = false ): void {
 		self::style( 'assets/dashboard.css', self::HANDLE );
 		self::script( 'assets/dashboard.js', self::HANDLE );
+
+		wp_add_inline_script(
+			self::HANDLE,
+			'window.dglUpload = ' . wp_json_encode(
+				[
+					'uploading'  => __( 'Uploading the picture…', 'dgl-platform' ),
+					'describing' => __( 'Picture uploaded. Writing a description of it…', 'dgl-platform' ),
+					'suggested'  => __( 'Picture uploaded. We have suggested a description below; change it if it does not say what the picture shows.', 'dgl-platform' ),
+					'done'       => __( 'Picture uploaded.', 'dgl-platform' ),
+					'noAlt'      => __( 'Picture uploaded. No description came back; add one below if you can.', 'dgl-platform' ),
+					'failed'     => __( 'Could not upload it now. It will be sent when you save this step.', 'dgl-platform' ),
+				]
+			) . ';',
+			'before'
+		);
 		self::autoload();
 
 		if ( $with_editor ) {

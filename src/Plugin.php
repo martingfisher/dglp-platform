@@ -82,6 +82,7 @@ final class Plugin {
 		AdminLockout::init();
 		SignIn::init();
 		Admin::init();
+		\DGL\Dashboard\UploadEndpoint::init();
 		Frontend::init();
 		\DGL\News\LegacyRedirect::init();
 

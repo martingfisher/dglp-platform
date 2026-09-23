@@ -3011,8 +3011,11 @@ wp_update_attachment_metadata( $pic_att, [ 'width' => 1600, 'height' => 900, 'fi
 $ok( $pic_att > 0 && 'attachment' === get_post_type( $pic_att ), 'an attachment to describe' );
 
 $saved = \DGL\Dashboard\Wizard::save_step( $pic_item, PostTypes::EVENT, 1, [ 'title' => 'Tree planting', 'summary' => 'A morning of planting.', 'body' => '<p>Bring gloves.</p>', 'image' => (string) $pic_att ] );
-$ok( isset( $saved['image_alt'] ) && str_contains( $saved['image_alt'], 'when there is a picture' ), 'a picture without a description does not pass step 1: ' . ( $saved['image_alt'] ?? '(no error)' ) );
-$ok( 'Tree planting' === get_post_field( 'post_title', $pic_item ), 'but what was typed is kept' );
+$ok( [] === $saved, 'a picture without a description passes step 1: the description is suggested, not demanded (' . implode( ' | ', $saved ) . ')' );
+$ok( 'Tree planting' === get_post_field( 'post_title', $pic_item ), 'and what was typed is kept' );
+update_post_meta( $pic_att, '_wp_attachment_image_alt', 'From AltText' );
+$saved = \DGL\Dashboard\Wizard::save_step( $pic_item, PostTypes::EVENT, 1, [ 'title' => 'Tree planting', 'summary' => 'A morning of planting.', 'body' => '<p>Bring gloves.</p>', 'image' => (string) $pic_att, 'image_alt' => '' ] );
+$ok( [] === $saved && 'From AltText' === get_post_meta( $pic_item, 'dgl_image_alt', true ), 'a blank description on save takes the picture\'s own words' );
 
 $saved = \DGL\Dashboard\Wizard::save_step( $pic_item, PostTypes::EVENT, 1, [ 'title' => 'Tree planting', 'summary' => 'A morning of planting.', 'body' => '<p>Bring gloves.</p>', 'image' => (string) $pic_att, 'image_alt' => 'Volunteers planting a sapling in Armley Park' ] );
 $ok( [] === $saved, 'with a description it passes: ' . implode( ' | ', $saved ) );
@@ -3847,6 +3850,16 @@ update_post_meta( $alt_item, 'dgl_image', $alt_att );
 $ok( 'From the file' === \DGL\Dashboard\Wizard::values( $alt_item, PostTypes::NEWS )['image_alt'], 'the wizard shows the picture\'s description when the story has none' );
 update_post_meta( $alt_item, 'dgl_image_alt', 'Typed' );
 $ok( 'Typed' === \DGL\Dashboard\Wizard::values( $alt_item, PostTypes::NEWS )['image_alt'], 'and the story\'s own when it has one' );
+$alt_reg = \DGL\Schema\FieldRegistry::find( PostTypes::NEWS, 'image_alt' );
+$ok( null !== $alt_reg && null === $alt_reg->required_with && 'image' === $alt_reg->suggested_from, 'the description is suggested from the picture, not demanded' );
+$ok( [] === \DGL\Schema\Validator::required_with_errors( $alt_fields, [ 'image' => $alt_att, 'image_alt' => '' ] ), 'a picture with no words is not an error on save' );
+$ep_field = \DGL\Dashboard\UploadEndpoint::may_upload( $alice, $alt_item, 'image' );
+$ok( $ep_field instanceof \DGL\Schema\Field && 'image' === $ep_field->key, 'the owner may put a picture on her draft' );
+$ok( is_wp_error( \DGL\Dashboard\UploadEndpoint::may_upload( $bella, $alt_item, 'image' ) ), 'somebody from another organisation may not' );
+$ok( is_wp_error( \DGL\Dashboard\UploadEndpoint::may_upload( $alice, $alt_item, 'title' ) ), 'nor may a picture go on a text field' );
+$ok( is_wp_error( \DGL\Dashboard\UploadEndpoint::may_upload( $alice, 999999, 'image' ) ), 'nor on an item that does not exist' );
+$ep_desc = \DGL\Dashboard\UploadEndpoint::describe( $alt_att );
+$ok( $alt_att === $ep_desc['id'] && 'From the file' === $ep_desc['alt'] && is_string( $ep_desc['preview'] ), 'the reply carries the id, the description and a preview' );
 
 /* ----------------------------------------------------------------- report */
 

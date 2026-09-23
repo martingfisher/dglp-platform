@@ -84,7 +84,7 @@ if ( FieldRegistry::STEP_DETAILS === $step ) {
 			</div>
 		<?php endif; ?>
 
-		<form class="dgl-form" method="post" enctype="multipart/form-data" novalidate>
+		<form class="dgl-form" method="post" enctype="multipart/form-data" novalidate data-dgl-post="<?php echo (int) $data['post']->ID; ?>" data-dgl-ajax="<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>">
 			<?php wp_nonce_field( \DGL\Dashboard\Wizard::NONCE ); ?>
 
 			<?php foreach ( $data['fields'] as $field ) : ?>

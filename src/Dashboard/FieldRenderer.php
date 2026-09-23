@@ -326,7 +326,7 @@ final class FieldRenderer {
 		 * 403 with no way back. Checked again on the server regardless.
 		 */
 		$out .= sprintf(
-			'<input class="dgl-field dgl-field--file" type="file" id="%s" name="%s" accept="%s" data-dgl-max-bytes="%d" data-dgl-max-message="%s"%s>',
+			'<input class="dgl-field dgl-field--file" type="file" id="%s" name="%s" accept="%s" data-dgl-max-bytes="%d" data-dgl-max-message="%s" data-dgl-upload="%s"%s>',
 			esc_attr( $id ),
 			esc_attr( self::INPUT_NAME . '_file_' . $field->key ),
 			esc_attr( implode( ',', array_values( \DGL\Uploads::allowed_mimes() ) ) ),
@@ -338,6 +338,7 @@ final class FieldRenderer {
 					size_format( \DGL\Uploads::MAX_BYTES )
 				)
 			),
+			esc_attr( $field->key ),
 			$aria
 		);
 

@@ -286,9 +286,11 @@ there with a message. A new submission starts with the contact name,
 email, phone and website the organisation used last time; every one can
 be changed on the Contact and links step.
 
-**The picture's description.** The AltText.ai plugin writes a description
-into every uploaded picture. When a member leaves "What the picture shows"
-blank, the wizard puts that description in the box for them to keep or
-change; a description they typed is never replaced. If AltText.ai has not
-finished by the time the step is saved, the member is asked for one as
-before, and the box is pre-filled when the step reloads.
+**The picture's description.** A picture goes up the moment a member
+chooses it, before they save the step. The AltText.ai plugin describes it
+on the way in, and that description appears in "What the picture shows"
+within a few seconds, for them to keep or change. A description they typed
+is never replaced. The box is not compulsory: a member can leave it and the
+picture keeps AltText.ai's words. The review screen's checks still flag a
+picture with no words at all. Without JavaScript the file goes up with the
+step as before and the box is filled when the step reloads.

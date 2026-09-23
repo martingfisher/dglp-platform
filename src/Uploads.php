@@ -135,14 +135,14 @@ final class Uploads {
 	 */
 	public static function adopt_alt( array $fields, array &$values ): void {
 		foreach ( $fields as $field ) {
-			if ( null === $field->required_with || Field::TEXT !== $field->type ) {
+			if ( null === $field->suggested_from || Field::TEXT !== $field->type ) {
 				continue;
 			}
 
 			$image = null;
 
 			foreach ( $fields as $candidate ) {
-				if ( $candidate->key === $field->required_with && Field::IMAGE === $candidate->type ) {
+				if ( $candidate->key === $field->suggested_from && Field::IMAGE === $candidate->type ) {
 					$image = $candidate;
 					break;
 				}

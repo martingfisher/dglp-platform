@@ -58,6 +58,7 @@ final readonly class Field {
 	 * @param bool                  $schedule  Part of an event's schedule: the
 	 *        organisation may change it on a live item at once, without review,
 	 *        because it is a fact about the world they know and the team does not.
+	 * @param string|null $suggested_from The image field whose own alt text fills this one when it is blank.
 	 * @param string|null $required_with Required only when this other field
 	 *        holds something: the description of a picture is needed when
 	 *        there is a picture, and nothing otherwise.
@@ -81,6 +82,7 @@ final readonly class Field {
 		public ?array $depends_on = null,
 		public bool $schedule = false,
 		public ?string $required_with = null,
+		public ?string $suggested_from = null,
 	) {}
 
 	/**

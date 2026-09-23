@@ -112,7 +112,10 @@ final class FieldRegistry {
 			/*
 			 * The picture in words, for people who cannot see it. Not a
 			 * caption: a screen reader reads it in place of the image, so it
-			 * says what the picture shows. Required whenever there is one.
+			 * says what the picture shows. Suggested from the picture's own
+			 * alt text (AltText.ai writes one on upload) and never demanded:
+			 * a member who skips it gets the suggestion, and the review team
+			 * see a check when a picture has no words at all.
 			 */
 			new Field(
 				key: 'image_alt',
@@ -123,7 +126,7 @@ final class FieldRegistry {
 				max_length: 150,
 				public: false,
 				in_csv: false,
-				required_with: 'image',
+				suggested_from: 'image',
 			),
 		];
 	}
