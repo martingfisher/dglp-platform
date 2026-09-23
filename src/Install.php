@@ -142,6 +142,8 @@ final class Install {
 		\DGL\Workflow\Lifetime::backfill();
 		// Schema 8: news no longer has a spell. Clears the end dates 7 gave it.
 		\DGL\Workflow\Lifetime::release();
+		// Schema 9: sign-ups say what kind they are.
+		SignupStore::backfill_kind();
 
 		update_option( self::DB_VERSION_OPTION, DB_VERSION, false );
 	}

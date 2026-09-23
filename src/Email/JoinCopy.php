@@ -18,11 +18,11 @@ final class JoinCopy {
 		return new Message(
 			key: 'join_verify',
 			audience: 'joiner',
-			subject: __( 'Confirm your email address for the DGLP member area', 'dgl-platform' ),
+			subject: __( 'Confirm your email address for the DGLP user area', 'dgl-platform' ),
 			preheader: __( 'One click and you can carry on.', 'dgl-platform' ),
 			heading: __( 'Confirm it is you', 'dgl-platform' ),
 			paragraphs: [
-				__( 'Somebody used this address to start joining the Doing Good Leeds Partnership member area. If that was you, use the button below and you can carry on. If it was not, ignore this and nothing will happen.', 'dgl-platform' ),
+				__( 'Somebody used this address to start joining the Doing Good Leeds Partnership user area. If that was you, use the button below and you can carry on. If it was not, ignore this and nothing will happen.', 'dgl-platform' ),
 			],
 			cta_label: __( 'Confirm my email address', 'dgl-platform' ),
 			cta_url: $link,
@@ -32,8 +32,11 @@ final class JoinCopy {
 		);
 	}
 
-	/** To the organisation's owners: somebody arrived by domain. */
-	public static function joined( string $who, string $email, string $org_name, string $role_label, string $members_url ): Message {
+	/**
+	 * To the organisation's owners: somebody arrived, by domain or because
+	 * the team checked them.
+	 */
+	public static function joined( string $who, string $email, string $org_name, string $role_label, string $members_url, bool $by_domain = true ): Message {
 		return new Message(
 			key: 'join_joined',
 			audience: 'owners',
@@ -42,16 +45,26 @@ final class JoinCopy {
 				__( '%s has joined your organisation', 'dgl-platform' ),
 				$who
 			),
-			preheader: __( 'Their email address is on your domain, so they were let in.', 'dgl-platform' ),
+			preheader: $by_domain
+				? __( 'Their email address is on your domain, so they were let in.', 'dgl-platform' )
+				: __( 'The DGLP team checked they are part of your organisation.', 'dgl-platform' ),
 			heading: __( 'Somebody has joined', 'dgl-platform' ),
 			paragraphs: [
-				sprintf(
-					/* translators: 1: person, 2: email, 3: organisation. */
-					__( '%1$s (%2$s) signed up with an address on your organisation\'s email domain, so they now post for %3$s. Nobody had to approve it: the domain is the check.', 'dgl-platform' ),
-					$who,
-					$email,
-					$org_name
-				),
+				$by_domain
+					? sprintf(
+						/* translators: 1: person, 2: email, 3: organisation. */
+						__( '%1$s (%2$s) signed up with an address on your organisation\'s email domain, so they now post for %3$s. Nobody had to approve it: the domain is the check.', 'dgl-platform' ),
+						$who,
+						$email,
+						$org_name
+					)
+					: sprintf(
+						/* translators: 1: person, 2: email, 3: organisation. */
+						__( '%1$s (%2$s) asked to join %3$s and the DGLP team checked they are part of it, so they now post for it.', 'dgl-platform' ),
+						$who,
+						$email,
+						$org_name
+					),
 				__( 'If you do not recognise them, remove them from the Members page and tell the DGLP team.', 'dgl-platform' ),
 			],
 			facts: [
@@ -80,7 +93,7 @@ final class JoinCopy {
 			paragraphs: [
 				sprintf(
 					/* translators: 1: person, 2: email, 3: organisation. */
-					__( '%1$s (%2$s) has confirmed their email address and registered %3$s. Their address does not match any organisation on the list, so this one needs checking before they can submit anything.', 'dgl-platform' ),
+					__( '%1$s (%2$s) has confirmed their email address and registered %3$s as an organisation that is not on the list. It needs checking before they can submit anything: the review screen shows anything on the list it might be.', 'dgl-platform' ),
 					$who,
 					$email,
 					$org_name
@@ -113,6 +126,127 @@ final class JoinCopy {
 					$org_name
 				),
 			],
+			cta_label: __( 'Go to your dashboard', 'dgl-platform' ),
+			cta_url: $dashboard_url
+		);
+	}
+
+	/** To the review team: somebody wants to join an organisation on the list. */
+	public static function claim_awaiting( string $org_name, string $who, string $email, string $note, string $review_url ): Message {
+		return new Message(
+			key: 'join_claim_awaiting',
+			audience: 'moderators',
+			subject: sprintf(
+				/* translators: %s: organisation. */
+				__( 'Somebody wants to join %s', 'dgl-platform' ),
+				$org_name
+			),
+			preheader: __( 'Their email address is not on the organisation\'s domain, so it needs a check.', 'dgl-platform' ),
+			heading: __( 'A joining request is waiting', 'dgl-platform' ),
+			paragraphs: [
+				sprintf(
+					/* translators: 1: person, 2: email, 3: organisation. */
+					__( '%1$s (%2$s) has confirmed their email address and says they are part of %3$s. Their address is not on the organisation\'s email domain, so this needs checking before they can post.', 'dgl-platform' ),
+					$who,
+					$email,
+					$org_name
+				),
+			],
+			facts: '' === $note ? [] : [ __( 'They said', 'dgl-platform' ) => $note ],
+			cta_label: __( 'Check it and decide', 'dgl-platform' ),
+			cta_url: $review_url,
+			footnotes: [
+				__( 'You are getting this because you are on the review team.', 'dgl-platform' ),
+			]
+		);
+	}
+
+	/** To the person: their claim on a listed organisation is approved. */
+	public static function claim_approved( string $org_name, string $dashboard_url, bool $owner, bool $org_pending ): Message {
+		$paragraphs = [
+			sprintf(
+				/* translators: %s: organisation. */
+				__( 'The DGLP team have confirmed you are part of %s.', 'dgl-platform' ),
+				$org_name
+			),
+			$owner
+				? __( 'You are its first person here, so you run its page: you can change its details and invite colleagues from the Members page.', 'dgl-platform' )
+				: __( 'You can post for it now, and anything you drafted while you waited can be sent for review.', 'dgl-platform' ),
+		];
+
+		if ( $org_pending ) {
+			$paragraphs[] = __( 'The organisation itself is still waiting to be verified, so submitting waits for that. You can draft in the meantime.', 'dgl-platform' );
+		}
+
+		return new Message(
+			key: 'join_claim_approved',
+			audience: 'joiner',
+			subject: sprintf(
+				/* translators: %s: organisation. */
+				__( 'You are in: %s', 'dgl-platform' ),
+				$org_name
+			),
+			preheader: __( 'The team have checked your request.', 'dgl-platform' ),
+			heading: __( 'You are in', 'dgl-platform' ),
+			paragraphs: $paragraphs,
+			cta_label: __( 'Go to your dashboard', 'dgl-platform' ),
+			cta_url: $dashboard_url
+		);
+	}
+
+	/** To the person: their claim on a listed organisation is refused, with the reason. */
+	public static function claim_refused( string $org_name, string $reason ): Message {
+		return new Message(
+			key: 'join_claim_refused',
+			audience: 'joiner',
+			subject: sprintf(
+				/* translators: %s: organisation. */
+				__( 'About your request to join %s', 'dgl-platform' ),
+				$org_name
+			),
+			preheader: __( 'The team could not confirm you are part of the organisation.', 'dgl-platform' ),
+			heading: __( 'Not confirmed', 'dgl-platform' ),
+			paragraphs: [
+				sprintf(
+					/* translators: %s: organisation. */
+					__( 'The DGLP team could not confirm you are part of %s, so the user area is not open to you. They said:', 'dgl-platform' ),
+					$org_name
+				),
+				$reason,
+				__( 'If you think this is a mistake, reply to the team through the main website and they can look again.', 'dgl-platform' ),
+			]
+		);
+	}
+
+	/** To the person: the team put them in an organisation already on the list. */
+	public static function attached( string $org_name, string $typed_name, string $dashboard_url, bool $owner, bool $org_pending ): Message {
+		$paragraphs = [
+			sprintf(
+				/* translators: 1: what was typed, 2: the organisation on the list. */
+				__( 'The DGLP team recognised %1$s as %2$s, which is already on the list, so you have been added to it instead of a second entry being created.', 'dgl-platform' ),
+				$typed_name,
+				$org_name
+			),
+			$owner
+				? __( 'You are its first person here, so you run its page: you can change its details and invite colleagues from the Members page.', 'dgl-platform' )
+				: __( 'You can post for it now, and anything you drafted while you waited can be sent for review.', 'dgl-platform' ),
+		];
+
+		if ( $org_pending ) {
+			$paragraphs[] = __( 'The organisation itself is still waiting to be verified, so submitting waits for that. You can draft in the meantime.', 'dgl-platform' );
+		}
+
+		return new Message(
+			key: 'join_attached',
+			audience: 'joiner',
+			subject: sprintf(
+				/* translators: %s: organisation. */
+				__( 'You have been added to %s', 'dgl-platform' ),
+				$org_name
+			),
+			preheader: __( 'It was already on the list.', 'dgl-platform' ),
+			heading: __( 'You are in', 'dgl-platform' ),
+			paragraphs: $paragraphs,
 			cta_label: __( 'Go to your dashboard', 'dgl-platform' ),
 			cta_url: $dashboard_url
 		);

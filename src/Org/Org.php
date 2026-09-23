@@ -369,6 +369,91 @@ final class Org {
 	}
 
 	/**
+	 * Every organisation somebody could pick as theirs: approved or still
+	 * pending, never suspended. As id => [name, status], in name order.
+	 *
+	 * Pending ones are offered on purpose. The second person from an
+	 * organisation that is waiting to be verified is exactly who would
+	 * otherwise register it again.
+	 *
+	 * @return array<int, array{name: string, status: string}>
+	 */
+	public static function pickable(): array {
+		$ids = get_posts(
+			[
+				'post_type'        => PostTypes::ORG,
+				'post_status'      => 'publish',
+				'fields'           => 'ids',
+				'posts_per_page'   => 2000,
+				'orderby'          => 'title',
+				'order'            => 'ASC',
+				'no_found_rows'    => true,
+				'suppress_filters' => true,
+			]
+		);
+
+		$out = [];
+
+		foreach ( array_map( 'intval', (array) $ids ) as $id ) {
+			$status = self::status( $id );
+
+			if ( Meta::ORG_SUSPENDED === $status ) {
+				continue;
+			}
+
+			$out[ $id ] = [
+				'name'   => (string) get_the_title( $id ),
+				'status' => $status,
+			];
+		}
+
+		return $out;
+	}
+
+	/**
+	 * Every organisation a new registration could be a duplicate of, in the
+	 * shape Duplicates::find() compares: live ones and the bin, never
+	 * suspended ones.
+	 *
+	 * @return array<int, array{id: int, name: string, domains: string[], website: string, number: string, postcode: string, status: string, trashed: bool}>
+	 */
+	public static function duplicate_candidates( int $exclude_id = 0 ): array {
+		$ids = get_posts(
+			[
+				'post_type'        => PostTypes::ORG,
+				'post_status'      => [ 'publish', 'trash' ],
+				'fields'           => 'ids',
+				'posts_per_page'   => 2000,
+				'orderby'          => 'title',
+				'order'            => 'ASC',
+				'no_found_rows'    => true,
+				'suppress_filters' => true,
+			]
+		);
+
+		$out = [];
+
+		foreach ( array_map( 'intval', (array) $ids ) as $id ) {
+			if ( $id === $exclude_id || Meta::ORG_SUSPENDED === self::status( $id ) ) {
+				continue;
+			}
+
+			$out[] = [
+				'id'       => $id,
+				'name'     => html_entity_decode( (string) get_the_title( $id ), ENT_QUOTES, 'UTF-8' ),
+				'domains'  => self::domains( $id ),
+				'website'  => (string) get_post_meta( $id, 'dgl_org_website', true ),
+				'number'   => (string) get_post_meta( $id, 'dgl_org_number', true ),
+				'postcode' => (string) get_post_meta( $id, 'dgl_org_postcode', true ),
+				'status'   => self::status( $id ),
+				'trashed'  => 'trash' === get_post_status( $id ),
+			];
+		}
+
+		return $out;
+	}
+
+	/**
 	 * Move an item to another organisation. The index row follows, so the
 	 * new owner's dashboard lists it and the old one's does not; the audit
 	 * row names both. The item's status is untouched.

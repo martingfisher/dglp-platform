@@ -3,7 +3,7 @@
  * Plugin Name:       DGLP Platform
  * Plugin URI:        https://partnership.doinggoodleeds.org.uk/
  * Description:       Member organisation accounts, content submission and a moderation workflow for the Doing Good Leeds Partnership site.
- * Version:           0.32.1
+ * Version:           0.33.0
  * Requires at least: 6.4
  * Requires PHP:      8.2
  * Author:            Results You Can Measure
@@ -19,8 +19,8 @@ namespace DGL;
 
 defined( 'ABSPATH' ) || exit;
 
-const VERSION    = '0.32.1';
-const DB_VERSION = 8;
+const VERSION    = '0.33.0';
+const DB_VERSION = 9;
 
 define( 'DGL\\PLUGIN_FILE', __FILE__ );
 define( 'DGL\\PLUGIN_DIR', plugin_dir_path( __FILE__ ) );

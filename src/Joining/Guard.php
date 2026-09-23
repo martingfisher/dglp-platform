@@ -46,6 +46,9 @@ final class Guard {
 	/** The window, in seconds. */
 	public const WINDOW = 3600;
 
+	/** Lookups against the list one sign-up may make in the window. */
+	public const PER_SIGNUP_LOOKUPS = 60;
+
 	/**
 	 * The stamp to put in the form: the time, signed so it cannot be forged.
 	 */
@@ -99,6 +102,19 @@ final class Guard {
 
 		if ( '' !== $ip && self::bump( 'ip_' . md5( $ip ) ) > self::PER_IP ) {
 			return __( 'Too many attempts from your connection. Try again in an hour.', 'dgl-platform' );
+		}
+
+		return '';
+	}
+
+	/**
+	 * Whether one sign-up has asked the list too often. Counts the ask.
+	 *
+	 * @return string '' when fine, else the message for the person.
+	 */
+	public static function limited_lookup( int $signup_id ): string {
+		if ( self::bump( 'lookup_' . $signup_id ) > self::PER_SIGNUP_LOOKUPS ) {
+			return __( 'Too many checks for now. Carry on and the list is checked when you press Continue.', 'dgl-platform' );
 		}
 
 		return '';

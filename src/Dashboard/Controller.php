@@ -340,19 +340,27 @@ final class Controller {
 	}
 
 	/**
-	 * New organisations registered by somebody whose address matched nothing.
+	 * Joining requests the team decide: organisations registered by somebody
+	 * whose address matched nothing, and people who picked an organisation
+	 * from the list without a domain match.
 	 *
-	 * @return array<int, array{id:int, org:string, who:string, email:string, since:string, url:string}>
+	 * @return array<int, array{id:int, org:string, asks:string, who:string, email:string, since:string, url:string}>
 	 */
 	private static function join_rows(): array {
 		$rows = [];
 
 		foreach ( \DGL\Joining\Store::awaiting() as $signup ) {
 			$person = get_userdata( $signup->user_id );
+			$org    = $signup->is_claim() ? (string) get_the_title( $signup->org_id ) : $signup->new_org_name;
 
 			$rows[] = [
 				'id'    => $signup->id,
-				'org'   => $signup->new_org_name,
+				'org'   => $org,
+				'asks'  => $signup->is_claim()
+					/* translators: %s: organisation. */
+					? sprintf( __( 'Wants to join %s', 'dgl-platform' ), $org )
+					/* translators: %s: organisation. */
+					: sprintf( __( 'Registered %s', 'dgl-platform' ), $org ),
 				'who'   => $person ? (string) $person->display_name : '',
 				'email' => $signup->email,
 				'since' => Invites::readable_date( (string) $signup->completed_at ),
@@ -364,7 +372,10 @@ final class Controller {
 	}
 
 	/**
-	 * A registered organisation and its first person, read and decided.
+	 * A joining request, read and decided: an organisation somebody
+	 * registered, or an organisation somebody picked from the list. Either
+	 * can be approved, refused, or attached to a different organisation
+	 * already on the list.
 	 */
 	private static function review_join( int $signup_id, UserContext $user ): void {
 		$signup = \DGL\Joining\Store::find( $signup_id );
@@ -385,6 +396,7 @@ final class Controller {
 			$result = match ( $intent ) {
 				'approve' => \DGL\Joining\Joining::approve( $signup_id, $user->user_id ),
 				'refuse'  => \DGL\Joining\Joining::refuse( $signup_id, $user->user_id, $note ),
+				'attach'  => \DGL\Joining\Joining::attach( $signup_id, (int) ( $_POST['dgl_attach_org'] ?? 0 ), $user->user_id, ! empty( $_POST['dgl_add_domain'] ) ),
 				default   => null,
 			};
 
@@ -396,8 +408,10 @@ final class Controller {
 			}
 		}
 
-		$person = get_userdata( $signup->user_id );
-		$labels = [];
+		$person   = get_userdata( $signup->user_id );
+		$is_claim = $signup->is_claim();
+		$org_id   = $signup->org_id;
+		$labels   = [];
 
 		foreach ( \DGL\Org\Schema::fields() as $field ) {
 			$value = (string) ( $signup->new_org_details[ $field->key ] ?? '' );
@@ -407,19 +421,66 @@ final class Controller {
 			}
 		}
 
+		$members = [];
+
+		foreach ( \DGL\Org\Org::members( $org_id ) as $member_id ) {
+			if ( $member_id === $signup->user_id ) {
+				continue;
+			}
+
+			$member = get_userdata( $member_id );
+
+			if ( ! $member ) {
+				continue;
+			}
+
+			$members[] = [
+				'name'    => (string) $member->display_name,
+				'email'   => (string) $member->user_email,
+				'role'    => UserContext::ORG_OWNER === \DGL\Org\Org::role_for_user( $member_id ) ? __( 'Owner', 'dgl-platform' ) : __( 'Contributor', 'dgl-platform' ),
+				'account' => (string) get_user_meta( $member_id, \DGL\Meta::USER_ACCOUNT_STATUS, true ),
+			];
+		}
+
+		$likely = array_map(
+			static fn( array $m ): array => [
+				'id'       => $m['id'],
+				'name'     => $m['name'],
+				'status'   => $m['status'],
+				'trashed'  => $m['trashed'],
+				'strength' => $m['strength'],
+				'why'      => implode( ', ', array_unique( array_map( [ \DGL\Org\Duplicates::class, 'reason_label' ], $m['reasons'] ) ) ),
+				'edit_url' => admin_url( 'post.php?post=' . $m['id'] . '&action=edit' ),
+			],
+			\DGL\Joining\Joining::likely_matches( $signup )
+		);
+
+		$shown = array_map( 'intval', (array) ( $signup->new_org_details['confirmed_against'] ?? [] ) );
+
 		self::screen(
 			'review-join',
 			[
-				'user'    => $user,
-				'signup'  => $signup,
-				'org'     => $signup->new_org_name,
-				'domains' => \DGL\Org\Org::domains( $signup->org_id ),
-				'details' => $labels,
-				'who'     => $person ? (string) $person->display_name : '',
-				'since'   => Invites::readable_date( (string) $signup->completed_at ),
-				'error'   => $error,
+				'user'           => $user,
+				'signup'         => $signup,
+				'kind'           => $signup->kind(),
+				'org'            => $is_claim ? (string) get_the_title( $org_id ) : $signup->new_org_name,
+				'org_id'         => $org_id,
+				'org_status'     => \DGL\Org\Org::status( $org_id ),
+				'domains'        => \DGL\Org\Org::domains( $org_id ),
+				'members'        => $members,
+				'closeness'      => \DGL\Org\Duplicates::domain_closeness( $signup->domain, \DGL\Org\Org::domains( $org_id ), (string) get_post_meta( $org_id, 'dgl_org_website', true ) ),
+				'email_domain'   => $signup->domain,
+				'note'           => (string) ( $signup->new_org_details['note'] ?? '' ),
+				'details'        => $labels,
+				'shown'          => array_values( array_filter( array_map( static fn( int $id ): string => (string) get_the_title( $id ), $shown ) ) ),
+				'likely'         => $likely,
+				'attach_options' => array_filter( \DGL\Org\Org::pickable(), static fn( int $id ): bool => $id !== $org_id, ARRAY_FILTER_USE_KEY ),
+				'can_add_domain' => \DGL\Joining\Domains::can_match( $signup->email ),
+				'who'            => $person ? (string) $person->display_name : '',
+				'since'          => Invites::readable_date( (string) $signup->completed_at ),
+				'error'          => $error,
 			],
-			$signup->new_org_name,
+			$is_claim ? (string) get_the_title( $org_id ) : $signup->new_org_name,
 			$user
 		);
 	}
@@ -427,14 +488,16 @@ final class Controller {
 	/**
 	 * Joining, logged out: an address, a link, then an account.
 	 *
-	 * Wireframes 1a to 1c. Nothing exists until the address is proven; the
-	 * domain then decides between an organisation on the list and a new one
-	 * for the team to verify. Somebody at a listed organisation with a Gmail
-	 * address cannot join it here; they need an invitation from an owner.
+	 * Nothing exists until the address is proven. Then the domain decides
+	 * whether an organisation on the list is offered outright. Failing that
+	 * the person picks theirs from the list and the team check they are
+	 * part of it, or registers one that is not listed, which is checked
+	 * against the list first: a hard match is offered instead of created,
+	 * a soft match is shown once for the person to say it is not theirs.
 	 */
 	private static function join( string $token ): void {
-		$title = __( 'Join the member area', 'dgl-platform' );
-		$data  = [ 'stage' => 'email', 'email' => '', 'error' => '', 'token' => $token, 'orgs' => [], 'values' => [] ];
+		$title = __( 'Join the user area', 'dgl-platform' );
+		$data  = [ 'stage' => 'email', 'email' => '', 'error' => '', 'token' => $token, 'orgs' => [], 'values' => [], 'pickable' => [], 'matches' => [], 'check' => '', 'intent' => '' ];
 
 		if ( is_user_logged_in() ) {
 			/*
@@ -514,61 +577,123 @@ final class Controller {
 			return;
 		}
 
-		$signup        = $verified['signup'];
-		$data['email'] = $signup->email;
-		$data['stage'] = $verified['outcome'];
-		$data['orgs']  = array_map( static fn( int $id ): array => [ 'id' => $id, 'name' => (string) get_the_title( $id ) ], $verified['orgs'] );
+		$signup           = $verified['signup'];
+		$data['email']    = $signup->email;
+		$data['stage']    = $verified['outcome'];
+		$data['orgs']     = array_map( static fn( int $id ): array => [ 'id' => $id, 'name' => (string) get_the_title( $id ) ], $verified['orgs'] );
+		$data['pickable'] = \DGL\Org\Org::pickable();
+		$data['intent']   = 'match' === $verified['outcome'] ? 'join' : 'claim';
 
 		if ( 'POST' === ( $_SERVER['REQUEST_METHOD'] ?? 'GET' ) ) {
 			check_admin_referer( Wizard::NONCE );
 
-			$post = wp_unslash( $_POST ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- each field is handled below.
+			$post     = wp_unslash( $_POST ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- each field is handled below.
 			$name     = sanitize_text_field( (string) ( $post['dgl_name'] ?? '' ) );
 			$password = (string) ( $post['dgl_password'] ?? '' );
 			$confirm  = (string) ( $post['dgl_password_confirm'] ?? '' );
 			$intent   = sanitize_key( (string) ( $post['dgl_intent'] ?? '' ) );
+			$take     = (int) ( $post['dgl_take'] ?? 0 );
+
+			// "Join X instead" and "Yes, that is mine" are a claim on X, whatever the radio says.
+			$claim_org = $take > 0 ? $take : (int) ( $post['dgl_claim_org'] ?? 0 );
+			$intent    = $take > 0 ? 'claim' : $intent;
+			$confirmed = ! empty( $post['dgl_confirmed_new'] );
 
 			$data['values'] = [
 				'name'            => $name,
 				'org_name'        => sanitize_text_field( (string) ( $post['dgl_org_name'] ?? '' ) ),
 				'org_website'     => esc_url_raw( \DGL\Schema\Links::normalise( (string) ( $post['dgl_org_website'] ?? '' ) ) ),
+				'org_postcode'    => strtoupper( sanitize_text_field( (string) ( $post['dgl_org_postcode'] ?? '' ) ) ),
 				'org_email'       => sanitize_email( (string) ( $post['dgl_org_email'] ?? '' ) ),
 				'org_phone'       => sanitize_text_field( (string) ( $post['dgl_org_phone'] ?? '' ) ),
 				'org_number'      => sanitize_text_field( (string) ( $post['dgl_org_number'] ?? '' ) ),
 				'org_description' => sanitize_textarea_field( (string) ( $post['dgl_org_description'] ?? '' ) ),
+				'claim_org'       => $claim_org > 0 ? (string) $claim_org : '',
+				'claim_note'      => sanitize_textarea_field( (string) ( $post['dgl_claim_note'] ?? '' ) ),
 			];
+			$data['intent'] = in_array( $intent, [ 'join', 'claim', 'register' ], true ) ? $intent : $data['intent'];
 
 			$problem = InviteRules::password_problem( $password, $confirm );
 
-			if ( '' === $problem && 'register' === $intent && '' !== $data['values']['org_website'] && ! \DGL\Schema\Links::is_secure( $data['values']['org_website'] ) ) {
-				$problem = __( 'The website has to start with https://. The site does not link to pages served over plain http. Leave it out for now if the site has no https, and the DGLP team can help.', 'dgl-platform' );
+			if ( '' === $problem && 'claim' === $intent && $claim_org <= 0 ) {
+				$problem = __( 'Choose your organisation from the list, or register it if it is not there.', 'dgl-platform' );
 			}
+
+			if ( '' === $problem && 'register' === $intent ) {
+				$problem = self::registration_input_problem( $data['values'] );
+			}
+
+			$result = null;
 
 			if ( '' !== $problem ) {
 				$data['error'] = $problem;
 			} elseif ( 'join' === $intent ) {
 				$result = \DGL\Joining\Joining::join( $signup, (int) ( $post['dgl_org_id'] ?? 0 ), $name, $password );
+			} elseif ( 'claim' === $intent ) {
+				$result = \DGL\Joining\Joining::claim( $signup, $claim_org, $data['values']['claim_note'], $name, $password );
 			} elseif ( 'register' === $intent ) {
 				$details = $data['values'];
-				unset( $details['name'] );
-				$result = \DGL\Joining\Joining::register( $signup, $details['org_name'], $details, $name, $password );
+				unset( $details['name'], $details['claim_org'], $details['claim_note'] );
+				$result = \DGL\Joining\Joining::register( $signup, $details['org_name'], $details, $name, $password, $confirmed );
 			} else {
 				$data['error'] = __( 'Choose what to do.', 'dgl-platform' );
 			}
 
-			if ( isset( $result ) ) {
-				if ( is_wp_error( $result ) ) {
-					$data['error'] = $result->get_error_message();
+			if ( is_wp_error( $result ) ) {
+				$code = $result->get_error_code();
+
+				if ( in_array( $code, [ 'dgl_duplicate_hard', 'dgl_duplicate_soft' ], true ) ) {
+					// Not an error to the person: a question, with the matches in it.
+					$data['check']   = 'dgl_duplicate_hard' === $code ? 'blocked' : 'confirm';
+					$data['matches'] = (array) ( $result->get_error_data()['matches'] ?? [] );
+					$data['intent']  = 'register';
 				} else {
-					wp_set_current_user( $result );
-					wp_set_auth_cookie( $result, false, is_ssl() );
-					wp_safe_redirect( Router::url() );
-					exit;
+					$data['error'] = $result->get_error_message();
 				}
+			} elseif ( null !== $result ) {
+				wp_set_current_user( $result );
+				wp_set_auth_cookie( $result, false, is_ssl() );
+				wp_safe_redirect( Router::url() );
+				exit;
 			}
 		}
 
 		self::screen( 'join', $data, $title );
+	}
+
+	/**
+	 * What is wrong with a registration's typed details before the list is
+	 * consulted: the two required fields, the postcode's shape, the website's
+	 * scheme. The HTML no longer marks these required, because with
+	 * JavaScript off every block is on the page and a person claiming an
+	 * organisation must not be stopped by an empty registration field.
+	 *
+	 * @param array<string, string> $values
+	 */
+	private static function registration_input_problem( array $values ): string {
+		if ( '' === trim( $values['org_name'] ) ) {
+			return __( 'Give the organisation its name.', 'dgl-platform' );
+		}
+
+		if ( ! is_email( $values['org_email'] ) ) {
+			return __( 'Give a public contact email address for the organisation.', 'dgl-platform' );
+		}
+
+		if ( '' !== $values['org_website'] && ! \DGL\Schema\Links::is_secure( $values['org_website'] ) ) {
+			return __( 'The website has to start with https://. The site does not link to pages served over plain http. Leave it out for now if the site has no https, and the DGLP team can help.', 'dgl-platform' );
+		}
+
+		$postcode = \DGL\Org\Schema::find( 'org_postcode' );
+
+		if ( '' !== $values['org_postcode'] && null !== $postcode ) {
+			$checked = \DGL\Schema\Validator::validate( [ $postcode ], [ 'org_postcode' => $values['org_postcode'] ] );
+
+			if ( isset( $checked['errors']['org_postcode'] ) ) {
+				return (string) $checked['errors']['org_postcode'];
+			}
+		}
+
+		return '';
 	}
 
 	/**

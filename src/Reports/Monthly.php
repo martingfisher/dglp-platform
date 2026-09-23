@@ -234,6 +234,10 @@ final class Monthly {
 			'changes_accepted' => (int) ( $found['org_change_approved'] ?? 0 ),
 			'changes_refused'  => (int) ( $found['org_change_rejected'] ?? 0 ),
 			'registered'       => (int) ( $found['join_registered_org'] ?? 0 ),
+			'claimed'          => (int) ( $found['join_claimed'] ?? 0 ),
+			'claims_approved'  => (int) ( $found['join_claim_approved'] ?? 0 ),
+			'claims_refused'   => (int) ( $found['join_claim_refused'] ?? 0 ),
+			'attached'         => (int) ( $found['join_attached'] ?? 0 ),
 		];
 	}
 

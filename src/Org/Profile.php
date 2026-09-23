@@ -337,6 +337,21 @@ final class Profile {
 			return new \WP_Error( 'dgl_nothing_pending', __( 'There is no change waiting on this organisation.', 'dgl-platform' ) );
 		}
 
+		if ( array_key_exists( 'org_name', $pending ) ) {
+			$taken = Duplicates::hard( Duplicates::find( [ 'name' => (string) $pending['org_name'] ], Org::duplicate_candidates( $org_id ) ) );
+
+			if ( [] !== $taken ) {
+				return new \WP_Error(
+					'dgl_duplicate_name',
+					sprintf(
+						/* translators: %s: organisation. */
+						__( 'That name is already used by %s. Refuse the change, or sort out which record is which first.', 'dgl-platform' ),
+						$taken[0]['name']
+					)
+				);
+			}
+		}
+
 		$before = self::values( $org_id );
 
 		foreach ( Schema::approval_fields() as $field ) {

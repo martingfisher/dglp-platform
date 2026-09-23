@@ -178,6 +178,12 @@ final class Command {
 			WP_CLI::error( sprintf( '"%s" already exists, as post %d.', $name, $existing ) );
 		}
 
+		$taken = \DGL\Org\Duplicates::hard( \DGL\Org\Duplicates::find( [ 'name' => $name ], Org::duplicate_candidates() ) );
+
+		if ( [] !== $taken ) {
+			WP_CLI::error( sprintf( '"%s" is the same organisation as "%s", post %d, once "The", "Ltd" and the like are set aside.', $name, $taken[0]['name'], $taken[0]['id'] ) );
+		}
+
 		$id = wp_insert_post(
 			[
 				'post_type'   => PostTypes::ORG,

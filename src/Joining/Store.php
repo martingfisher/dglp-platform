@@ -35,6 +35,7 @@ final class Store {
 	domain varchar(190) NOT NULL default '',
 	token_hash char(64) NOT NULL default '',
 	state varchar(20) NOT NULL default 'unverified',
+	kind varchar(12) NOT NULL default '',
 	org_id bigint(20) unsigned NOT NULL default 0,
 	user_id bigint(20) unsigned NOT NULL default 0,
 	new_org_name varchar(200) NOT NULL default '',
@@ -159,6 +160,21 @@ final class Store {
 		);
 
 		return [ 'id' => (int) $wpdb->insert_id, 'token' => $token ];
+	}
+
+	/**
+	 * Rows from before `kind` existed say what they were from what they hold:
+	 * a registered name means a registration, a joined state means a domain
+	 * match. Run once by the migration; harmless to run again.
+	 */
+	public static function backfill_kind(): void {
+		global $wpdb;
+
+		$table = self::name();
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		$wpdb->query( $wpdb->prepare( "UPDATE {$table} SET kind = %s WHERE kind = '' AND new_org_name <> ''", Signup::KIND_REGISTER ) );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		$wpdb->query( $wpdb->prepare( "UPDATE {$table} SET kind = %s WHERE kind = '' AND state = %s", Signup::KIND_JOIN, Signup::JOINED ) );
 	}
 
 	/**

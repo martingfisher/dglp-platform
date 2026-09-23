@@ -360,6 +360,32 @@ The chip is the system's signature: every list, every detail header and every
 email carries the same six words in the same six tints. A member learns them
 once.
 
+### Picker
+A search box over a long select, for choosing one organisation from
+hundreds. The select stays in the form and carries the value; without
+JavaScript it is the control. With it, the select is visually hidden and a
+field-styled search box (`role="combobox"`) sits in its place. Typing two
+or more characters opens a list under the box: up to eight names whose
+words all contain what was typed, 9px 14px rows at 0.92em, the active row
+filled Council Navy with white text, a pending organisation suffixed
+"(awaiting verification)". Arrows move, Enter picks, Escape closes, and
+Enter never submits the form. A choice replaces the box with a Surface Tint
+line, "Chosen: Name." in 600 Council Navy, and an underlined "Change" link
+button. The list floats (z-index 20, raised shadow) so it never pushes the
+form about.
+
+### Match rows
+"Is it one of these?" on the join page and "Likely matches on the list" on
+the review screen use the same row: a hairline-separated flex row with the
+organisation's name in 600 Council Navy, then its status and the reason it
+matched in the warn text colour at 0.9em ("similar name", "same website",
+"same charity number", "same postcode"), and one secondary button on the
+right that takes it. A hard match's reason is bold; a binned organisation's
+name is muted and struck through and carries a note instead of a button.
+On the join page the rows sit in a warn-tinted box (`#fff7e8`, `#7a5a1c`
+border) because they are a pause, not an error; on the review screen they
+sit in a plain card because they are information.
+
 ## Do's and Don'ts
 
 ### Do:

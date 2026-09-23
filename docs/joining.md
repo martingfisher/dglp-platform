@@ -104,13 +104,50 @@ would otherwise walk in. The blocklist is a hard rule, not a warning.
 | 8 | **Archive, restore, take down.** Built 16 September (0.7.1): archive and restore on the item screen for members, take down with a reason on the review screen for staff. | done |
 | 9 | **Removing a member.** Built 16 September (0.7.1): an owner removes anybody in their organisation except themselves; access ends immediately, the work stays, the person is emailed. | done |
 
+## Changed 23 September 2026: choosing from the list
+
+The must-match rule below was reversed on 23 September. Most of the 350
+organisations imported from Forum Central have nobody in them, so "ask a
+colleague to invite you" had nobody to ask. Now, after the address is
+proven:
+
+1. A domain match is offered as before and joins straight away.
+2. Otherwise the person picks their organisation from the full list
+   (approved and pending, never suspended) with a search-as-you-type picker
+   over a plain select. That is a **claim**: the account is created pending
+   as a contributor, the review team are emailed, and the queue shows
+   "Wants to join X". Approving makes them owner if nobody else is in the
+   organisation by then, otherwise contributor; the organisation's owners are
+   emailed. Refusing closes the account and leaves the organisation alone.
+   The team always decide; owners are informed, not asked.
+3. Only if the organisation is not on the list do they register it. The
+   typed details are checked by `Org\Duplicates` against every live and
+   binned organisation before anything is created. Hard (same normalised
+   name, same website or email domain, same charity number, same postcode
+   with a similar name) is refused with the match offered as a claim
+   instead. Soft (similar name, same postcode) is shown once as "Is it one
+   of these?"; the person can say none is theirs and go on. A binned
+   registration is never a block and is shown to the team as such.
+
+The review screen for a registration lists the likely matches with reasons
+and offers **Attach**: the person is moved into the existing organisation,
+gaps in its record are filled from what they typed, their email domain is
+recorded if ticked, the empty duplicate is deleted, and everybody is emailed.
+The same check refuses an approved name change that would create a
+duplicate, stops `wp dgl invite org`, and warns on the import.
+
+Sign-ups carry a `kind` column (join, claim, register) from schema 9; older
+rows are read from what they hold and backfilled. Pure rules and thresholds
+are in `tests/test-duplicates.php`; the flow is in the integration suite's
+Joining group.
+
 ## Decisions taken, 16 September 2026
 
 Martin took the recommended answers, with one rule stated more firmly by
 DGLP: **a person can only join a listed organisation if their email domain
 matches it.** There is no "pick an organisation from the list" without a
 match. Somebody at a listed organisation with a Gmail address needs an
-invitation from an owner.
+invitation from an owner. *Superseded on 23 September, see above.*
 
 1. **Later joiners by domain are contributors.** The first person into an
    organisation with nobody in it, including one loaded from DGLP's list,

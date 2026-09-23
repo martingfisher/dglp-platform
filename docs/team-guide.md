@@ -195,9 +195,9 @@ organisation and the trust level stops applying.
 Anyone who joins with an email address at that domain is offered this
 organisation and, if it is Approved, joins straight away as a colleague. The
 first person to join an organisation becomes its owner. Public providers such
-as gmail.com and outlook.com are never matched, whatever you type here, so a
-group that only has a Gmail address gets its colleagues in by invitation from
-the owner instead.
+as gmail.com and outlook.com are never matched, whatever you type here. A
+person at one of those addresses picks the organisation from the list instead
+and the request comes to you to check.
 
 A pending name or logo change also shows on this screen with the same accept
 and refuse choices as the queue.
@@ -223,11 +223,21 @@ hours; after that they ask for another. When they click it:
 - If the address matches an organisation's domain, they are offered that
   organisation and can join with one click. The owner is emailed that
   somebody has joined.
-- If it matches nothing, they describe their organisation and it lands in
-  your queue under "New organisations to verify".
+- Otherwise they pick their organisation from the list, searching by name.
+  That is a request: the account is made, pending, and it lands in your
+  queue as "Wants to join X".
+- Only if their organisation is not on the list do they register it. What
+  they type is checked against the list before anything is created: the
+  same name once "The", "Ltd", "CIC" and the like are set aside, the same
+  website or email domain, the same charity or company number, or the same
+  postcode with a similar name is a clear match, and they are offered that
+  organisation instead of creating a second one. A similar name, or the same
+  postcode alone, is shown as "Is it one of these?" and they can say it is
+  not. A registration lands in your queue as "Registered X".
 
 Owners invite and remove colleagues themselves from the Members tab of their
-organisation profile. A removed colleague is signed out everywhere and emailed.
+organisation profile. An invitation skips the check. A removed colleague is
+signed out everywhere and emailed.
 
 The email form has three quiet defences: a hidden field robots fill and
 people never see, a signed clock that drops a submit made within three
@@ -235,6 +245,52 @@ seconds of the form being drawn, and a limit of three links per address and
 ten per connection an hour. A robot is shown "sent" and nothing is sent
 (the audit trail records `join_blocked`); a person over the limit is told
 to wait an hour.
+
+## Checking a joining request
+
+Both kinds sit in the review queue under "Joining requests to check", oldest
+first, and open to one screen with a decision at the bottom.
+
+**Somebody wants to join an organisation on the list.** The screen shows
+what they said about how they are connected, and one line about their email
+address: on a subdomain of the organisation's domain (probably genuine, and
+worth adding that domain in wp-admin), matching the organisation's website,
+a public address such as Gmail (nothing to go on but what they said), or
+nothing like anything recorded. It lists who is already in the organisation
+with their emails, so you can ask. Approve adds them as a contributor, or as
+owner if nobody is in it yet; an owner can promote them later. Refuse closes
+the account and emails them your note; the organisation is untouched. The
+organisation's owners are emailed when you approve.
+
+**Somebody registered an organisation.** The screen shows what they typed,
+and "Likely matches on the list": every organisation this could be, with the
+reason (same website, similar name, same charity number, same postcode) and
+whether it is verified, awaiting verification, or a previously refused
+registration in the bin. If they were shown near matches before registering
+and said none was theirs, it says so.
+
+- If it is one of the listed organisations, press "It is this one" (or pick
+  it in the attach box) and "Attach and remove the duplicate". The person
+  joins the existing organisation with the usual rules, their typed details
+  fill any gaps in its record without overwriting anything, their email
+  domain is recorded on it if you leave the box ticked, the duplicate record
+  is deleted, and the person and the organisation's owners are emailed. If
+  the duplicate already has a listing or another person in it, attach
+  refuses; verify or refuse it instead.
+- If it matches a registration in the bin, that was refused once. Restore it
+  from wp-admin if the refusal was a mistake, then attach the person to it.
+- Otherwise verify it: the organisation becomes a member with this person as
+  its owner. Or refuse it with a note, which removes the organisation and
+  closes the account.
+
+The attach box also works on a request to join, for the case where the
+person picked the wrong organisation. Then nothing is deleted.
+
+A name change an owner asks for is refused automatically if it would make
+two organisations the same once suffixes are set aside; the same check runs
+on `wp dgl invite org` and warns on the import. The one place it does not
+run is the title box on an organisation in wp-admin, so leave that alone
+unless you have checked the list.
 
 ## What members are emailed
 

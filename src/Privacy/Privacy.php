@@ -206,7 +206,7 @@ final class Privacy {
 
 		$table = SignupStore::name();
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
-		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT id, domain, state, org_id, new_org_name, new_org_details, reason, created_at, verified_at, completed_at, decided_at FROM {$table} WHERE email = %s ORDER BY id", $email ), ARRAY_A );
+		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT id, domain, state, kind, org_id, new_org_name, new_org_details, reason, created_at, verified_at, completed_at, decided_at FROM {$table} WHERE email = %s ORDER BY id", $email ), ARRAY_A );
 		$out  = [];
 
 		foreach ( (array) $rows as $row ) {
@@ -220,6 +220,7 @@ final class Privacy {
 				[
 					__( 'Email domain', 'dgl-platform' )       => (string) $row['domain'],
 					__( 'State', 'dgl-platform' )              => (string) $row['state'],
+					__( 'Kind', 'dgl-platform' )               => (string) $row['kind'],
 					__( 'Organisation', 'dgl-platform' )       => (int) $row['org_id'] > 0 ? get_the_title( (int) $row['org_id'] ) : (string) $row['new_org_name'],
 					__( 'Organisation details given', 'dgl-platform' ) => $about,
 					__( 'Decision note', 'dgl-platform' )      => (string) $row['reason'],

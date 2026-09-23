@@ -1303,12 +1303,12 @@ $group( 'Only the team can make a name stick' );
 
 \DGL\Org\Profile::save(
 	$profile_org,
-	[ 'org_name' => 'Leeds Community Trust CIO', 'org_email' => 'hello@example.test' ],
+	[ 'org_name' => 'Profile Org Renamed Properly', 'org_email' => 'hello@example.test' ],
 	$owner
 );
 
 $ok( true === \DGL\Org\Profile::approve_pending( $profile_org, $mod ), 'the team approve it' );
-$ok( 'Leeds Community Trust CIO' === get_the_title( $profile_org ), 'and only then does the name change' );
+$ok( 'Profile Org Renamed Properly' === get_the_title( $profile_org ), 'and only then does the name change' );
 $ok( ! \DGL\Org\Profile::has_pending( $profile_org ), 'the proposal is cleared' );
 
 \DGL\Org\Profile::save(
@@ -1319,7 +1319,7 @@ $ok( ! \DGL\Org\Profile::has_pending( $profile_org ), 'the proposal is cleared' 
 
 $ok( is_wp_error( \DGL\Org\Profile::reject_pending( $profile_org, $mod, '' ) ), 'a refusal with no reason is not allowed' );
 $ok( true === \DGL\Org\Profile::reject_pending( $profile_org, $mod, 'That is not your registered name.' ), 'with a reason it is' );
-$ok( 'Leeds Community Trust CIO' === get_the_title( $profile_org ), 'and the name is left as it was' );
+$ok( 'Profile Org Renamed Properly' === get_the_title( $profile_org ), 'and the name is left as it was' );
 
 $group( 'A profile still has to be valid' );
 
@@ -1327,7 +1327,7 @@ $bad = \DGL\Org\Profile::save( $profile_org, [ 'org_name' => '', 'org_email' => 
 
 $ok( isset( $bad['errors']['org_name'] ), 'an organisation with no name is refused' );
 $ok( isset( $bad['errors']['org_email'] ), 'and so is a contact address that is not one' );
-$ok( 'Leeds Community Trust CIO' === get_the_title( $profile_org ), 'nothing was written' );
+$ok( 'Profile Org Renamed Properly' === get_the_title( $profile_org ), 'nothing was written' );
 
 $group( 'A person can edit their own details' );
 
@@ -2373,6 +2373,11 @@ $ok( true === \DGL\Org\Profile::approve_pending( $org_a, $mod ), 'a second reque
 $ok( 'Org A, properly renamed' === get_the_title( $org_a ), 'and the name is live' );
 $ok( 1 === count( $sent_to ) && str_contains( $sent_to[0], $owner_mail ), 'the owner is emailed the acceptance (' . implode( ' | ', $sent_to ) . ')' );
 $ok( str_contains( implode( ' ', $sent_bodies ), 'organisation name' ) && str_contains( implode( ' ', $sent_links ), '/profile/organisation' ), 'naming what changed and linking to the profile' );
+$org_input['org_name'] = 'The Org B Ltd';
+$saved = \DGL\Org\Profile::save( $org_a, $org_input, $alice, [] );
+$dup_r = \DGL\Org\Profile::approve_pending( $org_a, $mod );
+$ok( is_wp_error( $dup_r ) && 'dgl_duplicate_name' === $dup_r->get_error_code() && 'Org A, properly renamed' === get_the_title( $org_a ), 'a name change that would duplicate another organisation is refused and nothing changes' );
+$ok( true === \DGL\Org\Profile::reject_pending( $org_a, $mod, 'That is Org B.' ), 'and the team refuse it with a note' );
 wp_update_post( [ 'ID' => $org_a, 'post_title' => 'Org A' ] );
 
 update_option( \DGL\Email\Routing::OPTION_ENABLED, $mail_was_on );
@@ -2444,7 +2449,9 @@ $r = Joining::start( 'founder@brandnew.test' ); $token = trim( (string) substr( 
 $v = Joining::verify( $token );
 $ok( \DGL\Joining\Rules::OUTCOME_NEW === $v['outcome'], 'an unknown domain means a new organisation' );
 $uid3 = Joining::register( $v['signup'], 'Org A', [ 'org_email' => 'founder@brandnew.test' ], 'Founder', 'yet-another-pw' );
-$ok( is_wp_error( $uid3 ) && 'dgl_org_name' === $uid3->get_error_code(), 'a name already on the list is refused' );
+$ok( is_wp_error( $uid3 ) && 'dgl_duplicate_hard' === $uid3->get_error_code() && $org_a === ( $uid3->get_error_data()['matches'][0]['id'] ?? 0 ), 'a name already on the list is refused, with that organisation offered instead' );
+$uid3 = Joining::register( $v['signup'], 'AB', [ 'org_email' => 'founder@brandnew.test' ], 'Founder', 'yet-another-pw' );
+$ok( is_wp_error( $uid3 ) && 'dgl_org_name' === $uid3->get_error_code(), 'a two-letter name is not a name' );
 $sent_to = [];
 $uid3 = Joining::register( $v['signup'], 'Brand New CIC', [ 'org_email' => 'founder@brandnew.test', 'org_website' => 'https://brandnew.test' ], 'Founder', 'yet-another-pw' );
 $ok( ! is_wp_error( $uid3 ), 'a new organisation is registered' );
@@ -2480,6 +2487,183 @@ $r = Joining::start( 'gmailer@gmail.com' ); $token = trim( (string) substr( end(
 $v = Joining::verify( $token );
 $ok( \DGL\Joining\Rules::OUTCOME_NEW === $v['outcome'] && [] === $v['orgs'], 'a Gmail address is never offered an organisation, even one that recorded gmail.com' );
 \DGL\Org\Org::set_domains( $org_b, [] );
+
+/* ---- Sign-ups say what kind they are; rows from before the column do too. */
+
+$wpdb->insert( SignupStore::name(), [ 'email' => 'legacy@kind.test', 'domain' => 'kind.test', 'token_hash' => hash( 'sha256', 'legacy-kind' ), 'state' => Signup::AWAITING, 'kind' => '', 'org_id' => $org_b, 'new_org_name' => 'Legacy Registration', 'new_org_details' => '', 'reason' => '', 'created_at' => SignupStore::now(), 'expires_at' => SignupStore::now() ] );
+$legacy_id = (int) $wpdb->insert_id;
+$ok( Signup::KIND_REGISTER === SignupStore::find( $legacy_id )->kind() && SignupStore::find( $legacy_id )->is_registration(), 'a row with a registered name and no kind reads as a registration' );
+$wpdb->update( SignupStore::name(), [ 'new_org_name' => '', 'state' => Signup::JOINED ], [ 'id' => $legacy_id ] );
+$ok( Signup::KIND_JOIN === SignupStore::find( $legacy_id )->kind(), 'a joined row with no kind reads as a domain join' );
+$wpdb->update( SignupStore::name(), [ 'new_org_name' => 'Legacy Registration', 'state' => Signup::AWAITING ], [ 'id' => $legacy_id ] );
+SignupStore::backfill_kind();
+$ok( Signup::KIND_REGISTER === SignupStore::find( $legacy_id )->stored_kind, 'the migration writes the kind into the row' );
+$wpdb->delete( SignupStore::name(), [ 'id' => $legacy_id ] );
+
+/* ---- Claims: picking an organisation from the list without a domain match. */
+
+foreach ( [ 'claimer@gmail.com', 'firstclaim@gmail.com', 'badclaim@gmail.com', 'byclaim@orga.test', 'someone@other.test', 'again@nowhere2.test', 'busy@busy.test' ] as $addr ) {
+	$u = get_user_by( 'email', $addr ); if ( $u ) { wp_delete_user( $u->ID ); }
+}
+
+foreach ( get_posts( [ 'post_type' => PostTypes::ORG, 'post_status' => [ 'publish', 'trash' ], 'posts_per_page' => -1, 'fields' => 'ids' ] ) as $stray ) {
+	$stray_title = get_the_title( (int) $stray );
+	if ( in_array( $stray_title, [ 'Org A Wellbeing', 'Busy Group' ], true ) || ( 'Nowhere Collective' === $stray_title && 'trash' !== get_post_status( (int) $stray ) ) ) {
+		wp_delete_post( (int) $stray, true );
+	}
+}
+
+$pickable = \DGL\Org\Org::pickable();
+$ok( isset( $pickable[ $org_a ] ) && Meta::ORG_APPROVED === $pickable[ $org_a ]['status'], 'the picker offers an approved organisation' );
+$suspended_org = $make_org( 'Suspended Org', Meta::ORG_SUSPENDED );
+$pending_org   = $make_org( 'Pending Org', Meta::ORG_PENDING );
+$pickable = \DGL\Org\Org::pickable();
+$ok( ! isset( $pickable[ $suspended_org ] ) && isset( $pickable[ $pending_org ] ) && Meta::ORG_PENDING === $pickable[ $pending_org ]['status'], 'never a suspended one, and a pending one is marked' );
+
+$sent_to = []; $sent_links = []; $sent_bodies = [];
+$r = Joining::start( 'claimer@gmail.com' ); $token = trim( (string) substr( end( $sent_links ), strrpos( rtrim( end( $sent_links ), '/' ), '/' ) + 1 ), '/' );
+$v = Joining::verify( $token );
+$ok( is_wp_error( Joining::claim( $v['signup'], $suspended_org, '', 'Claimer', 'claim-password-1' ) ), 'a suspended organisation cannot be claimed' );
+$ok( is_wp_error( Joining::claim( $v['signup'], 999999999, '', 'Claimer', 'claim-password-1' ) ), 'nor one that does not exist' );
+$sent_to = []; $sent_links = []; $sent_bodies = [];
+$uid5 = Joining::claim( $v['signup'], $org_a, 'Volunteer coordinator', 'Claimer', 'claim-password-1' );
+$ok( ! is_wp_error( $uid5 ) && (int) \DGL\Org\Org::for_user( $uid5 ) === $org_a, 'claiming a listed organisation creates an account linked to it' );
+$ok( \DGL\Access\UserContext::ORG_CONTRIBUTOR === \DGL\Org\Org::role_for_user( $uid5 ) && \DGL\Access\UserContext::ACCOUNT_PENDING === get_user_meta( $uid5, Meta::USER_ACCOUNT_STATUS, true ), 'as a pending contributor' );
+$claim = array_values( array_filter( SignupStore::awaiting(), static fn( $s ) => $s->user_id === $uid5 ) );
+$ok( 1 === count( $claim ) && $claim[0]->is_claim() && $claim[0]->org_id === $org_a && '' === $claim[0]->new_org_name, 'and a claim waits in the queue' );
+$ok( 'Volunteer coordinator' === ( $claim[0]->new_org_details['note'] ?? '' ), 'with what they said' );
+$ok( str_contains( implode( ',', $sent_to ), 'mod@example.test' ) && str_contains( end( $sent_links ), '/review/join/' ) && str_contains( implode( ' ', $sent_bodies ), 'says they are part of' ), 'the team are emailed with a link to decide' );
+$ok( ! Access::can( $uid5, Policy::SUBMIT_ITEM, $make_item( $org_a, $uid5, Statuses::DRAFT ) ), 'the pending claimant can draft but not submit' );
+$ok( [] === Joining::likely_matches( $claim[0] ), 'a claim has no likely matches to list' );
+
+$ok( is_wp_error( Joining::approve( $claim[0]->id, $alice ) ), 'a member cannot approve a claim' );
+$sent_to = []; $sent_bodies = [];
+$ok( true === Joining::approve( $claim[0]->id, $mod ), 'the team can' );
+$ok( \DGL\Access\UserContext::ACCOUNT_APPROVED === get_user_meta( $uid5, Meta::USER_ACCOUNT_STATUS, true ) && \DGL\Access\UserContext::ORG_CONTRIBUTOR === \DGL\Org\Org::role_for_user( $uid5 ), 'approved, still a contributor because Org A has people' );
+$ok( Meta::ORG_APPROVED === \DGL\Org\Org::status( $org_a ) && Signup::APPROVED === SignupStore::find( $claim[0]->id )->state, 'the organisation is untouched and the claim is decided' );
+$ok( str_contains( implode( ',', $sent_to ), 'claimer@gmail.com' ) && str_contains( implode( ',', $sent_to ), 'dgl_alice@example.test' ), 'the person and the owner are both told (' . implode( ' | ', $sent_to ) . ')' );
+$ok( str_contains( implode( ' ', $sent_bodies ), 'checked they are part of it' ), 'and the owner is told it was the team, not the domain' );
+
+$nobody_org = $make_org( 'Nobody Home Org' );
+$sent_links = [];
+$r = Joining::start( 'firstclaim@gmail.com' ); $token = trim( (string) substr( end( $sent_links ), strrpos( rtrim( end( $sent_links ), '/' ), '/' ) + 1 ), '/' );
+$v = Joining::verify( $token );
+$uid6 = Joining::claim( $v['signup'], $nobody_org, '', 'First Claimer', 'claim-password-2' );
+$claim = array_values( array_filter( SignupStore::awaiting(), static fn( $s ) => $s->user_id === $uid6 ) )[0];
+$ok( \DGL\Access\UserContext::ORG_CONTRIBUTOR === \DGL\Org\Org::role_for_user( $uid6 ), 'a claim on an empty organisation is still only a contributor while it waits' );
+Joining::approve( $claim->id, $mod );
+$ok( \DGL\Access\UserContext::ORG_OWNER === \DGL\Org\Org::role_for_user( $uid6 ), 'approved, they become its owner: nobody else is in it' );
+
+$sent_links = [];
+$r = Joining::start( 'badclaim@gmail.com' ); $token = trim( (string) substr( end( $sent_links ), strrpos( rtrim( end( $sent_links ), '/' ), '/' ) + 1 ), '/' );
+$v = Joining::verify( $token );
+$uid7 = Joining::claim( $v['signup'], $org_b, 'I just like them', 'Bad Claimer', 'claim-password-3' );
+$claim = array_values( array_filter( SignupStore::awaiting(), static fn( $s ) => $s->user_id === $uid7 ) )[0];
+$sent_to = []; $sent_bodies = [];
+$ok( true === Joining::refuse( $claim->id, $mod, 'Org B do not know you.' ), 'a claim can be refused with a reason' );
+$ok( 'publish' === get_post_status( $org_b ) && Meta::ORG_APPROVED === \DGL\Org\Org::status( $org_b ), 'the organisation is untouched' );
+$ok( \DGL\Access\UserContext::ACCOUNT_CLOSED === get_user_meta( $uid7, Meta::USER_ACCOUNT_STATUS, true ) && null === \DGL\Org\Org::for_user( $uid7 ), 'the account is closed and unlinked' );
+$ok( str_contains( implode( ',', $sent_to ), 'badclaim@gmail.com' ) && str_contains( implode( ' ', $sent_bodies ), 'Org B do not know you.' ), 'and the person is told why' );
+
+$sent_links = [];
+$r = Joining::start( 'byclaim@orga.test' ); $token = trim( (string) substr( end( $sent_links ), strrpos( rtrim( end( $sent_links ), '/' ), '/' ) + 1 ), '/' );
+$v = Joining::verify( $token );
+$uid8 = Joining::claim( $v['signup'], $org_a, '', 'By Domain Really', 'claim-password-4' );
+$row = SignupStore::find( $v['signup']->id );
+$ok( ! is_wp_error( $uid8 ) && Signup::JOINED === $row->state && Signup::KIND_JOIN === $row->kind() && \DGL\Access\UserContext::ACCOUNT_APPROVED === get_user_meta( $uid8, Meta::USER_ACCOUNT_STATUS, true ), 'claiming an organisation the domain matches just joins it: the domain is the check' );
+
+/* ---- Registering: what is typed is checked against the list first. */
+
+$sent_links = [];
+$r = Joining::start( 'someone@other.test' ); $token = trim( (string) substr( end( $sent_links ), strrpos( rtrim( end( $sent_links ), '/' ), '/' ) + 1 ), '/' );
+$v = Joining::verify( $token );
+$before_users = count( get_users( [ 'fields' => 'ID' ] ) );
+$res = Joining::register( $v['signup'], 'A Different Name', [ 'org_email' => 'someone@other.test', 'org_website' => 'https://www.orga.test/' ], 'Someone', 'register-pw-1' );
+$ok( is_wp_error( $res ) && 'dgl_duplicate_hard' === $res->get_error_code(), 'a website that is an organisation\'s recorded domain is refused (' . ( is_wp_error( $res ) ? $res->get_error_code() : 'created' ) . ')' );
+$ok( is_wp_error( $res ) && $org_a === ( $res->get_error_data()['matches'][0]['id'] ?? 0 ) && in_array( 'website', $res->get_error_data()['matches'][0]['reasons'], true ), 'with Org A offered instead, for the website' );
+$ok( $before_users === count( get_users( [ 'fields' => 'ID' ] ) ) && ( false === get_user_by( 'email', 'someone@other.test' ) ), 'and nothing was created' );
+$res = Joining::register( $v['signup'], 'The Org A Ltd', [ 'org_email' => 'someone@other.test' ], 'Someone', 'register-pw-1' );
+$ok( is_wp_error( $res ) && 'dgl_duplicate_hard' === $res->get_error_code() && in_array( 'name_exact', $res->get_error_data()['matches'][0]['reasons'], true ), 'a name that is Org A with a suffix is a hard match on the name' );
+
+$res = Joining::register( $v['signup'], 'Org A Wellbeing', [ 'org_email' => 'someone@other.test', 'org_number' => 'Charity 7654321', 'org_postcode' => 'LS99 9ZZ' ], 'Someone', 'register-pw-1' );
+$ok( is_wp_error( $res ) && 'dgl_duplicate_soft' === $res->get_error_code() && in_array( $org_a, array_column( (array) ( $res->get_error_data()['matches'] ?? [] ), 'id' ), true ), 'a similar name is held for a question, with Org A listed' );
+$sent_to = [];
+$uid9 = Joining::register( $v['signup'], 'Org A Wellbeing', [ 'org_email' => 'someone@other.test', 'org_number' => 'Charity 7654321', 'org_postcode' => 'LS99 9ZZ' ], 'Someone', 'register-pw-1', true );
+$ok( ! is_wp_error( $uid9 ), 'once the person has said none of them is theirs, it is registered' );
+$soft_org = (int) \DGL\Org\Org::for_user( $uid9 ); update_post_meta( $soft_org, DGL_FIXTURE_FLAG, '1' );
+$soft_signup = array_values( array_filter( SignupStore::awaiting(), static fn( $s ) => $s->org_id === $soft_org ) )[0];
+$ok( $soft_signup->is_registration() && in_array( $org_a, (array) ( $soft_signup->new_org_details['confirmed_against'] ?? [] ), true ), 'and the record says what they were shown' );
+$ok( 'LS99 9ZZ' === get_post_meta( $soft_org, 'dgl_org_postcode', true ), 'the postcode is kept on the new record' );
+$likely = Joining::likely_matches( $soft_signup );
+$likely_a = array_values( array_filter( $likely, static fn( array $m ): bool => $m['id'] === $org_a ) );
+$ok( [] !== $likely_a && \DGL\Org\Duplicates::SOFT === $likely_a[0]['strength'], 'the review screen gets the same likely match' );
+
+$sent_links = [];
+$r = Joining::start( 'again@nowhere2.test' ); $token = trim( (string) substr( end( $sent_links ), strrpos( rtrim( end( $sent_links ), '/' ), '/' ) + 1 ), '/' );
+$v = Joining::verify( $token );
+$uid10 = Joining::register( $v['signup'], 'Nowhere Collective', [ 'org_email' => 'again@nowhere2.test' ], 'Again', 'register-pw-2' );
+$ok( ! is_wp_error( $uid10 ), 'a name that only matches a binned registration is not blocked' );
+$again_org = (int) \DGL\Org\Org::for_user( $uid10 ); update_post_meta( $again_org, DGL_FIXTURE_FLAG, '1' );
+$again_signup = array_values( array_filter( SignupStore::awaiting(), static fn( $s ) => $s->org_id === $again_org ) )[0];
+$ok( [ $bad_org ] === ( $again_signup->new_org_details['trashed_matches'] ?? [] ), 'but the record notes the binned one' );
+$likely = Joining::likely_matches( $again_signup );
+$ok( [] !== $likely && $bad_org === $likely[0]['id'] && $likely[0]['trashed'], 'and the team see it flagged as in the bin' );
+
+/* ---- Attaching: the team put the person in the organisation already listed. */
+
+delete_post_meta( $org_a, 'dgl_org_number' );
+update_post_meta( $org_a, 'dgl_org_postcode', 'LS9 9ZZ' );
+$ok( is_wp_error( Joining::attach( $soft_signup->id, $soft_org, $mod ) ), 'attaching to itself is refused' );
+$ok( is_wp_error( Joining::attach( $soft_signup->id, $suspended_org, $mod ) ), 'attaching to a suspended organisation is refused' );
+$ok( is_wp_error( Joining::attach( $soft_signup->id, $org_a, $alice ) ), 'a member cannot attach' );
+$sent_to = []; $sent_bodies = [];
+$ok( true === Joining::attach( $soft_signup->id, $org_a, $mod ), 'the team can attach the person to Org A' );
+$ok( (int) \DGL\Org\Org::for_user( $uid9 ) === $org_a && \DGL\Access\UserContext::ORG_CONTRIBUTOR === \DGL\Org\Org::role_for_user( $uid9 ) && \DGL\Access\UserContext::ACCOUNT_APPROVED === get_user_meta( $uid9, Meta::USER_ACCOUNT_STATUS, true ), 'the person is in Org A, approved, as a contributor' );
+$ok( null === get_post( $soft_org ), 'the duplicate is gone for good' );
+$ok( 'Charity 7654321' === get_post_meta( $org_a, 'dgl_org_number', true ), 'the number filled a gap on Org A' );
+$ok( 'LS9 9ZZ' === get_post_meta( $org_a, 'dgl_org_postcode', true ), 'the postcode Org A already had is untouched' );
+$ok( in_array( 'other.test', \DGL\Org\Org::domains( $org_a ), true ), 'their email domain is recorded on Org A' );
+$after = SignupStore::find( $soft_signup->id );
+$ok( Signup::APPROVED === $after->state && $after->org_id === $org_a && 'Org A Wellbeing' === $after->new_org_name, 'the sign-up is decided, points at Org A and keeps what was typed' );
+$ok( str_contains( implode( ',', $sent_to ), 'someone@other.test' ) && str_contains( implode( ' ', $sent_bodies ), 'recognised Org A Wellbeing as Org A' ), 'the person is told (' . implode( ' | ', $sent_to ) . ')' );
+$ok( str_contains( implode( ',', $sent_to ), 'dgl_alice@example.test' ), 'and so is the owner' );
+\DGL\Org\Org::set_domains( $org_a, [ 'orga.test' ] );
+delete_post_meta( $org_a, 'dgl_org_number' );
+delete_post_meta( $org_a, 'dgl_org_postcode' );
+
+$sent_links = [];
+$r = Joining::start( 'busy@busy.test' ); $token = trim( (string) substr( end( $sent_links ), strrpos( rtrim( end( $sent_links ), '/' ), '/' ) + 1 ), '/' );
+$v = Joining::verify( $token );
+$uid11 = Joining::register( $v['signup'], 'Busy Group', [ 'org_email' => 'busy@busy.test' ], 'Busy', 'register-pw-3' );
+$busy_org = (int) \DGL\Org\Org::for_user( $uid11 ); update_post_meta( $busy_org, DGL_FIXTURE_FLAG, '1' );
+$busy_signup = array_values( array_filter( SignupStore::awaiting(), static fn( $s ) => $s->org_id === $busy_org ) )[0];
+$make_item( $busy_org, $uid11, Statuses::DRAFT );
+$res = Joining::attach( $busy_signup->id, $org_b, $mod );
+$ok( is_wp_error( $res ) && 'dgl_not_empty' === $res->get_error_code() && 'publish' === get_post_status( $busy_org ) && (int) \DGL\Org\Org::for_user( $uid11 ) === $busy_org, 'a duplicate with a listing in it cannot be removed, and nothing moved' );
+
+/* ---- The live check the join page makes while the person types. */
+
+$sent_links = [];
+$r = Joining::start( 'typing@livecheck.test' ); $live_token = trim( (string) substr( end( $sent_links ), strrpos( rtrim( end( $sent_links ), '/' ), '/' ) + 1 ), '/' );
+$a = \DGL\Joining\MatchEndpoint::answer( [ 'token' => $live_token, 'name' => 'Org A Wellbeing' ] );
+$ok( 403 === $a['status'], 'the live check refuses a link that has not been used yet' );
+$v = Joining::verify( $live_token );
+\DGL\Joining\Guard::reset();
+$a = \DGL\Joining\MatchEndpoint::answer( [ 'token' => 'nonsense', 'name' => 'Org A Wellbeing' ] );
+$ok( 403 === $a['status'], 'and a made-up token' );
+$a = \DGL\Joining\MatchEndpoint::answer( [ 'token' => $live_token, 'name' => 'Or' ] );
+$ok( 200 === $a['status'] && [] === $a['body']['matches'], 'two letters and nothing else asks nothing' );
+$a = \DGL\Joining\MatchEndpoint::answer( [ 'token' => $live_token, 'name' => 'Org A Wellbeing' ] );
+$ok( 200 === $a['status'] && ! $a['body']['hard'] && $org_a === ( $a['body']['matches'][0]['id'] ?? 0 ) && 'similar name' === $a['body']['matches'][0]['why'], 'a verified token gets the soft match with its reason in words' );
+$a = \DGL\Joining\MatchEndpoint::answer( [ 'token' => $live_token, 'name' => 'Whatever', 'website' => 'orga.test' ] );
+$ok( 200 === $a['status'] && $a['body']['hard'] && $org_a === ( $a['body']['matches'][0]['id'] ?? 0 ), 'a hard match says so' );
+$a = \DGL\Joining\MatchEndpoint::answer( [ 'token' => $live_token, 'name' => 'Nowhere Collective' ] );
+$ok( 200 === $a['status'] && [] === array_filter( $a['body']['matches'], static fn( array $m ): bool => $m['id'] === $bad_org ), 'a binned organisation is never shown to the person' );
+for ( $i = 0; $i < \DGL\Joining\Guard::PER_SIGNUP_LOOKUPS; $i++ ) {
+	$a = \DGL\Joining\MatchEndpoint::answer( [ 'token' => $live_token, 'name' => 'Org A Wellbeing' ] );
+}
+$ok( 429 === $a['status'], 'the sixty-first ask in an hour is refused' );
+$wpdb->delete( SignupStore::name(), [ 'email' => 'typing@livecheck.test' ] );
 
 remove_filter( 'pre_wp_mail', '__return_true' );
 update_option( \DGL\Email\Routing::OPTION_ENABLED, $mail_was_on );

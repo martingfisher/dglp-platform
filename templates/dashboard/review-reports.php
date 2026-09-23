@@ -120,6 +120,10 @@ $hours   = static function ( ?float $h ): string {
 		<table class="dgl-reports__table">
 			<tbody>
 				<tr><th scope="row"><?php esc_html_e( 'New organisations registered', 'dgl-platform' ); ?></th><td><?php echo esc_html( (string) ( $orgs['registered'] ?? 0 ) ); ?></td></tr>
+				<tr><th scope="row"><?php esc_html_e( 'Requests to join a listed organisation', 'dgl-platform' ); ?></th><td><?php echo esc_html( (string) ( $orgs['claimed'] ?? 0 ) ); ?></td></tr>
+				<tr><th scope="row"><?php esc_html_e( 'Requests approved', 'dgl-platform' ); ?></th><td><?php echo esc_html( (string) ( $orgs['claims_approved'] ?? 0 ) ); ?></td></tr>
+				<tr><th scope="row"><?php esc_html_e( 'Requests refused', 'dgl-platform' ); ?></th><td><?php echo esc_html( (string) ( $orgs['claims_refused'] ?? 0 ) ); ?></td></tr>
+				<tr><th scope="row"><?php esc_html_e( 'Duplicates attached to an existing organisation', 'dgl-platform' ); ?></th><td><?php echo esc_html( (string) ( $orgs['attached'] ?? 0 ) ); ?></td></tr>
 				<tr><th scope="row"><?php esc_html_e( 'Verified', 'dgl-platform' ); ?></th><td><?php echo esc_html( (string) ( $orgs['verified'] ?? 0 ) ); ?></td></tr>
 				<tr><th scope="row"><?php esc_html_e( 'Refused', 'dgl-platform' ); ?></th><td><?php echo esc_html( (string) ( $orgs['refused'] ?? 0 ) ); ?></td></tr>
 				<tr><th scope="row"><?php esc_html_e( 'Name or logo changes accepted', 'dgl-platform' ); ?></th><td><?php echo esc_html( (string) ( $orgs['changes_accepted'] ?? 0 ) ); ?></td></tr>

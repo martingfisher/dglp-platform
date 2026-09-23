@@ -1816,6 +1816,150 @@ body.dgl-body {
 
 .dgl-field-row--group .dgl-check .dgl-help { margin: 2px 0 0; }
 
+/*
+ * Joining: which organisation. The intent radios carry a bold line and a
+ * help line each; the matched organisations sit indented under theirs.
+ */
+.dgl-intent .dgl-check > span { display: block; }
+.dgl-intent .dgl-check > span > .dgl-help { display: block; margin: 2px 0 0; }
+.dgl-intent__sub { margin: 8px 0 4px 27px; }
+.dgl-intent__sub .dgl-check + .dgl-check { margin-top: 6px; }
+
+.dgl-join__block { margin: 0 0 var(--dgl-gap-lg); }
+.dgl-join__block[hidden] { display: none; }
+.dgl-join__block > .dgl-section__title { margin-top: 0; }
+.dgl-join__block > .dgl-section__title + .dgl-help { margin: -6px 0 var(--dgl-gap); }
+.dgl-join__blocked .dgl-alert__actions { margin: 10px 0; }
+.dgl-join__blocked .dgl-help { margin: 0; color: inherit; }
+
+.dgl-field--short { max-width: 12ch; }
+
+/*
+ * The picker: a search box over a long select. The list opens under the
+ * box, up to eight names, the active one in Council Navy like a chosen
+ * row anywhere else. The chosen line replaces the box until "Change".
+ */
+.dgl-picker { position: relative; }
+
+.dgl-picker__list {
+	position: absolute;
+	z-index: 20;
+	inset-inline: 0;
+	margin: 4px 0 0;
+	padding: 6px 0;
+	list-style: none;
+	background: var(--dgl-white);
+	border: 1px solid var(--dgl-border-strong);
+	border-radius: var(--dgl-radius-field);
+	box-shadow: var(--dgl-shadow-raise);
+	max-height: 320px;
+	overflow-y: auto;
+}
+
+.dgl-picker__list[hidden] { display: none; }
+
+.dgl-picker__option,
+.dgl-picker__none {
+	margin: 0;
+	padding: 9px 14px;
+	font-size: 0.92em;
+	line-height: 1.4;
+}
+
+.dgl-picker__option { cursor: pointer; color: var(--dgl-text); }
+
+.dgl-picker__option:hover,
+.dgl-picker__option.is-active {
+	background: var(--dgl-primary);
+	color: var(--dgl-primary-text);
+}
+
+.dgl-picker__option--pending::after {
+	content: "";
+}
+
+.dgl-picker__none { color: var(--dgl-text-muted); }
+
+.dgl-picker__chosen {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px 12px;
+	margin: 0;
+	padding: 10px 14px;
+	border: var(--dgl-field-border) solid var(--dgl-field-outline);
+	border-radius: var(--dgl-radius-field);
+	background: var(--dgl-surface);
+	font-size: 0.92em;
+	font-weight: 600;
+	color: var(--dgl-navy);
+}
+
+.dgl-picker__chosen[hidden] { display: none; }
+
+.dgl-picker__change {
+	border: 0;
+	padding: 0;
+	background: none;
+	font: inherit;
+	font-weight: 500;
+	color: var(--dgl-link);
+	text-decoration: underline;
+	cursor: pointer;
+}
+
+.dgl-picker__change:focus-visible { outline: 2px solid var(--dgl-focus); outline-offset: 2px; }
+
+/*
+ * "Is it one of these?" and the team's likely matches. One row per
+ * organisation: name, why it matched, and the button that takes it.
+ */
+.dgl-matches {
+	margin: 0 0 var(--dgl-gap-lg);
+	padding: 16px 18px;
+	border: 1px solid #7a5a1c;
+	border-radius: var(--dgl-radius-field);
+	background: #fff7e8;
+	color: #4d3a12;
+}
+
+.dgl-matches__title { margin: 0 0 6px; font-size: 1.05em; color: inherit; }
+.dgl-matches > p { margin: 0 0 12px; font-size: 0.92em; }
+
+.dgl-matches__list {
+	list-style: none;
+	margin: 0 0 12px;
+	padding: 0;
+}
+
+.dgl-match {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px 16px;
+	padding: 10px 0;
+	border-top: 1px solid rgb(122 90 28 / 30%);
+}
+
+.dgl-match:last-child { border-bottom: 1px solid rgb(122 90 28 / 30%); }
+
+.dgl-match__who { font-size: 0.92em; }
+.dgl-match__who > strong { color: var(--dgl-navy); }
+.dgl-match__who > strong a { color: inherit; }
+.dgl-match__why,
+.dgl-match__status { display: inline-block; margin-left: 8px; font-size: 0.9em; color: #6b4f18; }
+.dgl-match__status::before { content: "\2022  "; }
+.dgl-match--trashed .dgl-match__who > strong { color: var(--dgl-text-muted); text-decoration: line-through; }
+.dgl-match--hard .dgl-match__why { font-weight: 600; }
+
+.dgl-matches .dgl-button--secondary { background: var(--dgl-white); }
+
+.dgl-matches--live > .dgl-button--secondary { margin-top: 4px; }
+
+/* The team's attach form. */
+.dgl-attach .dgl-check { margin: 0 0 12px; }
+
 /* Buttons sitting side by side in a table cell, each in its own form. */
 .dgl-row-actions {
 	display: flex;

@@ -56,8 +56,9 @@ final class Content {
 						[ 'p', __( 'Not a member yet? Press "Join the user area" on the sign-in page and give your work email address. We send a link that works once, for 48 hours. When you click it:', 'dgl-platform' ) ],
 						[ 'ul', [
 							__( 'If your address is at an organisation already on the list, you are offered that organisation and join it with one click. Its owner is told.', 'dgl-platform' ),
-							__( 'If it matches nothing, describe your organisation. The DGLP team check every new organisation before it can post. You can draft in the meantime.', 'dgl-platform' ),
-							__( 'If a colleague already uses the user area, the quickest way in is to ask them to invite you from their Members page.', 'dgl-platform' ),
+							__( 'Otherwise, pick your organisation from the list. The DGLP team check that you are part of it before you can post. You can draft in the meantime.', 'dgl-platform' ),
+							__( 'Only if it is not on the list, register it. We check what you type against the list first, so the same organisation is never listed twice, and the team check every new organisation before it can post.', 'dgl-platform' ),
+							__( 'A colleague who already uses the user area can also invite you from their Members page, which skips the check.', 'dgl-platform' ),
 						] ],
 						[ 'p', __( 'Forgotten your password? The link under the sign-in form sends a reset email.', 'dgl-platform' ) ],
 					],
@@ -212,8 +213,10 @@ final class Content {
 						] ],
 						[ 'h3', __( 'Organisation changes waiting', 'dgl-platform' ) ],
 						[ 'p', __( 'A member has asked to change their organisation\'s name or logo. Listings keep the old details until you accept; accepting updates every listing at once. Refusing needs a note, which the member reads by email.', 'dgl-platform' ) ],
-						[ 'h3', __( 'New organisations to verify', 'dgl-platform' ) ],
-						[ 'p', __( 'Somebody joined with an email address that matched no organisation on the list, proved the address, and described their organisation. They can draft but not submit until you decide. Verifying makes it a member organisation with that person as its owner; refusing removes the organisation and closes the account, with your note going to them by email.', 'dgl-platform' ) ],
+						[ 'h3', __( 'Joining requests to check', 'dgl-platform' ) ],
+						[ 'p', __( 'Somebody joined with an email address that matched no organisation on the list and proved the address. Either they picked an organisation from the list ("Wants to join X"), or they registered one that is not on it ("Registered X"). They can draft but not submit until you decide.', 'dgl-platform' ) ],
+						[ 'p', __( 'For a pick: the screen says how they are connected, how close their email address is to the organisation, and who is already in it. Approving adds them as a contributor, or as owner if nobody is in it yet; refusing closes the account and leaves the organisation alone. The organisation\'s owners are emailed either way.', 'dgl-platform' ) ],
+						[ 'p', __( 'For a registration: the screen lists anything on the list it might be, with the reason (same website, similar name, same charity number, same postcode). If it is one of them, use "Attach" to put the person in the existing organisation instead: the duplicate is removed, its details fill any gaps in the existing record, and their email domain can be recorded so colleagues join by domain. Otherwise verify it, which makes it a member organisation with that person as its owner, or refuse it with a note.', 'dgl-platform' ) ],
 					],
 				],
 				[
@@ -258,7 +261,7 @@ final class Content {
 						[ 'ul', [
 							__( 'Verification. Pending means nobody at the organisation can submit yet. Approved means they can. Suspended stops submitting and editing but leaves their live listings up. Verifying from the review queue sets this to Approved for you.', 'dgl-platform' ),
 							__( 'Trust level. Moderated is the default: every submission and every edit is reviewed. "Trusted for edits" reviews new items but lets edits to approved items go live straight away. "Trusted" lets everything go live and lists it for a spot check. Move an organisation up only when its record earns it. Trust never outlives verification.', 'dgl-platform' ),
-							__( 'Email domains, one per line. Anyone who joins with an address at that domain is offered this organisation and, if it is Approved, joins straight away as a colleague. The first person in becomes its owner. Public providers such as gmail.com are never matched, whatever you type.', 'dgl-platform' ),
+							__( 'Email domains, one per line. Anyone who joins with an address at that domain is offered this organisation and, if it is Approved, joins straight away as a colleague. The first person in becomes its owner. Public providers such as gmail.com are never matched, whatever you type; people at those addresses pick the organisation from the list and you check them.', 'dgl-platform' ),
 						] ],
 						[ 'p', __( 'Topics for listings and the public filters are managed under Organisations > Topics. Only topics with something published under them are offered to visitors.', 'dgl-platform' ) ],
 					],
@@ -274,7 +277,7 @@ final class Content {
 					'id'      => 'joining',
 					'heading' => __( 'How people join', 'dgl-platform' ),
 					'blocks'  => [
-						[ 'p', __( 'The sign-in page links to "Join the user area". The person gives an email address and we send a link that works once, for 48 hours. A domain match joins them to that organisation and emails its owner; no match lands in your queue under "New organisations to verify". Owners invite and remove colleagues themselves from the Members tab. A removed colleague is signed out everywhere and emailed.', 'dgl-platform' ) ],
+						[ 'p', __( 'The sign-in page links to "Join the user area". The person gives an email address and we send a link that works once, for 48 hours. A domain match joins them to that organisation and emails its owner. No match means they pick their organisation from the list, or register one that is not there; both land in your queue under "Joining requests to check". A registration is checked against the list before it is created: a clear match is offered instead, a near match is shown for the person to confirm. Owners invite and remove colleagues themselves from the Members tab. A removed colleague is signed out everywhere and emailed.', 'dgl-platform' ) ],
 					],
 				],
 				[
@@ -309,7 +312,7 @@ final class Content {
 				[ 'q' => __( 'I approved something by mistake.', 'dgl-platform' ), 'a' => __( 'Open it from Decided (or from the queue) and use "Take it off the site" with a note. It comes off at once and goes back in the queue to be decided again.', 'dgl-platform' ) ],
 				[ 'q' => __( 'I refused something that should have gone through.', 'dgl-platform' ), 'a' => __( 'Open it from Decided and press "Look at it again". It goes back in the queue and the member is told. Then approve it.', 'dgl-platform' ) ],
 				[ 'q' => __( 'A member wants to change the date of a live event. Do they resubmit?', 'dgl-platform' ), 'a' => __( 'No. They change it from the "Dates and times" card on the event\'s screen and it applies at once. Nothing comes to you.', 'dgl-platform' ) ],
-				[ 'q' => __( 'Where do new organisations appear?', 'dgl-platform' ), 'a' => __( 'In the review queue under "New organisations to verify", and on the Organisations screen in wp-admin with Verification set to Pending.', 'dgl-platform' ) ],
+				[ 'q' => __( 'Where do new organisations appear?', 'dgl-platform' ), 'a' => __( 'In the review queue under "Joining requests to check", as "Registered X", and on the Organisations screen in wp-admin with Verification set to Pending. People who picked an organisation from the list are in the same queue as "Wants to join X".', 'dgl-platform' ) ],
 				[ 'q' => __( 'Can two organisations share one person?', 'dgl-platform' ), 'a' => __( 'No. An account belongs to one organisation. Somebody who works for two needs two accounts with two email addresses.', 'dgl-platform' ) ],
 				[ 'q' => __( 'How do I feature something on the home page?', 'dgl-platform' ), 'a' => __( '"Feature it" puts it first on its own public list (events or news) with a stamp, for 7 or 14 days. The home page is the theme\'s; the platform does not place things on it.', 'dgl-platform' ) ],
 				[ 'q' => __( 'Somebody has left an organisation.', 'dgl-platform' ), 'a' => __( 'Their owner removes them from the Members tab. If the owner has left, a site administrator changes the account in wp-admin under Users. What they posted stays with the organisation.', 'dgl-platform' ) ],

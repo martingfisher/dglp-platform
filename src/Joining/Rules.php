@@ -10,6 +10,7 @@ declare( strict_types=1 );
 namespace DGL\Joining;
 
 use DGL\Access\UserContext;
+use DGL\Org\Duplicates;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -17,6 +18,9 @@ final class Rules {
 
 	/** How long a verification link works. Two days covers a weekend. */
 	public const LINK_HOURS = 48;
+
+	/** The most a person can say about how they are connected to an organisation. */
+	public const NOTE_MAX = 300;
 
 	public const OUTCOME_MATCH = 'match';
 	public const OUTCOME_NEW   = 'new';
@@ -68,6 +72,11 @@ final class Rules {
 	 * A new organisation needs a name that is not a duplicate of one on the
 	 * list, or the second "Leeds Mind" is how the list stops being one.
 	 *
+	 * Compared the way Duplicates compares: "The Leeds Mind Ltd" is
+	 * "Leeds Mind". The fuller checks (website, domain, number, postcode,
+	 * similar names) run in Joining::registration_problems(); this one is
+	 * the cheap gate that runs first.
+	 *
 	 * @param string[] $existing_names Titles already on the list, any case.
 	 */
 	public static function org_name_problem( string $name, array $existing_names ): string {
@@ -77,9 +86,11 @@ final class Rules {
 			return 'Give the organisation its full name.';
 		}
 
+		$wanted = Duplicates::normalise_name( $name );
+
 		foreach ( $existing_names as $existing ) {
-			if ( 0 === strcasecmp( trim( $existing ), $name ) ) {
-				return 'An organisation with that name is already on the list. If it is yours, you need an email address on its domain, or an invitation from somebody there.';
+			if ( '' !== $wanted && Duplicates::normalise_name( html_entity_decode( (string) $existing, ENT_QUOTES, 'UTF-8' ) ) === $wanted ) {
+				return 'An organisation with that name is already on the list. Choose it from the list instead, and the DGLP team will check you are part of it.';
 			}
 		}
 

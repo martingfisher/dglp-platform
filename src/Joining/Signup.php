@@ -26,6 +26,13 @@ final class Signup {
 	/** A newer sign-up for the same address replaced this one. */
 	public const SUPERSEDED = 'superseded';
 
+	/** Joined an organisation the email domain matched. */
+	public const KIND_JOIN = 'join';
+	/** Picked an organisation from the list; the team check they are part of it. */
+	public const KIND_CLAIM = 'claim';
+	/** Registered an organisation that was not on the list. */
+	public const KIND_REGISTER = 'register';
+
 	/**
 	 * @param array<string, mixed> $new_org_details
 	 */
@@ -45,6 +52,7 @@ final class Signup {
 		public readonly ?string $completed_at,
 		public readonly ?string $decided_at,
 		public readonly int $decided_by,
+		public readonly string $stored_kind = '',
 	) {}
 
 	/**
@@ -69,7 +77,33 @@ final class Signup {
 			$row['completed_at'] ?? null,
 			$row['decided_at'] ?? null,
 			(int) $row['decided_by'],
+			(string) ( $row['kind'] ?? '' ),
 		);
+	}
+
+	/**
+	 * What this sign-up is: a domain join, a claim on a listed organisation,
+	 * or a registration. Rows from before the column existed are read from
+	 * what they hold.
+	 */
+	public function kind(): string {
+		if ( '' !== $this->stored_kind ) {
+			return $this->stored_kind;
+		}
+
+		if ( '' !== $this->new_org_name ) {
+			return self::KIND_REGISTER;
+		}
+
+		return self::JOINED === $this->state ? self::KIND_JOIN : '';
+	}
+
+	public function is_claim(): bool {
+		return self::KIND_CLAIM === $this->kind();
+	}
+
+	public function is_registration(): bool {
+		return self::KIND_REGISTER === $this->kind();
 	}
 
 	public function is_expired( string $now ): bool {

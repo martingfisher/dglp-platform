@@ -40,6 +40,26 @@ final class Assets {
 			) . ';',
 			'before'
 		);
+		wp_add_inline_script(
+			self::HANDLE,
+			'window.dglJoin = ' . wp_json_encode(
+				[
+					'search'    => __( 'Start typing the name', 'dgl-platform' ),
+					'noResults' => __( 'Nothing on the list matches that. If your organisation is not on the list, register it below.', 'dgl-platform' ),
+					'chosen'    => __( 'Chosen: %s.', 'dgl-platform' ),
+					'change'    => __( 'Change', 'dgl-platform' ),
+					'checking'  => __( 'Checking the list…', 'dgl-platform' ),
+					'looksLike' => __( 'Is it one of these?', 'dgl-platform' ),
+					'looksLikeHelp' => __( 'These organisations on the list look like the one you are typing. If one of them is yours, choose it and the DGLP team will check you are part of it.', 'dgl-platform' ),
+					'blocked'   => __( 'That looks like %s, which is already on the list.', 'dgl-platform' ),
+					'blockedHelp' => __( 'It cannot be registered twice. Choose it and the DGLP team will check you are part of it, or correct what you typed.', 'dgl-platform' ),
+					'take'      => __( 'Yes, that is mine', 'dgl-platform' ),
+					'none'      => __( 'No, none of these', 'dgl-platform' ),
+					'pending'   => __( 'awaiting verification', 'dgl-platform' ),
+				]
+			) . ';',
+			'before'
+		);
 		self::autoload();
 
 		if ( $with_editor ) {

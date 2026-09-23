@@ -22,8 +22,9 @@ $decided_copy = [
 	'restore'   => __( 'Restored. It is back in this queue to be decided again.', 'dgl-platform' ),
 	'org_approve' => __( 'Organisation change accepted. Their listings carry the new details from now, and the owners have been told.', 'dgl-platform' ),
 	'org_refuse'  => __( 'Organisation change refused. The member has been told, with your reason.', 'dgl-platform' ),
-	'join_approve' => __( 'Organisation verified. They can submit now, and they have been told.', 'dgl-platform' ),
-	'join_refuse'  => __( 'Registration refused. The organisation is gone and the person has been told why.', 'dgl-platform' ),
+	'join_approve' => __( 'Approved. They can submit now, and they have been told.', 'dgl-platform' ),
+	'join_refuse'  => __( 'Refused. The person has been told why.', 'dgl-platform' ),
+	'join_attach'  => __( 'Attached to the organisation already on the list. The person has been told, and so have its owners.', 'dgl-platform' ),
 ];
 $decided = (string) ( $data['decided'] ?? '' );
 ?>
@@ -83,22 +84,22 @@ View::output(
 <?php if ( ! empty( $data['joins'] ) ) : ?>
 	<section class="dgl-section" aria-labelledby="dgl-joins-heading">
 		<div class="dgl-section__head">
-			<h2 class="dgl-section__title" id="dgl-joins-heading"><?php esc_html_e( 'New organisations to verify', 'dgl-platform' ); ?></h2>
-			<p class="dgl-section__note"><?php esc_html_e( 'Registered by somebody whose email address matched nothing on the list', 'dgl-platform' ); ?></p>
+			<h2 class="dgl-section__title" id="dgl-joins-heading"><?php esc_html_e( 'Joining requests to check', 'dgl-platform' ); ?></h2>
+			<p class="dgl-section__note"><?php esc_html_e( 'People whose email address matched nothing on the list: an organisation they registered, or one they picked', 'dgl-platform' ); ?></p>
 		</div>
 
 		<table class="dgl-table">
 			<thead>
 				<tr>
-					<th scope="col"><?php esc_html_e( 'Organisation', 'dgl-platform' ); ?></th>
-					<th scope="col"><?php esc_html_e( 'Registered by', 'dgl-platform' ); ?></th>
+					<th scope="col"><?php esc_html_e( 'Request', 'dgl-platform' ); ?></th>
+					<th scope="col"><?php esc_html_e( 'Who', 'dgl-platform' ); ?></th>
 					<th scope="col"><?php esc_html_e( 'Waiting since', 'dgl-platform' ); ?></th>
 				</tr>
 			</thead>
 			<tbody>
 				<?php foreach ( $data['joins'] as $row ) : ?>
 					<tr>
-						<td><a href="<?php echo esc_url( $row['url'] ); ?>"><?php echo esc_html( $row['org'] ); ?></a></td>
+						<td><a href="<?php echo esc_url( $row['url'] ); ?>"><?php echo esc_html( $row['asks'] ); ?></a></td>
 						<td><?php echo esc_html( $row['who'] ); ?> <span class="dgl-help"><?php echo esc_html( $row['email'] ); ?></span></td>
 						<td><?php echo esc_html( $row['since'] ); ?></td>
 					</tr>

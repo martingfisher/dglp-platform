@@ -269,6 +269,12 @@ final class ImportCommand {
 	}
 
 	private static function create( string $name, bool $approve ): int {
+		$alike = Duplicates::hard( Duplicates::find( [ 'name' => $name ], Org::duplicate_candidates() ) );
+
+		if ( [] !== $alike ) {
+			WP_CLI::warning( sprintf( '"%s" looks like post %d, "%s": check the pair after the run.', $name, $alike[0]['id'], $alike[0]['name'] ) );
+		}
+
 		$id = wp_insert_post(
 			[
 				'post_type'   => PostTypes::ORG,

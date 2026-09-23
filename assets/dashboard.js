@@ -531,11 +531,505 @@
 		}
 	}
 
+	/*
+	 * The join form: which of its blocks show follows a radio group, the
+	 * way applyDependencies follows one field. Hidden means disabled, so a
+	 * block the person did not choose sends nothing.
+	 */
+	function revealByChoice( form ) {
+		var blocks = form.querySelectorAll( '[data-dgl-when]' );
+		var radios = form.querySelectorAll( 'input[type="radio"][name="dgl_intent"]' );
+
+		if ( ! blocks.length || ! radios.length ) {
+			return;
+		}
+
+		function chosen() {
+			var value = '';
+
+			Array.prototype.forEach.call( radios, function ( radio ) {
+				if ( radio.checked ) {
+					value = radio.value;
+				}
+			} );
+
+			return value;
+		}
+
+		function sync() {
+			var value = chosen();
+
+			Array.prototype.forEach.call( blocks, function ( block ) {
+				var show = ( block.getAttribute( 'data-dgl-when' ) || '' ).split( '|' ).indexOf( value ) !== -1;
+
+				block.hidden = ! show;
+
+				Array.prototype.forEach.call(
+					block.querySelectorAll( 'input, select, textarea, button' ),
+					function ( field ) {
+						field.disabled = ! show;
+					}
+				);
+			} );
+		}
+
+		Array.prototype.forEach.call( radios, function ( radio ) {
+			radio.addEventListener( 'change', sync );
+		} );
+
+		sync();
+	}
+
+	/*
+	 * A search box over a long select. The select stays in the form and
+	 * carries the value; it is only hidden once this has taken over, so
+	 * without JavaScript it is the control. Typing filters the options to
+	 * the first eight whose words all start somewhere in the name; arrows
+	 * and Enter choose; a chosen name shows with a Change button.
+	 */
+	function orgPicker( form ) {
+		var words = window.dglJoin || {};
+
+		function normalise( text ) {
+			return String( text || '' ).toLowerCase().replace( /^the\s+/, '' ).replace( /[^a-z0-9 ]+/g, ' ' ).replace( /\s+/g, ' ' ).trim();
+		}
+
+		Array.prototype.forEach.call( form.querySelectorAll( '[data-dgl-picker]' ), function ( wrap ) {
+			var select = wrap.querySelector( 'select' );
+
+			if ( ! select ) {
+				return;
+			}
+
+			var options = Array.prototype.filter.call( select.options, function ( option ) {
+				return '' !== option.value;
+			} ).map( function ( option ) {
+				return {
+					id: option.value,
+					label: option.textContent.replace( /\s+/g, ' ' ).trim(),
+					key: normalise( option.textContent ),
+					pending: '1' === option.getAttribute( 'data-pending' )
+				};
+			} );
+
+			var listId = select.id + '_list';
+			var search = document.createElement( 'input' );
+			var list = document.createElement( 'ul' );
+			var chosen = document.createElement( 'p' );
+			var chosenName = document.createElement( 'span' );
+			var change = document.createElement( 'button' );
+			var shown = [];
+			var active = -1;
+
+			search.type = 'text';
+			search.className = 'dgl-field dgl-picker__search';
+			search.setAttribute( 'role', 'combobox' );
+			search.setAttribute( 'aria-autocomplete', 'list' );
+			search.setAttribute( 'aria-expanded', 'false' );
+			search.setAttribute( 'aria-controls', listId );
+			search.setAttribute( 'autocomplete', 'off' );
+			search.setAttribute( 'spellcheck', 'false' );
+			search.placeholder = words.search || 'Start typing the name';
+			search.id = select.id + '_search';
+
+			list.className = 'dgl-picker__list';
+			list.id = listId;
+			list.setAttribute( 'role', 'listbox' );
+			list.hidden = true;
+
+			chosen.className = 'dgl-picker__chosen';
+			chosen.hidden = true;
+			change.type = 'button';
+			change.className = 'dgl-picker__change';
+			change.textContent = words.change || 'Change';
+			chosen.appendChild( chosenName );
+			chosen.appendChild( document.createTextNode( ' ' ) );
+			chosen.appendChild( change );
+
+			var label = form.querySelector( 'label[for="' + select.id + '"]' );
+
+			if ( label ) {
+				label.setAttribute( 'for', search.id );
+			}
+
+			select.classList.add( 'dgl-visually-hidden' );
+			select.setAttribute( 'tabindex', '-1' );
+			select.setAttribute( 'aria-hidden', 'true' );
+			wrap.appendChild( search );
+			wrap.appendChild( list );
+			wrap.appendChild( chosen );
+
+			function close() {
+				list.hidden = true;
+				search.setAttribute( 'aria-expanded', 'false' );
+				search.removeAttribute( 'aria-activedescendant' );
+				active = -1;
+			}
+
+			function highlight( index ) {
+				active = index;
+
+				Array.prototype.forEach.call( list.children, function ( item, i ) {
+					var on = i === index && item.hasAttribute( 'data-id' );
+					item.setAttribute( 'aria-selected', on ? 'true' : 'false' );
+					item.classList.toggle( 'is-active', on );
+
+					if ( on ) {
+						search.setAttribute( 'aria-activedescendant', item.id );
+						item.scrollIntoView( { block: 'nearest' } );
+					}
+				} );
+			}
+
+			function choose( option ) {
+				select.value = option.id;
+				select.dispatchEvent( new Event( 'change', { bubbles: true } ) );
+				chosenName.textContent = ( words.chosen || 'Chosen: %s.' ).replace( '%s', option.label );
+				chosen.hidden = false;
+				search.hidden = true;
+				close();
+				change.focus();
+			}
+
+			function render() {
+				var query = normalise( search.value );
+				var terms = query.split( ' ' ).filter( Boolean );
+
+				list.innerHTML = '';
+				shown = [];
+
+				if ( ! terms.length ) {
+					close();
+					return;
+				}
+
+				shown = options.filter( function ( option ) {
+					return terms.every( function ( term ) {
+						return option.key.indexOf( term ) !== -1;
+					} );
+				} ).slice( 0, 8 );
+
+				if ( ! shown.length ) {
+					var none = document.createElement( 'li' );
+					none.className = 'dgl-picker__none';
+					none.textContent = words.noResults || 'Nothing on the list matches that.';
+					list.appendChild( none );
+				}
+
+				shown.forEach( function ( option, i ) {
+					var item = document.createElement( 'li' );
+					item.className = 'dgl-picker__option' + ( option.pending ? ' dgl-picker__option--pending' : '' );
+					item.id = listId + '_' + i;
+					item.setAttribute( 'role', 'option' );
+					item.setAttribute( 'aria-selected', 'false' );
+					item.setAttribute( 'data-id', option.id );
+					item.textContent = option.label;
+					item.addEventListener( 'mousedown', function ( event ) {
+						event.preventDefault();
+						choose( option );
+					} );
+					list.appendChild( item );
+				} );
+
+				list.hidden = false;
+				search.setAttribute( 'aria-expanded', 'true' );
+				active = -1;
+			}
+
+			search.addEventListener( 'input', render );
+			search.addEventListener( 'focus', function () {
+				if ( search.value ) {
+					render();
+				}
+			} );
+			search.addEventListener( 'blur', function () {
+				setTimeout( close, 150 );
+			} );
+			search.addEventListener( 'keydown', function ( event ) {
+				if ( 'ArrowDown' === event.key && shown.length ) {
+					event.preventDefault();
+					highlight( ( active + 1 ) % shown.length );
+				} else if ( 'ArrowUp' === event.key && shown.length ) {
+					event.preventDefault();
+					highlight( ( active - 1 + shown.length ) % shown.length );
+				} else if ( 'Enter' === event.key ) {
+					// Enter in the search box picks, never submits a half-filled form.
+					event.preventDefault();
+
+					if ( active >= 0 && shown[ active ] ) {
+						choose( shown[ active ] );
+					} else if ( 1 === shown.length ) {
+						choose( shown[ 0 ] );
+					}
+				} else if ( 'Escape' === event.key ) {
+					close();
+				}
+			} );
+
+			change.addEventListener( 'click', function () {
+				select.value = '';
+				chosen.hidden = true;
+				search.hidden = false;
+				search.value = '';
+				search.focus();
+			} );
+
+			// Another control on the page may choose for the person: the
+			// review screen's "It is this one" beside a likely match.
+			wrap.dglChoose = function ( id ) {
+				options.some( function ( option ) {
+					if ( option.id === String( id ) ) {
+						choose( option );
+						return true;
+					}
+
+					return false;
+				} );
+			};
+
+			// A server re-render keeps the choice; show it as chosen.
+			if ( '' !== select.value ) {
+				options.some( function ( option ) {
+					if ( option.id === select.value ) {
+						choose( option );
+						search.blur();
+						return true;
+					}
+
+					return false;
+				} );
+			}
+		} );
+	}
+
+	/*
+	 * On the join page, ask the list while the person types their
+	 * organisation's details, so a duplicate is caught before a password
+	 * is chosen. The server runs the same check on submit; this only makes
+	 * that round trip rare. "Yes, that is mine" switches to the picker with
+	 * that organisation chosen; "No, none of these" records the answer in a
+	 * hidden field that any later change to the details clears.
+	 */
+	function duplicateCheck( form ) {
+		var url = form.getAttribute( 'data-dgl-matches' );
+		var token = form.getAttribute( 'data-dgl-token' );
+		var block = form.querySelector( '[data-dgl-when="register"]' );
+
+		if ( ! url || ! token || ! block || ! window.fetch ) {
+			return;
+		}
+
+		var words = window.dglJoin || {};
+		var fields = {
+			name: form.querySelector( '#dgl_org_name' ),
+			website: form.querySelector( '#dgl_org_website' ),
+			number: form.querySelector( '#dgl_org_number' ),
+			postcode: form.querySelector( '#dgl_org_postcode' )
+		};
+
+		if ( ! fields.name ) {
+			return;
+		}
+
+		var box = document.createElement( 'div' );
+		var confirmed = null;
+		var timer = null;
+		var last = '';
+
+		box.className = 'dgl-matches dgl-matches--live';
+		box.setAttribute( 'role', 'status' );
+		box.hidden = true;
+		fields.name.closest( '.dgl-field-row' ).parentNode.insertBefore( box, fields.name.closest( '.dgl-field-row' ) );
+
+		function clearConfirmed() {
+			if ( confirmed ) {
+				confirmed.parentNode.removeChild( confirmed );
+				confirmed = null;
+			}
+		}
+
+		function choose( id ) {
+			var radio = form.querySelector( 'input[name="dgl_intent"][value="claim"]' );
+			var select = form.querySelector( '#dgl_claim_org' );
+
+			if ( radio ) {
+				radio.checked = true;
+				radio.dispatchEvent( new Event( 'change', { bubbles: true } ) );
+			}
+
+			if ( select ) {
+				var wrap = select.closest( '[data-dgl-picker]' );
+
+				if ( wrap && wrap.dglChoose ) {
+					wrap.dglChoose( id );
+				} else {
+					select.value = String( id );
+				}
+			}
+
+			if ( radio ) {
+				radio.closest( 'fieldset' ).scrollIntoView( { behavior: 'smooth', block: 'start' } );
+			}
+		}
+
+		function render( data ) {
+			box.innerHTML = '';
+
+			if ( ! data.matches.length ) {
+				box.hidden = true;
+				return;
+			}
+
+			var title = document.createElement( 'h3' );
+			var help = document.createElement( 'p' );
+			var list = document.createElement( 'ul' );
+
+			title.className = 'dgl-matches__title';
+			title.textContent = data.hard ? ( words.blocked || 'That looks like %s, which is already on the list.' ).replace( '%s', data.matches[ 0 ].name ) : ( words.looksLike || 'Is it one of these?' );
+			help.textContent = data.hard ? ( words.blockedHelp || '' ) : ( words.looksLikeHelp || '' );
+			list.className = 'dgl-matches__list';
+
+			data.matches.forEach( function ( match ) {
+				var item = document.createElement( 'li' );
+				var who = document.createElement( 'div' );
+				var name = document.createElement( 'strong' );
+				var why = document.createElement( 'span' );
+				var take = document.createElement( 'button' );
+
+				item.className = 'dgl-match dgl-match--' + match.strength;
+				who.className = 'dgl-match__who';
+				name.textContent = match.name;
+				why.className = 'dgl-match__why';
+				why.textContent = ( match.pending ? ( words.pending || 'awaiting verification' ) + ', ' : '' ) + match.why;
+				take.type = 'button';
+				take.className = 'dgl-button dgl-button--secondary dgl-match__take';
+				take.textContent = words.take || 'Yes, that is mine';
+				take.addEventListener( 'click', function () {
+					choose( match.id );
+				} );
+
+				who.appendChild( name );
+				who.appendChild( why );
+				item.appendChild( who );
+				item.appendChild( take );
+				list.appendChild( item );
+			} );
+
+			box.appendChild( title );
+			box.appendChild( help );
+			box.appendChild( list );
+
+			if ( ! data.hard ) {
+				var none = document.createElement( 'button' );
+				none.type = 'button';
+				none.className = 'dgl-button dgl-button--secondary';
+				none.textContent = words.none || 'No, none of these';
+				none.addEventListener( 'click', function () {
+					clearConfirmed();
+					confirmed = document.createElement( 'input' );
+					confirmed.type = 'hidden';
+					confirmed.name = 'dgl_confirmed_new';
+					confirmed.value = '1';
+					form.appendChild( confirmed );
+					box.hidden = true;
+				} );
+				box.appendChild( none );
+			}
+
+			box.hidden = false;
+		}
+
+		function ask() {
+			var fd = new FormData();
+			var key;
+
+			fd.append( 'action', 'dgl_join_matches' );
+			fd.append( 'token', token );
+
+			for ( key in fields ) {
+				if ( fields[ key ] ) {
+					fd.append( key, fields[ key ].value );
+				}
+			}
+
+			var signature = fd.get( 'name' ) + '|' + fd.get( 'website' ) + '|' + fd.get( 'number' ) + '|' + fd.get( 'postcode' );
+
+			if ( signature === last ) {
+				return;
+			}
+
+			last = signature;
+
+			fetch( url, { method: 'POST', credentials: 'same-origin', body: fd } ).then( function ( r ) {
+				return r.ok ? r.json() : null;
+			} ).then( function ( json ) {
+				if ( json && json.success && json.data ) {
+					render( json.data );
+				}
+			} ).catch( function () {
+				// The server checks on submit; nothing to say here.
+			} );
+		}
+
+		Object.keys( fields ).forEach( function ( key ) {
+			if ( ! fields[ key ] ) {
+				return;
+			}
+
+			fields[ key ].addEventListener( 'input', function () {
+				clearConfirmed();
+				clearTimeout( timer );
+				timer = setTimeout( ask, 600 );
+			} );
+			fields[ key ].addEventListener( 'blur', function () {
+				clearTimeout( timer );
+				ask();
+			} );
+		} );
+	}
+
+	/*
+	 * "It is this one" beside a likely match on the review screen fills the
+	 * attach picker with that organisation and takes the person to it.
+	 */
+	function attachShortcut() {
+		document.addEventListener( 'click', function ( event ) {
+			var button = event.target.closest( '[data-dgl-attach]' );
+
+			if ( ! button ) {
+				return;
+			}
+
+			var select = document.getElementById( 'dgl-attach-org' );
+
+			if ( ! select ) {
+				return;
+			}
+
+			var wrap = select.closest( '[data-dgl-picker]' );
+
+			if ( wrap && wrap.dglChoose ) {
+				wrap.dglChoose( button.getAttribute( 'data-dgl-attach' ) );
+			} else {
+				select.value = button.getAttribute( 'data-dgl-attach' );
+			}
+
+			var card = document.getElementById( 'dgl-attach' );
+
+			if ( card ) {
+				card.scrollIntoView( { behavior: 'smooth', block: 'start' } );
+			}
+		} );
+	}
+
 	function init() {
 		var forms = document.querySelectorAll( '.dgl-form' );
 
 		Array.prototype.forEach.call( forms, function ( form ) {
 			applyDependencies( form );
+			revealByChoice( form );
+			orgPicker( form );
+			duplicateCheck( form );
 			addCounters( form );
 			guardFileSize( form );
 			shrinkImages( form );
@@ -545,6 +1039,7 @@
 		} );
 
 		confirmDestructive();
+		attachShortcut();
 		responsiveMenu();
 	}
 

@@ -83,6 +83,7 @@ final class Plugin {
 		SignIn::init();
 		Admin::init();
 		\DGL\Dashboard\UploadEndpoint::init();
+		\DGL\Joining\MatchEndpoint::init();
 		Frontend::init();
 		\DGL\News\LegacyRedirect::init();
 
