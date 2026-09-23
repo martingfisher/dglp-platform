@@ -112,6 +112,7 @@ final class Plugin {
 			\DGL\Reports\Command::register();
 			\DGL\Joining\Command::register();
 			\DGL\Schema\LinksCommand::register();
+			\DGL\Tools\LinksCommand::register();
 			\DGL\News\Command::register();
 		}
 
