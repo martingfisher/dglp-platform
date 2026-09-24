@@ -263,6 +263,12 @@ final class Controller {
 			return;
 		}
 
+		if ( 'orgs' === ( $segments[1] ?? '' ) ) {
+			$org_id = (int) ( $segments[2] ?? 0 );
+			$org_id > 0 ? self::organisation( $org_id, $user ) : self::organisations( $user );
+			return;
+		}
+
 		if ( 'org' === ( $segments[1] ?? '' ) ) {
 			self::review_org( (int) ( $segments[2] ?? 0 ), $user );
 			return;
@@ -697,6 +703,144 @@ final class Controller {
 	}
 
 	/**
+	 * Every organisation, for the review team: who is trusted for what.
+	 */
+	private static function organisations( UserContext $user ): void {
+		if ( ! Access::can( $user->user_id, Policy::MANAGE_ORGS ) ) {
+			self::screen( 'no-access', [], __( 'No access', 'dgl-platform' ), $user );
+			return;
+		}
+
+		$q      = isset( $_GET['q'] ) ? sanitize_text_field( wp_unslash( $_GET['q'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$found  = \DGL\Org\Org::search( $q, 24, 0 );
+		$paging = self::page_args( $found['total'], 24 );
+		$found  = 0 === $paging['offset'] ? $found : \DGL\Org\Org::search( $q, 24, $paging['offset'] );
+		$rows   = [];
+
+		foreach ( $found['ids'] as $org_id ) {
+			$rows[] = [
+				'id'       => $org_id,
+				'name'     => (string) get_the_title( $org_id ),
+				'url'      => Router::url( 'review', 'orgs', (string) $org_id ),
+				'status'   => Org::status( $org_id ),
+				'approved' => Org::is_approved( $org_id ),
+				'trust'    => \DGL\Org\Trust::stored_summary( $org_id ),
+				'trusted'  => \DGL\Org\Trust::stored( $org_id )->is_on(),
+				'members'  => count( Org::members( $org_id ) ),
+				'waiting'  => \DGL\Org\Profile::has_pending( $org_id ),
+			];
+		}
+
+		self::screen(
+			'review-orgs',
+			[
+				'user' => $user,
+				'q'    => $q,
+				'rows' => $rows,
+			] + $paging,
+			__( 'Organisations', 'dgl-platform' ),
+			$user
+		);
+	}
+
+	/**
+	 * One organisation, for the review team: its trust switches, people and
+	 * details. The trust form posts back here.
+	 */
+	private static function organisation( int $org_id, UserContext $user ): void {
+		if ( ! Access::can( $user->user_id, Policy::MANAGE_ORGS ) ) {
+			self::screen( 'no-access', [], __( 'No access', 'dgl-platform' ), $user );
+			return;
+		}
+
+		if ( ! Org::exists( $org_id ) || 'publish' !== get_post_status( $org_id ) ) {
+			self::not_found( $user );
+			return;
+		}
+
+		$labels = \DGL\Org\Trust::labels();
+		$error  = '';
+
+		if ( 'POST' === ( $_SERVER['REQUEST_METHOD'] ?? 'GET' ) && isset( $_POST['dgl_trust_save'] ) ) {
+			check_admin_referer( Wizard::NONCE );
+
+			// A sub-switch that was not posted is off: hidden means disabled means
+			// absent. With JavaScript off the sub-switches post whatever they
+			// hold, so the master being off has to win here too.
+			$on     = ! empty( $_POST['dgl_trust_on'] );
+			$posted = isset( $_POST['dgl_trust_type'] ) && is_array( $_POST['dgl_trust_type'] )
+				? array_map( 'sanitize_key', array_keys( wp_unslash( $_POST['dgl_trust_type'] ) ) ) // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+				: [];
+			$types  = [];
+
+			foreach ( array_keys( $labels ) as $type ) {
+				$types[ $type ] = $on && in_array( $type, $posted, true );
+			}
+
+			$result = \DGL\Org\Trust::set(
+				$org_id,
+				new \DGL\Org\TrustSettings( $on, $types, $on && ! empty( $_POST['dgl_trust_edits'] ) ),
+				$user->user_id
+			);
+
+			if ( is_wp_error( $result ) ) {
+				$error = $result->get_error_message();
+			} else {
+				wp_safe_redirect( add_query_arg( 'saved', '1', Router::url( 'review', 'orgs', (string) $org_id ) ) );
+				exit;
+			}
+		}
+
+		$members = [];
+
+		foreach ( Org::members( $org_id ) as $member_id ) {
+			$member = get_userdata( $member_id );
+
+			if ( ! $member ) {
+				continue;
+			}
+
+			$members[] = [
+				'name'    => (string) $member->display_name,
+				'email'   => (string) $member->user_email,
+				'role'    => UserContext::ORG_OWNER === Org::role_for_user( $member_id ) ? __( 'Owner', 'dgl-platform' ) : __( 'Contributor', 'dgl-platform' ),
+				'account' => (string) get_user_meta( $member_id, \DGL\Meta::USER_ACCOUNT_STATUS, true ),
+			];
+		}
+
+		$values = \DGL\Org\Profile::values( $org_id );
+		$counts = ItemsTable::counts_for_org( $org_id );
+
+		self::screen(
+			'review-organisation',
+			[
+				'user'      => $user,
+				'org_id'    => $org_id,
+				'name'      => (string) get_the_title( $org_id ),
+				'status'    => Org::status( $org_id ),
+				'approved'  => Org::is_approved( $org_id ),
+				'settings'  => \DGL\Org\Trust::stored( $org_id ),
+				'summary'   => \DGL\Org\Trust::stored_summary( $org_id ),
+				'labels'    => $labels,
+				'members'   => $members,
+				'website'   => (string) ( $values['org_website'] ?? '' ),
+				'email'     => (string) ( $values['org_email'] ?? '' ),
+				'phone'     => (string) ( $values['org_phone'] ?? '' ),
+				'domains'   => Org::domains( $org_id ),
+				'live'      => $counts[ Statuses::LIVE ] ?? 0,
+				'rejected'  => $counts[ Statuses::REJECTED ] ?? 0,
+				'waiting'   => \DGL\Org\Profile::has_pending( $org_id ),
+				'history'   => \DGL\Audit\Log::for_org_actions( $org_id, [ 'trust_changed', 'trust_revoked' ], 10 ),
+				'admin_url' => admin_url( 'post.php?post=' . $org_id . '&action=edit' ),
+				'saved'     => isset( $_GET['saved'] ), // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+				'error'     => $error,
+			],
+			(string) get_the_title( $org_id ),
+			$user
+		);
+	}
+
+	/**
 	 * A requested name or logo change, read and decided, on the front end.
 	 *
 	 * The same decision the wp-admin Organisations screen offers, where the
@@ -975,7 +1119,11 @@ final class Controller {
 				'topics'    => wp_get_object_terms( $post_id, Taxonomies::TOPIC, [ 'fields' => 'names' ] ),
 				'error'     => $error,
 				'org'       => $org_id > 0 ? get_post( $org_id ) : null,
-				'org_trust' => \DGL\Org\Trust::label( \DGL\Org\Org::trust_level( $org_id > 0 ? $org_id : null ) ),
+				'org_trust' => \DGL\Org\Trust::summary_for( $org_id > 0 ? $org_id : null ),
+				// Which switch let it through, when one did, so the reviewer can
+				// see why a live item never came past them.
+				'trust_why' => $org_id > 0 && Statuses::LIVE === $post->post_status ? \DGL\Org\Trust::settings( $org_id )->why( $is_edit ? Revisions::type_of( $post_id ) : (string) $post->post_type, $is_edit ) : '',
+				'trust_url' => Router::url( 'review', 'orgs', (string) $org_id ),
 				'submitter' => get_userdata( (int) $post->post_author ),
 				'approved'  => $counts[ Statuses::LIVE ] ?? 0,
 				'rejected'  => $counts[ Statuses::REJECTED ] ?? 0,
@@ -1686,7 +1834,7 @@ final class Controller {
 				'tab'        => $tab,
 				'org'        => $org_id > 0 ? get_post( $org_id ) : null,
 				'org_status' => $org_id > 0 ? Org::status( $org_id ) : '',
-				'org_trust'  => \DGL\Org\Trust::label( \DGL\Org\Org::trust_level( $org_id > 0 ? $org_id : null ) ),
+				'org_trust'  => \DGL\Org\Trust::summary_for( $org_id > 0 ? $org_id : null ),
 				'fields'     => \DGL\Org\Schema::fields(),
 				'sections'   => \DGL\Org\Schema::sections(),
 				'directory_on'   => $org_id > 0 && \DGL\Org\Directory::wants_listing( $org_id ),

@@ -1,8 +1,9 @@
 # Review team guide
 
 For the DGLP staff who check submissions, verify organisations and look after
-members. Two places matter: the review queue at `/dashboard/review`, which you
-reach through the user area, and the Organisations screen in wp-admin.
+members. Three places matter: the review queue at `/dashboard/review` and the
+Organisations section at `/dashboard/review/orgs`, both reached through the
+user area, and the Organisations screen in wp-admin.
 
 ## Help inside the user area
 
@@ -175,21 +176,46 @@ on the page is "Take it off the site". A note is required. The item comes off
 the public site, goes back into the queue as needing changes, and the member
 is emailed your note.
 
+## Organisations: trust, people and details
+
+Organisations, under Review team in the user area, lists every organisation
+on the platform with its verification state, its trust setting and how many
+people it has. Search by name. Open one to see its people (with their role
+and account state), its website, email, phone and email domains, how many
+listings it has live, and its trust switches.
+
+**Trust this organisation** is off for every organisation to start with:
+everything it submits comes to the queue. Switch it on and four more
+switches appear.
+
+- **Trust News**, **Trust Events**, **Trust Training**. Tick one and new
+  items of that type, and edits to them, appear on the site as soon as they
+  are submitted. Untick it and they come to the queue again.
+- **Trust edits to already approved items**. An edit to anything the team
+  has already approved goes live straight away, whatever its type. New
+  items still come to the queue unless their type is ticked.
+
+Any review team member can change these. Every change is recorded on the
+organisation's page, under Trust changes, and its owners are emailed the new
+setting. Refusing or taking down anything from a trusted organisation
+switches all of it off again, so trust has to be given back on purpose. An
+unverified organisation's switches are kept but do nothing until it is
+verified in wp-admin. Something already waiting in the queue when you change
+trust stays there: the decision is made when an item is submitted.
+
+On a review screen, the Trust line under "Who sent it" shows the
+organisation's setting and, for a live item that never came to the queue,
+which switch let it through.
+
 ## The Organisations screen in wp-admin
 
-Each organisation has a box on the right with three settings.
+Each organisation has a box on the right with two settings, and shows its
+trust setting with a link to change it in the user area.
 
 **Verification.** Pending means nobody at the organisation can submit yet.
 Approved means they can. Suspended stops submitting and editing but leaves
 their live listings up. Verifying from the review queue sets this to Approved
 for you.
-
-**Trust level.** Moderated is the default: every submission and every edit is
-reviewed before it appears. "Trusted for edits" reviews new items but lets
-edits to approved items go live straight away. "Trusted" lets everything go
-live straight away and lists it for a spot check. Move an organisation up only
-when their record earns it. Trust never outlives verification: suspend the
-organisation and the trust level stops applying.
 
 **Email domains.** One per line, for example `leedscommunitytrust.org.uk`.
 Anyone who joins with an email address at that domain is offered this

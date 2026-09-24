@@ -11,7 +11,6 @@ use DGL\Email\Context;
 use DGL\Email\Copy;
 use DGL\Email\Message;
 use DGL\Email\Routing;
-use DGL\Org\Trust;
 use DGL\Statuses;
 use DGL\Workflow\Plan;
 use DGL\Workflow\Planner;
@@ -29,6 +28,7 @@ $ctx = static fn( array $o = [] ): Context => new Context(
 	queue_url: $o['queue_url'] ?? 'https://example.test/dashboard/review',
 	expires_on: $o['expires_on'] ?? '',
 	note: $o['note'] ?? '',
+	trusted_for: $o['trusted_for'] ?? '',
 );
 
 /*
@@ -43,7 +43,7 @@ $pairs = [];
 
 foreach ( array_keys( StateMachine::table() ) as $action ) {
 	foreach ( Statuses::all() as $from ) {
-		foreach ( [ Trust::MODERATED, Trust::TRUSTED_EDITS, Trust::TRUSTED ] as $trust ) {
+		foreach ( [ false, true ] as $trust ) {
 			foreach ( [ true, false ] as $staff ) {
 				$plan = Planner::plan( $action, $from, $trust, $staff );
 
@@ -227,6 +227,7 @@ $edit = static fn( array $o = [] ): Context => new Context(
 	expires_on: '',
 	note: $o['note'] ?? '',
 	is_edit: true,
+	trusted_for: $o['trusted_for'] ?? '',
 );
 
 /*
@@ -400,3 +401,14 @@ $gone = Copy::compose( 'expired', Plan::NOTIFY_MEMBER, new Context( title: 'Gran
 Harness::assert_true( null !== $gone && str_contains( $gone->paragraphs[0], 'listed for 3 months' ), 'an expired listing is told it ran its spell, not that it passed a date' );
 $dated = Copy::compose( 'expired', Plan::NOTIFY_MEMBER, new Context( title: 'Fete', type_label: 'Event' ) );
 Harness::assert_true( null !== $dated && str_contains( $dated->paragraphs[0], 'passed its date' ), 'a dated item keeps the old wording' );
+
+Harness::group( 'Published on trust names what the organisation is trusted for' );
+
+$m = Copy::compose( 'published_on_trust', Plan::NOTIFY_MEMBER, $ctx( [ 'trusted_for' => 'News' ] ) );
+Harness::assert_true( null !== $m && str_contains( implode( ' ', $m->paragraphs ), 'trusted for News' ), 'a new story says trusted for News' );
+$m = Copy::compose( 'published_on_trust', Plan::NOTIFY_MODERATORS, $ctx( [ 'trusted_for' => 'News' ] ) );
+Harness::assert_true( null !== $m && str_contains( implode( ' ', $m->paragraphs ), 'trusted for News' ), 'and so does the team\'s copy' );
+$m = Copy::compose( 'published_on_trust', Plan::NOTIFY_MEMBER, $edit( [ 'trusted_for' => 'edits' ] ) );
+Harness::assert_true( null !== $m && str_contains( implode( ' ', $m->paragraphs ), 'trusted for edits' ), 'an edit let through on the edits switch says so' );
+$m = Copy::compose( 'published_on_trust', Plan::NOTIFY_MEMBER, $ctx() );
+Harness::assert_true( null !== $m && str_contains( implode( ' ', $m->paragraphs ), 'trusted for this kind of listing' ), 'with nothing known the wording still reads' );

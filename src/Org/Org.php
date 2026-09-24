@@ -77,11 +77,7 @@ final class Org {
 	 * is stored against it, so trust can never outlive verification.
 	 */
 	public static function trust_level( ?int $org_id ): int {
-		if ( null === $org_id || $org_id <= 0 || ! self::is_approved( $org_id ) ) {
-			return Trust::MODERATED;
-		}
-
-		return Trust::normalise( get_post_meta( $org_id, Meta::ORG_TRUST, true ) );
+		return Trust::settings( $org_id )->legacy_level();
 	}
 
 	/**
@@ -332,6 +328,33 @@ final class Org {
 
 		return '' !== trim( (string) get_post_meta( $org_id, Meta::ORG_IMPORTED_AT, true ) )
 			&& '' === trim( (string) get_post_meta( $org_id, Meta::ORG_CHECKED_AT, true ) );
+	}
+
+	/**
+	 * Organisations by name, for the review team's list. Every published
+	 * organisation whatever its verification state, name order, title match
+	 * only. An empty search is the whole list.
+	 *
+	 * @return array{ids: int[], total: int}
+	 */
+	public static function search( string $q, int $limit = 24, int $offset = 0 ): array {
+		global $wpdb;
+
+		$q     = trim( $q );
+		$where = "post_type = %s AND post_status = 'publish'";
+		$args  = [ PostTypes::ORG ];
+
+		if ( '' !== $q ) {
+			$where .= ' AND post_title LIKE %s';
+			$args[] = '%' . $wpdb->esc_like( $q ) . '%';
+		}
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
+		$total = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->posts} WHERE {$where}", ...$args ) );
+		$ids   = $wpdb->get_col( $wpdb->prepare( "SELECT ID FROM {$wpdb->posts} WHERE {$where} ORDER BY post_title ASC, ID ASC LIMIT %d OFFSET %d", ...array_merge( $args, [ $limit, $offset ] ) ) );
+		// phpcs:enable
+
+		return [ 'ids' => array_map( 'intval', $ids ), 'total' => $total ];
 	}
 
 	public static function exists( int $org_id ): bool {

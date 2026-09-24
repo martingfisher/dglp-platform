@@ -33,7 +33,13 @@ final class Meta {
 	/** Whether the DGLP team has verified the organisation. */
 	public const ORG_STATUS = 'dgl_org_status';
 
-	/** One of Org\Trust::*. */
+	/**
+	 * The trust setting: array{on: bool, types: array<string, bool>, edits: bool}.
+	 * See Org\TrustSettings. ORG_TRUST is derived from it and kept for the index.
+	 */
+	public const ORG_TRUST_SETTINGS = 'dgl_trust';
+
+	/** The old level, 0 to 2, derived from ORG_TRUST_SETTINGS. Read only by the index. */
 	public const ORG_TRUST = 'dgl_trust_level';
 
 	/** Wall-clock datetime of the next occurrence that has not finished; a one-off's start. Mirrored into the index. */

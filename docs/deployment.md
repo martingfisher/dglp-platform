@@ -157,6 +157,19 @@ The topic list ships in the plugin and seeds itself:
   one: `wp post meta get <org id> dgl_org_checked_at` is empty before, a UTC
   datetime after.
 
+## After 0.34.0
+
+- `wp option get dgl_platform_db_version` should print `10`. Schema 10 gives
+  every organisation the new trust setting (`dgl_trust`, an array with `on`,
+  `types` and `edits`) worked out from its old level: 2 becomes everything
+  on, 1 becomes edits only, 0 stays off. The old `dgl_trust_level` is kept in
+  step for the index. Check one: `wp post meta get <org id> dgl_trust`.
+- Moderators gain the `grant_dgl_trust` capability, so the review team can
+  set trust from Organisations in the user area:
+  `wp cap list dgl_moderator` should include it.
+- The wp-admin Organisations box no longer has a trust select. It shows the
+  setting and links to the user area page.
+
 ## Staging to production
 
 Do **not** use Wordify's `push_staging` to move the plugin. That pushes the whole

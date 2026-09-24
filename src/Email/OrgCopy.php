@@ -123,4 +123,38 @@ final class OrgCopy {
 			]
 		);
 	}
+
+	/**
+	 * To the organisation's owners: the review team changed what they may
+	 * publish without review.
+	 *
+	 * @param string $summary In words, e.g. "Trusted: News, Events".
+	 */
+	public static function trust_changed( string $org_name, string $summary, string $profile_url ): Message {
+		return new Message(
+			key: 'trust_changed',
+			audience: 'member',
+			subject: sprintf(
+				/* translators: %s: organisation. */
+				__( 'Review settings changed for %s', 'dgl-platform' ),
+				$org_name
+			),
+			preheader: __( 'The review team changed what your organisation can publish without review.', 'dgl-platform' ),
+			heading: __( 'Your review settings changed', 'dgl-platform' ),
+			paragraphs: [
+				sprintf(
+					/* translators: 1: organisation, 2: the new setting in words. */
+					__( 'The review team changed what %1$s can publish without a reviewer reading it first. The setting is now: %2$s.', 'dgl-platform' ),
+					$org_name,
+					$summary
+				),
+				__( 'Anything not covered by that setting is still read by the review team before it appears. Anything already waiting for review is unaffected.', 'dgl-platform' ),
+			],
+			cta_label: __( 'Go to your member area', 'dgl-platform' ),
+			cta_url: $profile_url,
+			footnotes: [
+				__( 'You are getting this because you are an owner of the organisation in the DGLP member area.', 'dgl-platform' ),
+			]
+		);
+	}
 }

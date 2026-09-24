@@ -37,7 +37,18 @@ final readonly class Context {
 		public string $note = '',
 		public bool $is_edit = false,
 		public string $lifetime = '',
+		public string $trusted_for = '',
 	) {}
+
+	/**
+	 * What the organisation was trusted for when this went live on trust:
+	 * the plural type label ("News") or "edits", mid-sentence.
+	 */
+	public function trusted_for(): string {
+		$for = trim( $this->trusted_for );
+
+		return '' !== $for ? $for : __( 'this kind of listing', 'dgl-platform' );
+	}
 
 	/**
 	 * The title, or something honest when there is not one yet.

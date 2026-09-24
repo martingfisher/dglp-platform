@@ -27,7 +27,7 @@ final class Roles {
 	/** Decide on a pending submission. */
 	public const CAP_MODERATE = 'moderate_dgl_items';
 
-	/** Raise or lower an organisation's trust level. Administrators only. */
+	/** Change what an organisation may publish without review. Any review team member. */
 	public const CAP_GRANT_TRUST = 'grant_dgl_trust';
 
 	/** Read the audit trail across all organisations. */
@@ -60,9 +60,9 @@ final class Roles {
 	/**
 	 * Capabilities a moderator holds.
 	 *
-	 * Note the absence of CAP_GRANT_TRUST and of delete: a moderator decides
-	 * what goes live, an administrator decides who is trusted and what is
-	 * destroyed.
+	 * Note the absence of delete: a moderator decides what goes live and,
+	 * since 0.34.0, which organisations are trusted; an administrator decides
+	 * what is destroyed.
 	 *
 	 * @return array<string, bool>
 	 */
@@ -81,6 +81,7 @@ final class Roles {
 			'edit_others_dgl_orgs'      => true,
 			'read_private_dgl_orgs'     => true,
 			self::CAP_MODERATE          => true,
+			self::CAP_GRANT_TRUST       => true,
 			self::CAP_VIEW_AUDIT        => true,
 			self::CAP_MANAGE_TOPICS     => true,
 		];

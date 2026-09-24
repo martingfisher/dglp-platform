@@ -1817,6 +1817,50 @@ body.dgl-body {
 .dgl-field-row--group .dgl-check .dgl-help { margin: 2px 0 0; }
 
 /*
+ * Organisations, for the review team. The search sits above the table; the
+ * trust form is a master switch with its sub-switches indented under it,
+ * hidden by the dependency script until the master is on.
+ */
+.dgl-orgsearch { margin-bottom: var(--dgl-gap); }
+
+.dgl-orgsearch__row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	align-items: center;
+}
+
+.dgl-orgsearch__row .dgl-field { flex: 1 1 220px; max-width: 420px; }
+
+.dgl-orgs__name { font-weight: 600; }
+
+.dgl-orgs__num { text-align: right; }
+
+.dgl-orgs__trust { white-space: nowrap; }
+
+.dgl-orgs__trust .dgl-help { white-space: normal; }
+
+/* On a phone the header row is hidden, so a bare count needs its word. */
+@media (max-width: 720px) {
+	.dgl-dash__main .dgl-orgs__num::after { content: " " attr(data-noun); }
+}
+
+.dgl-orgs td .dgl-help,
+.dgl-orgs td .dgl-chip { display: inline-block; margin-left: 6px; }
+
+.dgl-trust .dgl-check > span { display: flex; flex-direction: column; gap: 2px; }
+
+.dgl-trust__sub {
+	margin-left: 27px;
+	padding-left: 14px;
+	border-left: 3px solid var(--dgl-border);
+}
+
+.dgl-trust__sub > legend { margin-bottom: 8px; }
+
+.dgl-trust__sub[hidden] { display: none; }
+
+/*
  * Joining: which organisation. The intent radios carry a bold line and a
  * help line each; the matched organisations sit indented under theirs.
  */

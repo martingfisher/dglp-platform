@@ -835,3 +835,22 @@ clean. They are the only DGLP content on staging.
   site's probe because the sandbox proxy blocks them: website, description,
   email, phone, address, postcode, email domain; LOPF's charity and company
   numbers; the other two print none.
+- **0.34.0 deployed** (24 September, production): trust per organisation,
+  per content type, set by the review team from the Admin area. New
+  Organisations section under Review team (`/dashboard/review/orgs`): every
+  organisation with its verification state, trust setting and member count,
+  searchable by name, 24 a page. Open one for its trust switches, people,
+  details, live and refused counts and a Trust changes history. "Trust this
+  organisation" is off for all to start; on reveals Trust News, Trust
+  Events, Trust Training and Trust edits to already approved items. The
+  decision is made at submit time from the item's type and whether it is an
+  edit; a refusal or take-down switches everything off; an unverified
+  organisation's switches are kept but do nothing. Every change is audited
+  (`trust_changed`, note is the new setting) and the owners are emailed.
+  Schema 10 migrates the old level into the new `dgl_trust` meta (2 becomes
+  everything, 1 edits only, 0 off) and keeps `dgl_trust_level` in step for
+  the index; moderators gain `grant_dgl_trust`. The wp-admin Organisations
+  box shows the setting read-only with a link to the new page. Review
+  screens show the setting and, for a live item that skipped the queue,
+  which switch let it through. Unit 1998, integration 1095, contrast AAA
+  clear on the two new routes.

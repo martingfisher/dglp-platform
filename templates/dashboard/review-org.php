@@ -24,6 +24,8 @@ $changes = $data['changes'] ?? [];
 	<div>
 		<p class="dgl-crumbs">
 			<a href="<?php echo esc_url( Router::url( 'review' ) ); ?>"><?php esc_html_e( 'Review queue', 'dgl-platform' ); ?></a>
+			<span aria-hidden="true">/</span>
+			<a href="<?php echo esc_url( Router::url( 'review', 'orgs', (string) (int) $data['org_id'] ) ); ?>"><?php esc_html_e( 'Organisation', 'dgl-platform' ); ?></a>
 		</p>
 		<h1 class="dgl-page-head__title"><?php echo esc_html( (string) $data['name'] ); ?></h1>
 		<p class="dgl-page-head__lede">

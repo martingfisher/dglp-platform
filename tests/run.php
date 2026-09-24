@@ -10,6 +10,7 @@ declare( strict_types=1 );
 require __DIR__ . '/bootstrap.php';
 require __DIR__ . '/test-policy.php';
 require __DIR__ . '/test-state-machine.php';
+require __DIR__ . '/test-trust-settings.php';
 require __DIR__ . '/test-schema.php';
 require __DIR__ . '/test-brand.php';
 require __DIR__ . '/test-topic-suggest.php';

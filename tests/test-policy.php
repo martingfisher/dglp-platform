@@ -115,11 +115,13 @@ Harness::assert_true( Policy::decide( moderator(), Policy::TAKE_DOWN_ITEM, item_
 Harness::assert_false( Policy::decide( moderator(), Policy::TAKE_DOWN_ITEM, item_a( Statuses::PENDING ) ), 'take down only applies to live content' );
 Harness::assert_false( Policy::decide( member_a(), Policy::TAKE_DOWN_ITEM, item_a( Statuses::LIVE ) ), 'member cannot take down content' );
 
-Harness::group( 'Trust is an administrator decision' );
+Harness::group( 'Trust is a review team decision' );
 
-Harness::assert_false( Policy::decide( moderator(), Policy::GRANT_TRUST ), 'moderator cannot grant trust' );
+Harness::assert_true( Policy::decide( moderator(), Policy::GRANT_TRUST ), 'moderator can set trust' );
 Harness::assert_false( Policy::decide( member_a( UserContext::ORG_OWNER ), Policy::GRANT_TRUST ), 'org owner cannot grant themselves trust' );
-Harness::assert_true( Policy::decide( administrator(), Policy::GRANT_TRUST ), 'administrator can grant trust' );
+Harness::assert_true( Policy::decide( administrator(), Policy::GRANT_TRUST ), 'administrator can set trust' );
+Harness::assert_true( Policy::decide( moderator(), Policy::MANAGE_ORGS ), 'moderator can open the Organisations section' );
+Harness::assert_false( Policy::decide( member_a( UserContext::ORG_OWNER ), Policy::MANAGE_ORGS ), 'a member cannot' );
 
 Harness::group( 'Deletion is limited to untouched drafts' );
 

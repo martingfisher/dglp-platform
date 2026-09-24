@@ -400,8 +400,18 @@ $check_word = static fn( string $status ): string => match ( $status ) {
 			<dl class="dgl-review__list">
 				<dt><?php esc_html_e( 'Organisation', 'dgl-platform' ); ?></dt>
 				<dd><?php echo esc_html( $data['org'] ? get_the_title( $data['org'] ) : __( 'None', 'dgl-platform' ) ); ?></dd>
-				<dt><?php esc_html_e( 'Trust level', 'dgl-platform' ); ?></dt>
-				<dd><?php echo esc_html( (string) $data['org_trust'] ); ?></dd>
+				<dt><?php esc_html_e( 'Trust', 'dgl-platform' ); ?></dt>
+				<dd>
+					<?php echo esc_html( (string) $data['org_trust'] ); ?>
+					<?php if ( 'type' === (string) ( $data['trust_why'] ?? '' ) ) : ?>
+						<span class="dgl-help"><?php esc_html_e( 'Went live without review: this type is trusted.', 'dgl-platform' ); ?></span>
+					<?php elseif ( 'edits' === (string) ( $data['trust_why'] ?? '' ) ) : ?>
+						<span class="dgl-help"><?php esc_html_e( 'Went live without review: edits are trusted.', 'dgl-platform' ); ?></span>
+					<?php endif; ?>
+					<?php if ( $data['org'] ) : ?>
+						<span class="dgl-help"><a href="<?php echo esc_url( (string) $data['trust_url'] ); ?>"><?php esc_html_e( 'Change', 'dgl-platform' ); ?></a></span>
+					<?php endif; ?>
+				</dd>
 				<dt><?php esc_html_e( 'Live on site', 'dgl-platform' ); ?></dt>
 				<dd><?php echo esc_html( (string) $data['approved'] ); ?></dd>
 				<dt><?php esc_html_e( 'Previously refused', 'dgl-platform' ); ?></dt>

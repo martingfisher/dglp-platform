@@ -98,10 +98,14 @@ final class Transition {
 		}
 
 		$org_id = Org::for_item( $post_id );
-		$trust  = Org::trust_level( $org_id > 0 ? $org_id : null );
 		$staff  = ! $system && Access::user_context( $actor_id )->is_moderator();
 
-		$plan = Planner::plan( $action, (string) $post->post_status, $trust, $staff, $is_edit );
+		// Trust is per content type and per kind of change. An edit is decided
+		// by the type of the item it would replace.
+		$type = $is_edit ? Revisions::type_of( $post_id ) : (string) $post->post_type;
+		$auto = '' !== $type && Trust::settings( $org_id > 0 ? $org_id : null )->skips_review( $type, $is_edit );
+
+		$plan = Planner::plan( $action, (string) $post->post_status, $auto, $staff, $is_edit );
 
 		if ( null === $plan ) {
 			return self::illegal( $action, (string) $post->post_status );
@@ -193,22 +197,8 @@ final class Transition {
 			}
 		}
 
-		if ( $plan->revokes_trust && $org_id > 0 && Trust::MODERATED !== Trust::normalise( get_post_meta( $org_id, Meta::ORG_TRUST, true ) ) ) {
-			update_post_meta( $org_id, Meta::ORG_TRUST, Trust::MODERATED );
-
-			Log::record(
-				'trust_revoked',
-				'org',
-				$org_id,
-				$org_id,
-				sprintf(
-					/* translators: %s: the action that caused it. */
-					__( 'Trust returned to moderated automatically after %s.', 'dgl-platform' ),
-					$plan->action
-				),
-				[],
-				$actor_id
-			);
+		if ( $plan->revokes_trust && $org_id > 0 ) {
+			Trust::revoke( $org_id, $plan->action, $actor_id );
 		}
 
 		Sync::sync( $post_id );

@@ -9,7 +9,6 @@ declare( strict_types=1 );
 
 namespace DGL\Workflow;
 
-use DGL\Org\Trust;
 use DGL\Statuses;
 
 defined( 'ABSPATH' ) || exit;
@@ -87,13 +86,17 @@ final class StateMachine {
 	/**
 	 * Where an action lands, or null if the move is illegal from this status.
 	 *
-	 * @param string $action  One of the class constants.
-	 * @param string $from     The item's current status.
-	 * @param int    $trust    The owning organisation's trust level.
-	 * @param bool   $is_edit  Whether this is an edit to something already
-	 *                         published, rather than a new submission.
+	 * @param string $action       One of the class constants.
+	 * @param string $from         The item's current status.
+	 * @param bool   $auto_publish Whether the owning organisation is trusted
+	 *                             for this kind of submission, decided by the
+	 *                             caller with TrustSettings::skips_review().
+	 * @param bool   $is_edit      Whether this is an edit to something already
+	 *                             published, rather than a new submission.
+	 *                             Kept for the record; the caller has already
+	 *                             folded it into $auto_publish.
 	 */
-	public static function next( string $action, string $from, int $trust = Trust::MODERATED, bool $is_edit = false ): ?string {
+	public static function next( string $action, string $from, bool $auto_publish = false, bool $is_edit = false ): ?string {
 		$to = self::table()[ $action ][ $from ] ?? null;
 
 		if ( null === $to ) {
@@ -105,18 +108,12 @@ final class StateMachine {
 		 * else about the move, including the audit entry, is unchanged: the
 		 * item simply lands on `publish` instead of waiting in the queue.
 		 *
-		 * Edits and new items are two different permissions. The middle trust
-		 * level exists precisely so an organisation can fix its own typos
-		 * without waiting, while anything genuinely new is still read first.
+		 * Whether it is trusted is decided per content type and per kind of
+		 * change (new or edit) before this is called, so this only has to
+		 * know the answer.
 		 */
-		if ( self::SUBMIT === $action && Statuses::PENDING === $to ) {
-			$skips_queue = $is_edit
-				? Trust::auto_publishes_edits( $trust )
-				: Trust::auto_publishes_new( $trust );
-
-			if ( $skips_queue ) {
-				return Statuses::LIVE;
-			}
+		if ( self::SUBMIT === $action && Statuses::PENDING === $to && $auto_publish ) {
+			return Statuses::LIVE;
 		}
 
 		return $to;

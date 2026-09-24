@@ -53,6 +53,7 @@ final class Policy {
 	public const PIN_ITEM        = 'pin_item';
 	public const CANCEL_ITEM     = 'cancel_item';
 	public const REASSIGN_ITEM   = 'reassign_item';
+	public const MANAGE_ORGS     = 'manage_orgs';
 
 	/**
 	 * Decide whether an actor may perform an action, optionally on an item.
@@ -68,7 +69,8 @@ final class Policy {
 		}
 
 		return match ( $action ) {
-			self::GRANT_TRUST    => $user->is_admin(),
+			self::GRANT_TRUST    => $user->is_moderator(), // Any review team member: they are who judge an organisation's record.
+			self::MANAGE_ORGS    => $user->is_moderator(),
 			self::VIEW_ALL_AUDIT => $user->is_moderator(),
 			self::VIEW_ORG_AUDIT => self::can_view_org_audit( $user ),
 			self::MANAGE_ORG     => self::can_manage_org( $user ),

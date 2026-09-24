@@ -144,6 +144,11 @@ final class Install {
 		\DGL\Workflow\Lifetime::release();
 		// Schema 9: sign-ups say what kind they are.
 		SignupStore::backfill_kind();
+		// Schema 10: trust is per content type. Levels become switches, and
+		// moderators gain the capability to set them (roles are only otherwise
+		// written on activation, which an upgrade never fires).
+		\DGL\Org\Trust::migrate_levels();
+		\DGL\Roles::install();
 
 		update_option( self::DB_VERSION_OPTION, DB_VERSION, false );
 	}

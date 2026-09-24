@@ -196,7 +196,7 @@ final class Content {
 	private static function team(): array {
 		return [
 			'title'       => __( 'Review team guide', 'dgl-platform' ),
-			'lede'        => __( 'For the DGLP, Voluntary Action Leeds and Forum Central staff who check submissions, verify organisations and look after members. Two places matter: the review queue in the user area, and the Organisations screen in wp-admin.', 'dgl-platform' ),
+			'lede'        => __( 'For the DGLP, Voluntary Action Leeds and Forum Central staff who check submissions, verify organisations and look after members. Three places matter: the review queue and the Organisations section in the user area, and the Organisations screen in wp-admin.', 'dgl-platform' ),
 			'faq_heading' => __( 'Questions the team ask', 'dgl-platform' ),
 			'sections'    => [
 				[
@@ -254,13 +254,25 @@ final class Content {
 					],
 				],
 				[
+					'id'      => 'trust',
+					'heading' => __( 'Trust: what goes live without you', 'dgl-platform' ),
+					'blocks'  => [
+						[ 'p', __( 'Organisations, under Review team, lists every organisation with its verification state, its trust setting and how many people it has. Search by name. Open one to see its people, its details and its trust switches.', 'dgl-platform' ) ],
+						[ 'p', __( 'Every organisation starts with "Trust this organisation" off: everything it submits comes to the queue. Switch it on and four more switches appear.', 'dgl-platform' ) ],
+						[ 'ul', [
+							__( 'Trust News, Trust Events, Trust Training. Tick one and new items of that type, and edits to them, appear on the site as soon as they are submitted. Untick and they come to the queue again.', 'dgl-platform' ),
+							__( 'Trust edits to already approved items. An edit to anything the team has already approved goes live straight away, whatever its type. New items still come to the queue unless their type is ticked.', 'dgl-platform' ),
+						] ],
+						[ 'p', __( 'Any review team member can change these. Every change is recorded on the organisation\'s page and its owners are emailed. Refusing or taking down anything from a trusted organisation switches all of it off again, so trust has to be given back on purpose. An unverified organisation\'s switches are kept but do nothing until it is verified. Something already waiting in the queue when you change trust stays there.', 'dgl-platform' ) ],
+					],
+				],
+				[
 					'id'      => 'organisations',
 					'heading' => __( 'The Organisations screen in wp-admin', 'dgl-platform' ),
 					'blocks'  => [
-						[ 'p', __( 'Each organisation has a box with three settings.', 'dgl-platform' ) ],
+						[ 'p', __( 'Each organisation has a box with two settings, and shows its trust setting with a link to change it in the user area.', 'dgl-platform' ) ],
 						[ 'ul', [
 							__( 'Verification. Pending means nobody at the organisation can submit yet. Approved means they can. Suspended stops submitting and editing but leaves their live listings up. Verifying from the review queue sets this to Approved for you.', 'dgl-platform' ),
-							__( 'Trust level. Moderated is the default: every submission and every edit is reviewed. "Trusted for edits" reviews new items but lets edits to approved items go live straight away. "Trusted" lets everything go live and lists it for a spot check. Move an organisation up only when its record earns it. Trust never outlives verification.', 'dgl-platform' ),
 							__( 'Email domains, one per line. Anyone who joins with an address at that domain is offered this organisation and, if it is Approved, joins straight away as a colleague. The first person in becomes its owner. Public providers such as gmail.com are never matched, whatever you type; people at those addresses pick the organisation from the list and you check them.', 'dgl-platform' ),
 						] ],
 						[ 'p', __( 'Topics for listings and the public filters are managed under Organisations > Topics. Only topics with something published under them are offered to visitors.', 'dgl-platform' ) ],

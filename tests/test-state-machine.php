@@ -32,38 +32,27 @@ Harness::group( 'Trust changes where a submission lands' );
 
 Harness::assert_same(
 	Statuses::PENDING,
-	StateMachine::next( StateMachine::SUBMIT, Statuses::DRAFT, Trust::MODERATED ),
-	'moderated organisation goes to the queue'
-);
-Harness::assert_same(
-	Statuses::PENDING,
-	StateMachine::next( StateMachine::SUBMIT, Statuses::DRAFT, Trust::TRUSTED_EDITS ),
-	'trusted-for-edits organisation still queues new items'
+	StateMachine::next( StateMachine::SUBMIT, Statuses::DRAFT, false ),
+	'an untrusted submission goes to the queue'
 );
 Harness::assert_same(
 	Statuses::LIVE,
-	StateMachine::next( StateMachine::SUBMIT, Statuses::DRAFT, Trust::TRUSTED ),
-	'fully trusted organisation publishes on submit'
+	StateMachine::next( StateMachine::SUBMIT, Statuses::DRAFT, true ),
+	'a trusted one publishes on submit'
 );
 Harness::assert_same(
 	null,
-	StateMachine::next( StateMachine::SUBMIT, Statuses::ARCHIVED, Trust::TRUSTED ),
+	StateMachine::next( StateMachine::SUBMIT, Statuses::ARCHIVED, true ),
 	'trust does not make an illegal transition legal'
 );
 Harness::assert_same(
 	Statuses::PENDING,
-	StateMachine::next( StateMachine::RESTORE, Statuses::ARCHIVED, Trust::TRUSTED ),
+	StateMachine::next( StateMachine::RESTORE, Statuses::ARCHIVED, true ),
 	'trust does not auto-publish a restore'
 );
 
-Harness::group( 'Trust helpers' );
+Harness::group( 'The old trust levels still normalise, for the index' );
 
-Harness::assert_false( Trust::auto_publishes_new( Trust::MODERATED ), 'moderated does not auto-publish new items' );
-Harness::assert_false( Trust::auto_publishes_new( Trust::TRUSTED_EDITS ), 'trusted-for-edits does not auto-publish new items' );
-Harness::assert_true( Trust::auto_publishes_new( Trust::TRUSTED ), 'trusted auto-publishes new items' );
-Harness::assert_false( Trust::auto_publishes_edits( Trust::MODERATED ), 'moderated does not auto-publish edits' );
-Harness::assert_true( Trust::auto_publishes_edits( Trust::TRUSTED_EDITS ), 'trusted-for-edits auto-publishes edits' );
-Harness::assert_true( Trust::auto_publishes_edits( Trust::TRUSTED ), 'trusted auto-publishes edits' );
 Harness::assert_same( Trust::MODERATED, Trust::normalise( 99 ), 'an out of range trust level fails closed' );
 Harness::assert_same( Trust::MODERATED, Trust::normalise( 'nonsense' ), 'a non-numeric trust level fails closed' );
 Harness::assert_same( Trust::MODERATED, Trust::normalise( -1 ), 'a negative trust level fails closed' );
@@ -98,39 +87,29 @@ Harness::assert_same(
 Harness::assert_same( [], StateMachine::available_from( 'not_a_status' ), 'an unknown status offers no actions' );
 Harness::assert_same( null, StateMachine::next( 'not_an_action', Statuses::DRAFT ), 'an unknown action is illegal' );
 
-Harness::group( 'Trust treats an edit and a new item as different permissions' );
+Harness::group( 'Trust is decided by the caller, per type and per kind of change' );
 
 Harness::assert_same(
 	Statuses::PENDING,
-	StateMachine::next( StateMachine::SUBMIT, Statuses::DRAFT, Trust::TRUSTED_EDITS, false ),
-	'a trusted-for-edits organisation still has new work read first'
+	StateMachine::next( StateMachine::SUBMIT, Statuses::DRAFT, false, true ),
+	'an edit the caller did not trust is read first'
 );
 Harness::assert_same(
 	Statuses::LIVE,
-	StateMachine::next( StateMachine::SUBMIT, Statuses::DRAFT, Trust::TRUSTED_EDITS, true ),
-	'but its edits go straight on to the site'
-);
-Harness::assert_same(
-	Statuses::PENDING,
-	StateMachine::next( StateMachine::SUBMIT, Statuses::DRAFT, Trust::MODERATED, true ),
-	'a moderated organisation has its edits read like everything else'
+	StateMachine::next( StateMachine::SUBMIT, Statuses::DRAFT, true, true ),
+	'a trusted edit goes straight on to the site'
 );
 Harness::assert_same(
 	Statuses::LIVE,
-	StateMachine::next( StateMachine::SUBMIT, Statuses::DRAFT, Trust::TRUSTED, true ),
-	'and a fully trusted one skips the queue either way'
-);
-Harness::assert_same(
-	Statuses::LIVE,
-	StateMachine::next( StateMachine::SUBMIT, Statuses::DRAFT, Trust::TRUSTED, false ),
-	'both ways round'
+	StateMachine::next( StateMachine::SUBMIT, Statuses::DRAFT, true, false ),
+	'and so does a trusted new item'
 );
 
 Harness::group( 'An edit is decided like anything else once it is in the queue' );
 
-Harness::assert_same( Statuses::LIVE, StateMachine::next( StateMachine::APPROVE, Statuses::PENDING, Trust::MODERATED, true ), 'approving an edit resolves it' );
-Harness::assert_same( Statuses::CHANGES, StateMachine::next( StateMachine::REQUEST_CHANGES, Statuses::PENDING, Trust::MODERATED, true ), 'changes can be asked for' );
-Harness::assert_same( Statuses::REJECTED, StateMachine::next( StateMachine::REJECT, Statuses::PENDING, Trust::MODERATED, true ), 'and it can be refused' );
+Harness::assert_same( Statuses::LIVE, StateMachine::next( StateMachine::APPROVE, Statuses::PENDING, false, true ), 'approving an edit resolves it' );
+Harness::assert_same( Statuses::CHANGES, StateMachine::next( StateMachine::REQUEST_CHANGES, Statuses::PENDING, false, true ), 'changes can be asked for' );
+Harness::assert_same( Statuses::REJECTED, StateMachine::next( StateMachine::REJECT, Statuses::PENDING, false, true ), 'and it can be refused' );
 
 Harness::group( 'Reopening a refusal' );
 

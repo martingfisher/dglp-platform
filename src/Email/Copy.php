@@ -185,19 +185,21 @@ final class Copy {
 				paragraphs: $c->is_edit
 					? [
 						sprintf(
-							/* translators: 1: item title, 2: organisation. */
-							__( 'Your edit to %1$s went on to the site straight away, because %2$s is trusted for edits.', 'dgl-platform' ),
+							/* translators: 1: item title, 2: organisation, 3: what it is trusted for, e.g. "News" or "edits". */
+							__( 'Your edit to %1$s went on to the site straight away, because %2$s is trusted for %3$s.', 'dgl-platform' ),
 							$c->title(),
-							$c->org()
+							$c->org(),
+							$c->trusted_for()
 						),
 						__( 'The DGLP team still read edits from trusted organisations, so they may come back to you about it.', 'dgl-platform' ),
 					]
 					: [
 						sprintf(
-							/* translators: 1: item title, 2: organisation. */
-							__( '%1$s was published straight away, because %2$s is a trusted organisation on the Partnership.', 'dgl-platform' ),
+							/* translators: 1: item title, 2: organisation, 3: what it is trusted for, e.g. "News". */
+							__( '%1$s was published straight away, because %2$s is trusted for %3$s on the Partnership.', 'dgl-platform' ),
 							$c->title(),
-							$c->org()
+							$c->org(),
+							$c->trusted_for()
 						),
 						__( 'The DGLP team still read trusted submissions, so they may come back to you about it.', 'dgl-platform' ),
 					],
@@ -225,19 +227,21 @@ final class Copy {
 			paragraphs: $c->is_edit
 				? [
 					sprintf(
-						/* translators: 1: organisation, 2: content type. */
-						__( '%1$s is trusted for edits, so this change to a published %2$s went live without review. The site shows the edited version now.', 'dgl-platform' ),
+						/* translators: 1: organisation, 2: content type, 3: what it is trusted for. */
+						__( '%1$s is trusted for %3$s, so this change to a published %2$s went live without review. The site shows the edited version now.', 'dgl-platform' ),
 						$c->org(),
-						$c->type_lower()
+						$c->type_lower(),
+						$c->trusted_for()
 					),
 					__( 'Read it when you can. You can take the item down from the review screen if the change is not right.', 'dgl-platform' ),
 				]
 				: [
 					sprintf(
-						/* translators: 1: organisation, 2: content type. */
-						__( '%1$s is a trusted organisation, so this %2$s went live without review. It is on the site now.', 'dgl-platform' ),
+						/* translators: 1: organisation, 2: content type, 3: what it is trusted for. */
+						__( '%1$s is trusted for %3$s, so this %2$s went live without review. It is on the site now.', 'dgl-platform' ),
 						$c->org(),
-						$c->type_lower()
+						$c->type_lower(),
+						$c->trusted_for()
 					),
 					__( 'Read it when you can. You can take it down from the review screen if it needs it.', 'dgl-platform' ),
 				],

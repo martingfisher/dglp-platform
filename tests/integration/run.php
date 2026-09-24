@@ -190,7 +190,7 @@ $make_org = static function ( string $name, string $status = Meta::ORG_APPROVED,
 	);
 	update_post_meta( $id, DGL_FIXTURE_FLAG, '1' );
 	update_post_meta( $id, Meta::ORG_STATUS, $status );
-	update_post_meta( $id, Meta::ORG_TRUST, $trust );
+	\DGL\Org\Trust::set_stored( $id, \DGL\Org\TrustSettings::from_legacy( $trust, PostTypes::enabled_keys() ) );
 	return (int) $id;
 };
 
@@ -296,7 +296,7 @@ $ok( user_can( $mod, 'read_post', $a_draft ), 'the moderator can read any organi
 $ok( user_can( $mod, 'read_post', $b_draft ), 'including the other organisation' );
 $ok( Access::can( $mod, Policy::MODERATE_ITEM, $a_pending ), 'the moderator can decide a pending item' );
 $ok( ! Access::can( $mod, Policy::MODERATE_ITEM, $a_draft ), 'but cannot decide a draft that was never submitted' );
-$ok( ! Access::can( $mod, Policy::GRANT_TRUST ), 'and cannot grant trust' );
+$ok( Access::can( $mod, Policy::GRANT_TRUST ), 'and can set trust from the Admin area' );
 $ok( ! user_can( $mod, 'delete_post', $a_live ), 'and cannot permanently delete' );
 
 $group( 'Account state' );
@@ -480,7 +480,7 @@ $ok( '' !== (string) get_post_meta( $t_item, Meta::ITEM_APPROVED_AT, true ), 'ap
 $r = Transition::apply( $t_item, StateMachine::TAKE_DOWN, $mod, 'Reported by a reader.' );
 $ok( true === $r, 'a moderator can take it down with a reason' );
 $ok( Statuses::PENDING === get_post_status( $t_item ), 'it returns to the queue rather than vanishing' );
-$ok( Trust::MODERATED === Trust::normalise( get_post_meta( $org_t, Meta::ORG_TRUST, true ) ), 'and the organisation loses its trust automatically' );
+$ok( ! \DGL\Org\Trust::stored( $org_t )->is_on() && Trust::MODERATED === Trust::normalise( get_post_meta( $org_t, Meta::ORG_TRUST, true ) ), 'and the organisation loses its trust automatically' );
 
 $trust_log = Log::for_org( $org_t );
 $ok( in_array( 'trust_revoked', array_column( $trust_log, 'action' ), true ), 'the trust change is audited' );
@@ -1045,7 +1045,7 @@ $ok( 'Summer picnic and bring-and-buy' === get_post( $live )->post_title, 'the l
 
 $group( 'Trust for edits is a separate permission from trust for new work' );
 
-update_post_meta( $org_a, Meta::ORG_TRUST, \DGL\Org\Trust::TRUSTED_EDITS );
+\DGL\Org\Trust::set_stored( $org_a, new \DGL\Org\TrustSettings( true, [], true ) );
 Access::flush_cache();
 
 $trusted_new = $make_item( $org_a, $alice, Statuses::DRAFT );
@@ -1062,7 +1062,7 @@ $ok( 'Trusted edit applied straight away' === get_post( $live )->post_title, 'bu
 $ok( Statuses::ARCHIVED === get_post( $rev4 )->post_status, 'and the edit resolves itself without a moderator' );
 $ok( ! in_array( $rev4, ItemsTable::queue( null, 200 ), true ), 'so it never reaches the queue' );
 
-update_post_meta( $org_a, Meta::ORG_TRUST, \DGL\Org\Trust::MODERATED );
+\DGL\Org\Trust::set_stored( $org_a, \DGL\Org\TrustSettings::off() );
 Access::flush_cache();
 
 $group( 'An edit is never mistaken for live content' );
@@ -4044,6 +4044,111 @@ $ok( is_wp_error( \DGL\Dashboard\UploadEndpoint::may_upload( $alice, $alt_item, 
 $ok( is_wp_error( \DGL\Dashboard\UploadEndpoint::may_upload( $alice, 999999, 'image' ) ), 'nor on an item that does not exist' );
 $ep_desc = \DGL\Dashboard\UploadEndpoint::describe( $alt_att );
 $ok( $alt_att === $ep_desc['id'] && 'From the file' === $ep_desc['alt'] && is_string( $ep_desc['preview'] ), 'the reply carries the id, the description and a preview' );
+
+$group( 'Trust: per organisation, per type, set by the review team' );
+
+$mail_was_on = get_option( \DGL\Email\Routing::OPTION_ENABLED, false );
+update_option( \DGL\Email\Routing::OPTION_ENABLED, 1 );
+
+// The migration: old levels become settings, once, and a second run writes nothing.
+$mig_2 = $make_org( 'Migrate Two' );
+$mig_1 = $make_org( 'Migrate One' );
+$mig_0 = $make_org( 'Migrate Zero' );
+foreach ( [ $mig_2 => 2, $mig_1 => 1, $mig_0 => 0 ] as $mig_id => $mig_level ) {
+	delete_post_meta( $mig_id, Meta::ORG_TRUST_SETTINGS );
+	update_post_meta( $mig_id, Meta::ORG_TRUST, $mig_level );
+}
+$mig_done = \DGL\Org\Trust::migrate_levels();
+$ok( $mig_done >= 3, 'the migration wrote the organisations that had no setting (' . $mig_done . ')' );
+$ok( \DGL\Org\Trust::stored( $mig_2 )->trusts( PostTypes::NEWS ) && \DGL\Org\Trust::stored( $mig_2 )->trusts( PostTypes::EVENT ) && \DGL\Org\Trust::stored( $mig_2 )->trusts_edits(), 'level 2 became everything on' );
+$ok( \DGL\Org\Trust::stored( $mig_1 )->is_on() && \DGL\Org\Trust::stored( $mig_1 )->trusts_edits() && ! \DGL\Org\Trust::stored( $mig_1 )->trusts( PostTypes::NEWS ), 'level 1 became edits only' );
+$ok( ! \DGL\Org\Trust::stored( $mig_0 )->is_on(), 'level 0 stayed off' );
+$ok( 0 === \DGL\Org\Trust::migrate_levels(), 'and a second run has nothing to do' );
+$ok( 2 === (int) get_post_meta( $mig_2, Meta::ORG_TRUST, true ) && 1 === (int) get_post_meta( $mig_1, Meta::ORG_TRUST, true ), 'the old level is kept in step for the index' );
+
+// A moderator sets trust; the change is audited and the owners are told.
+$org_n = $make_org( 'Newsy Org' );
+$nora  = $make_member( 'dgl_nora', $org_n, 'owner' );
+$nick  = $make_member( 'dgl_nick', $org_n, 'contributor' );
+Access::flush_cache();
+$sent_to = []; $sent_links = []; $sent_bodies = [];
+
+$news_only = new \DGL\Org\TrustSettings( true, [ PostTypes::NEWS => true ], false );
+$r = \DGL\Org\Trust::set( $org_n, $news_only, $nora );
+$ok( is_wp_error( $r ) && 'dgl_not_allowed' === $r->get_error_code(), 'an owner cannot set trust on their own organisation' );
+$ok( ! \DGL\Org\Trust::stored( $org_n )->is_on(), 'and nothing was written' );
+
+$r = \DGL\Org\Trust::set( $org_n, $news_only, $mod );
+$ok( true === $r && \DGL\Org\Trust::stored( $org_n )->trusts( PostTypes::NEWS ) && ! \DGL\Org\Trust::stored( $org_n )->trusts( PostTypes::EVENT ), 'a moderator can trust an organisation for News alone' );
+$ok( 'Trusted: News' === \DGL\Org\Trust::stored_summary( $org_n ), 'which reads as "Trusted: News" (' . \DGL\Org\Trust::stored_summary( $org_n ) . ')' );
+$trust_rows = Log::for_org_actions( $org_n, [ 'trust_changed' ] );
+$ok( 1 === count( $trust_rows ) && 'Trusted: News' === $trust_rows[0]['note'], 'the change is audited with the new setting as its note' );
+$ok( 1 === count( $sent_to ) && str_contains( $sent_to[0], 'dgl_nora@example.test' ) && ! str_contains( $sent_to[0], 'dgl_nick@' ), 'the owner is emailed, the contributor is not (' . implode( ' | ', $sent_to ) . ')' );
+$ok( str_contains( implode( ' ', $sent_bodies ), 'Trusted: News' ), 'and the email says what the setting now is' );
+
+$r = \DGL\Org\Trust::set( $org_n, $news_only, $mod );
+$ok( true === $r && 1 === count( $sent_to ) && 1 === count( Log::for_org_actions( $org_n, [ 'trust_changed' ] ) ), 'saving the same setting again writes no audit row and sends no email' );
+
+// A news story from that organisation goes live; an event waits.
+Access::flush_cache();
+$n_story = wp_insert_post( [ 'post_type' => PostTypes::NEWS, 'post_status' => Statuses::DRAFT, 'post_title' => 'Trusted story', 'post_author' => $nora ] );
+update_post_meta( $n_story, DGL_FIXTURE_FLAG, '1' );
+update_post_meta( $n_story, Meta::ITEM_ORG, $org_n );
+$n_event = $make_item( $org_n, $nora, Statuses::DRAFT );
+$ok( true === Transition::apply( $n_story, StateMachine::SUBMIT, $nora ) && Statuses::LIVE === get_post_status( $n_story ), 'a news story from an organisation trusted for News goes live on submit' );
+$ok( true === Transition::apply( $n_event, StateMachine::SUBMIT, $nora ) && Statuses::PENDING === get_post_status( $n_event ), 'an event from the same organisation waits for review' );
+$ok( 'type' === \DGL\Org\Trust::settings( $org_n )->why( PostTypes::NEWS, false ) && '' === \DGL\Org\Trust::settings( $org_n )->why( PostTypes::EVENT, false ), 'and the review screen can say which switch let the story through' );
+
+// The edits switch: an edit to an approved event goes live, a new event still waits.
+$n_live = $make_item( $org_n, $nora, Statuses::LIVE );
+\DGL\Org\Trust::set( $org_n, new \DGL\Org\TrustSettings( true, [ PostTypes::NEWS => true ], true ), $mod );
+Access::flush_cache();
+$n_rev = (int) \DGL\Workflow\Revisions::open( $n_live, $nora );
+update_post_meta( $n_rev, DGL_FIXTURE_FLAG, '1' );
+wp_update_post( [ 'ID' => $n_rev, 'post_title' => 'Edited on trust' ] );
+Transition::apply( $n_rev, StateMachine::SUBMIT, $nora );
+$ok( 'Edited on trust' === get_post( $n_live )->post_title && Statuses::ARCHIVED === get_post_status( $n_rev ), 'with edits trusted, an edit to a live event goes straight on to the site' );
+$n_event2 = $make_item( $org_n, $nora, Statuses::DRAFT );
+Transition::apply( $n_event2, StateMachine::SUBMIT, $nora );
+$ok( Statuses::PENDING === get_post_status( $n_event2 ), 'while a new event still waits' );
+
+// Master off: whatever is ticked underneath is stored off and nothing skips review.
+\DGL\Org\Trust::set( $org_n, new \DGL\Org\TrustSettings( false, [ PostTypes::NEWS => true ], true ), $mod );
+Access::flush_cache();
+$off_meta = get_post_meta( $org_n, Meta::ORG_TRUST_SETTINGS, true );
+$ok( is_array( $off_meta ) && false === $off_meta['on'] && false === $off_meta['edits'] && ! in_array( true, $off_meta['types'], true ), 'switching the master off stores every switch under it as off' );
+$ok( 'Not trusted' === \DGL\Org\Trust::stored_summary( $org_n ) && 0 === (int) get_post_meta( $org_n, Meta::ORG_TRUST, true ), 'and it reads as "Not trusted" with the old level at 0' );
+$n_story2 = wp_insert_post( [ 'post_type' => PostTypes::NEWS, 'post_status' => Statuses::DRAFT, 'post_title' => 'Story after trust went', 'post_author' => $nora ] );
+update_post_meta( $n_story2, DGL_FIXTURE_FLAG, '1' );
+update_post_meta( $n_story2, Meta::ITEM_ORG, $org_n );
+Transition::apply( $n_story2, StateMachine::SUBMIT, $nora );
+$ok( Statuses::PENDING === get_post_status( $n_story2 ), 'so a news story now waits' );
+
+// Trust on an unverified organisation is kept but does not apply.
+$org_u = $make_org( 'Unverified Trusted', Meta::ORG_PENDING );
+\DGL\Org\Trust::set( $org_u, $news_only, $mod );
+$ok( \DGL\Org\Trust::stored( $org_u )->trusts( PostTypes::NEWS ) && ! \DGL\Org\Trust::settings( $org_u )->is_on(), 'a pending organisation keeps its switches but none of them apply' );
+$ok( 'Trusted: News' === \DGL\Org\Trust::stored_summary( $org_u ) && 'Not trusted' === \DGL\Org\Trust::summary_for( $org_u ), 'the list shows what is set; the decision sees nothing' );
+
+// A refusal switches everything off.
+\DGL\Org\Trust::set( $org_n, $news_only, $mod );
+Access::flush_cache();
+$ok( true === Transition::apply( $n_event2, StateMachine::REJECT, $mod, 'Not for this site.' ), 'the moderator refuses the waiting event' );
+$ok( ! \DGL\Org\Trust::stored( $org_n )->is_on(), 'and the organisation loses its trust' );
+$revoked = Log::for_org_actions( $org_n, [ 'trust_revoked' ] );
+$ok( 1 === count( $revoked ) && str_contains( (string) $revoked[0]['note'], 'reject' ), 'with a trust_revoked row naming the action (' . ( $revoked[0]['note'] ?? '' ) . ')' );
+
+// The list: search by name over every published organisation, whatever its verification state.
+$found = \DGL\Org\Org::search( 'Migrate' );
+$ok( 3 === $found['total'] && 3 === count( $found['ids'] ) && in_array( $mig_0, $found['ids'], true ), 'search finds organisations by part of their name (' . $found['total'] . ')' );
+$found = \DGL\Org\Org::search( 'Unverified Trusted' );
+$ok( in_array( $org_u, $found['ids'], true ), 'including a pending one' );
+$found = \DGL\Org\Org::search( 'Migrate', 2, 0 );
+$ok( 3 === $found['total'] && 2 === count( $found['ids'] ), 'the total counts everything while the page is capped' );
+$ok( 'Migrate One' === get_the_title( $found['ids'][0] ) && 'Migrate Two' === get_the_title( $found['ids'][1] ), 'in name order' );
+$ok( 0 === \DGL\Org\Org::search( 'No such organisation anywhere' )['total'], 'and nothing when nothing matches' );
+
+update_option( \DGL\Email\Routing::OPTION_ENABLED, $mail_was_on );
 
 /* ----------------------------------------------------------------- report */
 

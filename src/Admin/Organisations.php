@@ -9,8 +9,6 @@ declare( strict_types=1 );
 
 namespace DGL\Admin;
 
-use DGL\Access\Access;
-use DGL\Access\Policy;
 use DGL\Meta;
 use DGL\Org\Org;
 use DGL\Org\Profile;
@@ -21,7 +19,9 @@ use WP_Post;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Verifying organisations, setting trust, and deciding name and logo changes.
+ * Verifying organisations, their email domains, and deciding name and logo
+ * changes. Trust is set in the Admin area (Organisations, under Review team)
+ * and only shown here.
  *
  * A member can ask to rename their organisation or change its logo, and until
  * now nothing anywhere could say yes. {@see Profile::approve_pending()} existed
@@ -78,8 +78,6 @@ final class Organisations {
 	public static function render( WP_Post $post ): void {
 		$org_id = (int) $post->ID;
 		$status = Org::status( $org_id );
-		$trust  = Trust::normalise( get_post_meta( $org_id, Meta::ORG_TRUST, true ) );
-		$admin  = Access::current_user_can( Policy::GRANT_TRUST );
 
 		wp_nonce_field( self::NONCE, self::NONCE );
 
@@ -103,31 +101,13 @@ final class Organisations {
 
 		echo '</select></p>';
 
-		echo '<p><label for="dgl-org-trust-field"><strong>' . esc_html__( 'Trust level', 'dgl-platform' ) . '</strong></label><br />';
-
-		if ( ! $admin ) {
-			echo esc_html( Trust::label( $trust ) ) . '<br />';
-			echo '<span class="description">' . esc_html__( 'Only a site administrator can change this.', 'dgl-platform' ) . '</span></p>';
-			return;
-		}
-
-		echo '<select id="dgl-org-trust-field" name="dgl_org_trust" class="widefat">';
-
-		foreach ( Trust::all() as $level ) {
-			printf(
-				'<option value="%d" %s>%s</option>',
-				$level,
-				selected( $trust, $level, false ),
-				esc_html( Trust::label( $level ) )
-			);
-		}
-
-		echo '</select>';
-		echo '<span class="description">' . esc_html( Trust::description( $trust ) ) . '</span></p>';
-
-		echo '<p class="description">'
-			. esc_html__( 'Trust is dropped back to moderated automatically if anything from this organisation is refused or taken down.', 'dgl-platform' )
-			. '</p>';
+		echo '<p><strong>' . esc_html__( 'Trust', 'dgl-platform' ) . '</strong><br />';
+		echo esc_html( Trust::stored_summary( $org_id ) ) . '<br />';
+		printf(
+			'<span class="description"><a href="%s">%s</a></span></p>',
+			esc_url( \DGL\Dashboard\Router::url( 'review', 'orgs', (string) $org_id ) ),
+			esc_html__( 'Change what this organisation may publish without review, in the Admin area.', 'dgl-platform' )
+		);
 	}
 
 	/**
@@ -333,39 +313,6 @@ final class Organisations {
 				);
 			}
 		}
-
-		/*
-		 * Trust is administrator-only and checked here as well as hidden in the
-		 * form. A control that is not rendered is not a permission check: the
-		 * field can still be posted.
-		 */
-		if ( ! Access::current_user_can( Policy::GRANT_TRUST ) ) {
-			return;
-		}
-
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing
-		$trust = isset( $_POST['dgl_org_trust'] ) ? Trust::normalise( wp_unslash( $_POST['dgl_org_trust'] ) ) : null;
-
-		if ( null === $trust ) {
-			return;
-		}
-
-		$before = Trust::normalise( get_post_meta( $post_id, Meta::ORG_TRUST, true ) );
-
-		if ( $before === $trust ) {
-			return;
-		}
-
-		update_post_meta( $post_id, Meta::ORG_TRUST, $trust );
-
-		\DGL\Audit\Log::record(
-			'trust_changed',
-			'org',
-			$post_id,
-			$post_id,
-			Trust::description( $trust ),
-			[ 'trust' => [ $before, $trust ] ]
-		);
 	}
 
 	/**
@@ -462,7 +409,7 @@ final class Organisations {
 				return;
 
 			case 'dgl_trust':
-				echo esc_html( Trust::label( Trust::normalise( get_post_meta( $post_id, Meta::ORG_TRUST, true ) ) ) );
+				echo esc_html( Trust::stored_summary( $post_id ) );
 				return;
 
 			case 'dgl_waiting':

@@ -9,7 +9,6 @@ declare( strict_types=1 );
 
 namespace DGL\Workflow;
 
-use DGL\Org\Trust;
 use DGL\Statuses;
 
 defined( 'ABSPATH' ) || exit;
@@ -28,13 +27,14 @@ final class Planner {
 	 *
 	 * @param string $action         A {@see StateMachine} action.
 	 * @param string $from           Current status.
-	 * @param int    $trust          The owning organisation's trust level.
+	 * @param bool   $auto_publish   Whether the owning organisation is trusted
+	 *                               for this kind of submission.
 	 * @param bool   $actor_is_staff Whether a moderator or administrator is acting.
 	 * @param bool   $is_edit        Whether the thing moving is an edit to
 	 *                               already-published content.
 	 */
-	public static function plan( string $action, string $from, int $trust = Trust::MODERATED, bool $actor_is_staff = false, bool $is_edit = false ): ?Plan {
-		$to = StateMachine::next( $action, $from, $trust, $is_edit );
+	public static function plan( string $action, string $from, bool $auto_publish = false, bool $actor_is_staff = false, bool $is_edit = false ): ?Plan {
+		$to = StateMachine::next( $action, $from, $auto_publish, $is_edit );
 
 		if ( null === $to ) {
 			return null;

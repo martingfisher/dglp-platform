@@ -133,6 +133,12 @@ final class Mailer {
 		$org_id   = Org::for_item( (int) $subject->ID );
 		$org_name = $org_id > 0 ? (string) get_the_title( $org_id ) : '';
 
+		// For the "published on trust" wording: which switch let it through.
+		$why         = \DGL\Org\Trust::settings( $org_id > 0 ? $org_id : null )->why( (string) $subject->post_type, $is_edit );
+		$trusted_for = 'edits' === $why
+			? __( 'edits', 'dgl-platform' )
+			: ( 'type' === $why ? (string) ( $definitions[ $subject->post_type ]['plural'] ?? '' ) : '' );
+
 		return new Context(
 			title: (string) get_the_title( $subject ),
 			type_label: (string) $type_label,
@@ -151,6 +157,7 @@ final class Mailer {
 			is_edit: $is_edit,
 			// "3 months" for a listing that stays up for a spell, '' for a dated one.
 			lifetime: null !== \DGL\Workflow\Lifetime::days_for( (string) $subject->post_type ) ? \DGL\Workflow\Lifetime::spell_for( (string) $subject->post_type ) : '',
+			trusted_for: $trusted_for,
 		);
 	}
 

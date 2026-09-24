@@ -7,7 +7,6 @@
 
 declare( strict_types=1 );
 
-use DGL\Org\Trust;
 use DGL\Statuses;
 use DGL\Workflow\Plan;
 use DGL\Workflow\Planner;
@@ -21,7 +20,7 @@ Harness::assert_same( null, Planner::plan( 'invent_an_action', Statuses::DRAFT )
 
 Harness::group( 'Submitting under moderation' );
 
-$plan = Planner::plan( StateMachine::SUBMIT, Statuses::DRAFT, Trust::MODERATED );
+$plan = Planner::plan( StateMachine::SUBMIT, Statuses::DRAFT, false );
 Harness::assert_same( Statuses::PENDING, $plan->to, 'a moderated submission waits in the queue' );
 Harness::assert_true( $plan->notifies( Plan::NOTIFY_MODERATORS ), 'the review team is told there is something to read' );
 Harness::assert_true( $plan->notifies( Plan::NOTIFY_MEMBER ), 'and the member gets a receipt, because they can no longer edit it' );
@@ -33,7 +32,7 @@ Harness::assert_false( $plan->publishes(), 'a moderated submission does not reac
 
 Harness::group( 'Submitting on trust' );
 
-$plan = Planner::plan( StateMachine::SUBMIT, Statuses::DRAFT, Trust::TRUSTED );
+$plan = Planner::plan( StateMachine::SUBMIT, Statuses::DRAFT, true );
 Harness::assert_same( Statuses::LIVE, $plan->to, 'a trusted submission publishes' );
 Harness::assert_true( $plan->publishes(), 'it counts as reaching the public' );
 Harness::assert_true( $plan->notifies( Plan::NOTIFY_MEMBER ), 'the member is told it is live, not that it is waiting' );
@@ -42,8 +41,8 @@ Harness::assert_true( $plan->spot_check, 'it joins the spot-check list, because 
 Harness::assert_true( $plan->stamp_approved, 'approval time is stamped even though no person approved it' );
 Harness::assert_same( 'published_on_trust', $plan->message_key, 'the member gets the published message, not the submitted one' );
 
-$plan = Planner::plan( StateMachine::SUBMIT, Statuses::DRAFT, Trust::TRUSTED_EDITS );
-Harness::assert_same( Statuses::PENDING, $plan->to, 'trusted-for-edits does not skip review on a new item' );
+$plan = Planner::plan( StateMachine::SUBMIT, Statuses::DRAFT, false, false, true );
+Harness::assert_same( Statuses::PENDING, $plan->to, 'an edit the organisation is not trusted for still waits' );
 Harness::assert_false( $plan->spot_check, 'and so needs no spot check' );
 
 Harness::group( 'Moderator decisions' );
@@ -83,17 +82,17 @@ Harness::assert_false( $plan->notifies( Plan::NOTIFY_MODERATORS ), 'the team doe
 
 Harness::group( 'Archiving depends on who did it' );
 
-$by_member = Planner::plan( StateMachine::ARCHIVE, Statuses::LIVE, Trust::MODERATED, false );
+$by_member = Planner::plan( StateMachine::ARCHIVE, Statuses::LIVE, false, false );
 Harness::assert_same( [], $by_member->notify, 'a member gets no email telling them what they just did' );
 Harness::assert_false( $by_member->requires_note, 'and needs to explain themselves to nobody' );
 
-$by_staff = Planner::plan( StateMachine::ARCHIVE, Statuses::LIVE, Trust::MODERATED, true );
+$by_staff = Planner::plan( StateMachine::ARCHIVE, Statuses::LIVE, false, true );
 Harness::assert_true( $by_staff->notifies( Plan::NOTIFY_MEMBER ), 'the team archiving somebody else s work does tell them' );
 Harness::assert_true( $by_staff->requires_note, 'and has to say why' );
 
 Harness::group( 'Restoring re-enters the queue' );
 
-$plan = Planner::plan( StateMachine::RESTORE, Statuses::ARCHIVED, Trust::TRUSTED );
+$plan = Planner::plan( StateMachine::RESTORE, Statuses::ARCHIVED, true );
 Harness::assert_same( Statuses::PENDING, $plan->to, 'even a trusted organisation goes through review on restore' );
 Harness::assert_true( $plan->stamp_submitted, 'the queue sees it as newly submitted' );
 Harness::assert_true( $plan->notifies( Plan::NOTIFY_MODERATORS ), 'the team is told there is something back in the queue' );
@@ -102,19 +101,19 @@ Harness::group( 'Every legal move has a plan, and the two agree' );
 
 foreach ( StateMachine::table() as $action => $moves ) {
 	foreach ( array_keys( $moves ) as $from ) {
-		foreach ( Trust::all() as $trust ) {
+		foreach ( [ false, true ] as $trust ) {
 			foreach ( [ true, false ] as $staff ) {
 				$plan = Planner::plan( $action, $from, $trust, $staff );
 
 				Harness::assert_true(
 					$plan instanceof Plan,
-					sprintf( '%s from %s (trust %d, staff %s) has a plan', $action, $from, $trust, $staff ? 'yes' : 'no' )
+					sprintf( '%s from %s (auto %s, staff %s) has a plan', $action, $from, $trust ? 'yes' : 'no', $staff ? 'yes' : 'no' )
 				);
 
 				Harness::assert_same(
 					StateMachine::next( $action, $from, $trust ),
 					$plan->to,
-					sprintf( '%s from %s (trust %d) lands where the state machine says', $action, $from, $trust )
+					sprintf( '%s from %s (auto %s) lands where the state machine says', $action, $from, $trust ? 'yes' : 'no' )
 				);
 
 				Harness::assert_true(
