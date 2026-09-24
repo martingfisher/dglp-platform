@@ -1294,6 +1294,9 @@ body.dgl-body {
 
 .dgl-detail__status { margin: 0 0 8px; }
 
+/* Cards stacked in the main column keep the same breathing room as the side. */
+.dgl-detail > div > .dgl-card + .dgl-card { margin-top: var(--dgl-gap); }
+
 .dgl-card {
 	padding: 20px 22px;
 	border: 1px solid var(--dgl-border);

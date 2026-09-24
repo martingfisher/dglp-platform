@@ -854,3 +854,6 @@ clean. They are the only DGLP content on staging.
   screens show the setting and, for a live item that skipped the queue,
   which switch let it through. Unit 1998, integration 1095, contrast AAA
   clear on the two new routes.
+- **0.34.1 deployed** (24 September, production): cards stacked in the main
+  column of a review page (the organisation page's Trust and People cards)
+  had no gap between them. They now keep the same spacing as the side column.
