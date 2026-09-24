@@ -870,3 +870,8 @@ clean. They are the only DGLP content on staging.
 - **0.35.1 deployed** (24 September, production): on the organisation page
   the details card comes first and is titled "Organisation details"; Trust
   is second.
+- **0.35.2 deployed** (24 September, production): a "DGLP Admin area"
+  widget at the top of the WordPress dashboard for the review team: a
+  button to the review queue with the waiting count, links to
+  Organisations, Approved, Reports and the team guide. Members never see
+  it.

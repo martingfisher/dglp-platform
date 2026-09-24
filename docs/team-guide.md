@@ -5,6 +5,12 @@ members. Three places matter: the review queue at `/dashboard/review` and the
 Organisations section at `/dashboard/review/orgs`, both reached through the
 user area, and the Organisations screen in wp-admin.
 
+## From wp-admin
+
+If you land on the WordPress dashboard, the "DGLP Admin area" box at the top
+takes you to the review queue, with how many things are waiting, and to
+Organisations, Approved, Reports and this guide.
+
 ## Help inside the user area
 
 The review team see the same screens under the name "Admin area"; members

@@ -46,6 +46,7 @@ final class Admin {
 		Moderate::init();
 		Organisations::init();
 		Health::init();
+		Widget::init();
 
 		add_action( 'admin_notices', [ MetaBoxes::class, 'notices' ] );
 		add_action( 'admin_head', [ self::class, 'styles' ] );
@@ -105,6 +106,9 @@ final class Admin {
 			.dgl-admin-fields__heading { font-size: 14px; margin: 18px 0 0; }
 			.dgl-admin-fields .form-table th { width: 220px; }
 			.dgl-admin-required { color: #b32d2e; }
+			.dgl-admin-widget__links { margin: 0 0 12px; }
+			.dgl-admin-widget__links li { margin: 0 0 6px; }
+			.dgl-admin-widget__links a { font-weight: 600; }
 		</style>';
 	}
 }
