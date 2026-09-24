@@ -867,3 +867,6 @@ clean. They are the only DGLP content on staging.
   "Updated by the review team.", and a member's waiting name or logo
   request is answered by whatever the team save. The side card keeps what
   is set in wp-admin only: email domains, plus the live and refused counts.
+- **0.35.1 deployed** (24 September, production): on the organisation page
+  the details card comes first and is titled "Organisation details"; Trust
+  is second.

@@ -70,6 +70,44 @@ $pending  = (array) ( $data['pending'] ?? [] );
 
 <div class="dgl-detail">
 	<div>
+		<section class="dgl-card" id="dgl-org-details">
+			<h2 class="dgl-section__title"><?php esc_html_e( 'Organisation details', 'dgl-platform' ); ?></h2>
+			<p class="dgl-help"><?php esc_html_e( 'What the organisation\'s owners see on their Organisation tab and what the public directory shows. Changes you make here are live at once and recorded against you.', 'dgl-platform' ); ?></p>
+			<?php if ( [] !== $pending ) : ?>
+				<p class="dgl-alert dgl-alert--edit">
+					<?php esc_html_e( 'The organisation has asked to change its name or logo.', 'dgl-platform' ); ?>
+					<a href="<?php echo esc_url( Router::url( 'review', 'org', (string) $org_id ) ); ?>"><?php esc_html_e( 'Decide that first', 'dgl-platform' ); ?></a>,
+					<?php esc_html_e( 'or set the field here and the request is answered by what you save.', 'dgl-platform' ); ?>
+				</p>
+			<?php endif; ?>
+
+			<details class="dgl-fold" <?php echo [] !== $errors || 'details' === (string) ( $data['saved'] ?? '' ) ? 'open' : ''; ?>>
+				<summary class="dgl-fold__summary"><?php esc_html_e( 'Show and edit the details', 'dgl-platform' ); ?></summary>
+			<form class="dgl-form dgl-form--bare" method="post" action="<?php echo esc_url( Router::url( 'review', 'orgs', (string) $org_id ) ); ?>#dgl-org-details" enctype="multipart/form-data">
+				<?php wp_nonce_field( Wizard::NONCE ); ?>
+
+				<?php $section_shown = 0; ?>
+				<?php foreach ( (array) ( $data['fields'] ?? [] ) as $field ) : ?>
+					<?php if ( $field->step !== $section_shown && isset( $data['sections'][ $field->step ] ) ) : ?>
+						<?php $section_shown = $field->step; ?>
+						<h3 class="dgl-section__title dgl-section__title--form"><?php echo esc_html( (string) $data['sections'][ $field->step ] ); ?></h3>
+					<?php endif; ?>
+					<?php
+					echo FieldRenderer::render( // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped by the renderer.
+						$field,
+						$data['values'][ $field->key ] ?? '',
+						(string) ( $errors[ $field->key ] ?? '' )
+					);
+					?>
+				<?php endforeach; ?>
+
+				<div class="dgl-decision__actions">
+					<button class="dgl-button" type="submit" name="dgl_org_save" value="1"><?php esc_html_e( 'Save details', 'dgl-platform' ); ?></button>
+				</div>
+			</form>
+			</details>
+		</section>
+
 		<section class="dgl-card dgl-trust">
 			<h2 class="dgl-section__title"><?php esc_html_e( 'Trust', 'dgl-platform' ); ?></h2>
 			<p class="dgl-help"><?php esc_html_e( 'Off means everything this organisation submits is read by the review team before it appears. On reveals what may go live straight away. A refusal or a take-down switches everything off again.', 'dgl-platform' ); ?></p>
@@ -133,44 +171,6 @@ $pending  = (array) ( $data['pending'] ?? [] );
 					<button class="dgl-button" type="submit" name="dgl_trust_save" value="1"><?php esc_html_e( 'Save trust settings', 'dgl-platform' ); ?></button>
 				</div>
 			</form>
-		</section>
-
-		<section class="dgl-card" id="dgl-org-details">
-			<h2 class="dgl-section__title"><?php esc_html_e( 'Details', 'dgl-platform' ); ?></h2>
-			<p class="dgl-help"><?php esc_html_e( 'What the organisation\'s owners see on their Organisation tab and what the public directory shows. Changes you make here are live at once and recorded against you.', 'dgl-platform' ); ?></p>
-			<?php if ( [] !== $pending ) : ?>
-				<p class="dgl-alert dgl-alert--edit">
-					<?php esc_html_e( 'The organisation has asked to change its name or logo.', 'dgl-platform' ); ?>
-					<a href="<?php echo esc_url( Router::url( 'review', 'org', (string) $org_id ) ); ?>"><?php esc_html_e( 'Decide that first', 'dgl-platform' ); ?></a>,
-					<?php esc_html_e( 'or set the field here and the request is answered by what you save.', 'dgl-platform' ); ?>
-				</p>
-			<?php endif; ?>
-
-			<details class="dgl-fold" <?php echo [] !== $errors || 'details' === (string) ( $data['saved'] ?? '' ) ? 'open' : ''; ?>>
-				<summary class="dgl-fold__summary"><?php esc_html_e( 'Show and edit the details', 'dgl-platform' ); ?></summary>
-			<form class="dgl-form dgl-form--bare" method="post" action="<?php echo esc_url( Router::url( 'review', 'orgs', (string) $org_id ) ); ?>#dgl-org-details" enctype="multipart/form-data">
-				<?php wp_nonce_field( Wizard::NONCE ); ?>
-
-				<?php $section_shown = 0; ?>
-				<?php foreach ( (array) ( $data['fields'] ?? [] ) as $field ) : ?>
-					<?php if ( $field->step !== $section_shown && isset( $data['sections'][ $field->step ] ) ) : ?>
-						<?php $section_shown = $field->step; ?>
-						<h3 class="dgl-section__title dgl-section__title--form"><?php echo esc_html( (string) $data['sections'][ $field->step ] ); ?></h3>
-					<?php endif; ?>
-					<?php
-					echo FieldRenderer::render( // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped by the renderer.
-						$field,
-						$data['values'][ $field->key ] ?? '',
-						(string) ( $errors[ $field->key ] ?? '' )
-					);
-					?>
-				<?php endforeach; ?>
-
-				<div class="dgl-decision__actions">
-					<button class="dgl-button" type="submit" name="dgl_org_save" value="1"><?php esc_html_e( 'Save details', 'dgl-platform' ); ?></button>
-				</div>
-			</form>
-			</details>
 		</section>
 
 		<section class="dgl-card">
