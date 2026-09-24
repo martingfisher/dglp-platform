@@ -180,9 +180,17 @@ is emailed your note.
 
 Organisations, under Review team in the user area, lists every organisation
 on the platform with its verification state, its trust setting and how many
-people it has. Search by name. Open one to see its people (with their role
-and account state), its website, email, phone and email domains, how many
-listings it has live, and its trust switches.
+people it has. Search by name. Open one to see its trust switches, its
+details and its people (with their role and account state), its email
+domains and how many listings it has live.
+
+**Details** is the organisation's own profile: name, logo, overview,
+contact details, address, what they do and who for. It is the same form
+the owners see on their Organisation tab, and what the public directory
+shows. You can change any of it and it is live at once, recorded in the
+audit trail against your name. If the organisation has asked to change its
+name or logo, decide that request first, or set the field yourself and the
+request is answered by what you save.
 
 **Trust this organisation** is off for every organisation to start with:
 everything it submits comes to the queue. Switch it on and four more

@@ -112,6 +112,14 @@ final class Navigation {
 			];
 
 			$items[] = [
+				'label'   => __( 'Organisations', 'dgl-platform' ),
+				'url'     => Router::url( 'review', 'orgs' ),
+				'count'   => null,
+				'section' => __( 'Review team', 'dgl-platform' ),
+				'current' => 'review' === $first && 'orgs' === $second,
+			];
+
+			$items[] = [
 				'label'   => __( 'Approved', 'dgl-platform' ),
 				'url'     => Router::url( 'review', 'decided' ),
 				'count'   => null,
@@ -125,14 +133,6 @@ final class Navigation {
 				'count'   => null,
 				'section' => __( 'Review team', 'dgl-platform' ),
 				'current' => 'review' === $first && 'reports' === $second,
-			];
-
-			$items[] = [
-				'label'   => __( 'Organisations', 'dgl-platform' ),
-				'url'     => Router::url( 'review', 'orgs' ),
-				'count'   => null,
-				'section' => __( 'Review team', 'dgl-platform' ),
-				'current' => 'review' === $first && 'orgs' === $second,
 			];
 
 			$items[] = [

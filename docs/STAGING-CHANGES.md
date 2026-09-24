@@ -857,3 +857,13 @@ clean. They are the only DGLP content on staging.
 - **0.34.1 deployed** (24 September, production): cards stacked in the main
   column of a review page (the organisation page's Trust and People cards)
   had no gap between them. They now keep the same spacing as the side column.
+- **0.35.0 deployed** (24 September, production): the review team edit an
+  organisation's details from its page in the Organisations section, and
+  the section sits directly under Review queue in the menu. The Details
+  card holds the same form the owners see on their Organisation tab,
+  folded until opened (and open after a failed save); every
+  field, name and logo included, is written at once with a duplicate-name
+  check, audited as `org_updated` against the team member with the note
+  "Updated by the review team.", and a member's waiting name or logo
+  request is answered by whatever the team save. The side card keeps what
+  is set in wp-admin only: email domains, plus the live and refused counts.

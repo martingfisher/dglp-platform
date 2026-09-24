@@ -4150,6 +4150,46 @@ $ok( 0 === \DGL\Org\Org::search( 'No such organisation anywhere' )['total'], 'an
 
 update_option( \DGL\Email\Routing::OPTION_ENABLED, $mail_was_on );
 
+$group( 'The review team edit an organisation\'s details directly' );
+
+$org_e = $make_org( 'Editable Org' );
+$ella  = $make_member( 'dgl_ella', $org_e, 'owner' );
+Access::flush_cache();
+
+$team_input = \DGL\Org\Profile::form_values( $org_e );
+$team_input['org_email']       = 'hello@editable.example';
+$team_input['org_description'] = 'Written by the team.';
+$team_input['org_website']     = 'not a website';
+$r = \DGL\Org\Profile::save_by_team( $org_e, $team_input, $mod, [] );
+$ok( isset( $r['errors']['org_website'] ) && 'Written by the team.' !== (string) get_post_meta( $org_e, 'dgl_org_description', true ), 'a bad field stops the whole save, like the member form' );
+
+$team_input['org_website'] = 'https://editable.example';
+$r = \DGL\Org\Profile::save_by_team( $org_e, $team_input, $mod, [] );
+$ok( [] === $r['errors'] && 'Written by the team.' === \DGL\Org\Profile::values( $org_e )['org_description'] && 'https://editable.example' === \DGL\Org\Profile::values( $org_e )['org_website'], 'open fields are written straight away' );
+$team_rows = Log::for_org_actions( $org_e, [ 'org_updated' ] );
+$ok( 1 === count( $team_rows ) && (int) $team_rows[0]['actor_id'] === (int) $mod && str_contains( (string) $team_rows[0]['note'], 'review team' ), 'audited against the team member, saying so' );
+
+$r = \DGL\Org\Profile::save_by_team( $org_e, $team_input, $mod, [] );
+$ok( [] === $r['errors'] && 1 === count( Log::for_org_actions( $org_e, [ 'org_updated' ] ) ), 'saving unchanged details writes no audit row' );
+
+$team_input['org_name'] = 'Editable Org, renamed by the team';
+$r = \DGL\Org\Profile::save_by_team( $org_e, $team_input, $mod, [] );
+$ok( [] === $r['errors'] && 'Editable Org, renamed by the team' === get_the_title( $org_e ) && ! \DGL\Org\Profile::has_pending( $org_e ), 'the name changes at once, nothing is held for review' );
+
+$team_input['org_name'] = 'Org B';
+$r = \DGL\Org\Profile::save_by_team( $org_e, $team_input, $mod, [] );
+$ok( isset( $r['errors']['org_name'] ) && 'Editable Org, renamed by the team' === get_the_title( $org_e ), 'but not to a name another organisation already has' );
+
+// A member's waiting request is answered by whatever the team save.
+$member_input = \DGL\Org\Profile::form_values( $org_e );
+$member_input['org_name'] = 'Ella\'s preferred name';
+\DGL\Org\Profile::save( $org_e, $member_input, $ella, [] );
+$ok( \DGL\Org\Profile::has_pending( $org_e ), 'an owner asks for a rename and it waits' );
+$team_input['org_name'] = 'The team\'s name';
+$r = \DGL\Org\Profile::save_by_team( $org_e, $team_input, $mod, [] );
+$ok( [] === $r['errors'], 'the team can set the name while a request waits (' . implode( '; ', $r['errors'] ) . ')' );
+$ok( 'The team\'s name' === get_post_field( 'post_title', $org_e, 'raw' ) && ! \DGL\Org\Profile::has_pending( $org_e ) && ! in_array( $org_e, \DGL\Org\Profile::awaiting_review(), true ), 'the team setting the name answers the request and takes it off the waiting list' );
+
 /* ----------------------------------------------------------------- report */
 
 echo "\n" . str_repeat( '-', 60 ) . "\n";

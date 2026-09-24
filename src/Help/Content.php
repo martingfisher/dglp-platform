@@ -257,7 +257,8 @@ final class Content {
 					'id'      => 'trust',
 					'heading' => __( 'Trust: what goes live without you', 'dgl-platform' ),
 					'blocks'  => [
-						[ 'p', __( 'Organisations, under Review team, lists every organisation with its verification state, its trust setting and how many people it has. Search by name. Open one to see its people, its details and its trust switches.', 'dgl-platform' ) ],
+						[ 'p', __( 'Organisations, under Review team, lists every organisation with its verification state, its trust setting and how many people it has. Search by name. Open one to see its trust switches, its details and its people.', 'dgl-platform' ) ],
+						[ 'p', __( 'The Details card is the organisation\'s own profile: name, logo, overview, contact details, address, what they do and who for. You can change any of it and it is live at once, recorded against your name. If the organisation has asked to change its name or logo, decide that request first, or set the field yourself and the request is answered by what you save. Verification and email domains stay in wp-admin.', 'dgl-platform' ) ],
 						[ 'p', __( 'Every organisation starts with "Trust this organisation" off: everything it submits comes to the queue. Switch it on and four more switches appear.', 'dgl-platform' ) ],
 						[ 'ul', [
 							__( 'Trust News, Trust Events, Trust Training. Tick one and new items of that type, and edits to them, appear on the site as soon as they are submitted. Untick and they come to the queue again.', 'dgl-platform' ),

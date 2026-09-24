@@ -1864,6 +1864,22 @@ body.dgl-body {
 .dgl-trust__sub[hidden] { display: none; }
 
 /*
+ * The organisation's full profile form, folded. The whole thing is a long
+ * page on its own, and the team open it only when they mean to edit.
+ */
+.dgl-fold__summary {
+	cursor: pointer;
+	font-weight: 600;
+	color: var(--dgl-navy);
+	min-height: 28px;
+	padding: 6px 0;
+}
+
+.dgl-fold__summary:focus-visible { outline: 2px solid var(--dgl-primary); outline-offset: 2px; }
+
+.dgl-fold[open] > .dgl-fold__summary { margin-bottom: 10px; }
+
+/*
  * Joining: which organisation. The intent radios carry a bold line and a
  * help line each; the matched organisations sit indented under theirs.
  */

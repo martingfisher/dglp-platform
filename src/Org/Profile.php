@@ -261,6 +261,92 @@ final class Profile {
 	}
 
 	/**
+	 * The review team save an organisation's details from the Admin area.
+	 *
+	 * Everything is written straight away, the name and logo included: the
+	 * team are the people a member's request would have waited for. A
+	 * request waiting on a field the team have just set is answered by that,
+	 * so it is dropped. Audited against the team member; the "please check
+	 * these" prompt is left for an owner, because only an owner has read them.
+	 *
+	 * @param array<string, mixed> $input Raw form values.
+	 * @return array{errors: array<string, string>}
+	 */
+	public static function save_by_team( int $org_id, array $input, int $actor_id, array $files = [] ): array {
+		$result = Validator::validate( Schema::fields(), $input );
+		$errors = array_merge( $result['errors'], Uploads::handle( $org_id, Schema::fields(), $files, $input, $result['values'] ) );
+
+		if ( ! empty( $errors ) ) {
+			return [ 'errors' => $errors ];
+		}
+
+		$values = $result['values'];
+		$before = self::values( $org_id );
+
+		// The raw title, not the displayed one: display filters curl an
+		// apostrophe, and a name that only differs by that is not a change.
+		$before['org_name'] = (string) get_post_field( 'post_title', $org_id, 'raw' );
+
+		if ( array_key_exists( 'org_name', $values ) && ! self::same( Schema::find( 'org_name' ), $before['org_name'] ?? '', $values['org_name'] ) ) {
+			$taken = Duplicates::hard( Duplicates::find( [ 'name' => (string) $values['org_name'] ], Org::duplicate_candidates( $org_id ) ) );
+
+			if ( [] !== $taken ) {
+				return [
+					'errors' => [
+						'org_name' => sprintf(
+							/* translators: %s: organisation. */
+							__( 'That name is already used by %s.', 'dgl-platform' ),
+							$taken[0]['name']
+						),
+					],
+				];
+			}
+		}
+
+		$pending = self::pending( $org_id );
+
+		foreach ( Schema::fields() as $field ) {
+			if ( ! array_key_exists( $field->key, $values ) ) {
+				continue;
+			}
+
+			unset( $pending[ $field->key ] );
+
+			if ( 'org_name' === $field->key ) {
+				if ( ! self::same( $field, $before['org_name'] ?? '', $values['org_name'] ) ) {
+					wp_update_post( [ 'ID' => $org_id, 'post_title' => sanitize_text_field( (string) $values['org_name'] ) ] );
+				}
+				continue;
+			}
+
+			self::write_meta( $org_id, $field, $values[ $field->key ] );
+		}
+
+		if ( [] === $pending ) {
+			delete_post_meta( $org_id, self::PENDING );
+			delete_post_meta( $org_id, self::PENDING_AT );
+		} else {
+			update_post_meta( $org_id, self::PENDING, $pending );
+		}
+
+		$after             = self::values( $org_id );
+		$after['org_name'] = (string) get_post_field( 'post_title', $org_id, 'raw' );
+		$changed           = [];
+
+		foreach ( Schema::fields() as $field ) {
+			if ( array_key_exists( $field->key, $values ) && ! self::same( $field, $before[ $field->key ] ?? '', $after[ $field->key ] ?? '' ) ) {
+				$changed[ $field->key ] = [ $before[ $field->key ] ?? '', $after[ $field->key ] ?? '' ];
+			}
+		}
+
+		if ( [] !== $changed ) {
+			Log::record( 'org_updated', 'org', $org_id, $org_id, __( 'Updated by the review team.', 'dgl-platform' ), $changed, $actor_id );
+		}
+
+		return [ 'errors' => [] ];
+	}
+
+	/**
 	 * Field labels for a set of keys, for the emails.
 	 *
 	 * @param string[] $keys

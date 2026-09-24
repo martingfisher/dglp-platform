@@ -760,6 +760,21 @@ final class Controller {
 
 		$labels = \DGL\Org\Trust::labels();
 		$error  = '';
+		$errors = [];
+		$typed  = null;
+
+		if ( 'POST' === ( $_SERVER['REQUEST_METHOD'] ?? 'GET' ) && isset( $_POST['dgl_org_save'] ) ) {
+			check_admin_referer( Wizard::NONCE );
+
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- the validator sanitises every declared field.
+			$typed  = isset( $_POST[ FieldRenderer::INPUT_NAME ] ) ? (array) wp_unslash( $_POST[ FieldRenderer::INPUT_NAME ] ) : [];
+			$errors = \DGL\Org\Profile::save_by_team( $org_id, $typed, $user->user_id, $_FILES )['errors'];
+
+			if ( [] === $errors ) {
+				wp_safe_redirect( add_query_arg( 'saved', 'details', Router::url( 'review', 'orgs', (string) $org_id ) ) );
+				exit;
+			}
+		}
 
 		if ( 'POST' === ( $_SERVER['REQUEST_METHOD'] ?? 'GET' ) && isset( $_POST['dgl_trust_save'] ) ) {
 			check_admin_referer( Wizard::NONCE );
@@ -832,8 +847,15 @@ final class Controller {
 				'waiting'   => \DGL\Org\Profile::has_pending( $org_id ),
 				'history'   => \DGL\Audit\Log::for_org_actions( $org_id, [ 'trust_changed', 'trust_revoked' ], 10 ),
 				'admin_url' => admin_url( 'post.php?post=' . $org_id . '&action=edit' ),
-				'saved'     => isset( $_GET['saved'] ), // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+				'saved'     => isset( $_GET['saved'] ) ? sanitize_key( wp_unslash( $_GET['saved'] ) ) : '', // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 				'error'     => $error,
+				// The organisation's own details, editable by the team. After a
+				// failed save the form shows what was typed, not what is stored.
+				'fields'    => \DGL\Org\Schema::fields(),
+				'sections'  => \DGL\Org\Schema::sections(),
+				'values'    => null !== $typed ? array_merge( $values, $typed ) : $values,
+				'errors'    => $errors,
+				'pending'   => \DGL\Org\Profile::pending( $org_id ),
 			],
 			(string) get_the_title( $org_id ),
 			$user
