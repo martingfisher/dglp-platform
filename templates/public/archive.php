@@ -214,13 +214,7 @@ $meta_line = static function ( WP_Post $item ): string {
 					<?php esc_html_e( 'Nothing matches these filters.', 'dgl-platform' ); ?>
 					<a href="<?php echo esc_url( $list_base ); ?>"><?php esc_html_e( 'Show everything', 'dgl-platform' ); ?></a>
 				<?php else : ?>
-					<?php
-					printf(
-						/* translators: %s: lower-case plural type label. */
-						esc_html__( 'There are no %s listed at the moment. Check back soon.', 'dgl-platform' ),
-						esc_html( strtolower( $label ) )
-					);
-					?>
+					<?php esc_html_e( 'Nothing is listed here at the moment. Check back soon.', 'dgl-platform' ); ?>
 				<?php endif; ?>
 			</p>
 		</div>

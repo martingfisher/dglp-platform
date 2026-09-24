@@ -880,3 +880,14 @@ clean. They are the only DGLP content on staging.
   links now", so the result of pressing it is where the eye is. A pending
   story or event shows a "Feature it" note saying the buttons appear once
   it is live; the card itself is unchanged and still live-only.
+- **0.36.0 deployed** (24 September, production): the review team can hide
+  an organisation from the public directory. A Directory card under Trust
+  on the organisation page says whether it is shown, asked to be shown, or
+  not switched on, with "Hide from the directory" / "Stop hiding it". Hiding
+  writes `dgl_org_directory_hidden`, which the directory query and the
+  single entry both honour; the organisation's own switch is untouched, so
+  stopping restores what it chose. Audited as `directory_hidden` and
+  `directory_unhidden`; the member's Organisation tab says the team have
+  hidden it. Also: the empty list sentence on News, Events and Training
+  is now "Nothing is listed here at the moment." (Training read "There are
+  no training").

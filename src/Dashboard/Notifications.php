@@ -67,6 +67,8 @@ final class Notifications {
 			'org_status_changed'          => [ 'title' => __( 'Your organisation\'s status changed', 'dgl-platform' ), 'tone' => 'quiet' ],
 			'trust_changed'               => [ 'title' => __( 'Your review settings changed', 'dgl-platform' ), 'tone' => 'quiet' ],
 			'trust_revoked'               => [ 'title' => __( 'Your submissions are being reviewed again', 'dgl-platform' ), 'tone' => 'attention' ],
+			'directory_hidden'            => [ 'title' => __( 'Your organisation was hidden from the directory', 'dgl-platform' ), 'tone' => 'attention' ],
+			'directory_unhidden'          => [ 'title' => __( 'Your organisation is back in the directory', 'dgl-platform' ), 'tone' => 'quiet' ],
 			'member_removed'              => [ 'title' => __( 'Somebody was removed from your organisation', 'dgl-platform' ), 'tone' => 'quiet' ],
 			'member_role_changed'         => [ 'title' => __( 'What a colleague can do has changed', 'dgl-platform' ), 'tone' => 'quiet' ],
 		];

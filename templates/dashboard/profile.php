@@ -144,12 +144,16 @@ $is_owner = $user instanceof UserContext && $user->is_org_owner();
 			<div class="dgl-alert" role="alert"><p><?php echo esc_html( $data['directory_error'] ); ?></p></div>
 		<?php endif; ?>
 		<p>
-			<?php if ( $data['directory_on'] ) : ?>
+			<?php if ( ! empty( $data['directory_hidden'] ) ) : ?>
+				<?php esc_html_e( 'You are not shown in the directory of member organisations on the website.', 'dgl-platform' ); ?>
+			<?php elseif ( $data['directory_on'] ) : ?>
 				<?php esc_html_e( 'You are shown in the directory of member organisations on the website, with the details above.', 'dgl-platform' ); ?>
 			<?php else : ?>
 				<?php esc_html_e( 'You are not shown in the directory of member organisations on the website. Nobody appears without choosing to.', 'dgl-platform' ); ?>
 			<?php endif; ?>
-			<?php if ( $data['directory_on'] && ! $data['directory_live'] ) : ?>
+			<?php if ( ! empty( $data['directory_hidden'] ) ) : ?>
+				<?php esc_html_e( 'The review team have hidden your organisation from the directory for now. Contact them if you think that is wrong.', 'dgl-platform' ); ?>
+			<?php elseif ( $data['directory_on'] && ! $data['directory_live'] ) : ?>
 				<?php esc_html_e( 'It will show once the team has verified your organisation.', 'dgl-platform' ); ?>
 			<?php endif; ?>
 		</p>

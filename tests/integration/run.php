@@ -4190,6 +4190,32 @@ $r = \DGL\Org\Profile::save_by_team( $org_e, $team_input, $mod, [] );
 $ok( [] === $r['errors'], 'the team can set the name while a request waits (' . implode( '; ', $r['errors'] ) . ')' );
 $ok( 'The team\'s name' === get_post_field( 'post_title', $org_e, 'raw' ) && ! \DGL\Org\Profile::has_pending( $org_e ) && ! in_array( $org_e, \DGL\Org\Profile::awaiting_review(), true ), 'the team setting the name answers the request and takes it off the waiting list' );
 
+$group( 'The review team can hide an organisation from the directory' );
+
+$org_d = $make_org( 'Directory Veto Org' );
+$dana  = $make_member( 'dgl_dana', $org_d, 'owner' );
+update_post_meta( $org_d, 'dgl_org_description', 'A directory veto test organisation.' );
+Access::flush_cache();
+
+$ok( true === \DGL\Org\Directory::set( $org_d, true, Access::user_context( $dana ) ) && \DGL\Org\Directory::is_listed( $org_d ), 'the organisation switches itself on and is listed' );
+$ok( in_array( $org_d, \DGL\Org\DirectoryQuery::run( [ 'q' => 'Directory Veto', 'page' => 1, 'filters' => [] ] )['ids'], true ), 'and the directory query finds it' );
+$ok( null !== \DGL\Org\DirectoryQuery::find( (string) $org_d ), 'and its own entry resolves' );
+
+$r = \DGL\Org\Directory::set_hidden( $org_d, true, $dana );
+$ok( is_wp_error( $r ) && 'dgl_not_allowed' === $r->get_error_code() && ! \DGL\Org\Directory::is_hidden( $org_d ), 'an owner cannot hide their own organisation this way' );
+
+$r = \DGL\Org\Directory::set_hidden( $org_d, true, $mod );
+$ok( true === $r && \DGL\Org\Directory::is_hidden( $org_d ) && ! \DGL\Org\Directory::is_listed( $org_d ), 'a moderator hides it and it is no longer listed' );
+$ok( \DGL\Org\Directory::wants_listing( $org_d ), 'while the organisation\'s own switch is left on' );
+$ok( ! in_array( $org_d, \DGL\Org\DirectoryQuery::run( [ 'q' => 'Directory Veto', 'page' => 1, 'filters' => [] ] )['ids'], true ), 'the directory query leaves it out' );
+$ok( null === \DGL\Org\DirectoryQuery::find( (string) $org_d ), 'and its own entry is gone' );
+$hid = Log::for_org_actions( $org_d, [ 'directory_hidden' ] );
+$ok( 1 === count( $hid ) && (int) $hid[0]['actor_id'] === (int) $mod, 'audited against the moderator' );
+$ok( true === \DGL\Org\Directory::set_hidden( $org_d, true, $mod ) && 1 === count( Log::for_org_actions( $org_d, [ 'directory_hidden' ] ) ), 'hiding it again writes nothing' );
+
+$ok( true === \DGL\Org\Directory::set_hidden( $org_d, false, $mod ) && \DGL\Org\Directory::is_listed( $org_d ), 'stop hiding and it is listed again, as the organisation chose' );
+$ok( 1 === count( Log::for_org_actions( $org_d, [ 'directory_unhidden' ] ) ), 'with its own audit row' );
+
 /* ----------------------------------------------------------------- report */
 
 echo "\n" . str_repeat( '-', 60 ) . "\n";

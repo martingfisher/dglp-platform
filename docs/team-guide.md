@@ -217,6 +217,13 @@ unverified organisation's switches are kept but do nothing until it is
 verified in wp-admin. Something already waiting in the queue when you change
 trust stays there: the decision is made when an item is submitted.
 
+**Directory**, under Trust, says whether the organisation is in the public
+directory at `/directory/`. Organisations put themselves in from their
+Organisation tab; you cannot add one for them. You can hide one: "Hide from
+the directory" takes it off at once, whatever it chose, and is recorded.
+"Stop hiding it" puts things back as the organisation had them. The
+organisation's Organisation tab tells them the team have hidden it.
+
 On a review screen, the Trust line under "Who sent it" shows the
 organisation's setting and, for a live item that never came to the queue,
 which switch let it through.

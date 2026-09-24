@@ -38,7 +38,54 @@ final class Directory {
 	 * Whether the public directory would show this organisation now.
 	 */
 	public static function is_listed( int $org_id ): bool {
-		return self::wants_listing( $org_id ) && Org::is_approved( $org_id );
+		return self::wants_listing( $org_id ) && Org::is_approved( $org_id ) && ! self::is_hidden( $org_id );
+	}
+
+	/**
+	 * Whether the review team have hidden the organisation from the
+	 * directory. The organisation's own switch is left as it was, so
+	 * showing it again restores what it chose.
+	 */
+	public static function is_hidden( int $org_id ): bool {
+		return '1' === (string) get_post_meta( $org_id, Meta::ORG_DIRECTORY_HIDDEN, true );
+	}
+
+	/**
+	 * The review team hide the organisation from the directory, or show it
+	 * again. Audited. The member's own switch is not touched.
+	 *
+	 * @return true|\WP_Error
+	 */
+	public static function set_hidden( int $org_id, bool $hidden, int $actor_id ) {
+		if ( ! Org::exists( $org_id ) ) {
+			return new \WP_Error( 'dgl_not_found', __( 'That organisation does not exist.', 'dgl-platform' ) );
+		}
+
+		if ( ! \DGL\Access\Access::can( $actor_id, Policy::MANAGE_ORGS ) ) {
+			return new \WP_Error( 'dgl_not_allowed', __( 'Only the review team can hide an organisation from the directory.', 'dgl-platform' ) );
+		}
+
+		if ( self::is_hidden( $org_id ) === $hidden ) {
+			return true;
+		}
+
+		if ( $hidden ) {
+			update_post_meta( $org_id, Meta::ORG_DIRECTORY_HIDDEN, '1' );
+		} else {
+			delete_post_meta( $org_id, Meta::ORG_DIRECTORY_HIDDEN );
+		}
+
+		Log::record(
+			$hidden ? 'directory_hidden' : 'directory_unhidden',
+			'org',
+			$org_id,
+			$org_id,
+			$hidden ? __( 'Hidden from the directory by the review team.', 'dgl-platform' ) : __( 'Shown in the directory again by the review team.', 'dgl-platform' ),
+			[ 'directory_hidden' => [ $hidden ? 'no' : 'yes', $hidden ? 'yes' : 'no' ] ],
+			$actor_id
+		);
+
+		return true;
 	}
 
 	/**

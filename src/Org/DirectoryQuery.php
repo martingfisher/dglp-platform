@@ -65,9 +65,9 @@ final class DirectoryQuery {
 	/**
 	 * Listed organisations matching the search and filters.
 	 *
-	 * Listed means: verified, and the organisation switched itself on. Both
-	 * are checked here, not on the page, so no template can show one by
-	 * accident.
+	 * Listed means: verified, the organisation switched itself on, and the
+	 * review team have not hidden it. All three are checked here, not on the
+	 * page, so no template can show one by accident.
 	 *
 	 * @param array{q: string, page: int, filters: array<string, string>} $args
 	 * @return array{ids: int[], total: int, pages: int}
@@ -82,12 +82,14 @@ final class DirectoryQuery {
 		 * where a filter's meta key belonged as soon as both were used:
 		 * "older" plus a ward matched nothing.
 		 */
-		$join_params  = [ Meta::ORG_IN_DIRECTORY, Meta::ORG_STATUS, Meta::ORG_APPROVED ];
+		$join_params  = [ Meta::ORG_IN_DIRECTORY, Meta::ORG_STATUS, Meta::ORG_APPROVED, Meta::ORG_DIRECTORY_HIDDEN ];
 		$where_params = [];
-		$where        = [];
+		$where        = [ 'hidden.post_id IS NULL' ];
 		$joins        = [
 			"INNER JOIN {$wpdb->postmeta} listed ON listed.post_id = p.ID AND listed.meta_key = %s AND listed.meta_value = '1'",
 			"INNER JOIN {$wpdb->postmeta} status ON status.post_id = p.ID AND status.meta_key = %s AND status.meta_value = %s",
+			// The review team's veto: a row here keeps the organisation out whatever it chose.
+			"LEFT JOIN {$wpdb->postmeta} hidden ON hidden.post_id = p.ID AND hidden.meta_key = %s AND hidden.meta_value = '1'",
 		];
 
 		$q = trim( $args['q'] ?? '' );

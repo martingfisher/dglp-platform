@@ -776,6 +776,19 @@ final class Controller {
 			}
 		}
 
+		if ( 'POST' === ( $_SERVER['REQUEST_METHOD'] ?? 'GET' ) && isset( $_POST['dgl_directory_hidden'] ) ) {
+			check_admin_referer( Wizard::NONCE );
+
+			$result = \DGL\Org\Directory::set_hidden( $org_id, '1' === sanitize_text_field( wp_unslash( (string) $_POST['dgl_directory_hidden'] ) ), $user->user_id );
+
+			if ( is_wp_error( $result ) ) {
+				$error = $result->get_error_message();
+			} else {
+				wp_safe_redirect( add_query_arg( 'saved', 'directory', Router::url( 'review', 'orgs', (string) $org_id ) ) );
+				exit;
+			}
+		}
+
 		if ( 'POST' === ( $_SERVER['REQUEST_METHOD'] ?? 'GET' ) && isset( $_POST['dgl_trust_save'] ) ) {
 			check_admin_referer( Wizard::NONCE );
 
@@ -856,6 +869,11 @@ final class Controller {
 				'values'    => null !== $typed ? array_merge( $values, $typed ) : $values,
 				'errors'    => $errors,
 				'pending'   => \DGL\Org\Profile::pending( $org_id ),
+				// The directory: what the organisation chose, and the team's veto.
+				'directory_on'     => \DGL\Org\Directory::wants_listing( $org_id ),
+				'directory_hidden' => \DGL\Org\Directory::is_hidden( $org_id ),
+				'directory_live'   => \DGL\Org\Directory::is_listed( $org_id ),
+				'directory_url'    => home_url( '/' . \DGL\Org\Directory::BASE . '/' . get_post_field( 'post_name', $org_id ) . '/' ),
 			],
 			(string) get_the_title( $org_id ),
 			$user
@@ -1861,6 +1879,7 @@ final class Controller {
 				'sections'   => \DGL\Org\Schema::sections(),
 				'directory_on'   => $org_id > 0 && \DGL\Org\Directory::wants_listing( $org_id ),
 				'directory_live' => $org_id > 0 && \DGL\Org\Directory::is_listed( $org_id ),
+				'directory_hidden' => $org_id > 0 && \DGL\Org\Directory::is_hidden( $org_id ),
 				'can_toggle_directory' => $org_id > 0 && Policy::can_toggle_directory( $user, $org_id ),
 				'directory_notice' => 'organisation' === $tab ? self::flash_notice() : '',
 				'directory_error'  => 'organisation' === $tab ? self::flash_error() : '',

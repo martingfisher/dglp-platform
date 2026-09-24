@@ -51,6 +51,9 @@ final class Meta {
 	/** '1' when the organisation has chosen to appear in the public directory. */
 	public const ORG_IN_DIRECTORY = 'dgl_org_in_directory';
 
+	/** '1' when the review team have hidden the organisation from the directory, whatever it chose. */
+	public const ORG_DIRECTORY_HIDDEN = 'dgl_org_directory_hidden';
+
 	/* Facts carried over from Forum Central's records by the import. Read-only in the member area. */
 	public const ORG_FC_ID          = 'dgl_org_fc_id';
 	public const ORG_FC_VOLITION    = 'dgl_org_fc_volition';

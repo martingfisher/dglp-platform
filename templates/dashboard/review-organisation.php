@@ -28,6 +28,10 @@ $pending  = (array) ( $data['pending'] ?? [] );
 	<div class="dgl-alert dgl-alert--good" role="status">
 		<p><?php esc_html_e( 'Details saved.', 'dgl-platform' ); ?></p>
 	</div>
+<?php elseif ( 'directory' === (string) ( $data['saved'] ?? '' ) ) : ?>
+	<div class="dgl-alert dgl-alert--good" role="status">
+		<p><?php echo ! empty( $data['directory_hidden'] ) ? esc_html__( 'Hidden from the directory.', 'dgl-platform' ) : esc_html__( 'No longer hidden. The directory shows what the organisation chose.', 'dgl-platform' ); ?></p>
+	</div>
 <?php elseif ( '' !== (string) ( $data['saved'] ?? '' ) ) : ?>
 	<div class="dgl-alert dgl-alert--good" role="status">
 		<p><?php esc_html_e( 'Saved. The organisation\'s owners have been emailed.', 'dgl-platform' ); ?></p>
@@ -171,6 +175,37 @@ $pending  = (array) ( $data['pending'] ?? [] );
 					<button class="dgl-button" type="submit" name="dgl_trust_save" value="1"><?php esc_html_e( 'Save trust settings', 'dgl-platform' ); ?></button>
 				</div>
 			</form>
+		</section>
+
+		<section class="dgl-card dgl-decision">
+			<h2 class="dgl-section__title"><?php esc_html_e( 'Directory', 'dgl-platform' ); ?></h2>
+			<p>
+				<?php if ( ! empty( $data['directory_hidden'] ) ) : ?>
+					<?php esc_html_e( 'Hidden from the public directory by the review team.', 'dgl-platform' ); ?>
+					<?php if ( ! empty( $data['directory_on'] ) ) : ?>
+						<?php esc_html_e( 'The organisation has asked to be shown, so it appears again as soon as you stop hiding it.', 'dgl-platform' ); ?>
+					<?php endif; ?>
+				<?php elseif ( ! empty( $data['directory_live'] ) ) : ?>
+					<?php esc_html_e( 'Shown in the public directory.', 'dgl-platform' ); ?>
+					<a href="<?php echo esc_url( (string) $data['directory_url'] ); ?>" target="_blank" rel="noopener"><?php esc_html_e( 'See its entry', 'dgl-platform' ); ?></a>
+				<?php elseif ( ! empty( $data['directory_on'] ) ) : ?>
+					<?php esc_html_e( 'The organisation has asked to be shown in the directory, which happens once it is verified.', 'dgl-platform' ); ?>
+				<?php else : ?>
+					<?php esc_html_e( 'Not in the public directory: the organisation has not switched itself on. Any of its approved members can, from their Organisation tab.', 'dgl-platform' ); ?>
+				<?php endif; ?>
+			</p>
+			<form method="post" class="dgl-form dgl-form--bare">
+				<?php wp_nonce_field( Wizard::NONCE ); ?>
+				<input type="hidden" name="dgl_directory_hidden" value="<?php echo ! empty( $data['directory_hidden'] ) ? '0' : '1'; ?>">
+				<div class="dgl-decision__actions">
+					<?php if ( ! empty( $data['directory_hidden'] ) ) : ?>
+						<button class="dgl-button dgl-button--secondary" type="submit"><?php esc_html_e( 'Stop hiding it', 'dgl-platform' ); ?></button>
+					<?php else : ?>
+						<button class="dgl-button dgl-button--danger" type="submit"><?php esc_html_e( 'Hide from the directory', 'dgl-platform' ); ?></button>
+					<?php endif; ?>
+				</div>
+			</form>
+			<p class="dgl-help"><?php esc_html_e( 'Hiding overrides the organisation\'s own choice and is recorded. Their own switch is left as it is, so stopping restores what they chose.', 'dgl-platform' ); ?></p>
 		</section>
 
 		<section class="dgl-card">
