@@ -170,6 +170,22 @@ The topic list ships in the plugin and seeds itself:
 - The wp-admin Organisations box no longer has a trust select. It shows the
   setting and links to the user area page.
 
+## After 0.37.0
+
+- Every public page the plugin owns prints its own description, canonical,
+  Open Graph and Twitter tags and JSON-LD. Check one: view the source of a
+  live news story and look for `<!-- DGLP: page description -->`.
+- Social cards are made with GD into `wp-content/uploads/dgl-og/`. Check
+  the `og:image` of an item without a picture answers 200. If GD or
+  `imagettftext` is missing on the host, the site icon is used instead and
+  nothing breaks; `wp dgl probe page <url> og:image` shows which.
+- Rank Math: when it prints the head, the plugin feeds it through its
+  filters and prints only the schema. That path is not exercised by the
+  test suites because Rank Math is not installed locally.
+- Launch day: Settings > Reading, untick "Discourage search engines". Until
+  then every page carries noindex from WordPress core, whatever else is
+  printed.
+
 ## Staging to production
 
 Do **not** use Wordify's `push_staging` to move the plugin. That pushes the whole

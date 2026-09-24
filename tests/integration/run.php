@@ -4216,6 +4216,89 @@ $ok( true === \DGL\Org\Directory::set_hidden( $org_d, true, $mod ) && 1 === coun
 $ok( true === \DGL\Org\Directory::set_hidden( $org_d, false, $mod ) && \DGL\Org\Directory::is_listed( $org_d ), 'stop hiding and it is listed again, as the organisation chose' );
 $ok( 1 === count( Log::for_org_actions( $org_d, [ 'directory_unhidden' ] ) ), 'with its own audit row' );
 
+$group( 'Page description: schema, social image and the card that is never missing' );
+
+$seo_org = $make_org( 'Seo Org' );
+update_post_meta( $seo_org, 'dgl_org_description', 'We run things in Leeds. ' . str_repeat( 'More words here. ', 20 ) );
+update_post_meta( $seo_org, 'dgl_org_website', 'https://seo-org.example' );
+update_post_meta( $seo_org, 'dgl_org_email', 'hi@seo-org.example' );
+update_post_meta( $seo_org, 'dgl_org_address_1', '1 Test Street' );
+update_post_meta( $seo_org, 'dgl_org_city', 'Leeds' );
+update_post_meta( $seo_org, 'dgl_org_postcode', 'ls1 1aa' );
+$seo_owner = $make_member( 'dgl_seo_owner', $seo_org, 'owner' );
+Access::flush_cache();
+
+$seo_event = $make_item( $seo_org, $seo_owner, Statuses::LIVE );
+wp_update_post( [ 'ID' => $seo_event, 'post_title' => 'Coffee &amp; cake morning' ] );
+update_post_meta( $seo_event, 'dgl_summary', 'Come for a cuppa.' );
+update_post_meta( $seo_event, 'dgl_start_datetime', '2026-10-03 10:00:00' );
+update_post_meta( $seo_event, 'dgl_end_datetime', '2026-10-03 12:00:00' );
+update_post_meta( $seo_event, 'dgl_format', 'hybrid' );
+update_post_meta( $seo_event, 'dgl_venue_name', 'The Hub' );
+update_post_meta( $seo_event, 'dgl_address', '2 Hub Lane' );
+update_post_meta( $seo_event, 'dgl_postcode', 'LS2 2BB' );
+update_post_meta( $seo_event, 'dgl_online_url', 'https://meet.example/room' );
+update_post_meta( $seo_event, 'dgl_cost', 'free' );
+update_post_meta( $seo_event, 'dgl_booking_url', 'https://book.example/1' );
+
+$seo_post = get_post( $seo_event );
+$seo_img  = \DGL\Frontend\Seo::image_for_post( $seo_post );
+$ok( str_contains( $seo_img['url'], '/dgl-og/item-' . $seo_event . '-' ) && 1200 === $seo_img['width'] && 630 === $seo_img['height'], 'an event with no picture and an organisation with no logo gets a made card (' . $seo_img['url'] . ')' );
+$seo_file = str_replace( wp_upload_dir()['baseurl'], wp_upload_dir()['basedir'], $seo_img['url'] );
+$ok( is_readable( $seo_file ) && "\x89PNG" === substr( (string) file_get_contents( $seo_file ), 0, 4 ), 'and the card is a real PNG on disk' );
+$ok( \DGL\Frontend\Seo::image_for_post( $seo_post )['url'] === $seo_img['url'], 'asked again, the same file is served' );
+wp_update_post( [ 'ID' => $seo_event, 'post_title' => 'Coffee, cake and a chat' ] );
+$seo_img2 = \DGL\Frontend\Seo::image_for_post( get_post( $seo_event ) );
+$ok( $seo_img2['url'] !== $seo_img['url'] && ! file_exists( $seo_file ) && is_readable( str_replace( wp_upload_dir()['baseurl'], wp_upload_dir()['basedir'], $seo_img2['url'] ) ), 'a new title means a new card and the old one is removed' );
+
+$seo_schema = \DGL\Frontend\Seo::schema_for_post( get_post( $seo_event ), $seo_img2, 'Come for a cuppa.' );
+$ok( 'Event' === $seo_schema['@type'] && 'Coffee, cake and a chat' === $seo_schema['name'], 'an event is an Event with a plain-text name' );
+$ok( str_starts_with( (string) $seo_schema['startDate'], '2026-10-03T10:00:00' ) && str_starts_with( (string) $seo_schema['endDate'], '2026-10-03T12:00:00' ), 'with its start and end as ISO stamps (' . $seo_schema['startDate'] . ')' );
+$ok( 'https://schema.org/MixedEventAttendanceMode' === $seo_schema['eventAttendanceMode'] && 2 === count( $seo_schema['location'] ) && 'The Hub' === $seo_schema['location'][0]['name'] && 'LS2 2BB' === $seo_schema['location'][0]['address']['postalCode'] && 'https://meet.example/room' === $seo_schema['location'][1]['url'], 'a hybrid event has a place and an online location' );
+$ok( '0' === $seo_schema['offers']['price'] && 'https://book.example/1' === $seo_schema['offers']['url'], 'free with a booking link is a zero-price offer at that link' );
+$ok( 'Seo Org' === $seo_schema['organizer']['name'] && ! isset( $seo_schema['organizer']['url'] ), 'the organiser is named, with no link while it is not in the directory' );
+$ok( 'https://schema.org/EventScheduled' === $seo_schema['eventStatus'], 'and it is scheduled' );
+
+$seo_news = wp_insert_post( [ 'post_type' => PostTypes::NEWS, 'post_status' => Statuses::LIVE, 'post_title' => 'A story', 'post_content' => '<p>Words about things.</p>', 'post_author' => $seo_owner ] );
+update_post_meta( $seo_news, DGL_FIXTURE_FLAG, '1' );
+update_post_meta( $seo_news, Meta::ITEM_ORG, $seo_org );
+$seo_ns = \DGL\Frontend\Seo::schema_for_post( get_post( $seo_news ), [ 'url' => '', 'width' => 0, 'height' => 0, 'alt' => '' ], 'Words about things.' );
+$ok( 'NewsArticle' === $seo_ns['@type'] && 'A story' === $seo_ns['headline'] && 'Seo Org' === $seo_ns['author']['name'] && ! isset( $seo_ns['image'] ), 'a story is a NewsArticle by its organisation, with no image key when there is none' );
+
+$seo_course = wp_insert_post( [ 'post_type' => PostTypes::TRAINING, 'post_status' => Statuses::LIVE, 'post_title' => 'Safeguarding basics', 'post_author' => $seo_owner ] );
+update_post_meta( $seo_course, DGL_FIXTURE_FLAG, '1' );
+update_post_meta( $seo_course, Meta::ITEM_ORG, $seo_org );
+update_post_meta( $seo_course, 'dgl_cost', 'paid' );
+$seo_cs = \DGL\Frontend\Seo::schema_for_post( get_post( $seo_course ), [ 'url' => '', 'width' => 0, 'height' => 0, 'alt' => '' ], '' );
+$ok( 'Course' === $seo_cs['@type'] && 'Seo Org' === $seo_cs['provider']['name'] && ! isset( $seo_cs['offers']['price'] ), 'undated training is a Course from its organisation, paid with no price stated' );
+update_post_meta( $seo_course, 'dgl_start_date', '2026-11-05' );
+update_post_meta( $seo_course, 'dgl_delivery', 'online' );
+$seo_cs = \DGL\Frontend\Seo::schema_for_post( get_post( $seo_course ), [ 'url' => '', 'width' => 0, 'height' => 0, 'alt' => '' ], '' );
+$ok( 'EducationEvent' === $seo_cs['@type'] && '2026-11-05' === $seo_cs['startDate'] && 'VirtualLocation' === $seo_cs['location']['@type'], 'dated online training is an EducationEvent held online' );
+
+$seo_org_page = \DGL\Frontend\Seo::for_org( get_post( $seo_org ) );
+$seo_oe = $seo_org_page['schema']['main'];
+$ok( 'Organization' === $seo_oe['@type'] && 'Seo Org' === $seo_oe['name'] && [ 'https://seo-org.example' ] === $seo_oe['sameAs'] && 'hi@seo-org.example' === $seo_oe['email'], 'a directory entry is an Organization with its website and email' );
+$ok( '1 Test Street' === $seo_oe['address']['streetAddress'] && 'LS1 1AA' === $seo_oe['address']['postalCode'] && 'GB' === $seo_oe['address']['addressCountry'], 'and a postal address with the postcode in capitals' );
+$ok( str_contains( $seo_org_page['image']['url'], '/dgl-og/org-' . $seo_org . '-' ) && str_contains( $seo_org_page['image']['url'], '.png' ), 'with a made card in place of a logo' );
+$ok( 30 >= str_word_count( $seo_org_page['description'] ) && str_ends_with( $seo_org_page['description'], '…' ), 'a long description is trimmed for the meta description' );
+$ok( 'BreadcrumbList' === $seo_org_page['schema']['breadcrumbs']['@type'] && 3 === count( $seo_org_page['schema']['breadcrumbs']['itemListElement'] ), 'breadcrumbs run Home, Member organisations, the organisation' );
+
+// The item's own picture wins over any card.
+$seo_att = wp_insert_attachment( [ 'post_mime_type' => 'image/png', 'post_title' => 'Hero', 'post_status' => 'inherit' ], '', 0 );
+update_post_meta( $seo_att, DGL_FIXTURE_FLAG, '1' );
+update_post_meta( $seo_att, '_wp_attached_file', '2026/09/seo-hero.png' );
+wp_update_attachment_metadata( $seo_att, [ 'width' => 1600, 'height' => 900, 'file' => '2026/09/seo-hero.png', 'sizes' => [] ] );
+update_post_meta( $seo_att, '_wp_attachment_image_alt', 'People at a table' );
+update_post_meta( $seo_event, 'dgl_image', $seo_att );
+$seo_hero = \DGL\Frontend\Seo::image_for_post( get_post( $seo_event ) );
+$ok( str_ends_with( $seo_hero['url'], '/2026/09/seo-hero.png' ) && 1600 === $seo_hero['width'] && 'People at a table' === $seo_hero['alt'], 'an uploaded picture is used first, with its own alt text' );
+delete_post_meta( $seo_event, 'dgl_image' );
+$seo_logo_field = \DGL\Org\Schema::find( 'org_logo' );
+update_post_meta( $seo_org, $seo_logo_field->meta_key(), $seo_att );
+$ok( str_ends_with( \DGL\Frontend\Seo::image_for_post( get_post( $seo_event ) )['url'], '/2026/09/seo-hero.png' ), 'else the organisation logo' );
+wp_delete_attachment( $seo_att, true );
+
 /* ----------------------------------------------------------------- report */
 
 echo "\n" . str_repeat( '-', 60 ) . "\n";

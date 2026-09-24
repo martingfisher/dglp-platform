@@ -891,3 +891,19 @@ clean. They are the only DGLP content on staging.
   hidden it. Also: the empty list sentence on News, Events and Training
   is now "Nothing is listed here at the moment." (Training read "There are
   no training").
+- **0.37.0 deployed** (24 September, production): a head for every public
+  page the plugin owns (`src/Frontend/Seo.php`): meta description, canonical,
+  Open Graph and Twitter tags, and JSON-LD. NewsArticle for news; Event with
+  dates, venue, online location, organiser and offer for events; Course or
+  EducationEvent for training; Organization with address and contact for a
+  directory entry; CollectionPage with an ItemList for the lists and the
+  directory; BreadcrumbList throughout. Filtered and searched lists are
+  noindex. The social image is the item's picture, else its organisation's
+  logo, else a card made on the server (`src/Frontend/OgCard.php`, GD,
+  Montserrat, 1200 by 630, saved under `uploads/dgl-og/`, remade when the
+  words change). If Rank Math is printing the head the same values go to it
+  through its filters and only the schema is printed here; on production
+  Rank Math prints nothing at all today (no title, tags or sitemap: Martin
+  to look in Rank Math > Dashboard), and the site is set to discourage
+  search engines, so every page still carries core's noindex until that is
+  switched off at launch.

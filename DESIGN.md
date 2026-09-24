@@ -336,6 +336,9 @@ shadows, no gradients, no icons unless the label needs one.
 - A block that only makes sense once a switch is on carries `data-dgl-depends="<key>"` and `data-dgl-depends-on="1"`, keyed on the control `#dgl-<key>`. The script hides and disables it until the control's value matches; a checkbox controller reads as `1` or `0`. Trust on an organisation is the pattern: the master `.dgl-check` first, then a `fieldset.dgl-trust__sub` indented under it with a 3px Cloud Grey left rule.
 - The server never relies on the hiding: a sub-switch that was not posted is off, and a master that is off clears everything under it.
 
+### Social card
+- Made on the server when an item, organisation or list has no picture of its own: 1200 by 630, Council Navy ground, the type as a small pale kicker, the title in Montserrat Bold (64, 54 or 44 to fit three or four lines), a thin rule, then who posted it in white and the site name in pale on the right. Nothing else: the card is read at thumbnail size in a feed.
+
 ### Navigation
 - **Sidebar:** Navy Deep, 24px padding, sections headed in uppercase label style at 80% white. Items 15.8px medium in 92% white, 9px 12px, 8px radius on the right corners only. Hover fills 10% white; the current item fills 14% white, goes bold, and carries a 3px Leeds Teal rail on its left edge. Counts sit right, 600, 80% white.
 - **Account block:** at the foot, above a 20% white rule: name in 600, organisation in 80% white, then "Sign out" as an outlined white button 44px tall.
