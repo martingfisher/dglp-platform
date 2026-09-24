@@ -875,3 +875,8 @@ clean. They are the only DGLP content on staging.
   button to the review queue with the waiting count, links to
   Organisations, Approved, Reports and the team guide. Members never see
   it.
+- **0.35.3 deployed** (24 September, production): on the review screen the
+  External links check is the last row, directly above "Check the external
+  links now", so the result of pressing it is where the eye is. A pending
+  story or event shows a "Feature it" note saying the buttons appear once
+  it is live; the card itself is unchanged and still live-only.

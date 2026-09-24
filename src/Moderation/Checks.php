@@ -54,8 +54,9 @@ final class Checks {
 		return [
 			self::required_fields( $post_id, $post_type ),
 			self::image( $post_id, $post_type ),
-			self::links( $post_id, $post_type ),
 			self::duplicates( $post_id, $post_type ),
+			// Last, so the row sits right above the button that runs it.
+			self::links( $post_id, $post_type ),
 		];
 	}
 

@@ -281,6 +281,11 @@ $check_word = static fn( string $status ): string => match ( $status ) {
 					</form>
 				<?php endif; ?>
 			</section>
+		<?php elseif ( empty( $data['is_edit'] ) && ! empty( $data['decidable'] ) ) : ?>
+			<section class="dgl-card">
+				<h2 class="dgl-section__title"><?php esc_html_e( 'Feature it', 'dgl-platform' ); ?></h2>
+				<p class="dgl-help"><?php esc_html_e( 'Once this is live, this card offers "Feature for 7 days" or "14 days": it then sits first on its public list with a Featured stamp. Approve it, then open it again from Approved.', 'dgl-platform' ); ?></p>
+			</section>
 		<?php endif; ?>
 
 		<?php if ( ! empty( $data['can_take_down'] ) ) : ?>
