@@ -1,0 +1,1085 @@
+<title>DGLP Spaces to Hire</title>
+<meta name="description" content="Proposal: how a venue and room hire section would look on partnership.doinggoodleeds.org.uk">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap">
+<style>
+/*
+ * Two layers. The proposal around the mock-ups follows the viewer's theme.
+ * The mock-ups themselves are pictures of the live site, which is light, so
+ * their tokens sit on .site and never change with the theme.
+ */
+:root {
+	--font: Montserrat, system-ui, -apple-system, "Segoe UI", sans-serif;
+	--p-bg: #fdf8f0;
+	--p-panel: #ffffff;
+	--p-ink: #1e3232;
+	--p-muted: #3f4f4d;
+	--p-line: rgb(30 50 50 / 14%);
+	--p-head: #2d3b6b;
+	--p-accent: #1b5a5d;
+	--p-rail: #57b0b6;
+	--p-tint: #f4f6fb;
+	--p-shadow: 0 1px 2px rgb(30 50 50 / 4%), 0 4px 16px rgb(30 50 50 / 6%);
+}
+@media (prefers-color-scheme: dark) {
+	:root:not([data-theme="light"]) {
+		color-scheme: dark;
+		--p-bg: #151b2e;
+		--p-panel: #1d2540;
+		--p-ink: #e8ebf3;
+		--p-muted: #b7bfd3;
+		--p-line: rgb(255 255 255 / 14%);
+		--p-head: #c9d1f0;
+		--p-accent: #86cdd2;
+		--p-rail: #57b0b6;
+		--p-tint: #232c4a;
+		--p-shadow: 0 1px 2px rgb(0 0 0 / 30%), 0 6px 20px rgb(0 0 0 / 30%);
+	}
+}
+:root[data-theme="dark"] {
+	color-scheme: dark;
+	--p-bg: #151b2e;
+	--p-panel: #1d2540;
+	--p-ink: #e8ebf3;
+	--p-muted: #b7bfd3;
+	--p-line: rgb(255 255 255 / 14%);
+	--p-head: #c9d1f0;
+	--p-accent: #86cdd2;
+	--p-rail: #57b0b6;
+	--p-tint: #232c4a;
+	--p-shadow: 0 1px 2px rgb(0 0 0 / 30%), 0 6px 20px rgb(0 0 0 / 30%);
+}
+
+* { box-sizing: border-box; }
+body {
+	margin: 0;
+	background: var(--p-bg);
+	color: var(--p-ink);
+	font-family: var(--font);
+	font-size: 17px;
+	line-height: 1.6;
+	-webkit-font-smoothing: antialiased;
+}
+.wrap { max-width: 1180px; margin: 0 auto; padding-inline: clamp(16px, 4vw, 40px); padding-block: 48px 80px; }
+h1, h2, h3, h4 { text-wrap: balance; }
+a { color: inherit; }
+:focus-visible { outline: 3px solid var(--p-accent); outline-offset: 2px; }
+
+/* ---- Proposal header ---------------------------------------------------- */
+.p-kicker {
+	margin: 0 0 10px;
+	font-size: 13px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+	color: var(--p-accent);
+}
+.p-title {
+	margin: 0 0 16px;
+	font-size: clamp(2.1rem, 5vw, 3.4rem); line-height: 1.08; font-weight: 700;
+	color: var(--p-head); letter-spacing: -0.01em;
+}
+.p-lede { margin: 0 0 20px; max-width: 62ch; font-size: 1.15rem; line-height: 1.6; }
+.p-meta { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 0; padding: 0; list-style: none; font-size: 14px; font-weight: 500; color: var(--p-muted); }
+.p-meta strong { color: var(--p-ink); font-weight: 600; }
+
+.p-jump {
+	position: sticky; top: env(safe-area-inset-top, 0px); z-index: 30;
+	margin: 36px 0 0; padding: 10px 0;
+	background: var(--p-bg); border-bottom: 1px solid var(--p-line);
+}
+.p-jump ul { display: flex; gap: 4px 6px; margin: 0; padding: 0; list-style: none; overflow-x: auto; scrollbar-width: none; }
+.p-jump a {
+	display: inline-flex; align-items: center; min-height: 40px; padding: 0 12px;
+	border-radius: 8px; font-size: 14px; font-weight: 600; white-space: nowrap;
+	color: var(--p-head); text-decoration: none;
+}
+.p-jump a:hover { background: var(--p-tint); }
+
+.p-section { padding-top: 64px; scroll-margin-top: 64px; }
+.p-h2 { margin: 0 0 10px; font-size: clamp(1.5rem, 3vw, 2rem); line-height: 1.2; color: var(--p-head); }
+.p-intro { margin: 0 0 28px; max-width: 64ch; color: var(--p-ink); }
+.p-label { margin: 0 0 6px; font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--p-accent); }
+
+/* Three points */
+.p-points { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin: 40px 0 0; padding: 0; list-style: none; }
+.p-points li { padding: 20px 22px; background: var(--p-panel); border: 1px solid var(--p-line); border-radius: 16px; box-shadow: var(--p-shadow); }
+.p-points h3 { margin: 0 0 6px; font-size: 1.05rem; color: var(--p-head); }
+.p-points p { margin: 0; font-size: 15px; line-height: 1.55; color: var(--p-muted); }
+
+/* ---- Structure: organisation > venue > space ---------------------------- */
+.p-levels { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 0 0 28px; }
+.p-level { padding: 16px 18px; border-radius: 14px; background: var(--p-tint); }
+.p-level b { display: block; margin-bottom: 2px; font-size: 1.02rem; color: var(--p-head); }
+.p-level span { font-size: 14.5px; color: var(--p-muted); line-height: 1.5; display: block; }
+.p-level small { display: block; margin-top: 8px; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--p-accent); }
+
+.p-examples { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 16px; }
+.p-ex { padding: 22px; background: var(--p-panel); border: 1px solid var(--p-line); border-radius: 16px; box-shadow: var(--p-shadow); }
+.p-ex h3 { margin: 0 0 4px; font-size: 1.08rem; color: var(--p-head); }
+.p-ex > p { margin: 0 0 16px; font-size: 14.5px; color: var(--p-muted); line-height: 1.5; }
+.tree { margin: 0; padding: 0; list-style: none; font-size: 14.5px; }
+.tree ul { margin: 0; padding: 0 0 0 18px; list-style: none; border-left: 2px solid var(--p-rail); margin-left: 7px; }
+.tree li { position: relative; padding: 5px 0 5px 12px; }
+.tree ul > li::before { content: ""; position: absolute; left: -2px; top: 17px; width: 12px; border-top: 2px solid var(--p-rail); }
+.tree .t-org { padding-left: 0; font-weight: 700; color: var(--p-head); }
+.tree .t-site { font-weight: 600; }
+.tree .t-space { color: var(--p-ink); }
+.tree .t-tag { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 999px; font-size: 11.5px; font-weight: 600; background: var(--p-tint); color: var(--p-muted); vertical-align: 1px; }
+
+/* ---- Browser frame ------------------------------------------------------ */
+.frame { border-radius: 14px; overflow: hidden; border: 1px solid var(--p-line); box-shadow: 0 2px 6px rgb(30 50 50 / 8%), 0 18px 48px rgb(30 50 50 / 12%); background: #fff; }
+.frame__bar { display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: #e9ebf1; border-bottom: 1px solid #d6d9e2; }
+.frame__dots { display: flex; gap: 6px; flex: none; }
+.frame__dots i { width: 11px; height: 11px; border-radius: 50%; background: #c5c9d4; }
+.frame__url { flex: 1; min-width: 0; padding: 5px 12px; border-radius: 999px; background: #fff; font-size: 13px; color: #4f5e5c; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.frame__url b { color: #1e3232; font-weight: 600; }
+.caption { display: flex; flex-wrap: wrap; gap: 6px 20px; margin: 14px 0 0; padding: 0; list-style: none; font-size: 14px; color: var(--p-muted); }
+.caption li::before { content: "●"; margin-right: 8px; color: var(--p-rail); font-size: 10px; vertical-align: 2px; }
+
+/* ==========================================================================
+   The mock site. Fixed light: this is a picture of the public pages.
+   Tokens and patterns follow assets/tokens.css and assets/public.css.
+   ========================================================================== */
+.site {
+	--navy: #2d3b6b; --navy-deep: #253057; --purple: #5b6bae; --ink: #1e3232;
+	--muted: #3a4a48; --page: #fdf8f0; --surface: #f4f6fb; --white: #ffffff;
+	--teal: #57b0b6; --teal-text: #1a585b; --line: rgb(30 50 50 / 14%);
+	--field: rgb(30 50 50 / 68%);
+	--live-bg: #eaf4e6; --live-fg: #2f6a1d; --pend-bg: #fff7e8; --pend-fg: #7a5a1c;
+	--shadow: 0 1px 2px rgb(30 50 50 / 4%), 0 4px 16px rgb(30 50 50 / 6%);
+	color-scheme: light;
+	background: var(--page); color: var(--ink);
+	font-family: var(--font); font-size: 16px; line-height: 1.6;
+}
+.site a { color: var(--navy); }
+
+/* Site header stand-in. The real one comes from the Blocksy theme. */
+.s-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px clamp(16px, 3vw, 32px); background: var(--white); border-bottom: 1px solid var(--line); }
+.s-brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 15px; color: var(--navy); line-height: 1.15; }
+.s-brand i { width: 34px; height: 34px; border-radius: 9px; background: var(--navy); position: relative; flex: none; }
+.s-brand i::after { content: ""; position: absolute; left: 9px; right: 9px; bottom: 9px; height: 4px; border-radius: 2px; background: var(--teal); }
+.s-nav { display: flex; flex-wrap: wrap; gap: 2px 18px; margin: 0; padding: 0; list-style: none; font-size: 14px; font-weight: 500; }
+.s-nav a { text-decoration: none; color: var(--ink); padding: 4px 0; }
+.s-nav [aria-current] { color: var(--navy); font-weight: 700; box-shadow: inset 0 -3px 0 var(--teal); }
+.s-new { margin-left: 6px; padding: 1px 7px; border-radius: 999px; background: var(--pend-bg); color: var(--pend-fg); font-size: 10.5px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; vertical-align: 1px; }
+
+.s-body { max-width: 1100px; margin: 0 auto; padding: 32px clamp(16px, 3vw, 32px) 48px; }
+.s-crumbs { margin: 0 0 14px; font-size: 13.5px; color: var(--muted); }
+.s-crumbs a { color: var(--navy); }
+.s-kicker { margin: 0 0 6px; font-size: 12.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--teal-text); }
+.s-title { margin: 0 0 10px; font-size: clamp(1.6rem, 3vw, 2.2rem); line-height: 1.2; font-weight: 700; color: var(--navy); }
+.s-lede { margin: 0 0 24px; max-width: 62ch; font-size: 1.05rem; }
+.s-h2 { margin: 0 0 14px; font-size: 1.2rem; line-height: 1.3; color: var(--navy); }
+
+.s-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 45px; padding: 0 20px; border-radius: 8px; border: 0; background: var(--navy); color: var(--white); font: 500 15px/1 var(--font); text-decoration: none; cursor: pointer; white-space: nowrap; }
+.s-btn:hover { background: var(--navy-deep); }
+/* .site a sets link colour; buttons that are links keep their own. */
+.site a.s-btn { color: var(--white); }
+.site a.s-btn--ghost { color: var(--navy); }
+.s-btn--ghost { background: transparent; color: var(--navy); border: 1px solid var(--field); }
+.s-btn--ghost:hover { background: var(--surface); }
+.s-btn--sm { height: 40px; padding: 0 16px; font-size: 14px; }
+.s-btn--block { width: 100%; }
+
+.s-field { display: grid; gap: 6px; min-width: 0; }
+.s-field label, .s-field .s-lab { font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+.s-input { height: 45px; width: 100%; padding: 0 12px; border-radius: 10px; border: 1px solid var(--field); background: var(--white); color: var(--ink); font: 500 15px var(--font); }
+select.s-input { appearance: none; padding-right: 36px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%232d3b6b' stroke-width='2'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; }
+textarea.s-input { height: 104px; padding: 10px 12px; resize: vertical; }
+.s-input:focus { outline: 2px solid var(--navy); outline-offset: 0; border-color: var(--navy); }
+
+/* Chips and tags */
+.s-chip { display: inline-flex; align-items: center; min-height: 34px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--field); background: var(--white); color: var(--ink); font: 500 13.5px var(--font); cursor: pointer; }
+.s-chip[aria-pressed="true"] { background: var(--navy); border-color: var(--navy); color: var(--white); }
+.s-tag { display: inline-block; padding: 3px 10px; border-radius: 999px; background: var(--surface); color: var(--ink); font-size: 12.5px; font-weight: 500; }
+.s-stamp { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: var(--live-bg); color: var(--live-fg); }
+.s-stamp--amber { background: var(--pend-bg); color: var(--pend-fg); }
+
+/* Scene placeholders stand in for venue photos */
+.ph { display: block; width: 100%; height: 100%; background: var(--surface); }
+.ph svg { display: block; width: 100%; height: 100%; }
+
+/* ---- Screen 1: find a space --------------------------------------------- */
+.find { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1.2fr) auto; gap: 12px; align-items: end; padding: 20px; background: var(--white); border: 1px solid var(--line); border-radius: 20px; box-shadow: var(--shadow); }
+.types { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0 0; }
+.results-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 10px 20px; margin: 30px 0 4px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+.results-head h2 { margin: 0; font-size: 1.1rem; color: var(--navy); }
+.results-head p { margin: 0; font-size: 14px; color: var(--muted); }
+.view { display: inline-flex; border: 1px solid var(--field); border-radius: 8px; overflow: hidden; }
+.view button { height: 36px; padding: 0 14px; border: 0; background: var(--white); font: 500 13.5px var(--font); color: var(--navy); cursor: pointer; }
+.view button[aria-pressed="true"] { background: var(--navy); color: var(--white); }
+
+.find-grid { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 32px; align-items: start; margin-top: 18px; }
+.filters { display: grid; gap: 22px; font-size: 14.5px; }
+.filters h3 { margin: 0 0 8px; font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+.filters ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 2px; }
+.check { display: flex; align-items: center; gap: 10px; min-height: 34px; cursor: pointer; }
+.check input { width: 18px; height: 18px; margin: 0; accent-color: var(--navy); flex: none; }
+.check span { flex: 1; }
+.check em { font-style: normal; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+.v-list { margin: 0; padding: 0; list-style: none; }
+.v-card { display: grid; grid-template-columns: 168px minmax(0, 1fr); gap: 20px; padding: 22px 0; border-bottom: 1px solid var(--line); }
+.v-card:first-child { padding-top: 6px; }
+.v-card:last-child { border-bottom: 0; }
+.v-pic { width: 168px; height: 126px; border-radius: 14px; overflow: hidden; }
+.v-chip { margin: 0 0 4px; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--teal-text); }
+.v-title { margin: 0 0 4px; font-size: 1.22rem; line-height: 1.3; }
+.v-title a { text-decoration: none; }
+.v-title a:hover { text-decoration: underline; text-underline-offset: 3px; }
+.v-meta { margin: 0 0 12px; font-size: 14px; color: var(--muted); }
+.v-meta span + span::before { content: "/"; margin: 0 8px; color: rgb(30 50 50 / 45%); }
+.v-rooms { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--line); }
+.v-rooms li { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 6px 18px; align-items: baseline; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 14.5px; }
+.v-rooms b { font-weight: 600; color: var(--ink); }
+.v-rooms .cap, .v-rooms .rate { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 13.5px; white-space: nowrap; }
+.v-rooms .rate strong { color: var(--ink); font-weight: 600; }
+.v-rooms .whole b::after { content: "Whole building"; margin-left: 8px; padding: 1px 8px; border-radius: 999px; background: var(--pend-bg); color: var(--pend-fg); font-size: 11px; font-weight: 700; letter-spacing: 0.03em; vertical-align: 1px; }
+.v-more { margin: 8px 0 0; font-size: 13.5px; font-weight: 600; }
+
+/* ---- Screen 2: venue page ------------------------------------------------ */
+.gallery { display: grid; grid-template-columns: 2fr 1fr; grid-template-rows: 1fr 1fr; gap: 8px; height: 340px; margin: 0 0 28px; border-radius: 20px; overflow: hidden; position: relative; }
+.gallery > :first-child { grid-row: 1 / 3; }
+.gallery__count { position: absolute; right: 12px; bottom: 12px; padding: 6px 12px; border-radius: 8px; background: rgb(255 255 255 / 94%); color: var(--navy); font-size: 13px; font-weight: 600; }
+.venue-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 24px; margin-bottom: 20px; }
+.runby { margin: 0; font-size: 15px; color: var(--muted); }
+.runby a { font-weight: 600; }
+.quick { display: flex; flex-wrap: wrap; gap: 8px 22px; margin: 0 0 24px; padding: 14px 18px; list-style: none; border-radius: 14px; background: var(--white); border: 1px solid var(--line); font-size: 14.5px; }
+.quick b { color: var(--navy); font-variant-numeric: tabular-nums; }
+
+.v-layout { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 36px; align-items: start; }
+.v-layout p { margin: 0 0 14px; max-width: 64ch; }
+
+.spaces { display: grid; gap: 16px; margin: 8px 0 32px; }
+.space { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 18px; padding: 18px; background: var(--white); border: 1px solid var(--line); border-radius: 20px; box-shadow: var(--shadow); }
+.space--whole { background: var(--surface); box-shadow: none; }
+.space__pic { width: 150px; height: 112px; border-radius: 12px; overflow: hidden; }
+.space__top { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 14px; align-items: baseline; }
+.space h3 { margin: 0; font-size: 1.08rem; color: var(--navy); }
+.space__size { font-size: 13.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.space__note { margin: 4px 0 10px !important; font-size: 14.5px; color: var(--ink); }
+.layouts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; margin: 0 0 12px; padding: 0; list-style: none; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.layouts li { padding: 6px 8px; text-align: center; border-left: 1px solid var(--line); }
+.layouts li:first-child { border-left: 0; }
+.layouts span { display: block; font-size: 11px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
+.layouts b { display: block; font-size: 1.05rem; color: var(--navy); font-variant-numeric: tabular-nums; }
+.layouts .na b { color: var(--muted); font-weight: 500; }
+.space__foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; }
+.rates { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 0; font-size: 14px; font-variant-numeric: tabular-nums; }
+.rates b { color: var(--ink); }
+.rates .member { color: var(--live-fg); font-weight: 600; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px; padding: 0; list-style: none; }
+
+.lists { margin: 0 0 28px; display: grid; grid-template-columns: 190px minmax(0, 1fr); gap: 10px 20px; font-size: 15px; }
+.lists dt { font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); padding-top: 3px; }
+.lists dd { margin: 0; }
+
+.aside { display: grid; gap: 16px; position: sticky; top: 16px; }
+.a-card { padding: 20px 22px; background: var(--white); border: 1px solid var(--line); border-radius: 20px; box-shadow: var(--shadow); }
+.a-card h2 { margin: 0 0 4px; font-size: 1.08rem; color: var(--navy); }
+.a-card > p { margin: 0 0 14px; font-size: 14px; color: var(--muted); line-height: 1.5; }
+.a-form { display: grid; gap: 12px; }
+.a-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.a-note { margin: 2px 0 0; font-size: 12.5px; color: var(--muted); line-height: 1.45; }
+.facts { margin: 0; display: grid; gap: 12px; font-size: 14.5px; }
+.facts dt { font-size: 11.5px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
+.facts dd { margin: 0; }
+.map { height: 150px; margin: 0 0 14px; border-radius: 12px; overflow: hidden; background: #e7ecef; }
+.map svg { width: 100%; height: 100%; display: block; }
+.sent { display: grid; gap: 6px; padding: 14px 16px; border-radius: 12px; background: var(--live-bg); color: var(--live-fg); font-size: 14.5px; font-weight: 500; }
+.sent strong { font-weight: 700; }
+
+/* ---- Screen 3: organisation page block ---------------------------------- */
+.org-head { display: flex; align-items: center; gap: 18px; margin-bottom: 16px; }
+.org-logo { width: 72px; height: 72px; border-radius: 16px; background: var(--white); border: 1px solid var(--line); display: grid; place-items: center; font-weight: 700; color: var(--navy); font-size: 22px; flex: none; }
+.org-where { margin: 0; color: var(--teal-text); font-weight: 500; font-size: 15px; }
+.org-sec { margin-top: 28px; padding-top: 24px; border-top: 1px solid var(--line); }
+.org-sec__head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 6px 16px; margin-bottom: 14px; }
+.org-sec__head h2 { margin: 0; font-size: 1.2rem; color: var(--navy); }
+.org-sec__head a { font-size: 14px; font-weight: 600; }
+.org-venues { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.ov { background: var(--white); border: 1px solid var(--line); border-radius: 20px; overflow: hidden; box-shadow: var(--shadow); }
+.ov__pic { height: 130px; }
+.ov__body { padding: 14px 16px 16px; }
+.ov h3 { margin: 0 0 2px; font-size: 1rem; line-height: 1.3; }
+.ov h3 a { text-decoration: none; }
+.ov p { margin: 0; font-size: 13.5px; color: var(--muted); }
+.ov ul { margin: 10px 0 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 6px; }
+.org-dim { opacity: 0.55; }
+.org-dim .s-h2 { margin-bottom: 8px; }
+.org-dim p { margin: 0; font-size: 14.5px; }
+
+/* ---- Screen 4: phone ----------------------------------------------------- */
+.phone-row { display: grid; grid-template-columns: 360px minmax(0, 1fr); gap: 40px; align-items: center; }
+.phone { width: 100%; max-width: 360px; border-radius: 40px; padding: 12px; background: #1b2238; box-shadow: 0 20px 50px rgb(20 30 50 / 25%); }
+.phone__screen { border-radius: 30px; overflow: hidden; height: 700px; position: relative; }
+.phone__screen .site { height: 100%; overflow-y: auto; font-size: 15px; scrollbar-width: none; }
+.phone__screen .site::-webkit-scrollbar { display: none; }
+.ph-top { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: var(--white); border-bottom: 1px solid var(--line); }
+.ph-top .s-brand { font-size: 13px; }
+.ph-top .s-brand i { width: 28px; height: 28px; }
+.ph-top button { height: 44px; padding: 0 14px; border-radius: 8px; border: 1px solid var(--field); background: var(--white); font: 600 13px var(--font); color: var(--navy); }
+.ph-hero { height: 190px; }
+.ph-body { padding: 18px 16px 110px; }
+.ph-body .s-title { font-size: 1.45rem; }
+.ph-body .space { grid-template-columns: 1fr; padding: 14px; gap: 10px; }
+.ph-body .space__pic { width: 100%; height: 120px; }
+.ph-body .layouts span { font-size: 10px; }
+.ph-bar { position: absolute; left: 0; right: 0; bottom: 0; display: flex; align-items: center; gap: 12px; padding: 12px 16px 18px; background: var(--white); border-top: 1px solid var(--line); box-shadow: 0 -6px 18px rgb(30 50 50 / 8%); }
+.ph-bar p { margin: 0; flex: 1; font-size: 13px; line-height: 1.35; color: var(--muted); }
+.ph-bar b { display: block; color: var(--ink); font-size: 15px; }
+.phone-notes { margin: 0; padding: 0; list-style: none; display: grid; gap: 18px; }
+.phone-notes h3 { margin: 0 0 4px; font-size: 1.05rem; color: var(--p-head); }
+.phone-notes p { margin: 0; color: var(--p-muted); font-size: 15.5px; max-width: 52ch; }
+
+/* ---- Decisions ----------------------------------------------------------- */
+.decide { display: grid; gap: 14px; margin: 0; padding: 0; list-style: none; }
+.decide li { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 8px 32px; padding: 20px 22px; background: var(--p-panel); border: 1px solid var(--p-line); border-radius: 16px; }
+.decide h3 { margin: 0 0 4px; font-size: 1.05rem; color: var(--p-head); }
+.decide p { margin: 0; font-size: 15px; line-height: 1.55; color: var(--p-muted); }
+.decide .rec { padding-left: 16px; border-left: 3px solid var(--p-rail); }
+.decide .rec strong { display: block; margin-bottom: 2px; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--p-accent); }
+.decide .rec p { color: var(--p-ink); }
+
+.close { margin-top: 64px; padding: 32px clamp(20px, 4vw, 40px); border-radius: 20px; background: #2d3b6b; color: #fff; display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 24px 40px; align-items: center; }
+.close h2 { margin: 0 0 8px; font-size: 1.6rem; line-height: 1.2; }
+.close p { margin: 0; color: rgb(255 255 255 / 90%); max-width: 56ch; }
+.close dl { margin: 0; display: grid; gap: 4px; font-size: 15px; }
+.close dt { font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: rgb(255 255 255 / 80%); margin-top: 8px; }
+.close dt:first-child { margin-top: 0; }
+.close dd { margin: 0; font-weight: 600; user-select: all; }
+
+/* ---- Narrow -------------------------------------------------------------- */
+@media (max-width: 960px) {
+	.find-grid, .v-layout, .phone-row, .close { grid-template-columns: minmax(0, 1fr); }
+	.filters { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+	.aside { position: static; }
+	.org-venues { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+	.phone { margin: 0 auto; }
+	.decide li { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 760px) {
+	.find { grid-template-columns: 1fr 1fr; }
+	.find .s-field:first-child, .find .s-btn { grid-column: 1 / -1; }
+	.p-levels { grid-template-columns: minmax(0, 1fr); }
+	.s-nav { display: none; }
+	.gallery { height: 220px; grid-template-columns: 1fr; }
+	.gallery > :not(:first-child) { display: none; }
+	.lists { grid-template-columns: minmax(0, 1fr); gap: 2px 0; }
+	.lists dd { margin-bottom: 12px; }
+}
+@media (max-width: 560px) {
+	.v-card { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+	.v-pic { width: 100%; height: 160px; }
+	.v-rooms li { grid-template-columns: minmax(0, 1fr) auto; }
+	.v-rooms .cap { grid-column: 1; grid-row: 2; }
+	.v-rooms .rate { grid-column: 2; grid-row: 1 / 3; align-self: center; }
+	.space { grid-template-columns: minmax(0, 1fr); }
+	.space__pic { width: 100%; height: 140px; }
+	.layouts span { font-size: 10px; }
+	.a-row { grid-template-columns: minmax(0, 1fr); }
+	.phone__screen { height: 640px; }
+}
+
+/* ---- Print (the PDF for circulation) ---------------------------------------- */
+@media print {
+	:root { color-scheme: light; }
+	body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+	.wrap { padding-block: 0; }
+	.p-jump, .screen-only { display: none; }
+	html { scroll-behavior: auto; }
+	#find, #venue, #org, #phone, #decide { break-before: page; padding-top: 0; }
+	.p-section#structure { padding-top: 40px; }
+	.p-ex, .p-points li, .v-card, .space, .decide li, .close, .a-card, .ov, .phone-row, .find, .quick, .lists, .caption, .gallery, .venue-head, .org-venues { break-inside: avoid; }
+	.p-h2, .s-h2, .p-label, .p-intro { break-after: avoid; }
+	.frame { box-shadow: none; }
+	.aside { position: static; }
+	/* Printed at about 56%: the proposal's own words are set larger so they read at 9pt or more. */
+	.p-lede { font-size: 23px; }
+	.p-intro { font-size: 21px; max-width: 70ch; }
+	.p-meta, .caption { font-size: 16.5px; }
+	.p-points h3, .p-ex h3, .decide h3, .phone-notes h3 { font-size: 21px; }
+	.p-points p, .p-ex > p, .tree, .p-level span, .decide p, .phone-notes p { font-size: 18.5px; }
+	.p-level b { font-size: 20px; }
+	.close p, .close dl { font-size: 20px; }
+}
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+</style>
+
+<!-- Scene drawings that stand in for venue photos in the mock-ups -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+	<defs>
+		<symbol id="sc-hall" viewBox="0 0 160 110" preserveAspectRatio="xMidYMid slice">
+			<rect width="160" height="110" fill="#eef0f7"/>
+			<rect y="74" width="160" height="36" fill="#d8c3a0"/>
+			<g fill="#c3e3e5" stroke="#ffffff" stroke-width="2"><rect x="16" y="14" width="24" height="46" rx="12"/><rect x="68" y="14" width="24" height="46" rx="12"/><rect x="120" y="14" width="24" height="46" rx="12"/></g>
+			<rect y="72" width="160" height="3" fill="#b9a27d"/>
+			<g fill="#2d3b6b"><rect x="22" y="80" width="10" height="3"/><rect x="36" y="80" width="10" height="3"/><rect x="50" y="80" width="10" height="3"/><rect x="100" y="80" width="10" height="3"/><rect x="114" y="80" width="10" height="3"/><rect x="128" y="80" width="10" height="3"/><rect x="22" y="92" width="10" height="3"/><rect x="36" y="92" width="10" height="3"/><rect x="50" y="92" width="10" height="3"/><rect x="100" y="92" width="10" height="3"/><rect x="114" y="92" width="10" height="3"/><rect x="128" y="92" width="10" height="3"/></g>
+		</symbol>
+		<symbol id="sc-meet" viewBox="0 0 160 110" preserveAspectRatio="xMidYMid slice">
+			<rect width="160" height="110" fill="#e8eef0"/>
+			<rect y="70" width="160" height="40" fill="#b8c3cf"/>
+			<rect x="52" y="16" width="56" height="32" rx="3" fill="#2d3b6b"/>
+			<rect x="56" y="20" width="48" height="24" fill="#57b0b6"/>
+			<rect x="30" y="76" width="100" height="14" rx="7" fill="#f7f2e8" stroke="#a7b1bd"/>
+			<g fill="#5b6bae"><rect x="36" y="68" width="12" height="8" rx="3"/><rect x="58" y="68" width="12" height="8" rx="3"/><rect x="90" y="68" width="12" height="8" rx="3"/><rect x="112" y="68" width="12" height="8" rx="3"/><rect x="36" y="90" width="12" height="8" rx="3"/><rect x="58" y="90" width="12" height="8" rx="3"/><rect x="90" y="90" width="12" height="8" rx="3"/><rect x="112" y="90" width="12" height="8" rx="3"/></g>
+		</symbol>
+		<symbol id="sc-kitchen" viewBox="0 0 160 110" preserveAspectRatio="xMidYMid slice">
+			<rect width="160" height="110" fill="#f3efe6"/>
+			<g fill="#ffffff" stroke="#d6cdbb"><rect x="14" y="14" width="40" height="26"/><rect x="58" y="14" width="40" height="26"/></g>
+			<rect x="112" y="12" width="34" height="30" fill="#c3e3e5" stroke="#ffffff" stroke-width="2"/>
+			<rect y="62" width="160" height="6" fill="#4f5e5c"/>
+			<rect y="68" width="160" height="42" fill="#2d3b6b"/>
+			<g fill="#57b0b6"><circle cx="36" cy="58" r="5"/><circle cx="56" cy="58" r="5"/></g>
+			<g stroke="#8a97c9" stroke-width="2"><line x1="40" y1="80" x2="40" y2="104"/><line x1="80" y1="80" x2="80" y2="104"/><line x1="120" y1="80" x2="120" y2="104"/></g>
+		</symbol>
+		<symbol id="sc-studio" viewBox="0 0 160 110" preserveAspectRatio="xMidYMid slice">
+			<rect width="160" height="110" fill="#ecebf5"/>
+			<rect y="78" width="160" height="32" fill="#c9a97a"/>
+			<rect x="12" y="12" width="96" height="60" fill="#dfe8f2" stroke="#ffffff" stroke-width="3"/>
+			<line x1="12" y1="46" x2="108" y2="46" stroke="#5b6bae" stroke-width="3"/>
+			<rect x="122" y="12" width="26" height="60" fill="#c3e3e5" stroke="#ffffff" stroke-width="2"/>
+			<g fill="#2d3b6b"><rect x="118" y="82" width="30" height="8" rx="4"/><rect x="118" y="93" width="30" height="8" rx="4"/></g>
+		</symbol>
+		<symbol id="sc-ext" viewBox="0 0 160 110" preserveAspectRatio="xMidYMid slice">
+			<rect width="160" height="110" fill="#d9ecee"/>
+			<rect y="92" width="160" height="18" fill="#9fc79a"/>
+			<rect x="26" y="34" width="108" height="60" fill="#b8704f"/>
+			<polygon points="18,36 80,10 142,36" fill="#2d3b6b"/>
+			<g fill="#f7f2e8"><rect x="38" y="46" width="16" height="16"/><rect x="106" y="46" width="16" height="16"/><rect x="38" y="70" width="16" height="16"/><rect x="106" y="70" width="16" height="16"/></g>
+			<rect x="70" y="62" width="20" height="32" fill="#253057"/>
+			<rect x="66" y="42" width="28" height="10" rx="2" fill="#57b0b6"/>
+		</symbol>
+		<symbol id="sc-church" viewBox="0 0 160 110" preserveAspectRatio="xMidYMid slice">
+			<rect width="160" height="110" fill="#e4eef3"/>
+			<rect y="94" width="160" height="16" fill="#a9cba3"/>
+			<rect x="30" y="44" width="100" height="52" fill="#c9c1b0"/>
+			<polygon points="24,46 80,20 136,46" fill="#4f5e5c"/>
+			<rect x="100" y="14" width="18" height="34" fill="#c9c1b0"/>
+			<polygon points="98,16 109,4 120,16" fill="#4f5e5c"/>
+			<g fill="#5b6bae"><rect x="44" y="56" width="10" height="20" rx="5"/><rect x="106" y="56" width="10" height="20" rx="5"/></g>
+			<rect x="70" y="62" width="20" height="34" rx="10" fill="#253057"/>
+		</symbol>
+		<symbol id="sc-hut" viewBox="0 0 160 110" preserveAspectRatio="xMidYMid slice">
+			<rect width="160" height="110" fill="#dcebe4"/>
+			<rect y="88" width="160" height="22" fill="#8fbf8a"/>
+			<circle cx="136" cy="54" r="22" fill="#6aa76b"/><rect x="133" y="70" width="6" height="20" fill="#7a5a3a"/>
+			<rect x="16" y="46" width="100" height="44" fill="#6f8a5a"/>
+			<polygon points="10,48 66,24 122,48" fill="#253057"/>
+			<g fill="#f7f2e8"><rect x="28" y="58" width="18" height="14"/><rect x="86" y="58" width="18" height="14"/></g>
+			<rect x="56" y="60" width="20" height="30" fill="#2d3b6b"/>
+		</symbol>
+		<symbol id="sc-garden" viewBox="0 0 160 110" preserveAspectRatio="xMidYMid slice">
+			<rect width="160" height="110" fill="#dcecf0"/>
+			<rect y="66" width="160" height="44" fill="#9cc792"/>
+			<circle cx="34" cy="48" r="20" fill="#5e9d62"/><rect x="31" y="60" width="6" height="16" fill="#7a5a3a"/>
+			<circle cx="126" cy="42" r="24" fill="#6aa76b"/><rect x="123" y="58" width="6" height="18" fill="#7a5a3a"/>
+			<g fill="#c9a97a"><rect x="62" y="80" width="36" height="5" rx="2"/><rect x="66" y="85" width="4" height="10"/><rect x="90" y="85" width="4" height="10"/></g>
+			<g fill="#57b0b6"><circle cx="20" cy="96" r="4"/><circle cx="40" cy="100" r="4"/><circle cx="140" cy="98" r="4"/></g>
+		</symbol>
+	</defs>
+</svg>
+
+<div class="wrap">
+
+	<!-- ================= Proposal opening ================= -->
+	<header>
+		<p class="p-kicker">Proposal for Doing Good Leeds Partnership</p>
+		<h1 class="p-title">Spaces to hire</h1>
+		<p class="p-lede">A new section of the partnership site where member organisations list rooms, halls and whole buildings for hire, and anyone planning a meeting, class or event in Leeds can find one. This page shows how it would look to a visitor.</p>
+		<ul class="p-meta">
+			<li><strong>Prepared by</strong> Results You Can Measure</li>
+			<li><strong>Date</strong> 25 September 2026</li>
+			<li><strong>Status</strong> Draft for discussion</li>
+		</ul>
+	</header>
+
+	<ul class="p-points">
+		<li>
+			<h3>One place to look</h3>
+			<p>Community centres, church halls and meeting rooms across the city, searchable by size, area, price and access needs.</p>
+		</li>
+		<li>
+			<h3>Fits any set-up</h3>
+			<p>One room, a whole building, or twenty rooms across four sites. The same listing handles all three.</p>
+		</li>
+		<li>
+			<h3>Built on what exists</h3>
+			<p>Members list spaces from the dashboard they already use, and the review team checks each one before it goes live.</p>
+		</li>
+	</ul>
+
+	<nav class="p-jump" aria-label="On this page">
+		<ul>
+			<li><a href="#structure">How listings work</a></li>
+			<li><a href="#find">Find a space</a></li>
+			<li><a href="#venue">A venue page</a></li>
+			<li><a href="#org">On an organisation's page</a></li>
+			<li><a href="#phone">On a phone</a></li>
+			<li><a href="#decide">To decide</a></li>
+		</ul>
+	</nav>
+
+	<!-- ================= Structure ================= -->
+	<section class="p-section" id="structure">
+		<p class="p-label">How listings work</p>
+		<h2 class="p-h2">Three levels, so any venue fits</h2>
+		<p class="p-intro">Every listing is built from the same three parts. A whole building is one more space at the venue, so an organisation can offer the lot, the rooms one by one, or both.</p>
+
+		<div class="p-levels">
+			<div class="p-level"><b>Organisation</b><span>The member organisation that runs the venue. Already in the directory.</span><small>Existing</small></div>
+			<div class="p-level"><b>Venue</b><span>A building at one address: photos, access, parking, how to get there.</span><small>New</small></div>
+			<div class="p-level"><b>Space</b><span>Something you can hire: a room, a hall, a kitchen, a garden or the whole building.</span><small>New</small></div>
+		</div>
+
+		<div class="p-examples">
+			<article class="p-ex">
+				<h3>A single room</h3>
+				<p>A church that hires out its hall and nothing else.</p>
+				<ul class="tree">
+					<li class="t-org">St Bartholomew's Parish
+						<ul>
+							<li class="t-site">St Bartholomew's Church
+								<ul><li class="t-space">Church hall</li></ul>
+							</li>
+						</ul>
+					</li>
+				</ul>
+			</article>
+			<article class="p-ex">
+				<h3>A whole building, or part of it</h3>
+				<p>A scout group that hires the whole hut at weekends and single rooms on weeknights.</p>
+				<ul class="tree">
+					<li class="t-org">4th Beeston Scout Group
+						<ul>
+							<li class="t-site">Cross Flatts Scout Hut
+								<ul>
+									<li class="t-space">Whole building <span class="t-tag">includes all below</span></li>
+									<li class="t-space">Main hall</li>
+									<li class="t-space">Kitchen</li>
+									<li class="t-space">Garden</li>
+								</ul>
+							</li>
+						</ul>
+					</li>
+				</ul>
+			</article>
+			<article class="p-ex">
+				<h3>Several rooms at several sites</h3>
+				<p>A neighbourhood trust running three buildings across west Leeds.</p>
+				<ul class="tree">
+					<li class="t-org">Westside Neighbourhood Trust
+						<ul>
+							<li class="t-site">Stanhope Road Community Centre <span class="t-tag">4 spaces</span></li>
+							<li class="t-site">The Old Library, Bramley <span class="t-tag">3 spaces</span></li>
+							<li class="t-site">Wortley Green Pavilion <span class="t-tag">2 spaces</span></li>
+						</ul>
+					</li>
+				</ul>
+			</article>
+		</div>
+	</section>
+
+	<!-- ================= Screen 1: Find a space ================= -->
+	<section class="p-section" id="find">
+		<p class="p-label">Screen 1</p>
+		<h2 class="p-h2">Find a space</h2>
+		<p class="p-intro">The front door. Search by what you are planning and how many people are coming. Results are grouped by venue, so a centre with four rooms shows as one card with the matching rooms listed underneath.</p>
+
+		<div class="frame" role="region" aria-label="Mock-up of the Find a space page">
+			<div class="frame__bar"><div class="frame__dots"><i></i><i></i><i></i></div><div class="frame__url">partnership.doinggoodleeds.org.uk<b>/spaces/</b></div></div>
+			<div class="site">
+				<div class="s-head">
+					<div class="s-brand"><i></i><span>Doing Good Leeds<br>Partnership</span></div>
+					<ul class="s-nav">
+						<li><a href="#find">News</a></li>
+						<li><a href="#find">Events</a></li>
+						<li><a href="#find">Training</a></li>
+						<li><a href="#find">Directory</a></li>
+						<li><a href="#find" aria-current="page">Spaces to hire<span class="s-new">New</span></a></li>
+					</ul>
+				</div>
+				<div class="s-body">
+					<p class="s-kicker">Spaces to hire</p>
+					<h1 class="s-title">Find a space in Leeds</h1>
+					<p class="s-lede">Rooms, halls and whole buildings run by partnership members. Enquire direct with the venue, and many offer a lower rate to member organisations.</p>
+
+					<form class="find" onsubmit="return false">
+						<div class="s-field"><label for="f-what">What are you planning?</label><input class="s-input" id="f-what" value="Community meeting"></div>
+						<div class="s-field"><label for="f-people">People</label><input class="s-input" id="f-people" value="40" inputmode="numeric"></div>
+						<div class="s-field"><label for="f-area">Area</label><select class="s-input" id="f-area"><option>West Leeds</option><option>All of Leeds</option></select></div>
+						<button class="s-btn" type="submit">Search</button>
+					</form>
+
+					<div class="types" role="group" aria-label="Type of space">
+						<button class="s-chip" type="button" aria-pressed="true">Any space</button>
+						<button class="s-chip" type="button" aria-pressed="false">Hall</button>
+						<button class="s-chip" type="button" aria-pressed="false">Meeting room</button>
+						<button class="s-chip" type="button" aria-pressed="false">Studio</button>
+						<button class="s-chip" type="button" aria-pressed="false">Kitchen</button>
+						<button class="s-chip" type="button" aria-pressed="false">Outdoor</button>
+						<button class="s-chip" type="button" aria-pressed="false">Whole building</button>
+					</div>
+
+					<div class="results-head">
+						<h2>11 spaces at 6 venues</h2>
+						<p>for 40 people in West Leeds</p>
+						<div class="view" role="group" aria-label="Show results as"><button type="button" aria-pressed="true">List</button><button type="button" aria-pressed="false">Map</button></div>
+					</div>
+
+					<div class="find-grid">
+						<div class="filters">
+							<div>
+								<h3>Access</h3>
+								<ul>
+									<li><label class="check"><input type="checkbox" checked><span>Step-free entrance</span><em>9</em></label></li>
+									<li><label class="check"><input type="checkbox"><span>Accessible toilet</span><em>8</em></label></li>
+									<li><label class="check"><input type="checkbox"><span>Hearing loop</span><em>4</em></label></li>
+									<li><label class="check"><input type="checkbox"><span>Changing Places toilet</span><em>1</em></label></li>
+								</ul>
+							</div>
+							<div>
+								<h3>Facilities</h3>
+								<ul>
+									<li><label class="check"><input type="checkbox"><span>Kitchen use</span><em>7</em></label></li>
+									<li><label class="check"><input type="checkbox"><span>Screen or projector</span><em>6</em></label></li>
+									<li><label class="check"><input type="checkbox"><span>Free Wi-Fi</span><em>10</em></label></li>
+									<li><label class="check"><input type="checkbox"><span>Parking on site</span><em>5</em></label></li>
+								</ul>
+							</div>
+							<div>
+								<h3>Price per hour</h3>
+								<ul>
+									<li><label class="check"><input type="checkbox"><span>Free for members</span><em>2</em></label></li>
+									<li><label class="check"><input type="checkbox"><span>Up to £15</span><em>4</em></label></li>
+									<li><label class="check"><input type="checkbox"><span>£15 to £30</span><em>5</em></label></li>
+									<li><label class="check"><input type="checkbox"><span>Over £30</span><em>2</em></label></li>
+								</ul>
+							</div>
+						</div>
+
+						<ul class="v-list">
+							<li class="v-card">
+								<div class="v-pic"><span class="ph"><svg><use href="#sc-ext"/></svg></span></div>
+								<div>
+									<p class="v-chip">Community centre</p>
+									<h3 class="v-title"><a href="#venue">Stanhope Road Community Centre</a></h3>
+									<p class="v-meta"><span>Armley</span><span>Westside Neighbourhood Trust</span><span>Step-free</span></p>
+									<ul class="v-rooms">
+										<li class="whole"><b>Whole centre</b><span class="cap">up to 180</span><span class="rate">from <strong>£220</strong> a day</span></li>
+										<li><b>Main hall</b><span class="cap">up to 150</span><span class="rate">from <strong>£28</strong> an hour</span></li>
+										<li><b>Garden room</b><span class="cap">up to 40</span><span class="rate">from <strong>£16</strong> an hour</span></li>
+									</ul>
+									<p class="v-more"><a href="#venue">See all 4 spaces</a></p>
+								</div>
+							</li>
+							<li class="v-card">
+								<div class="v-pic"><span class="ph"><svg><use href="#sc-church"/></svg></span></div>
+								<div>
+									<p class="v-chip">Church hall</p>
+									<h3 class="v-title"><a href="#find">St Bartholomew's Church Hall</a></h3>
+									<p class="v-meta"><span>Armley</span><span>St Bartholomew's Parish</span><span>Step-free</span></p>
+									<ul class="v-rooms">
+										<li><b>Church hall</b><span class="cap">up to 80</span><span class="rate">from <strong>£18</strong> an hour</span></li>
+									</ul>
+								</div>
+							</li>
+							<li class="v-card">
+								<div class="v-pic"><span class="ph"><svg><use href="#sc-studio"/></svg></span></div>
+								<div>
+									<p class="v-chip">Arts space</p>
+									<h3 class="v-title"><a href="#find">The Old Library, Bramley</a></h3>
+									<p class="v-meta"><span>Bramley and Stanningley</span><span>Westside Neighbourhood Trust</span><span>Hearing loop</span></p>
+									<ul class="v-rooms">
+										<li><b>Reading room</b><span class="cap">up to 45</span><span class="rate">from <strong>£14</strong> an hour</span></li>
+										<li><b>Studio</b><span class="cap">up to 40</span><span class="rate"><strong>Free</strong> for members</span></li>
+									</ul>
+									<p class="v-more"><a href="#find">See all 3 spaces</a></p>
+								</div>
+							</li>
+						</ul>
+					</div>
+				</div>
+			</div>
+		</div>
+		<ul class="caption">
+			<li>Results group rooms under their venue</li>
+			<li>Filters show how many spaces each would leave</li>
+			<li>A whole-building option is labelled so it cannot be mistaken for a room</li>
+		</ul>
+	</section>
+
+	<!-- ================= Screen 2: Venue page ================= -->
+	<section class="p-section" id="venue">
+		<p class="p-label">Screen 2</p>
+		<h2 class="p-h2">A venue page</h2>
+		<p class="p-intro">One page per building. The venue details sit at the top and each space has its own card with capacity by layout, size and rates. The enquiry form goes straight to the venue's contact, with the space already picked.</p>
+
+		<div class="frame" role="region" aria-label="Mock-up of a venue page">
+			<div class="frame__bar"><div class="frame__dots"><i></i><i></i><i></i></div><div class="frame__url">partnership.doinggoodleeds.org.uk<b>/spaces/stanhope-road-community-centre/</b></div></div>
+			<div class="site">
+				<div class="s-head">
+					<div class="s-brand"><i></i><span>Doing Good Leeds<br>Partnership</span></div>
+					<ul class="s-nav">
+						<li><a href="#venue">News</a></li>
+						<li><a href="#venue">Events</a></li>
+						<li><a href="#venue">Training</a></li>
+						<li><a href="#venue">Directory</a></li>
+						<li><a href="#find" aria-current="page">Spaces to hire<span class="s-new">New</span></a></li>
+					</ul>
+				</div>
+				<div class="s-body">
+					<p class="s-crumbs"><a href="#find">Spaces to hire</a> / <a href="#find">Armley</a></p>
+
+					<div class="gallery">
+						<span class="ph"><svg><use href="#sc-ext"/></svg></span>
+						<span class="ph"><svg><use href="#sc-hall"/></svg></span>
+						<span class="ph"><svg><use href="#sc-meet"/></svg></span>
+						<span class="gallery__count">12 photos</span>
+					</div>
+
+					<div class="venue-head">
+						<div>
+							<p class="s-kicker">Community centre / Armley</p>
+							<h1 class="s-title">Stanhope Road Community Centre</h1>
+							<p class="runby">Run by <a href="#org">Westside Neighbourhood Trust</a>, a partnership member</p>
+						</div>
+					</div>
+
+					<ul class="quick">
+						<li><b>4</b> spaces</li>
+						<li>Up to <b>180</b> people</li>
+						<li>From <b>£16</b> an hour</li>
+						<li>Step-free throughout</li>
+						<li>12 parking spaces</li>
+					</ul>
+
+					<div class="v-layout">
+						<div>
+							<p>A 1930s former school on the edge of Armley Park, run by local people since 2011. Big windows, a sprung floor in the main hall and a garden that catches the afternoon sun. Regular users include a parent and toddler group, two dance schools and the ward's councillor surgeries.</p>
+
+							<h2 class="s-h2" style="margin-top:26px">Spaces at this venue</h2>
+							<div class="spaces">
+								<article class="space space--whole">
+									<div class="space__pic"><span class="ph"><svg><use href="#sc-ext"/></svg></span></div>
+									<div>
+										<div class="space__top"><h3>Whole centre</h3><span class="space__size">All 3 rooms, kitchen and garden</span></div>
+										<p class="space__note">Weekends only. Suits fun days, conferences and fundraisers.</p>
+										<div class="space__foot">
+											<p class="rates"><span><b>£280</b> a day</span><span class="member">Members £220</span></p>
+											<a class="s-btn s-btn--ghost s-btn--sm" href="#enquire">Enquire</a>
+										</div>
+									</div>
+								</article>
+
+								<article class="space">
+									<div class="space__pic"><span class="ph"><svg><use href="#sc-hall"/></svg></span></div>
+									<div>
+										<div class="space__top"><h3>Main hall</h3><span class="space__size">14 × 11 m / 154 m²</span></div>
+										<ul class="layouts" aria-label="Capacity by layout">
+											<li><span>Theatre</span><b>150</b></li>
+											<li><span>Cabaret</span><b>80</b></li>
+											<li><span>Boardroom</span><b>30</b></li>
+											<li><span>Standing</span><b>180</b></li>
+										</ul>
+										<ul class="tags"><li class="s-tag">Stage</li><li class="s-tag">PA system</li><li class="s-tag">Sprung floor</li><li class="s-tag">Hearing loop</li></ul>
+										<div class="space__foot">
+											<p class="rates"><span><b>£35</b> an hour</span><span class="member">Members £28</span></p>
+											<a class="s-btn s-btn--ghost s-btn--sm" href="#enquire">Enquire</a>
+										</div>
+									</div>
+								</article>
+
+								<article class="space">
+									<div class="space__pic"><span class="ph"><svg><use href="#sc-meet"/></svg></span></div>
+									<div>
+										<div class="space__top"><h3>Garden room</h3><span class="space__size">8 × 6 m / 48 m²</span></div>
+										<ul class="layouts" aria-label="Capacity by layout">
+											<li><span>Theatre</span><b>40</b></li>
+											<li><span>Cabaret</span><b>24</b></li>
+											<li><span>Boardroom</span><b>16</b></li>
+											<li class="na"><span>Standing</span><b>-</b></li>
+										</ul>
+										<ul class="tags"><li class="s-tag">Screen</li><li class="s-tag">Opens to garden</li><li class="s-tag">Flipchart</li></ul>
+										<div class="space__foot">
+											<p class="rates"><span><b>£20</b> an hour</span><span class="member">Members £16</span></p>
+											<a class="s-btn s-btn--ghost s-btn--sm" href="#enquire">Enquire</a>
+										</div>
+									</div>
+								</article>
+
+								<article class="space">
+									<div class="space__pic"><span class="ph"><svg><use href="#sc-kitchen"/></svg></span></div>
+									<div>
+										<div class="space__top"><h3>Community kitchen</h3><span class="space__size">Food hygiene rating 5</span></div>
+										<p class="space__note">Hire on its own for cookery sessions, or add it to the hall.</p>
+										<ul class="tags"><li class="s-tag">Two ovens</li><li class="s-tag">Dishwasher</li><li class="s-tag">Seats 12</li></ul>
+										<div class="space__foot">
+											<p class="rates"><span><b>£18</b> an hour</span><span class="member">Members £15</span></p>
+											<a class="s-btn s-btn--ghost s-btn--sm" href="#enquire">Enquire</a>
+										</div>
+									</div>
+								</article>
+							</div>
+
+							<h2 class="s-h2">About the venue</h2>
+							<dl class="lists">
+								<dt>Access</dt><dd>Step-free entrance and ground floor, accessible toilet, hearing loop in the main hall, assistance dogs welcome</dd>
+								<dt>Facilities</dt><dd>Free Wi-Fi, tables and 150 chairs, baby changing, secure bike racks</dd>
+								<dt>Getting there</dt><dd>Buses 5, 15 and 16 stop 100 m away. 12 free parking spaces, 2 of them blue badge.</dd>
+								<dt>Usually available</dt><dd>Weekday evenings from 6pm, Saturdays, Sundays after 1pm</dd>
+								<dt>Good to know</dt><dd>No alcohol without prior agreement. Hirers need public liability insurance for events over 50 people.</dd>
+							</dl>
+						</div>
+
+						<aside class="aside" id="enquire">
+							<div class="a-card">
+								<h2>Send an enquiry</h2>
+								<p>Goes straight to the centre manager. They usually reply within 2 working days.</p>
+								<form class="a-form" onsubmit="return false">
+									<div class="s-field"><label for="e-space">Space</label><select class="s-input" id="e-space"><option>Main hall</option><option>Garden room</option><option>Community kitchen</option><option>Whole centre</option></select></div>
+									<div class="a-row">
+										<div class="s-field"><label for="e-date">Date</label><input class="s-input" id="e-date" value="Sat 14 Nov"></div>
+										<div class="s-field"><label for="e-people">People</label><input class="s-input" id="e-people" value="60"></div>
+									</div>
+									<div class="a-row">
+										<div class="s-field"><label for="e-from">From</label><input class="s-input" id="e-from" value="10:00"></div>
+										<div class="s-field"><label for="e-to">To</label><input class="s-input" id="e-to" value="15:00"></div>
+									</div>
+									<div class="s-field"><label for="e-what">What is it for?</label><textarea class="s-input" id="e-what">Winter warm space launch with a hot lunch. We'd need the kitchen too.</textarea></div>
+									<div class="s-field"><label for="e-email">Your email</label><input class="s-input" id="e-email" value="you@example.org"></div>
+									<button class="s-btn s-btn--block" type="submit">Send enquiry</button>
+									<p class="a-note">Signed in as a partnership member, so the member rate is shown to the venue.</p>
+								</form>
+							</div>
+							<div class="a-card">
+								<div class="map" aria-hidden="true">
+									<svg viewBox="0 0 300 150" preserveAspectRatio="xMidYMid slice">
+										<rect width="300" height="150" fill="#e7ecef"/>
+										<path d="M0 40 C 80 30, 140 70, 300 55" stroke="#ffffff" stroke-width="10" fill="none"/>
+										<path d="M120 0 L 150 150" stroke="#ffffff" stroke-width="8" fill="none"/>
+										<path d="M0 115 L 300 100" stroke="#ffffff" stroke-width="6" fill="none"/>
+										<rect x="190" y="70" width="90" height="26" rx="6" fill="#bfdcb8"/>
+										<circle cx="148" cy="84" r="11" fill="#2d3b6b"/><circle cx="148" cy="84" r="4" fill="#ffffff"/>
+									</svg>
+								</div>
+								<dl class="facts">
+									<div><dt>Address</dt><dd>14 Stanhope Road, Armley, Leeds LS12 3QP</dd></div>
+									<div><dt>Contact</dt><dd>Centre manager, 0113 000 0000</dd></div>
+									<div><dt>Ward</dt><dd>Armley</dd></div>
+								</dl>
+							</div>
+						</aside>
+					</div>
+				</div>
+			</div>
+		</div>
+		<ul class="caption">
+			<li>Capacity by layout, the way venue managers already describe rooms</li>
+			<li>Standard and member rates side by side</li>
+			<li>Enquiry, not booking, in the first version</li>
+		</ul>
+	</section>
+
+	<!-- ================= Screen 3: Organisation page ================= -->
+	<section class="p-section" id="org">
+		<p class="p-label">Screen 3</p>
+		<h2 class="p-h2">On an organisation's page</h2>
+		<p class="p-intro">The directory page each member already has gains a "Spaces to hire" block when the organisation lists a venue. This is where the multi-site case shows its value: one trust, three buildings, one tidy row.</p>
+
+		<div class="frame" role="region" aria-label="Mock-up of an organisation page with a Spaces to hire block">
+			<div class="frame__bar"><div class="frame__dots"><i></i><i></i><i></i></div><div class="frame__url">partnership.doinggoodleeds.org.uk<b>/directory/westside-neighbourhood-trust/</b></div></div>
+			<div class="site">
+				<div class="s-body">
+					<p class="s-kicker">Member organisation</p>
+					<div class="org-head">
+						<div class="org-logo">WNT</div>
+						<div>
+							<h1 class="s-title" style="margin-bottom:2px">Westside Neighbourhood Trust</h1>
+							<p class="org-where">Armley</p>
+						</div>
+					</div>
+					<p style="margin:0;max-width:62ch">A resident-led charity running community buildings, youth work and a food pantry across Armley, Bramley and Wortley.</p>
+
+					<div class="org-sec">
+						<div class="org-sec__head"><h2>Spaces to hire at 3 venues</h2><a href="#find">See all 9 spaces</a></div>
+						<div class="org-venues">
+							<article class="ov">
+								<div class="ov__pic"><span class="ph"><svg><use href="#sc-ext"/></svg></span></div>
+								<div class="ov__body">
+									<h3><a href="#venue">Stanhope Road Community Centre</a></h3>
+									<p>Armley / up to 180 people</p>
+									<ul><li class="s-tag">Hall</li><li class="s-tag">Meeting room</li><li class="s-tag">Kitchen</li><li class="s-tag">Whole building</li></ul>
+								</div>
+							</article>
+							<article class="ov">
+								<div class="ov__pic"><span class="ph"><svg><use href="#sc-studio"/></svg></span></div>
+								<div class="ov__body">
+									<h3><a href="#org">The Old Library, Bramley</a></h3>
+									<p>Bramley / up to 45 people</p>
+									<ul><li class="s-tag">Meeting room</li><li class="s-tag">Studio</li></ul>
+								</div>
+							</article>
+							<article class="ov">
+								<div class="ov__pic"><span class="ph"><svg><use href="#sc-garden"/></svg></span></div>
+								<div class="ov__body">
+									<h3><a href="#org">Wortley Green Pavilion</a></h3>
+									<p>Wortley / up to 60 people</p>
+									<ul><li class="s-tag">Hall</li><li class="s-tag">Outdoor</li></ul>
+								</div>
+							</article>
+						</div>
+					</div>
+
+					<div class="org-sec org-dim">
+						<h2 class="s-h2">Latest from Westside Neighbourhood Trust</h2>
+						<p>News, events and training, as the page shows today.</p>
+					</div>
+				</div>
+			</div>
+		</div>
+		<ul class="caption">
+			<li>Appears only when the organisation has a live venue</li>
+			<li>Every venue links back to its organisation, and the other way round</li>
+		</ul>
+	</section>
+
+	<!-- ================= Screen 4: Phone ================= -->
+	<section class="p-section" id="phone">
+		<p class="p-label">Screen 4</p>
+		<h2 class="p-h2">On a phone</h2>
+		<p class="p-intro">Most people looking for a room will be on a phone. The same venue page, at 390 pixels wide.<span class="screen-only"> Scroll inside the phone to see more.</span></p>
+
+		<div class="phone-row">
+			<div class="phone">
+				<div class="phone__screen">
+					<div class="site">
+						<div class="ph-top"><div class="s-brand"><i></i><span>DGLP</span></div><button type="button">Menu</button></div>
+						<div class="ph-hero"><span class="ph"><svg><use href="#sc-ext"/></svg></span></div>
+						<div class="ph-body">
+							<p class="s-kicker">Community centre / Armley</p>
+							<h1 class="s-title">Stanhope Road Community Centre</h1>
+							<p class="runby" style="margin-bottom:16px">Run by <a href="#org">Westside Neighbourhood Trust</a></p>
+							<ul class="quick" style="gap:6px 16px;font-size:13.5px">
+								<li><b>4</b> spaces</li>
+								<li>Up to <b>180</b></li>
+								<li>From <b>£16</b>/hr</li>
+								<li>Step-free</li>
+							</ul>
+							<h2 class="s-h2">Spaces</h2>
+							<div class="spaces">
+								<article class="space">
+									<div class="space__pic"><span class="ph"><svg><use href="#sc-hall"/></svg></span></div>
+									<div>
+										<div class="space__top"><h3>Main hall</h3><span class="space__size">154 m²</span></div>
+										<ul class="layouts" aria-label="Capacity by layout" style="margin-top:10px">
+											<li><span>Theatre</span><b>150</b></li>
+											<li><span>Cabaret</span><b>80</b></li>
+											<li><span>Board</span><b>30</b></li>
+											<li><span>Standing</span><b>180</b></li>
+										</ul>
+										<div class="space__foot">
+											<p class="rates"><span><b>£35</b>/hr</span><span class="member">Members £28</span></p>
+										</div>
+									</div>
+								</article>
+								<article class="space">
+									<div class="space__pic"><span class="ph"><svg><use href="#sc-meet"/></svg></span></div>
+									<div>
+										<div class="space__top"><h3>Garden room</h3><span class="space__size">48 m²</span></div>
+										<ul class="layouts" aria-label="Capacity by layout" style="margin-top:10px">
+											<li><span>Theatre</span><b>40</b></li>
+											<li><span>Cabaret</span><b>24</b></li>
+											<li><span>Board</span><b>16</b></li>
+											<li class="na"><span>Standing</span><b>-</b></li>
+										</ul>
+										<div class="space__foot">
+											<p class="rates"><span><b>£20</b>/hr</span><span class="member">Members £16</span></p>
+										</div>
+									</div>
+								</article>
+							</div>
+						</div>
+						<div class="ph-bar"><p><b>From £16 an hour</b>4 spaces, reply in 2 days</p><a class="s-btn s-btn--sm" href="#enquire">Enquire</a></div>
+					</div>
+				</div>
+			</div>
+
+			<ul class="phone-notes">
+				<li>
+					<h3>Enquire stays in reach</h3>
+					<p>A bar at the foot of the screen keeps the price and the Enquire button in view while people scroll through the rooms.</p>
+				</li>
+				<li>
+					<h3>Room cards stack</h3>
+					<p>Photo on top, then capacity, then price. The capacity grid keeps all four layouts on one line so rooms can be compared at a glance.</p>
+				</li>
+				<li>
+					<h3>Held to the same standard</h3>
+					<p>Every button and link at least 44 pixels tall, text at WCAG 2.2 AA contrast or better, and no sideways scrolling. The same rules the member area and public pages are already checked against.</p>
+				</li>
+			</ul>
+		</div>
+	</section>
+
+	<!-- ================= Decisions ================= -->
+	<section class="p-section" id="decide">
+		<p class="p-label">To decide</p>
+		<h2 class="p-h2">Six questions before we build</h2>
+		<p class="p-intro">Each one changes the build. A recommendation sits beside each, so a quick yes is enough.</p>
+
+		<ul class="decide">
+			<li>
+				<div><h3>Who can list a space?</h3><p>Only verified member organisations, or any venue in Leeds that applies?</p></div>
+				<div class="rec"><strong>Recommended</strong><p>Members only to start. They are already verified, their venue hangs off their directory page and it gives organisations another reason to join.</p></div>
+			</li>
+			<li>
+				<div><h3>Enquiry or booking?</h3><p>Send an enquiry to the venue, or take bookings on the site with a live calendar?</p></div>
+				<div class="rec"><strong>Recommended</strong><p>Enquiry first. Most venues already run their own diary, and a second calendar that drifts out of step causes double bookings. Bookings can follow once we know which venues want them.</p></div>
+			</li>
+			<li>
+				<div><h3>Show prices?</h3><p>Should every space show a rate, or can venues keep prices private?</p></div>
+				<div class="rec"><strong>Recommended</strong><p>Optional, with "Price on request" as the fallback. Listings with prices will rank higher in the results, which nudges venues to add them.</p></div>
+			</li>
+			<li>
+				<div><h3>A member rate?</h3><p>Should venues be able to show a lower rate for partnership members?</p></div>
+				<div class="rec"><strong>Recommended</strong><p>Yes, as an optional second price. It costs nothing to build and is a clear, visible benefit of membership.</p></div>
+			</li>
+			<li>
+				<div><h3>A map?</h3><p>The map view needs a mapping service, which may carry a cost at higher traffic.</p></div>
+				<div class="rec"><strong>Recommended</strong><p>Launch with the list and filters by ward, which cost nothing to run. Add the map in a second phase if people ask for it.</p></div>
+			</li>
+			<li>
+				<div><h3>How much review?</h3><p>Should every change to a venue go back through the review team?</p></div>
+				<div class="rec"><strong>Recommended</strong><p>Review every new venue and space. Let trusted organisations update prices, photos and availability without waiting, using the trust levels the platform already has.</p></div>
+			</li>
+		</ul>
+	</section>
+
+	<section class="close">
+		<div>
+			<h2>Next step</h2>
+			<p>Answer the six questions above, or talk them through with us. We will then write a scope with a fixed price and timeline for the first version: listing from the dashboard, review, the Find a space page, venue pages and enquiries.</p>
+		</div>
+		<dl>
+			<dt>Martin Fisher</dt>
+			<dd>Results You Can Measure</dd>
+			<dt>Email</dt>
+			<dd>martin@resultsyoucanmeasure.com</dd>
+			<dt>Phone</dt>
+			<dd>+44 (0)7973 321771</dd>
+		</dl>
+	</section>
+
+</div>
+
+<script>
+/* The mock chips and view toggles respond to a click so the page feels real. */
+document.querySelectorAll('.types, .view').forEach(function (group) {
+	group.addEventListener('click', function (e) {
+		var btn = e.target.closest('button');
+		if (!btn) { return; }
+		group.querySelectorAll('button').forEach(function (b) { b.setAttribute('aria-pressed', b === btn ? 'true' : 'false'); });
+	});
+});
+</script>
