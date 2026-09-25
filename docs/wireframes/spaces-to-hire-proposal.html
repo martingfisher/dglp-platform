@@ -379,6 +379,29 @@ textarea.s-input { height: 104px; padding: 10px 12px; resize: vertical; }
 	.a-row { grid-template-columns: minmax(0, 1fr); }
 	.phone__screen { height: 640px; }
 }
+
+/* ---- Print (the PDF for circulation) ---------------------------------------- */
+@media print {
+	:root { color-scheme: light; }
+	body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+	.wrap { padding-block: 0; }
+	.p-jump, .screen-only { display: none; }
+	html { scroll-behavior: auto; }
+	#find, #venue, #org, #phone, #decide { break-before: page; padding-top: 0; }
+	.p-section#structure { padding-top: 40px; }
+	.p-ex, .p-points li, .v-card, .space, .decide li, .close, .a-card, .ov, .phone-row, .find, .quick, .lists, .caption, .gallery, .venue-head, .org-venues { break-inside: avoid; }
+	.p-h2, .s-h2, .p-label, .p-intro { break-after: avoid; }
+	.frame { box-shadow: none; }
+	.aside { position: static; }
+	/* Printed at about 56%: the proposal's own words are set larger so they read at 9pt or more. */
+	.p-lede { font-size: 23px; }
+	.p-intro { font-size: 21px; max-width: 70ch; }
+	.p-meta, .caption { font-size: 16.5px; }
+	.p-points h3, .p-ex h3, .decide h3, .phone-notes h3 { font-size: 21px; }
+	.p-points p, .p-ex > p, .tree, .p-level span, .decide p, .phone-notes p { font-size: 18.5px; }
+	.p-level b { font-size: 20px; }
+	.close p, .close dl { font-size: 20px; }
+}
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
 @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
 </style>
@@ -925,7 +948,7 @@ textarea.s-input { height: 104px; padding: 10px 12px; resize: vertical; }
 	<section class="p-section" id="phone">
 		<p class="p-label">Screen 4</p>
 		<h2 class="p-h2">On a phone</h2>
-		<p class="p-intro">Most people looking for a room will be on a phone. The same venue page, at 390 pixels wide. Scroll inside the phone to see more.</p>
+		<p class="p-intro">Most people looking for a room will be on a phone. The same venue page, at 390 pixels wide.<span class="screen-only"> Scroll inside the phone to see more.</span></p>
 
 		<div class="phone-row">
 			<div class="phone">
