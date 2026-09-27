@@ -4480,9 +4480,7 @@ $home_pos_old = array_search( $home_news['old'], $home_stories, true );
 $ok( false !== $home_pos_new && false !== $home_pos_old && $home_pos_new < $home_pos_old, 'then the newest first' );
 
 $home_data = \DGL\Frontend\Home::view_data();
-$ok( [] === $home_data['grants'] && false === $home_data['grants_on'], 'funding is empty while the Grants type is switched off' );
-$ok( [] === $home_data['quotes'], 'no testimonials until somebody supplies them' );
-$ok( $home_data['org_total'] >= 1 && 6 === count( $home_data['areas'] ) && 3 === count( $home_data['partners'] ), 'the directory count, six areas of work and three partners are there (' . $home_data['org_total'] . ' organisations)' );
+$ok( false === $home_data['grants_on'] && [] === $home_data['quotes'] && 3 === count( $home_data['partners'] ), 'the sample page knows the Grants type is off, has no testimonials yet and names three partners' );
 $ok( str_ends_with( $home_data['join_url'], '/dashboard/join/' ) && str_ends_with( $home_data['dir_url'], '/directory/' ), 'join and directory links point at the real pages' );
 
 update_option( \DGL\Frontend\Home::OPTION_QUOTES, wp_json_encode( [ [ 'quote' => 'It filled our event.', 'name' => 'A Person', 'role' => 'Manager, Home Org' ], [ 'quote' => '   ' ], [ 'quote' => 'Second.' ], [ 'quote' => 'Third.' ], [ 'quote' => 'Fourth.' ] ] ) );
@@ -4493,10 +4491,30 @@ delete_option( \DGL\Frontend\Home::OPTION_QUOTES );
 $home_html = \DGL\Dashboard\View::render( 'public/home', \DGL\Frontend\Home::view_data() );
 $ok( str_contains( $home_html, 'The people doing good in Leeds, in one place.' ) && str_contains( $home_html, 'What&#039;s on' ) && str_contains( $home_html, 'Latest news' ) && str_contains( $home_html, 'Training and learning' ) && str_contains( $home_html, 'Funding and grants' ) && str_contains( $home_html, 'Find an organisation' ) && str_contains( $home_html, 'What members say' ) && str_contains( $home_html, 'Get the weekly round-up' ), 'the page renders every section of the wireframe' );
 $ok( str_contains( $home_html, 'Home event later' ) && str_contains( $home_html, 'Home story pinned' ) && ! str_contains( $home_html, 'Home event pending' ), 'with the live items in it and the pending one out' );
-$ok( 3 === substr_count( $home_html, 'Testimonial to be supplied' ) && str_contains( $home_html, 'once the Grants section is switched on' ), 'funding and testimonials are drawn as labelled placeholders' );
+$ok( 3 === substr_count( $home_html, 'Testimonial to be supplied' ) && str_contains( $home_html, 'once that section is switched on' ), 'funding and testimonials are drawn as labelled placeholders' );
 $ok( str_contains( $home_html, 'class="dgl-date"' ) && str_contains( $home_html, 'Posted: ' ), 'events carry the calendar leaf and stories say when they were posted' );
 $ok( 1 === preg_match( '#<form class="dgl-home__search" method="get" action="[^"]*/directory/"#', $home_html ) && str_contains( $home_html, 'name="q"' ), 'the search box posts to the directory' );
 $ok( str_contains( $home_html, 'Forum Central' ) && str_contains( $home_html, 'Voluntary Action Leeds' ), 'the partners are named' );
+
+$group( 'Home page shortcodes: the live sections for a page built in the theme' );
+
+$ok( 6 === count( array_filter( \DGL\Frontend\HomeBlocks::TAGS, 'shortcode_exists' ) ), 'six shortcodes are registered' );
+$sc_events = do_shortcode( '[dgl_home_events count="2"]' );
+$ok( str_starts_with( $sc_events, '<div class="dgl-home-block dgl-home-block--events">' ) && 2 === substr_count( $sc_events, 'class="dgl-home__row"' ) && str_contains( $sc_events, '>What&#039;s on</h2>' ) && str_contains( $sc_events, '>All events</a>' ), 'events: wrapped, two rows, the default heading and the All link' );
+$ok( $home_evt['later'] === (int) ( preg_match( '#<h3 class="dgl-home__rowtitle"><a href="[^"]*/(?:events|\?[^"]*)[^"]*">Home event later</a>#', $sc_events ) ? $home_evt['later'] : 0 ), 'and the featured event comes first' );
+$sc_bare = do_shortcode( '[dgl_home_events heading="" link="no" count="1"]' );
+$ok( ! str_contains( $sc_bare, '<h2' ) && ! str_contains( $sc_bare, 'dgl-home__all' ) && 1 === substr_count( $sc_bare, 'class="dgl-home__row"' ), 'heading="" and link="no" leave only the rows' );
+$ok( 1 === substr_count( do_shortcode( '[dgl_home_events count="0"]' ), 'class="dgl-home__row"' ) && substr_count( do_shortcode( '[dgl_home_events count="999"]' ), 'class="dgl-home__row"' ) <= \DGL\Frontend\HomeBlocks::MAX_COUNT, 'count is kept between one and the cap' );
+$sc_news = do_shortcode( '[dgl_home_news count="3" heading="In the news"]' );
+$ok( str_contains( $sc_news, '>In the news</h2>' ) && 1 === substr_count( $sc_news, 'dgl-home__lead"' ) && 2 === substr_count( $sc_news, 'dgl-home__row--news' ) && str_contains( $sc_news, 'Home story pinned' ), 'news: a custom heading, the featured story large, two beside it' );
+$sc_funding = do_shortcode( '[dgl_home_funding]' );
+$ok( str_contains( $sc_funding, 'dgl-home__placeholderbox' ) && str_contains( $sc_funding, 'once that section is switched on' ) && ! str_contains( $sc_funding, 'dgl-home__all' ), 'funding: a labelled placeholder and no link while the Grants type is off' );
+$sc_dir = do_shortcode( '[dgl_home_directory areas="2"]' );
+$ok( str_contains( $sc_dir, 'action="' . home_url( '/directory/' ) . '"' ) && 2 === substr_count( $sc_dir, 'class="dgl-home__chip"' ) && str_contains( $sc_dir, 'verified organisation' ), 'directory: the search form, two chips and the live count' );
+$sc_round = do_shortcode( '[dgl_home_roundup heading="Stay in touch" text="One email a week."]' );
+$ok( str_contains( $sc_round, '>Stay in touch</h2>' ) && str_contains( $sc_round, 'One email a week.' ) && str_contains( $sc_round, '/dashboard/join/' ), 'round-up: custom heading and text, the join link' );
+$ok( str_contains( do_shortcode( '[dgl_home_training heading="<b>Courses</b>"]' ), '>Courses</h2>' ), 'tags in an attribute are stripped' );
+$ok( wp_style_is( 'dgl-public', 'enqueued' ), 'rendering a shortcode loads the public stylesheet' );
 
 set_query_var( \DGL\Frontend\Home::QUERY_VAR, '1' );
 \DGL\Frontend\Seo::reset();

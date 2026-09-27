@@ -992,3 +992,13 @@ clean. They are the only DGLP content on staging.
   The page is `noindex` while it is a sample. `src/Frontend/Home.php`,
   `templates/public/home.php`, home styles in `assets/public.css`,
   integration tests, docs.
+- **0.40.0 deployed** (27 September, production): the home page's live
+  sections as shortcodes, so the front page is built in Blocksy on the
+  theme's own page: `[dgl_home_events]`, `[dgl_home_news]`,
+  `[dgl_home_training]`, `[dgl_home_funding]`, `[dgl_home_directory]`,
+  `[dgl_home_roundup]`, with `count`, `heading`, `link`, `areas` and
+  `text` attributes. The sections are partials under
+  `templates/public/home/`, shared with `/samplehome/`, which stays as the
+  reference. The public stylesheet loads only on a page that uses one, and
+  the grids use container queries so they adapt to the theme's column.
+  `src/Frontend/HomeBlocks.php`, docs, integration tests.

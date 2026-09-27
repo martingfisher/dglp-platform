@@ -249,6 +249,16 @@ and the request comes to you to check.
 A pending name or logo change also shows on this screen with the same accept
 and refuse choices as the queue.
 
+## The home page blocks
+
+The home page is an ordinary page in the block editor. The lists on it
+that change by themselves (what's on, latest news, training, funding, the
+directory search and the join call to action) are shortcodes: add a
+Shortcode block and type, for example, `[dgl_home_events count="6"]`.
+Everything else on the page, the hero, the photos, the copy and the
+testimonials, is yours to edit as you would any page. Featuring an item
+(see above) puts it first in its block.
+
 ## The directory
 
 Every organisation's profile carries the details from Forum Central's list:

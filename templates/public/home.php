@@ -5,7 +5,9 @@
  * Twelve blocks, top to bottom: hero, quick links, what the partnership does,
  * what's on, latest news, training, funding, find an organisation,
  * testimonials, the weekly round-up. The theme's header and footer do the
- * rest. Every list reads live content; funding and testimonials are drawn
+ * rest. The live sections are the partials under `public/home/`, the
+ * same ones the shortcodes render, so the sample and a page built in
+ * the theme can never drift apart. Funding and testimonials are drawn
  * as labelled placeholders until there is something real to show.
  *
  * @var array<string,mixed> $data
@@ -14,47 +16,14 @@
 
 declare( strict_types=1 );
 
-use DGL\Frontend\Cards;
-use DGL\Frontend\Frontend;
-use DGL\Frontend\Home;
 use DGL\PostTypes;
 
 defined( 'ABSPATH' ) || exit;
 
-$events    = (array) ( $data['events'] ?? [] );
-$news      = (array) ( $data['news'] ?? [] );
-$training  = (array) ( $data['training'] ?? [] );
-$grants    = (array) ( $data['grants'] ?? [] );
-$quotes    = (array) ( $data['quotes'] ?? [] );
-$partners  = (array) ( $data['partners'] ?? [] );
-$areas     = (array) ( $data['areas'] ?? [] );
-$urls      = (array) ( $data['urls'] ?? [] );
-$org_total = (int) ( $data['org_total'] ?? 0 );
-$lead      = [] !== $news ? array_shift( $news ) : null;
+$quotes   = (array) ( $data['quotes'] ?? [] );
+$partners = (array) ( $data['partners'] ?? [] );
+$urls     = (array) ( $data['urls'] ?? [] );
 
-/** One dated row: the leaf, the picture, the title and the where/org line. */
-$dated_row = static function ( WP_Post $item, string $heading = 'h3' ): void {
-	$org   = Frontend::organisation( $item )['name'];
-	$where = Frontend::where( $item );
-	$line  = implode( ' · ', array_filter( [ $where, $org ] ) );
-	?>
-	<li class="dgl-home__row">
-		<?php echo Cards::date_block( $item ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside. ?>
-		<a class="dgl-home__rowpic" href="<?php echo esc_url( (string) get_permalink( $item ) ); ?>" tabindex="-1" aria-hidden="true"><?php echo Cards::picture( $item, 'thumbnail' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside. ?></a>
-		<div class="dgl-home__rowbody">
-			<?php if ( Home::is_featured( $item ) ) : ?>
-				<span class="dgl-pub__pin"><?php esc_html_e( 'Featured', 'dgl-platform' ); ?></span>
-			<?php elseif ( PostTypes::EVENT === $item->post_type && \DGL\Events\Cancel::is_cancelled( (int) $item->ID ) ) : ?>
-				<span class="dgl-pub__pin dgl-pub__pin--off"><?php esc_html_e( 'Cancelled', 'dgl-platform' ); ?></span>
-			<?php endif; ?>
-			<<?php echo esc_html( $heading ); ?> class="dgl-home__rowtitle"><a href="<?php echo esc_url( (string) get_permalink( $item ) ); ?>"><?php echo esc_html( get_the_title( $item ) ); ?></a></<?php echo esc_html( $heading ); ?>>
-			<?php if ( '' !== $line ) : ?>
-				<p class="dgl-home__rowmeta"><?php echo esc_html( $line ); ?></p>
-			<?php endif; ?>
-		</div>
-	</li>
-	<?php
-};
 ?>
 <div class="dgl-pub dgl-home">
 
@@ -122,133 +91,12 @@ $dated_row = static function ( WP_Post $item, string $heading = 'h3' ): void {
 		<?php endif; ?>
 	</section>
 
-	<!-- 5. What's on -->
-	<section class="dgl-home__section" aria-labelledby="dgl-home-events">
-		<div class="dgl-home__sechead">
-			<h2 class="dgl-home__h2" id="dgl-home-events"><?php esc_html_e( "What's on", 'dgl-platform' ); ?></h2>
-			<a class="dgl-home__all" href="<?php echo esc_url( (string) ( $urls[ PostTypes::EVENT ] ?? '' ) ); ?>"><?php esc_html_e( 'All events', 'dgl-platform' ); ?></a>
-		</div>
-		<?php if ( [] === $events ) : ?>
-			<p class="dgl-home__empty"><?php esc_html_e( 'Nothing is listed at the moment. Check back soon.', 'dgl-platform' ); ?></p>
-		<?php else : ?>
-			<ul class="dgl-home__rows dgl-home__rows--3">
-				<?php foreach ( $events as $item ) : ?>
-					<?php $dated_row( $item ); ?>
-				<?php endforeach; ?>
-			</ul>
-		<?php endif; ?>
-	</section>
-
-	<!-- 6. Latest news -->
-	<section class="dgl-home__section" aria-labelledby="dgl-home-news">
-		<div class="dgl-home__sechead">
-			<h2 class="dgl-home__h2" id="dgl-home-news"><?php esc_html_e( 'Latest news', 'dgl-platform' ); ?></h2>
-			<a class="dgl-home__all" href="<?php echo esc_url( (string) ( $urls[ PostTypes::NEWS ] ?? '' ) ); ?>"><?php esc_html_e( 'All news', 'dgl-platform' ); ?></a>
-		</div>
-		<?php if ( null === $lead ) : ?>
-			<p class="dgl-home__empty"><?php esc_html_e( 'Nothing is listed at the moment. Check back soon.', 'dgl-platform' ); ?></p>
-		<?php else : ?>
-			<div class="dgl-home__news">
-				<article class="dgl-home__lead">
-					<a class="dgl-home__leadpic" href="<?php echo esc_url( (string) get_permalink( $lead ) ); ?>" tabindex="-1" aria-hidden="true"><?php echo Cards::picture( $lead, 'large', true ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside. ?></a>
-					<p class="dgl-card__chip">
-						<?php echo esc_html( Cards::chip( $lead ) ); ?>
-						<?php if ( Home::is_featured( $lead ) ) : ?>
-							<span class="dgl-pub__pin"><?php esc_html_e( 'Featured', 'dgl-platform' ); ?></span>
-						<?php endif; ?>
-					</p>
-					<h3 class="dgl-home__leadtitle"><a href="<?php echo esc_url( (string) get_permalink( $lead ) ); ?>"><?php echo esc_html( get_the_title( $lead ) ); ?></a></h3>
-					<?php $summary = Cards::summary( $lead, 40 ); ?>
-					<?php if ( '' !== $summary ) : ?>
-						<p class="dgl-home__leadsummary"><?php echo esc_html( $summary ); ?></p>
-					<?php endif; ?>
-					<p class="dgl-home__rowmeta"><?php echo esc_html( implode( ' · ', array_filter( [ Frontend::organisation( $lead )['name'], sprintf( /* translators: %s: a date like "24 Sep 2026". */ __( 'Posted: %s', 'dgl-platform' ), Cards::posted( $lead ) ) ] ) ) ); ?></p>
-				</article>
-				<?php if ( [] !== $news ) : ?>
-					<ul class="dgl-home__newslist">
-						<?php foreach ( $news as $item ) : ?>
-							<li class="dgl-home__row dgl-home__row--news">
-								<a class="dgl-home__rowpic" href="<?php echo esc_url( (string) get_permalink( $item ) ); ?>" tabindex="-1" aria-hidden="true"><?php echo Cards::picture( $item, 'thumbnail' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside. ?></a>
-								<div class="dgl-home__rowbody">
-									<h3 class="dgl-home__rowtitle"><a href="<?php echo esc_url( (string) get_permalink( $item ) ); ?>"><?php echo esc_html( get_the_title( $item ) ); ?></a></h3>
-									<p class="dgl-home__rowmeta"><?php echo esc_html( implode( ' · ', array_filter( [ Frontend::organisation( $item )['name'], sprintf( /* translators: %s: a date like "24 Sep 2026". */ __( 'Posted: %s', 'dgl-platform' ), Cards::posted( $item ) ) ] ) ) ); ?></p>
-								</div>
-							</li>
-						<?php endforeach; ?>
-					</ul>
-				<?php endif; ?>
-			</div>
-		<?php endif; ?>
-	</section>
-
-	<!-- 7. Training -->
-	<section class="dgl-home__section" aria-labelledby="dgl-home-training">
-		<div class="dgl-home__sechead">
-			<h2 class="dgl-home__h2" id="dgl-home-training"><?php esc_html_e( 'Training and learning', 'dgl-platform' ); ?></h2>
-			<a class="dgl-home__all" href="<?php echo esc_url( (string) ( $urls[ PostTypes::TRAINING ] ?? '' ) ); ?>"><?php esc_html_e( 'All training', 'dgl-platform' ); ?></a>
-		</div>
-		<?php if ( [] === $training ) : ?>
-			<p class="dgl-home__empty"><?php esc_html_e( 'Nothing is listed at the moment. Check back soon.', 'dgl-platform' ); ?></p>
-		<?php else : ?>
-			<ul class="dgl-home__rows dgl-home__rows--3">
-				<?php foreach ( $training as $item ) : ?>
-					<?php $dated_row( $item ); ?>
-				<?php endforeach; ?>
-			</ul>
-		<?php endif; ?>
-	</section>
-
-	<!-- 8. Funding -->
-	<section class="dgl-home__section" id="dgl-home-funding" aria-labelledby="dgl-home-funding-h">
-		<div class="dgl-home__sechead">
-			<h2 class="dgl-home__h2" id="dgl-home-funding-h"><?php esc_html_e( 'Funding and grants', 'dgl-platform' ); ?></h2>
-			<?php if ( $data['grants_on'] ) : ?>
-				<a class="dgl-home__all" href="<?php echo esc_url( (string) ( $urls[ PostTypes::GRANT ] ?? '' ) ); ?>"><?php esc_html_e( 'All funding', 'dgl-platform' ); ?></a>
-			<?php endif; ?>
-		</div>
-		<?php if ( ! $data['grants_on'] ) : ?>
-			<div class="dgl-home__placeholderbox">
-				<p class="dgl-home__placeholder"><?php esc_html_e( 'Open funding opportunities will list here, soonest closing first, once the Grants section is switched on.', 'dgl-platform' ); ?></p>
-			</div>
-		<?php elseif ( [] === $grants ) : ?>
-			<p class="dgl-home__empty"><?php esc_html_e( 'Nothing is listed at the moment. Check back soon.', 'dgl-platform' ); ?></p>
-		<?php else : ?>
-			<ul class="dgl-home__rows dgl-home__rows--3">
-				<?php foreach ( $grants as $item ) : ?>
-					<?php $dated_row( $item ); ?>
-				<?php endforeach; ?>
-			</ul>
-		<?php endif; ?>
-	</section>
-
-	<!-- 9. Find an organisation -->
-	<section class="dgl-home__section dgl-home__find" aria-labelledby="dgl-home-find">
-		<h2 class="dgl-home__h2" id="dgl-home-find"><?php esc_html_e( 'Find an organisation', 'dgl-platform' ); ?></h2>
-		<p class="dgl-home__findlede">
-			<?php
-			if ( $org_total > 0 ) {
-				/* translators: %s: a number. */
-				echo esc_html( sprintf( _n( '%s verified organisation listed so far.', '%s verified organisations, every one checked by the partnership team.', $org_total, 'dgl-platform' ), number_format_i18n( $org_total ) ) );
-			} else {
-				esc_html_e( 'Every organisation listed is checked by the partnership team.', 'dgl-platform' );
-			}
-			?>
-		</p>
-		<form class="dgl-home__search" method="get" action="<?php echo esc_url( (string) $data['dir_url'] ); ?>" role="search">
-			<label class="dgl-home__srlabel" for="dgl-home-q"><?php esc_html_e( 'Search the directory', 'dgl-platform' ); ?></label>
-			<input class="dgl-home__input" id="dgl-home-q" type="search" name="q" placeholder="<?php esc_attr_e( 'Try food, mental health, older people, Armley', 'dgl-platform' ); ?>">
-			<button class="dgl-home__searchbutton" type="submit"><?php esc_html_e( 'Search', 'dgl-platform' ); ?></button>
-		</form>
-		<?php if ( [] !== $areas ) : ?>
-			<div class="dgl-home__chips">
-				<span class="dgl-home__chipslabel"><?php esc_html_e( 'Browse by area of work', 'dgl-platform' ); ?></span>
-				<?php foreach ( $areas as $key => $label ) : ?>
-					<a class="dgl-home__chip" href="<?php echo esc_url( add_query_arg( 'area', (string) $key, (string) $data['dir_url'] ) ); ?>"><?php echo esc_html( (string) $label ); ?></a>
-				<?php endforeach; ?>
-				<a class="dgl-home__browse" href="<?php echo esc_url( (string) $data['dir_url'] ); ?>"><?php esc_html_e( 'Browse the full directory', 'dgl-platform' ); ?></a>
-			</div>
-		<?php endif; ?>
-	</section>
+	<?php
+	// 5 to 9: the live sections, the same partials the shortcodes render.
+	foreach ( [ 'events', 'news', 'training', 'funding', 'directory' ] as $dgl_section ) {
+		echo \DGL\Frontend\HomeBlocks::section( $dgl_section ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside.
+	}
+	?>
 
 	<!-- 10. Testimonials -->
 	<section class="dgl-home__section" aria-labelledby="dgl-home-quotes">
@@ -273,16 +121,6 @@ $dated_row = static function ( WP_Post $item, string $heading = 'h3' ): void {
 		</ul>
 	</section>
 
-	<!-- 11. Weekly round-up -->
-	<section class="dgl-home__section dgl-home__roundup" aria-labelledby="dgl-home-roundup">
-		<div>
-			<h2 class="dgl-home__h2" id="dgl-home-roundup"><?php esc_html_e( 'Get the weekly round-up', 'dgl-platform' ); ?></h2>
-			<p class="dgl-home__lede"><?php esc_html_e( 'Join the partnership and every Tuesday morning we send you what is new: news, events, training and funding from across Leeds. Pick what you want, or stop it any time from the email.', 'dgl-platform' ); ?></p>
-		</div>
-		<div class="dgl-home__actions dgl-home__actions--stack">
-			<a class="dgl-pub__button dgl-home__button" href="<?php echo esc_url( (string) $data['join_url'] ); ?>"><?php esc_html_e( 'Join the partnership', 'dgl-platform' ); ?></a>
-			<a class="dgl-home__button dgl-home__button--quiet" href="<?php echo esc_url( (string) $data['signin_url'] ); ?>"><?php esc_html_e( 'Already a member? Sign in', 'dgl-platform' ); ?></a>
-		</div>
-	</section>
+	<?php echo \DGL\Frontend\HomeBlocks::section( 'roundup' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside. ?>
 
 </div>

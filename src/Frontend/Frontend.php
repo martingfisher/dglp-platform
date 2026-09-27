@@ -47,6 +47,7 @@ final class Frontend {
 		add_filter( 'query_vars', [ self::class, 'add_query_var' ] );
 		add_filter( 'pre_get_document_title', [ self::class, 'directory_title' ] );
 		Seo::init();
+		HomeBlocks::init();
 		add_action( 'template_redirect', [ \DGL\Events\Ics::class, 'serve' ], 5 );
 		add_action( 'template_redirect', [ self::class, 'directory_status' ] );
 		add_filter( 'blocksy:breadcrumbs:items-array', [ self::class, 'breadcrumbs' ] );

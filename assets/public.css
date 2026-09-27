@@ -1402,7 +1402,33 @@ h2.dgl-listing__heading:only-child,
 	.dgl-search__grouphead { flex-direction: column; align-items: flex-start; gap: 4px; }
 }
 
-/* ---- The sample home page ---------------------------------------------- */
+/* ---- The home page: the sample page and the shortcode blocks ----------- */
+
+/*
+ * A shortcode block sits inside a page the theme lays out, so it takes the
+ * page's width and spacing and adds none of its own: no top rule, no
+ * section padding. The sample page at /samplehome/ stacks the same
+ * sections with a rule between them.
+ */
+.dgl-home-block {
+	font-family: var(--dgl-font);
+	line-height: var(--dgl-line);
+	color: var(--dgl-text);
+}
+
+/*
+ * The grids answer to the column they sit in, not to the window: a block
+ * dropped into a theme's 700px content column is narrow on a wide screen.
+ * Browsers without container queries fall back to the window-width rules.
+ */
+.dgl-home,
+.dgl-home-block { container-type: inline-size; }
+
+.dgl-home-block .dgl-home__section { padding: 0; border-top: 0; }
+
+.dgl-home-block .dgl-home__find { padding: var(--dgl-gap-xl, 40px); }
+
+.dgl-home-block a { text-decoration-thickness: 1px; }
 
 /*
  * Twelve blocks down one column, from the agreed wireframe. Alternate blocks
@@ -1493,7 +1519,8 @@ h2.dgl-listing__heading:only-child,
 
 .dgl-home__actions--stack { flex-direction: column; align-items: stretch; min-width: 280px; }
 
-.dgl-pub .dgl-home__button {
+.dgl-pub .dgl-home__button,
+.dgl-home-block .dgl-home__button {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
@@ -1506,14 +1533,17 @@ h2.dgl-listing__heading:only-child,
 	text-align: center;
 }
 
-.dgl-pub .dgl-home__button--quiet {
+.dgl-pub .dgl-home__button--quiet,
+.dgl-home-block .dgl-home__button--quiet {
 	border: 2px solid var(--dgl-navy);
 	color: var(--dgl-navy);
 	background: transparent;
 }
 
 .dgl-pub .dgl-home__button--quiet:hover,
-.dgl-pub .dgl-home__button--quiet:focus { background: var(--dgl-surface); color: var(--dgl-navy); }
+.dgl-pub .dgl-home__button--quiet:focus,
+.dgl-home-block .dgl-home__button--quiet:hover,
+.dgl-home-block .dgl-home__button--quiet:focus { background: var(--dgl-surface); color: var(--dgl-navy); }
 
 /* Quick links: four tiles in one line. */
 .dgl-home__quick {
@@ -1711,7 +1741,8 @@ h2.dgl-listing__heading:only-child,
 
 .dgl-home__srlabel { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
-.dgl-pub .dgl-home__input {
+.dgl-pub .dgl-home__input,
+.dgl-home-block .dgl-home__input {
 	flex: 1 1 auto;
 	box-sizing: border-box;
 	min-height: 52px;
@@ -1724,7 +1755,8 @@ h2.dgl-listing__heading:only-child,
 	font-size: 1em;
 }
 
-.dgl-pub .dgl-home__searchbutton {
+.dgl-pub .dgl-home__searchbutton,
+.dgl-home-block .dgl-home__searchbutton {
 	flex: none;
 	min-height: 52px;
 	padding: 0 26px;
@@ -1738,7 +1770,9 @@ h2.dgl-listing__heading:only-child,
 }
 
 .dgl-pub .dgl-home__searchbutton:hover,
-.dgl-pub .dgl-home__searchbutton:focus { background: var(--dgl-surface); }
+.dgl-pub .dgl-home__searchbutton:focus,
+.dgl-home-block .dgl-home__searchbutton:hover,
+.dgl-home-block .dgl-home__searchbutton:focus { background: var(--dgl-surface); }
 
 .dgl-home__find :focus-visible { outline: 3px solid var(--dgl-white); outline-offset: 2px; }
 
@@ -1829,6 +1863,30 @@ h2.dgl-listing__heading:only-child,
 }
 
 @media ( max-width: 560px ) {
+	.dgl-home__quicklist,
+	.dgl-home__benefits,
+	.dgl-home__rows--3,
+	.dgl-home__quotes { grid-template-columns: minmax(0, 1fr); }
+	.dgl-home__find { padding: var(--dgl-gap-lg) var(--dgl-gap); }
+	.dgl-home__search { flex-direction: column; }
+	.dgl-home__browse { margin-left: 0; }
+	.dgl-home__actions .dgl-home__button { flex: 1 1 100%; }
+	.dgl-home__sechead { flex-direction: column; align-items: flex-start; gap: 6px; }
+}
+
+@container ( max-width: 900px ) {
+	.dgl-home__hero { grid-template-columns: minmax(0, 1fr); }
+	.dgl-home__heropic { order: -1; aspect-ratio: 16 / 9; }
+	.dgl-home__quicklist { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+	.dgl-home__benefits,
+	.dgl-home__rows--3,
+	.dgl-home__quotes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+	.dgl-home__news { grid-template-columns: minmax(0, 1fr); }
+	.dgl-home__roundup { grid-template-columns: minmax(0, 1fr); }
+	.dgl-home__actions--stack { min-width: 0; }
+}
+
+@container ( max-width: 560px ) {
 	.dgl-home__quicklist,
 	.dgl-home__benefits,
 	.dgl-home__rows--3,

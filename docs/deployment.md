@@ -218,23 +218,36 @@ listings: one-day, three-day and two-date courses, in person, online and
 blended, free, paid and donation, two without a picture.
 `wp dgl demo training --remove` deletes them.
 
-## The sample home page
+## The home page: shortcodes for a page built in the theme
 
-`/samplehome/` is the agreed home page wireframe built with live content:
-the next six events, the newest five stories (a featured one large), the
-next three courses, the directory count and search, and the partners. It
-is served by the plugin inside the theme's header and footer, says
-`noindex` while it is a sample, and needs no page in WordPress.
+The live parts of the home page are shortcodes, so the front page is built
+in the block editor on the theme's own page (Blocksy, page 8132 on
+production) with the team's hero, copy, photos and testimonials, and the
+live sections dropped in as Shortcode blocks wherever they belong:
 
-Two things on it are set by option, no release needed:
+```
+[dgl_home_events count="6" heading="What's on" link="yes"]
+[dgl_home_news count="5" heading="Latest news"]
+[dgl_home_training count="3"]
+[dgl_home_funding]
+[dgl_home_directory areas="6"]
+[dgl_home_roundup heading="Get the weekly round-up" text="…"]
+```
 
-- `wp option update dgl_home_hero <attachment id>`: the hero photo.
-- `wp option update dgl_home_testimonials '[{"quote":"…","name":"…","role":"…"}]'`:
-  up to three testimonials. Until set, three labelled placeholders show.
+`count` is the number of items (1 to 24); `heading=""` drops the heading so
+the page can supply its own; `link="no"` drops the "All events" link;
+`areas` is how many area-of-work chips the directory block shows; `text`
+is the round-up's sentence. Featured items take the first slot. The
+stylesheet loads only on a page that uses one of these, and the grids
+adapt to the width of the column they are dropped into.
+
+`/samplehome/` is the same page as one plugin-rendered template, kept as
+the reference until the theme page is signed off. It says `noindex`. Its
+hero photo and testimonials are options (`dgl_home_hero`, an attachment
+ID; `dgl_home_testimonials`, JSON rows of quote, name, role).
 
 Funding lists from the Grants type once that is switched on; until then
-the block says so. The partner names and links can be changed with the
-`dgl_home_partners` filter.
+the block says so.
 
 ## Staging to production
 

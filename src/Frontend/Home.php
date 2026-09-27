@@ -11,8 +11,6 @@ namespace DGL\Frontend;
 
 use DGL\Meta;
 use DGL\Org\Directory;
-use DGL\Org\DirectoryQuery;
-use DGL\Org\Options;
 use DGL\PostTypes;
 use DGL\Statuses;
 use DGL\Workflow\Pins;
@@ -66,26 +64,18 @@ final class Home {
 	}
 
 	/**
-	 * Everything the template prints.
+	 * What the sample page's own blocks print: the hero, the partners, the
+	 * testimonials and the links. The live sections come from HomeBlocks.
 	 *
 	 * @return array<string, mixed>
 	 */
 	public static function view_data(): array {
-		$directory = DirectoryQuery::run( [ 'q' => '', 'page' => 1, 'filters' => [] ] );
-
 		return [
 			'hero_image'  => self::hero_image(),
 			'partners'    => self::partners(),
-			'events'      => self::upcoming( PostTypes::EVENT, self::EVENTS ),
-			'news'        => self::newest( PostTypes::NEWS, self::NEWS ),
-			'training'    => self::upcoming( PostTypes::TRAINING, self::TRAINING ),
-			'grants'      => PostTypes::is_enabled( PostTypes::GRANT ) ? self::upcoming( PostTypes::GRANT, self::GRANTS ) : [],
 			'grants_on'   => PostTypes::is_enabled( PostTypes::GRANT ),
-			'org_total'   => (int) $directory['total'],
-			'areas'       => array_slice( Options::specialism(), 0, self::TOPICS, true ),
 			'quotes'      => self::testimonials(),
 			'join_url'    => \DGL\Dashboard\Router::url( 'join' ),
-			'signin_url'  => \DGL\Dashboard\Router::url(),
 			'dir_url'     => home_url( '/' . Directory::BASE . '/' ),
 			'urls'        => [
 				PostTypes::EVENT    => Frontend::archive_url( PostTypes::EVENT ),
