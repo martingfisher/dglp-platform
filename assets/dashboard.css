@@ -990,7 +990,6 @@ body.dgl-body {
 .dgl-dash .dgl-field--file {
 	display: flex;
 	align-items: center;
-	gap: 12px;
 	height: var(--dgl-field-height);
 	min-height: var(--dgl-field-height);
 	padding: 0 12px 0 5px;
@@ -1010,7 +1009,7 @@ body.dgl-body {
 	box-sizing: border-box;
 	flex: none;
 	height: calc(var(--dgl-field-height) - 12px);
-	margin: 0;
+	margin: 0 12px 0 0; /* Chromium ignores the row's gap for the browser's own text, so the button carries the space. */
 	padding: 0 12px;
 	border: var(--dgl-field-border) solid var(--dgl-field-outline);
 	border-radius: var(--dgl-radius-button);
