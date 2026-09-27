@@ -956,3 +956,11 @@ clean. They are the only DGLP content on staging.
   (every 15 minutes): every WordPress scheduled job had been overdue since
   23 September. Mail redirect to Martin kept until launch. Unit 2019,
   integration 1174.
+- **0.38.1 deployed** (27 September, production): the round-up is laid out
+  in sections, Events then News then Training, each with a heading, and
+  every event or course carries the calendar leaf from the site (month
+  over day) beside its title, with the weekday, time and place under it;
+  a story shows the day it was posted. Soonest first within a section.
+  The heading reads "Your weekly round-up" rather than "New from
+  DGL.org.uk". The plain-text alternative carries the same sections and
+  dates. Martin's feedback on the first two digests he received.

@@ -72,11 +72,11 @@ final class Copy {
 			audience: self::AUDIENCE,
 			subject: $subject,
 			preheader: self::preheader( $items ),
-			heading: sprintf(
-				/* translators: %s: site name. */
-				__( 'New from %s', 'dgl-platform' ),
-				$site
-			),
+			heading: match ( $frequency ) {
+				Frequency::DAILY   => __( 'Your daily round-up', 'dgl-platform' ),
+				Frequency::MONTHLY => __( 'Your monthly round-up', 'dgl-platform' ),
+				default            => __( 'Your weekly round-up', 'dgl-platform' ),
+			},
 			paragraphs: [
 				match ( $frequency ) {
 					Frequency::DAILY   => __( 'Here is what member organisations posted yesterday.', 'dgl-platform' ),

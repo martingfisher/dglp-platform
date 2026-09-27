@@ -222,6 +222,7 @@ final class Runner {
 	 */
 	public static function rows( array $ids ): array {
 		$definitions = PostTypes::definitions();
+		$order       = array_flip( [ PostTypes::EVENT, PostTypes::NEWS, PostTypes::TRAINING, PostTypes::VOLUNTEERING, PostTypes::GRANT ] );
 		$rows        = [];
 
 		foreach ( $ids as $id ) {
@@ -231,26 +232,57 @@ final class Runner {
 				continue;
 			}
 
+			$type   = (string) $post->post_type;
 			$org_id = Org::for_item( (int) $post->ID );
+			$org    = $org_id > 0 ? (string) get_the_title( $org_id ) : '';
+			$date   = in_array( $type, [ PostTypes::EVENT, PostTypes::TRAINING ], true ) ? \DGL\Frontend\Cards::date_parts( $post ) : null;
 			$parts  = [];
 
-			$type_label = (string) ( $definitions[ $post->post_type ]['singular'] ?? '' );
+			/*
+			 * The line under the title, like the row on the site: for an
+			 * event the weekday, time and place; for a course the weekday and
+			 * where it runs; for a story the organisation and the day it
+			 * was posted. The date itself is on the leaf beside it.
+			 */
+			if ( null !== $date ) {
+				$parts[] = $date['weekday'];
 
-			if ( '' !== $type_label ) {
-				$parts[] = $type_label;
+				if ( '' !== $date['time'] ) {
+					$parts[] = $date['time'];
+				}
+
+				$where = PostTypes::EVENT === $type
+					? \DGL\Frontend\Frontend::where( $post )
+					: (string) \DGL\Frontend\Frontend::value( $post, 'location' );
+
+				if ( 'online' === (string) \DGL\Frontend\Frontend::value( $post, 'delivery' ) ) {
+					$where = __( 'Online', 'dgl-platform' );
+				}
+
+				if ( '' !== $where ) {
+					$parts[] = $where;
+				}
+			} elseif ( PostTypes::NEWS === $type ) {
+				$parts[] = \DGL\Frontend\Cards::posted( $post );
 			}
 
-			if ( $org_id > 0 ) {
-				$parts[] = (string) get_the_title( $org_id );
+			if ( '' !== $org ) {
+				$parts[] = $org;
 			}
 
 			$rows[] = [
 				'title'   => (string) get_the_title( $post ),
-				'meta'    => implode( ' - ', $parts ),
+				'meta'    => implode( ' · ', $parts ),
 				'url'     => (string) ( get_permalink( $post ) ?: '' ),
 				'summary' => self::summary( (int) $post->ID ),
+				'section' => (string) ( $definitions[ $type ]['plural'] ?? '' ),
+				'date'    => null === $date ? null : [ 'month' => $date['month'], 'day' => $date['day'], 'iso' => $date['iso'] ],
+				'sort'    => ( $order[ $type ] ?? 9 ) . '|' . ( null === $date ? '' : $date['iso'] ),
 			];
 		}
+
+		// Events first, soonest first; then news; then training, soonest first.
+		usort( $rows, static fn( array $a, array $b ): int => strcmp( $a['sort'], $b['sort'] ) );
 
 		return $rows;
 	}

@@ -1869,6 +1869,7 @@ $approved_at = $now->modify( '+2 days' )->format( 'Y-m-d H:i:s' );
 $fresh = $make_item( $org_a, $alice, Statuses::LIVE );
 wp_update_post( [ 'ID' => $fresh, 'post_title' => 'Coffee morning at the library' ] );
 update_post_meta( $fresh, Meta::ITEM_APPROVED_AT, $approved_at );
+update_post_meta( $fresh, 'dgl_start_datetime', $now->modify( '+10 days' )->format( 'Y-m-d' ) . ' 10:30:00' );
 update_post_meta( $fresh, 'summary', 'Free coffee and a chat, every Tuesday.' );
 \DGL\Index\Sync::sync( $fresh );
 
@@ -1904,6 +1905,10 @@ $ok( $digest->has_items(), 'the message carries its list' );
 
 $titles = array_column( $digest->items, 'title' );
 $ok( in_array( 'Coffee morning at the library', $titles, true ), 'the item is in it' );
+$ok( 'Events' === ( $digest->items[0]['section'] ?? '' ) && is_array( $digest->items[0]['date'] ) && '' !== $digest->items[0]['date']['month'] && '' !== $digest->items[0]['date']['day'], 'an event row carries its section and a calendar leaf (' . ( $digest->items[0]['date']['month'] ?? '' ) . ' ' . ( $digest->items[0]['date']['day'] ?? '' ) . ')' );
+$ok( str_contains( $digest->to_text(), "EVENTS\n------" ) && str_contains( $digest->to_text(), $digest->items[0]['date']['day'] . ' ' . $digest->items[0]['date']['month'] . ': Coffee morning' ), 'and the plain text has the section heading and the date before the title' );
+$ok( str_contains( \DGL\Email\Template::render( $digest ), '>Events<' ) && str_contains( \DGL\Email\Template::render( $digest ), '>' . $digest->items[0]['date']['day'] . '<' ), 'the HTML has the section heading and the leaf' );
+$ok( 'Your weekly round-up' === $digest->heading, 'the heading says what it is, not who it is from' );
 $ok( ! in_array( 'Our own thing', $titles, true ), 'and her own organisation is not' );
 
 $text = $digest->to_text();

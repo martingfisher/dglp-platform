@@ -188,22 +188,52 @@ final class Template {
 			return '';
 		}
 
-		$out = '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 24px;">';
+		$out     = '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 24px;">';
+		$section = null;
+		$first   = true;
 
-		foreach ( $message->items as $index => $item ) {
+		foreach ( $message->items as $item ) {
 			$title   = (string) ( $item['title'] ?? '' );
 			$meta    = (string) ( $item['meta'] ?? '' );
 			$url     = (string) ( $item['url'] ?? '' );
 			$summary = (string) ( $item['summary'] ?? '' );
+			$date    = is_array( $item['date'] ?? null ) ? $item['date'] : null;
+			$name    = (string) ( $item['section'] ?? '' );
 
 			if ( '' === $title ) {
 				continue;
 			}
 
-			// A rule between rows, never above the first one.
-			$border = $index > 0 ? 'border-top:1px solid ' . $c['rule'] . ';' : '';
+			/*
+			 * A heading each time the section changes: Events, News,
+			 * Training. Somebody skimming for one kind of thing finds it
+			 * without reading every row.
+			 */
+			if ( '' !== $name && $name !== $section ) {
+				$section = $name;
+				$out    .= '<tr><td style="padding:' . ( $first ? '4px' : '28px' ) . ' 0 6px;font-family:' . self::FONT . ';font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:' . $c['muted'] . ';border-bottom:2px solid ' . $c['primary'] . ';">'
+					. esc_html( $name ) . '</td></tr>';
+				$first   = false;
+			}
 
-			$out .= '<tr><td style="padding:16px 0;' . $border . '">';
+			$out .= '<tr><td style="padding:14px 0;border-bottom:1px solid ' . $c['rule'] . ';">';
+			$out .= '<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr>';
+
+			/*
+			 * The calendar leaf, as on the site: month over day in a small
+			 * bordered cell. Tables and inline styles only, because this is
+			 * email. It is repeated in the text under the title for anyone
+			 * whose client drops the styling.
+			 */
+			if ( null !== $date ) {
+				$out .= '<td width="58" valign="top" style="padding:0 14px 0 0;">'
+					. '<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="56" style="border:1px solid ' . $c['rule'] . ';border-radius:10px;background:' . $c['white'] . ';">'
+					. '<tr><td align="center" style="padding:7px 2px 2px;font-family:' . self::FONT . ';font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;line-height:1;color:' . $c['link'] . ';">' . esc_html( (string) $date['month'] ) . '</td></tr>'
+					. '<tr><td align="center" style="padding:0 2px 7px;font-family:' . self::FONT . ';font-size:22px;font-weight:700;line-height:1;color:' . $c['ink'] . ';">' . esc_html( (string) $date['day'] ) . '</td></tr>'
+					. '</table></td>';
+			}
+
+			$out .= '<td valign="top">';
 
 			$heading = '<span style="font-family:' . self::FONT . ';font-size:17px;font-weight:700;line-height:1.35;color:' . $c['primary'] . ';">'
 				. esc_html( $title ) . '</span>';
@@ -222,7 +252,7 @@ final class Template {
 					. esc_html( $summary ) . '</div>';
 			}
 
-			$out .= '</td></tr>';
+			$out .= '</td></tr></table></td></tr>';
 		}
 
 		return $out . '</table>';

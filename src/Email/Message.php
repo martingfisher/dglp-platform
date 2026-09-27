@@ -38,8 +38,9 @@ final readonly class Message {
 	 * @param string   $cta_label  Button text. Empty means no button.
 	 * @param string   $cta_url    Where the button goes.
 	 * @param string[] $footnotes  Small print under the body.
-	 * @param array<int, array{title:string, meta:string, url:string, summary:string}> $items
-	 *                             A list, for a digest. Empty for everything else.
+	 * @param array<int, array<string, mixed>> $items
+	 *                             A list, for a digest: title, meta, url, summary, and optionally
+	 *                             section (a heading when it changes) and date (month, day, iso). Empty for everything else.
 	 * @param string[] $to         Recipient addresses. Filled in by the mailer.
 	 * @param string[] $headers    Extra mail headers, "Name: value". A digest's List-Unsubscribe pair.
 	 */
@@ -141,8 +142,19 @@ final readonly class Message {
 			$lines[] = '';
 		}
 
+		$section = null;
+
 		foreach ( $this->items as $item ) {
-			$lines[] = '* ' . (string) ( $item['title'] ?? '' );
+			$name = (string) ( $item['section'] ?? '' );
+
+			if ( '' !== $name && $name !== $section ) {
+				$section = $name;
+				$lines[] = strtoupper( $name );
+				$lines[] = str_repeat( '-', min( 60, strlen( $name ) ) );
+			}
+
+			$date    = is_array( $item['date'] ?? null ) ? $item['date'] : null;
+			$lines[] = '* ' . ( null !== $date ? $date['day'] . ' ' . $date['month'] . ': ' : '' ) . (string) ( $item['title'] ?? '' );
 
 			if ( '' !== (string) ( $item['meta'] ?? '' ) ) {
 				$lines[] = '  ' . (string) $item['meta'];
