@@ -86,22 +86,50 @@ final class Install {
 		}
 	}
 
+	/** The digest job's own interval. */
+	public const DIGEST_SCHEDULE = 'dgl_five_minutes';
+
 	/**
-	 * Check for owed digests every hour.
+	 * Register the five-minute interval the digest job runs on.
 	 *
-	 * Hourly for all three cadences, not daily. Due-ness is worked out from
-	 * each subscriber's own last send rather than from a calendar rule, so an
-	 * hourly check means a run the server missed catches up within the hour
-	 * instead of waiting a whole period. A check that finds nothing owed reads
-	 * one index and stops.
+	 * @param array<string, array{interval:int, display:string}> $schedules
+	 * @return array<string, array{interval:int, display:string}>
+	 */
+	public static function schedules( array $schedules ): array {
+		$schedules[ self::DIGEST_SCHEDULE ] = [
+			'interval' => 5 * MINUTE_IN_SECONDS,
+			'display'  => __( 'Every five minutes (DGLP digests)', 'dgl-platform' ),
+		];
+
+		return $schedules;
+	}
+
+	/**
+	 * Check for owed digests every five minutes.
+	 *
+	 * Every cadence is due at a fixed slot, so on a Tuesday morning every
+	 * weekly subscriber comes due at once. One run sends a batch; five
+	 * minutes later the next run sends the next. At the runner's batch of
+	 * 400 that is 4,800 an hour, so five thousand are away within the hour
+	 * rather than by the next day. A run that finds nothing owed reads one
+	 * index per cadence and stops.
+	 *
+	 * An existing hourly schedule from an earlier version is replaced.
 	 *
 	 * This needs a real system cron behind it. On WordPress's pseudo-cron a
 	 * quiet site will not fire it, and a digest nobody receives looks exactly
 	 * like a digest nobody wanted.
 	 */
 	public static function schedule_digests(): void {
-		if ( ! wp_next_scheduled( Plugin::DIGEST_HOOK ) ) {
-			wp_schedule_event( time() + ( 15 * MINUTE_IN_SECONDS ), 'hourly', Plugin::DIGEST_HOOK );
+		$next = wp_next_scheduled( Plugin::DIGEST_HOOK );
+
+		if ( $next && self::DIGEST_SCHEDULE !== wp_get_schedule( Plugin::DIGEST_HOOK ) ) {
+			wp_clear_scheduled_hook( Plugin::DIGEST_HOOK );
+			$next = false;
+		}
+
+		if ( ! $next ) {
+			wp_schedule_event( time() + ( 2 * MINUTE_IN_SECONDS ), self::DIGEST_SCHEDULE, Plugin::DIGEST_HOOK );
 		}
 	}
 

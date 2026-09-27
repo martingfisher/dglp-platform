@@ -964,3 +964,10 @@ clean. They are the only DGLP content on staging.
   The heading reads "Your weekly round-up" rather than "New from
   DGL.org.uk". The plain-text alternative carries the same sections and
   dates. Martin's feedback on the first two digests he received.
+- **0.38.2 deployed** (27 September, production): the digest job runs every
+  five minutes on its own interval instead of hourly, sends 400 per cadence
+  per run, and holds a lock so two runs can never send the same digest
+  twice; an hourly schedule left by an earlier version is replaced on
+  upgrade. 5,000 subscribers due at 08:00 are away by about 09:05. Every
+  digest also carries `Precedence: bulk`. For Martin's question about 5,000
+  sends a week.

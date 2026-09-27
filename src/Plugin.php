@@ -127,6 +127,7 @@ final class Plugin {
 		add_action( self::EXPIRY_HOOK, [ Transition::class, 'run_expiry_sweep' ], 10, 0 );
 		add_action( self::EXPIRY_HOOK, static fn() => \DGL\Dashboard\Wizard::purge_empty_drafts() );
 		add_action( self::DIGEST_HOOK, [ self::class, 'run_digests' ] );
+		add_filter( 'cron_schedules', [ Install::class, 'schedules' ] ); // phpcs:ignore WordPress.WP.CronInterval.CronSchedulesInterval -- five minutes, under real server cron.
 	}
 
 	/**
@@ -160,8 +161,6 @@ final class Plugin {
 	 * indexed read per cadence.
 	 */
 	public static function run_digests(): void {
-		foreach ( Frequency::all() as $frequency ) {
-			DigestRunner::run( $frequency );
-		}
+		DigestRunner::run_all();
 	}
 }

@@ -84,6 +84,14 @@ until 27 September 2026, and every scheduled job sat overdue. Check with
 `wp dgl digest status`, which prints the next scheduled run or NOT SCHEDULED,
 and `wp cron event list`, where nothing should read "now" for long.
 
+**2b. Throughput.** The digest job runs every five minutes (its own
+`dgl_five_minutes` interval) and sends up to 400 per cadence per run under a
+lock, so 5,000 subscribers due at 08:00 are away by about 09:05. Check
+`wp dgl digest status`: "then every dgl_five_minutes". Staying out of spam:
+set a From address on the domain SMTP2GO has verified (`wp option update
+dgl_mail_from hello@...`), keep the SMTP2GO plan above the month's volume,
+and never remove the List-Unsubscribe headers or the plain-text part.
+
 **2a. The weekly round-up.** Every approved member is subscribed on approval
 (`Store::subscribe_default()`), and `wp dgl digest subscribe-approved`
 backfills members approved before 0.38.0. Slots are fixed in the site's

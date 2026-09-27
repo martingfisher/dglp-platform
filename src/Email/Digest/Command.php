@@ -72,7 +72,8 @@ final class Command {
 		}
 
 		$next = wp_next_scheduled( \DGL\Plugin::DIGEST_HOOK );
-		WP_CLI::log( 'Next scheduled run: ' . ( $next ? gmdate( 'Y-m-d H:i:s', (int) $next ) . ' UTC' : 'NOT SCHEDULED' ) );
+		WP_CLI::log( 'Next scheduled run: ' . ( $next ? gmdate( 'Y-m-d H:i:s', (int) $next ) . ' UTC, then every ' . (string) ( wp_get_schedule( \DGL\Plugin::DIGEST_HOOK ) ?: '?' ) : 'NOT SCHEDULED' ) );
+		WP_CLI::log( 'Batch per run: ' . Runner::BATCH . ' per cadence' . ( false !== get_transient( Runner::LOCK ) ? ' (a run is in progress now)' : '' ) );
 		WP_CLI::log( 'Next weekly slot: ' . Frequency::slot_after( Frequency::WEEKLY, $now, wp_timezone() )->format( 'D j M Y H:i T' ) );
 		WP_CLI::log( 'Approved members without a subscription row: ' . count( Store::approved_without_row() ) );
 		WP_CLI::log( '' );
@@ -119,19 +120,29 @@ final class Command {
 			WP_CLI::error( 'Sending is off, so a real run would do nothing. Turn it on, or use --dry-run.' );
 		}
 
+		if ( ! $dry && ! Runner::lock() ) {
+			WP_CLI::error( 'A digest run is in progress. Try again in a few minutes.' );
+		}
+
 		$totals = [];
 
-		foreach ( $cadences as $frequency ) {
-			$stats = Runner::run( $frequency, null, $dry );
+		try {
+			foreach ( $cadences as $frequency ) {
+				$stats = Runner::run( $frequency, null, $dry );
 
-			$totals[] = [
-				'cadence'    => $frequency,
-				'considered' => $stats['considered'],
-				'sent'       => $stats['sent'],
-				'nothing to say' => $stats['skipped_empty'],
-				'failed'     => $stats['failed'],
-				'items'      => $stats['items'],
-			];
+				$totals[] = [
+					'cadence'    => $frequency,
+					'considered' => $stats['considered'],
+					'sent'       => $stats['sent'],
+					'nothing to say' => $stats['skipped_empty'],
+					'failed'     => $stats['failed'],
+					'items'      => $stats['items'],
+				];
+			}
+		} finally {
+			if ( ! $dry ) {
+				Runner::unlock();
+			}
 		}
 
 		WP_CLI\Utils\format_items( 'table', $totals, [ 'cadence', 'considered', 'sent', 'nothing to say', 'failed', 'items' ] );

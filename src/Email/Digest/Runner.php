@@ -37,7 +37,54 @@ defined( 'ABSPATH' ) || exit;
 final class Runner {
 
 	/** How many subscribers one run will process for a given cadence. */
-	public const BATCH = 200;
+	public const BATCH = 400;
+
+	/** The lock that stops two runs overlapping. */
+	public const LOCK = 'dgl_digest_run_lock';
+
+	/** How long a run may hold the lock, well beyond a batch's worst case. */
+	public const LOCK_SECONDS = 20 * MINUTE_IN_SECONDS;
+
+	/**
+	 * Every cadence, under one lock.
+	 *
+	 * Runs are five minutes apart and a batch of 400 can take longer than
+	 * that on a slow relay. Two runs picking the same 400 subscribers would
+	 * send them the same digest twice, so a run that finds the lock held
+	 * does nothing and the next one carries on. Returns null when locked.
+	 *
+	 * @return array<string, array{considered:int, sent:int, skipped_empty:int, failed:int, items:int}>|null
+	 */
+	public static function run_all( ?DateTimeImmutable $now = null, bool $dry_run = false ): ?array {
+		if ( ! self::lock() ) {
+			return null;
+		}
+
+		$stats = [];
+
+		try {
+			foreach ( Frequency::all() as $frequency ) {
+				$stats[ $frequency ] = self::run( $frequency, $now, $dry_run );
+			}
+		} finally {
+			self::unlock();
+		}
+
+		return $stats;
+	}
+
+	/** Take the lock. False when another run holds it. */
+	public static function lock(): bool {
+		if ( false !== get_transient( self::LOCK ) ) {
+			return false;
+		}
+
+		return set_transient( self::LOCK, (string) time(), self::LOCK_SECONDS );
+	}
+
+	public static function unlock(): void {
+		delete_transient( self::LOCK );
+	}
 
 	/** How many items one digest will carry. */
 	public const MAX_ITEMS = 25;
@@ -138,6 +185,8 @@ final class Runner {
 			[
 				'List-Unsubscribe: <' . $unsubscribe . '>',
 				'List-Unsubscribe-Post: List-Unsubscribe=One-Click',
+				// Bulk, so out-of-office replies and auto-responders leave it alone.
+				'Precedence: bulk',
 			]
 		);
 

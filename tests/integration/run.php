@@ -1988,6 +1988,24 @@ $captured = [];
 $next_run = DigestRunner::run( Frequency::WEEKLY, $slot3->modify( '+1 hour' ) );
 $ok( 1 === $next_run['sent'] && str_contains( implode( ' ', array_column( $captured[0]['message']->items ?? [], 'title' ) ), 'Coffee morning' ), 'the week after carries what was posted that week' );
 
+$group( 'Digests: runs never overlap, and the job runs every five minutes' );
+
+DigestRunner::unlock();
+$ok( DigestRunner::lock(), 'a run takes the lock' );
+$ok( ! DigestRunner::lock(), 'and a second run cannot' );
+$ok( null === DigestRunner::run_all( new DateTimeImmutable( '2027-03-02 09:00:00', $utc ) ), 'so run_all does nothing while the lock is held' );
+DigestRunner::unlock();
+$ok( DigestRunner::lock() && ( DigestRunner::unlock() || true ) && DigestRunner::lock(), 'once released it can be taken again' );
+DigestRunner::unlock();
+$all = DigestRunner::run_all( new DateTimeImmutable( '2027-03-02 09:00:00', $utc ), true );
+$ok( is_array( $all ) && [] === array_diff( Frequency::all(), array_keys( $all ) ) && false === get_transient( DigestRunner::LOCK ), 'a run covers every cadence and releases the lock when done' );
+$ok( isset( wp_get_schedules()[ \DGL\Install::DIGEST_SCHEDULE ] ) && 300 === wp_get_schedules()[ \DGL\Install::DIGEST_SCHEDULE ]['interval'], 'the five-minute interval is registered' );
+wp_clear_scheduled_hook( \DGL\Plugin::DIGEST_HOOK );
+wp_schedule_event( time() + 60, 'hourly', \DGL\Plugin::DIGEST_HOOK );
+\DGL\Install::maybe_schedule();
+$ok( \DGL\Install::DIGEST_SCHEDULE === wp_get_schedule( \DGL\Plugin::DIGEST_HOOK ), 'an hourly schedule from an earlier version is replaced by the five-minute one' );
+$ok( 400 === DigestRunner::BATCH, 'four hundred a run: five thousand within the hour' );
+
 $group( 'Digests: approval subscribes, an unsubscribe sticks, backfill fills the gaps' );
 
 $wpdb->query( 'DELETE FROM ' . DigestStore::name() . ' WHERE user_id IN (' . (int) $alice . ',' . (int) $aaron . ',' . (int) $bella . ')' );
