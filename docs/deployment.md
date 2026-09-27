@@ -218,6 +218,24 @@ listings: one-day, three-day and two-date courses, in person, online and
 blended, free, paid and donation, two without a picture.
 `wp dgl demo training --remove` deletes them.
 
+## The sample home page
+
+`/samplehome/` is the agreed home page wireframe built with live content:
+the next six events, the newest five stories (a featured one large), the
+next three courses, the directory count and search, and the partners. It
+is served by the plugin inside the theme's header and footer, says
+`noindex` while it is a sample, and needs no page in WordPress.
+
+Two things on it are set by option, no release needed:
+
+- `wp option update dgl_home_hero <attachment id>`: the hero photo.
+- `wp option update dgl_home_testimonials '[{"quote":"…","name":"…","role":"…"}]'`:
+  up to three testimonials. Until set, three labelled placeholders show.
+
+Funding lists from the Grants type once that is switched on; until then
+the block says so. The partner names and links can be changed with the
+`dgl_home_partners` filter.
+
 ## Staging to production
 
 Do **not** use Wordify's `push_staging` to move the plugin. That pushes the whole

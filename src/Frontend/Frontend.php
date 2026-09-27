@@ -64,7 +64,7 @@ final class Frontend {
 	 * work without anybody remembering to change this.
 	 */
 	public static function is_ours(): bool {
-		return self::search_request() || self::single_type() !== null || self::archive_type() !== null || self::directory_request() !== null || self::calendar_request();
+		return self::search_request() || self::single_type() !== null || self::archive_type() !== null || self::directory_request() !== null || self::calendar_request() || Home::is_request();
 	}
 
 	/**
@@ -82,6 +82,7 @@ final class Frontend {
 		// Before the post type's own rules, or 'calendar' is read as an event slug.
 		add_rewrite_rule( '^' . PostTypes::definitions()[ PostTypes::EVENT ]['slug'] . '/calendar/?$', 'index.php?' . Calendar::QUERY_VAR . '=1', 'top' );
 		\DGL\Events\Ics::add_rules();
+		Home::add_rules();
 		add_rewrite_rule( '^' . Directory::BASE . '/?$', 'index.php?' . Directory::QUERY_VAR . '=1', 'top' );
 		add_rewrite_rule( '^' . Directory::BASE . '/([^/]+)/?$', 'index.php?' . Directory::QUERY_VAR . '=$matches[1]', 'top' );
 	}
@@ -94,6 +95,7 @@ final class Frontend {
 		$vars[] = Directory::QUERY_VAR;
 		$vars[] = Calendar::QUERY_VAR;
 		$vars[] = \DGL\Events\Ics::QUERY_VAR;
+		$vars[] = Home::QUERY_VAR;
 
 		return $vars;
 	}
@@ -132,7 +134,7 @@ final class Frontend {
 
 		global $wp_query;
 
-		if ( self::calendar_request() ) {
+		if ( self::calendar_request() || Home::is_request() ) {
 			$wp_query->is_404 = false;
 			// Not the blog either: the theme's breadcrumb read "News" off is_home.
 			$wp_query->is_home = false;
@@ -186,6 +188,10 @@ final class Frontend {
 			);
 		}
 
+		if ( Home::is_request() ) {
+			return array_merge( $home, [ [ 'name' => __( 'Home page sample', 'dgl-platform' ), 'url' => '' ] ] );
+		}
+
 		if ( null === $request ) {
 			return $items;
 		}
@@ -201,6 +207,10 @@ final class Frontend {
 	}
 
 	public static function directory_title( string $title ): string {
+		if ( Home::is_request() ) {
+			return __( 'Home page sample', 'dgl-platform' ) . ' | ' . get_bloginfo( 'name' );
+		}
+
 		if ( self::calendar_request() ) {
 			return __( 'Events calendar', 'dgl-platform' ) . ' | ' . get_bloginfo( 'name' );
 		}

@@ -27,6 +27,8 @@ if ( Frontend::search_request() ) {
 	View::output( 'public/single', [ 'post' => get_post(), 'type' => $dgl_single ] );
 } elseif ( null !== $dgl_archive ) {
 	View::output( 'public/archive', [ 'type' => $dgl_archive ] );
+} elseif ( \DGL\Frontend\Home::is_request() ) {
+	View::output( 'public/home', \DGL\Frontend\Home::view_data() );
 } elseif ( Frontend::calendar_request() ) {
 	View::output( 'public/calendar', \DGL\Events\Calendar::view_data( wp_unslash( $_GET ) ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 } elseif ( '1' === Frontend::directory_request() ) {

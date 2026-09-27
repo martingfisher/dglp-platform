@@ -979,3 +979,16 @@ clean. They are the only DGLP content on staging.
   input is now a flex row, and its rule carries `.dgl-dash` so it is not
   outranked by the shared field rule, which had left the button at the top
   of a box grown to the theme's line-height.
+- **0.39.0 deployed** (27 September, production): a working sample of the
+  agreed home page at `/samplehome/`, built from the wireframe with live
+  content: hero, quick links, what the partnership does with the three
+  partners, the next six events and three courses with calendar leaves,
+  the newest five stories with the featured one large, the directory
+  count with a search box into the directory and area-of-work chips,
+  three testimonial placeholders, and the weekly round-up call to action.
+  Funding is a labelled placeholder until the Grants type is switched on.
+  The hero photo and the testimonials are options (`dgl_home_hero`,
+  `dgl_home_testimonials`), so the team can fill them without a release.
+  The page is `noindex` while it is a sample. `src/Frontend/Home.php`,
+  `templates/public/home.php`, home styles in `assets/public.css`,
+  integration tests, docs.

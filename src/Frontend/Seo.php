@@ -252,6 +252,10 @@ final class Seo {
 			return null;
 		}
 
+		if ( Home::is_request() ) {
+			return self::for_home();
+		}
+
 		if ( Frontend::calendar_request() ) {
 			return self::for_calendar();
 		}
@@ -493,6 +497,39 @@ final class Seo {
 						[ $name, $url ],
 					]
 				),
+			],
+		];
+	}
+
+	/**
+	 * The sample home page. Not for search engines while it is a sample at
+	 * /samplehome/: it says noindex until it becomes the front page.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private static function for_home(): array {
+		$name = (string) get_bloginfo( 'name' );
+		$url  = Home::url();
+		$desc = __( 'News, events, training and funding from voluntary and community organisations across Leeds, posted by the organisations themselves and checked by the Doing Good Leeds Partnership team.', 'dgl-platform' );
+
+		return [
+			'kind'        => 'home',
+			'title'       => self::plain( wp_get_document_title() ),
+			'description' => $desc,
+			'url'         => $url,
+			'og_type'     => 'website',
+			'robots'      => 'noindex,follow',
+			'image'       => self::card( 'home', $name, __( 'The people doing good in Leeds, in one place.', 'dgl-platform' ), '' ),
+			'published'   => '',
+			'modified'    => '',
+			'schema'      => [
+				'main'        => [
+					'@type'       => 'WebSite',
+					'name'        => $name,
+					'url'         => home_url( '/' ),
+					'description' => $desc,
+				],
+				'breadcrumbs' => self::breadcrumbs( [ [ __( 'Home page sample', 'dgl-platform' ), $url ] ] ),
 			],
 		];
 	}

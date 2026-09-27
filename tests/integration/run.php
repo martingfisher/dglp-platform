@@ -4424,6 +4424,89 @@ $ok( str_starts_with( end( \DGL\Frontend\Cards::meta( get_post( $demo_tr[0] ) ) 
 $ok( 0 === count( \DGL\Demo\Command::remove() ), 'removing demo events leaves training alone' );
 $ok( 7 === count( \DGL\Demo\Command::remove( PostTypes::TRAINING ) ) && null === get_post( $demo_tr[0] ), 'removing demo training takes the seven' );
 
+/* ------------------------------------------------- the sample home page */
+
+$group( 'Sample home page: /samplehome/ reads live content, soonest first, featured first' );
+
+$rules = get_option( 'rewrite_rules' );
+$ok( is_array( $rules ) && isset( $rules['^samplehome/?$'] ) && str_contains( (string) $rules['^samplehome/?$'], \DGL\Frontend\Home::QUERY_VAR . '=1' ), 'the /samplehome/ rewrite rule is registered' );
+$ok( str_ends_with( \DGL\Frontend\Home::url(), '/samplehome/' ), 'and the page knows its own address (' . \DGL\Frontend\Home::url() . ')' );
+
+$home_org   = $make_org( 'Home Org' );
+$home_owner = $make_member( 'dgl_home_owner', $home_org, 'owner' );
+update_post_meta( $home_org, Meta::ORG_IN_DIRECTORY, '1' );
+
+$home_when = static fn( string $offset ): string => ( new DateTimeImmutable( 'today ' . $offset, wp_timezone() ) )->format( 'Y-m-d 10:00:00' );
+$home_evt  = [];
+foreach ( [ 'soon' => '+3 days', 'next' => '+1 day', 'far' => '+10 days', 'later' => '+20 days' ] as $key => $offset ) {
+	$id = wp_insert_post( [ 'post_type' => PostTypes::EVENT, 'post_status' => Statuses::LIVE, 'post_title' => 'Home event ' . $key, 'post_author' => $home_owner ] );
+	update_post_meta( $id, DGL_FIXTURE_FLAG, '1' );
+	update_post_meta( $id, Meta::ITEM_ORG, $home_org );
+	update_post_meta( $id, 'dgl_start_datetime', $home_when( $offset ) );
+	update_post_meta( $id, Meta::ITEM_NEXT_AT, $home_when( $offset ) );
+	$home_evt[ $key ] = (int) $id;
+}
+$home_hidden = wp_insert_post( [ 'post_type' => PostTypes::EVENT, 'post_status' => Statuses::PENDING, 'post_title' => 'Home event pending', 'post_author' => $home_owner ] );
+update_post_meta( $home_hidden, DGL_FIXTURE_FLAG, '1' );
+update_post_meta( $home_hidden, Meta::ITEM_ORG, $home_org );
+update_post_meta( $home_hidden, 'dgl_start_datetime', $home_when( '+2 days' ) );
+update_post_meta( $home_hidden, Meta::ITEM_NEXT_AT, $home_when( '+2 days' ) );
+
+$home_list = array_map( static fn( WP_Post $p ): int => (int) $p->ID, \DGL\Frontend\Home::upcoming( PostTypes::EVENT, 3 ) );
+$ok( 3 === count( $home_list ) && ! in_array( $home_hidden, $home_list, true ), 'upcoming events are live ones only, capped at the number asked for' );
+$home_ours = array_values( array_filter( $home_list, static fn( int $id ): bool => in_array( $id, $home_evt, true ) ) );
+$ok( $home_ours === array_values( array_filter( [ $home_evt['next'], $home_evt['soon'], $home_evt['far'] ], static fn( int $id ): bool => in_array( $id, $home_list, true ) ) ), 'and in date order, soonest first' );
+
+$ok( true === \DGL\Workflow\Pins::pin( $home_evt['later'], 7, $mod ), 'the moderator features the furthest-off event' );
+$home_list = array_map( static fn( WP_Post $p ): int => (int) $p->ID, \DGL\Frontend\Home::upcoming( PostTypes::EVENT, 6 ) );
+$ok( $home_evt['later'] === ( $home_list[0] ?? 0 ), 'a featured event takes the first slot whatever its date' );
+$ok( \DGL\Frontend\Home::is_featured( get_post( $home_evt['later'] ) ) && ! \DGL\Frontend\Home::is_featured( get_post( $home_evt['soon'] ) ), 'and the template can tell which one it is' );
+
+$home_news = [];
+foreach ( [ 'old' => '-5 days', 'new' => '-1 day', 'pinned' => '-9 days' ] as $key => $offset ) {
+	$stamp = ( new DateTimeImmutable( 'now ' . $offset, wp_timezone() ) )->format( 'Y-m-d H:i:s' );
+	$id    = wp_insert_post( [ 'post_type' => PostTypes::NEWS, 'post_status' => Statuses::LIVE, 'post_title' => 'Home story ' . $key, 'post_content' => '<p>A story for the home page.</p>', 'post_author' => $home_owner, 'post_date' => $stamp, 'post_date_gmt' => get_gmt_from_date( $stamp ) ] );
+	update_post_meta( $id, DGL_FIXTURE_FLAG, '1' );
+	update_post_meta( $id, Meta::ITEM_ORG, $home_org );
+	$home_news[ $key ] = (int) $id;
+}
+\DGL\Workflow\Pins::pin( $home_news['pinned'], 7, $mod );
+$home_stories = array_map( static fn( WP_Post $p ): int => (int) $p->ID, \DGL\Frontend\Home::newest( PostTypes::NEWS, 5 ) );
+$ok( $home_news['pinned'] === ( $home_stories[0] ?? 0 ), 'the featured story leads the news' );
+// Other groups have left stories dated now, so read a longer list for the order.
+$home_stories = array_map( static fn( WP_Post $p ): int => (int) $p->ID, \DGL\Frontend\Home::newest( PostTypes::NEWS, 50 ) );
+$home_pos_new = array_search( $home_news['new'], $home_stories, true );
+$home_pos_old = array_search( $home_news['old'], $home_stories, true );
+$ok( false !== $home_pos_new && false !== $home_pos_old && $home_pos_new < $home_pos_old, 'then the newest first' );
+
+$home_data = \DGL\Frontend\Home::view_data();
+$ok( [] === $home_data['grants'] && false === $home_data['grants_on'], 'funding is empty while the Grants type is switched off' );
+$ok( [] === $home_data['quotes'], 'no testimonials until somebody supplies them' );
+$ok( $home_data['org_total'] >= 1 && 6 === count( $home_data['areas'] ) && 3 === count( $home_data['partners'] ), 'the directory count, six areas of work and three partners are there (' . $home_data['org_total'] . ' organisations)' );
+$ok( str_ends_with( $home_data['join_url'], '/dashboard/join/' ) && str_ends_with( $home_data['dir_url'], '/directory/' ), 'join and directory links point at the real pages' );
+
+update_option( \DGL\Frontend\Home::OPTION_QUOTES, wp_json_encode( [ [ 'quote' => 'It filled our event.', 'name' => 'A Person', 'role' => 'Manager, Home Org' ], [ 'quote' => '   ' ], [ 'quote' => 'Second.' ], [ 'quote' => 'Third.' ], [ 'quote' => 'Fourth.' ] ] ) );
+$home_quotes = \DGL\Frontend\Home::testimonials();
+$ok( 3 === count( $home_quotes ) && 'It filled our event.' === $home_quotes[0]['quote'] && 'Manager, Home Org' === $home_quotes[0]['role'], 'testimonials come from the option as JSON: blanks dropped, three at most' );
+delete_option( \DGL\Frontend\Home::OPTION_QUOTES );
+
+$home_html = \DGL\Dashboard\View::render( 'public/home', \DGL\Frontend\Home::view_data() );
+$ok( str_contains( $home_html, 'The people doing good in Leeds, in one place.' ) && str_contains( $home_html, 'What&#039;s on' ) && str_contains( $home_html, 'Latest news' ) && str_contains( $home_html, 'Training and learning' ) && str_contains( $home_html, 'Funding and grants' ) && str_contains( $home_html, 'Find an organisation' ) && str_contains( $home_html, 'What members say' ) && str_contains( $home_html, 'Get the weekly round-up' ), 'the page renders every section of the wireframe' );
+$ok( str_contains( $home_html, 'Home event later' ) && str_contains( $home_html, 'Home story pinned' ) && ! str_contains( $home_html, 'Home event pending' ), 'with the live items in it and the pending one out' );
+$ok( 3 === substr_count( $home_html, 'Testimonial to be supplied' ) && str_contains( $home_html, 'once the Grants section is switched on' ), 'funding and testimonials are drawn as labelled placeholders' );
+$ok( str_contains( $home_html, 'class="dgl-date"' ) && str_contains( $home_html, 'Posted: ' ), 'events carry the calendar leaf and stories say when they were posted' );
+$ok( 1 === preg_match( '#<form class="dgl-home__search" method="get" action="[^"]*/directory/"#', $home_html ) && str_contains( $home_html, 'name="q"' ), 'the search box posts to the directory' );
+$ok( str_contains( $home_html, 'Forum Central' ) && str_contains( $home_html, 'Voluntary Action Leeds' ), 'the partners are named' );
+
+set_query_var( \DGL\Frontend\Home::QUERY_VAR, '1' );
+\DGL\Frontend\Seo::reset();
+$home_seo = \DGL\Frontend\Seo::page();
+$ok( \DGL\Frontend\Home::is_request() && \DGL\Frontend\Frontend::is_ours(), 'the router owns the request' );
+$ok( is_array( $home_seo ) && 'home' === $home_seo['kind'] && 'noindex,follow' === $home_seo['robots'] && 'WebSite' === $home_seo['schema']['main']['@type'] && '' !== $home_seo['image']['url'], 'the head describes it, noindex while it is a sample, with a social card' );
+$ok( str_starts_with( \DGL\Frontend\Frontend::directory_title( 'x' ), 'Home page sample | ' ), 'and the title says what it is' );
+set_query_var( \DGL\Frontend\Home::QUERY_VAR, '' );
+\DGL\Frontend\Seo::reset();
+
 /* ----------------------------------------------------------------- report */
 
 echo "\n" . str_repeat( '-', 60 ) . "\n";
