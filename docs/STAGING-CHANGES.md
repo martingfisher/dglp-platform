@@ -974,3 +974,8 @@ clean. They are the only DGLP content on staging.
 - **0.38.3 deployed** (27 September, production): `wp dgl digest send <user>
   --again` resends the whole of the last period, for checking the email's
   look; a manual send no longer stamps a quiet slot. Sent to Martin.
+- **0.38.4 deployed** (27 September, production): the Choose file button on
+  the Logo and picture fields sits centred in the 45px field box. The file
+  input is now a flex row, and its rule carries `.dgl-dash` so it is not
+  outranked by the shared field rule, which had left the button at the top
+  of a box grown to the theme's line-height.

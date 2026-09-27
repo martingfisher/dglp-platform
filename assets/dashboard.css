@@ -979,31 +979,38 @@ body.dgl-body {
 }
 
 /*
- * The file control is the browser's own button and a line of text. A file
- * input ignores flex and gap, so the line-height centres it in the same 45px
- * box as every other field and the button's own margin makes the gap. The
- * button is restyled to match the secondary button so it does not look
- * borrowed.
+ * The file control is the browser's own button and a line of text, laid out
+ * as a flex row so the button sits centred in the same 45px box as every
+ * other field whatever line-height the theme gives inputs. The selector
+ * carries .dgl-dash because the shared .dgl-field rule does, and a lone
+ * class lost to it: the button then sat at the top of a box that had grown
+ * to the theme's line-height. The line-height is a fallback for a browser
+ * that will not flex a file input.
  */
-.dgl-field--file {
-	padding: 0 12px 0 5px;
+.dgl-dash .dgl-field--file {
+	display: flex;
+	align-items: center;
+	gap: 12px;
 	height: var(--dgl-field-height);
 	min-height: var(--dgl-field-height);
+	padding: 0 12px 0 5px;
 	line-height: calc(var(--dgl-field-height) - 2 * var(--dgl-field-border));
 	font-size: 14px;
 	color: var(--dgl-text-muted);
+	overflow: hidden;
+	white-space: nowrap;
 }
 
 /*
- * The button is given a fixed height, no vertical padding and a line-height
- * equal to that height, then vertical-align: middle. With padding and the
- * theme's own line-height it sat a few pixels above the "No file chosen"
- * text on staging, where Montserrat's metrics differ from the test site's.
+ * The button is restyled to match the secondary button so it does not look
+ * borrowed: a fixed height, no vertical padding, its own line-height, and
+ * no margin because the row's gap makes the space.
  */
-.dgl-field--file::file-selector-button {
+.dgl-dash .dgl-field--file::file-selector-button {
 	box-sizing: border-box;
+	flex: none;
 	height: calc(var(--dgl-field-height) - 12px);
-	margin: 0 12px 0 0;
+	margin: 0;
 	padding: 0 12px;
 	border: var(--dgl-field-border) solid var(--dgl-field-outline);
 	border-radius: var(--dgl-radius-button);
@@ -1014,7 +1021,7 @@ body.dgl-body {
 	cursor: pointer;
 }
 
-.dgl-field--file:hover::file-selector-button { background: var(--dgl-white); }
+.dgl-dash .dgl-field--file:hover::file-selector-button { background: var(--dgl-white); }
 
 /*
  * One ring on focus, not two. The border turns purple and the outline sits
