@@ -971,3 +971,6 @@ clean. They are the only DGLP content on staging.
   upgrade. 5,000 subscribers due at 08:00 are away by about 09:05. Every
   digest also carries `Precedence: bulk`. For Martin's question about 5,000
   sends a week.
+- **0.38.3 deployed** (27 September, production): `wp dgl digest send <user>
+  --again` resends the whole of the last period, for checking the email's
+  look; a manual send no longer stamps a quiet slot. Sent to Martin.

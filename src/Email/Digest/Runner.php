@@ -136,12 +136,12 @@ final class Runner {
 	 *
 	 * The slot is the send time being handled; the digest covers the one
 	 * period before it. A manual send passes now, so it covers the period up
-	 * to this minute. The slot is stamped on a real send and on a quiet
-	 * period alike, never on a dry run or a failure.
+	 * to this minute. The slot is stamped on a real send and, for a scheduled
+	 * run, on a quiet period; never on a dry run or a failure.
 	 *
 	 * @return array{outcome:string, items:int}
 	 */
-	public static function send_one( Subscription $subscription, DateTimeImmutable $now, bool $dry_run = false, ?DateTimeImmutable $slot = null ): array {
+	public static function send_one( Subscription $subscription, DateTimeImmutable $now, bool $dry_run = false, ?DateTimeImmutable $slot = null, bool $stamp_quiet = true ): array {
 		if ( ! $subscription->is_sendable() ) {
 			return [ 'outcome' => 'skipped_empty', 'items' => 0 ];
 		}
@@ -151,7 +151,8 @@ final class Runner {
 		$matched = Matcher::match( $subscription, self::candidates( $subscription, $slot ) );
 
 		if ( ! Matcher::should_send( $matched ) ) {
-			if ( ! $dry_run ) {
+			// A scheduled run stamps a quiet slot; a manual send leaves it alone.
+			if ( ! $dry_run && $stamp_quiet ) {
 				Store::mark_sent( $subscription->user_id, $stamp );
 			}
 

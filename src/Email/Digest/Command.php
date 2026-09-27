@@ -179,10 +179,15 @@ final class Command {
 	 * [--dry-run]
 	 * : Build it and send nothing.
 	 *
+	 * [--again]
+	 * : Include what their last digest already carried: the whole of the
+	 * last period up to now. For checking how the email looks.
+	 *
 	 * ## EXAMPLES
 	 *
 	 *     wp dgl digest send jo@charity.org --dry-run
 	 *     wp dgl digest send jo@charity.org
+	 *     wp dgl digest send jo@charity.org --again
 	 *
 	 * @when after_wp_load
 	 *
@@ -214,10 +219,28 @@ final class Command {
 			WP_CLI::error( 'Sending is off. Turn it on, or use --dry-run.' );
 		}
 
+		if ( isset( $assoc['again'] ) ) {
+			// The same subscription with no memory of the last send.
+			$subscription = new Subscription(
+				user_id: $subscription->user_id,
+				email: $subscription->email,
+				types: $subscription->types,
+				topic_ids: $subscription->topic_ids,
+				frequency: $subscription->frequency,
+				last_sent_at: null,
+				unsubscribe_token: $subscription->unsubscribe_token,
+				consent_at: $subscription->consent_at,
+				org_id: $subscription->org_id,
+				include_own_org: $subscription->include_own_org,
+			);
+		}
+
 		$result = Runner::send_one(
 			$subscription,
 			new DateTimeImmutable( 'now', new DateTimeZone( 'UTC' ) ),
-			$dry
+			$dry,
+			null,
+			false
 		);
 
 		if ( 'skipped_empty' === $result['outcome'] ) {
