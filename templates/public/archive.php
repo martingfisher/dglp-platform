@@ -90,7 +90,9 @@ $meta_line = static function ( WP_Post $item ): string {
 					for ( $i = 0; $i < $side_count; $i++ ) :
 						?>
 						<?php the_post(); $item = get_post(); ?>
-						<article class="dgl-hero__item">
+						<?php $leaf = \DGL\PostTypes::EVENT === $type ? Cards::date_block( $item ) : ''; ?>
+						<article class="dgl-hero__item<?php echo '' !== $leaf ? ' dgl-card--dated' : ''; ?>">
+							<?php echo $leaf; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside. ?>
 							<a class="dgl-card__pic" href="<?php the_permalink(); ?>" tabindex="-1" aria-hidden="true"><?php echo Cards::picture( $item, 'medium' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside. ?></a>
 							<div class="dgl-card__body">
 								<p class="dgl-card__chip"><?php echo esc_html( Cards::chip( $item ) ); ?></p>

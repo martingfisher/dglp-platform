@@ -925,3 +925,8 @@ clean. They are the only DGLP content on staging.
   dates, funded), trustee essentials (online evening), Canva for charity
   comms (donation) and volunteer management (blended, paid with
   bursaries). Same marker, same `--remove`. Integration 1155.
+- **0.37.3 deployed** (27 September, production): a calendar leaf on every
+  event row and on the three cards beside the featured event: month over
+  day, white card, left of the picture (`Cards::date_block()`). A series
+  shows its next date; a cancelled event's leaf is faded. Events only for
+  now, training to follow once Martin has seen it. AAA contrast walk clean.

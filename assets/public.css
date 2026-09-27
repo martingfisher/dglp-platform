@@ -525,6 +525,53 @@
 
 .dgl-hero__item .dgl-card__pic { width: 104px; height: 104px; border-radius: 12px; }
 
+/*
+ * The calendar leaf. A date has to be read at a glance from a list, and a
+ * date inside a line of meta text is not. Month over day, in a small white
+ * card to the left of the picture: the shape people know from calendar
+ * apps. The month is teal, the one accent the palette keeps for words.
+ */
+.dgl-card--dated { grid-template-columns: auto auto minmax(0, 1fr); }
+
+.dgl-date {
+	display: grid;
+	justify-items: center;
+	align-content: center;
+	gap: 2px;
+	width: 64px;
+	min-height: 64px;
+	padding: 8px 4px 9px;
+	border: 1px solid var(--dgl-border);
+	border-radius: 12px;
+	background: var(--dgl-white);
+	color: var(--dgl-ink);
+	line-height: 1;
+	text-align: center;
+}
+
+.dgl-date__month {
+	font-size: 0.68rem;
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--dgl-teal-text);
+}
+
+.dgl-date__day {
+	font-size: 1.55rem;
+	font-weight: 700;
+	font-variant-numeric: tabular-nums;
+}
+
+/* Cancelled: the leaf goes quiet, the row's Cancelled stamp does the talking. */
+.dgl-date--off { opacity: 0.55; }
+
+.dgl-date--off .dgl-date__month { color: var(--dgl-text-muted); }
+
+.dgl-hero__item .dgl-date { width: 56px; min-height: 56px; padding: 6px 3px 7px; }
+
+.dgl-hero__item .dgl-date__day { font-size: 1.3rem; }
+
 .dgl-card__pic .dgl-card__img {
 	display: block;
 	width: 100%;
@@ -682,6 +729,8 @@ h2.dgl-listing__heading:only-child,
 	.dgl-hero__body { padding: var(--dgl-gap); }
 	.dgl-card__pic { width: 96px; height: 96px; border-radius: 12px; }
 	.dgl-hero__item .dgl-card__pic { width: 84px; height: 84px; }
+	.dgl-date { width: 56px; min-height: 56px; padding: 6px 3px 7px; }
+	.dgl-date__day { font-size: 1.3rem; }
 	.dgl-pub__list .dgl-card { padding: 16px 0; gap: 12px; }
 	.dgl-pub__list .dgl-card__title { font-size: 1.05rem; }
 	.dgl-card__summary { font-size: 0.92rem; }

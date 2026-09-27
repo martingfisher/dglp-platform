@@ -4321,6 +4321,13 @@ $ok( 1 === count( array_filter( $demo_ids, static fn( int $id ): bool => \DGL\Wo
 $demo_online = array_values( array_filter( $demo_ids, static fn( int $id ): bool => 'online' === get_post_meta( $id, 'dgl_format', true ) ) );
 $ok( 1 === count( $demo_online ) && '' === (string) get_post_meta( $demo_online[0], 'dgl_venue_name', true ) && '' !== (string) get_post_meta( $demo_online[0], 'dgl_online_url', true ), 'the online one has a link and no venue' );
 $ok( in_array( 'seeded', array_column( Log::for_org( $demo_org ), 'action' ), true ), 'each is audited as seeded' );
+$demo_series = array_values( array_filter( $demo_ids, static fn( int $id ): bool => \DGL\Events\Series::is_series( $id ) ) )[0];
+$demo_leaf   = \DGL\Frontend\Cards::date_parts( get_post( $demo_series ) );
+$demo_next   = \DGL\Events\Series::next_dates( $demo_series, 1 )[0]->start;
+$ok( null !== $demo_leaf && $demo_leaf['day'] === $demo_next->format( 'j' ) && $demo_leaf['month'] === $demo_next->format( 'M' ), 'the calendar leaf of a series is its next date (' . ( $demo_leaf['month'] ?? '' ) . ' ' . ( $demo_leaf['day'] ?? '' ) . ')' );
+$demo_cancelled_id = array_values( array_filter( $demo_ids, static fn( int $id ): bool => \DGL\Events\Cancel::is_cancelled( $id ) ) )[0];
+$ok( str_contains( \DGL\Frontend\Cards::date_block( get_post( $demo_cancelled_id ) ), 'dgl-date--off' ) && str_contains( \DGL\Frontend\Cards::date_block( get_post( $demo_online[0] ) ), '<time class="dgl-date" datetime="' ), 'a cancelled event\'s leaf is marked off; a live one is not' );
+$ok( '' === \DGL\Frontend\Cards::date_block( get_post( $seo_news ) ), 'a news story has no leaf' );
 $demo_gone = \DGL\Demo\Command::remove();
 $ok( 7 === count( $demo_gone ) && [] === array_diff( $demo_ids, $demo_gone ), 'remove takes exactly the seven' );
 $ok( null !== get_post( $other_evt ) && Statuses::LIVE === get_post_status( $other_evt ), 'and leaves the organisation\'s other event alone' );

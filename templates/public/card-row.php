@@ -22,7 +22,9 @@ $meta_line = $data['meta_line'] ?? static function ( WP_Post $post ): string {
 	return [] === $parts ? '' : '<p class="dgl-card__meta"><span>' . implode( '</span><span>', array_map( 'esc_html', $parts ) ) . '</span></p>';
 };
 ?>
-<li class="dgl-card">
+<?php $leaf = \DGL\PostTypes::EVENT === (string) $item->post_type ? Cards::date_block( $item ) : ''; ?>
+<li class="dgl-card<?php echo '' !== $leaf ? ' dgl-card--dated' : ''; ?>">
+	<?php echo $leaf; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside. ?>
 	<a class="dgl-card__pic" href="<?php echo esc_url( (string) get_permalink( $item ) ); ?>" tabindex="-1" aria-hidden="true"><?php echo Cards::picture( $item, 'medium' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside. ?></a>
 	<div class="dgl-card__body">
 		<p class="dgl-card__chip">

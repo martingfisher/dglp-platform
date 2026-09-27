@@ -114,6 +114,75 @@ final class Cards {
 	}
 
 	/**
+	 * The day an event or a course happens, as a calendar leaf: the month
+	 * over the day number. A series shows its next date. Nothing for news,
+	 * which has no date worth a glance.
+	 *
+	 * @return array{month:string, day:string, weekday:string, iso:string}|null
+	 */
+	public static function date_parts( WP_Post $post ): ?array {
+		$id = (int) $post->ID;
+		$ts = null;
+
+		if ( Series::is_series( $id ) ) {
+			$next = Series::next_dates( $id, 1 );
+
+			if ( [] !== $next ) {
+				$ts = $next[0]->start->getTimestamp();
+			}
+		}
+
+		if ( null === $ts ) {
+			foreach ( [ 'start_datetime', 'start_date' ] as $key ) {
+				$raw = trim( (string) Frontend::value( $post, $key ) );
+
+				if ( '' !== $raw ) {
+					try {
+						$ts = ( new \DateTimeImmutable( $raw, wp_timezone() ) )->getTimestamp();
+					} catch ( \Exception ) {
+						$ts = null;
+					}
+					break;
+				}
+			}
+		}
+
+		if ( null === $ts ) {
+			return null;
+		}
+
+		return [
+			'month'   => (string) wp_date( 'M', $ts ),
+			'day'     => (string) wp_date( 'j', $ts ),
+			'weekday' => (string) wp_date( 'D', $ts ),
+			'iso'     => (string) wp_date( 'Y-m-d', $ts ),
+		];
+	}
+
+	/**
+	 * The calendar leaf as markup, or '' when there is no date. The words
+	 * are already in the meta line, so the leaf is decoration to a screen
+	 * reader and the machine-readable date rides on a <time>.
+	 */
+	public static function date_block( WP_Post $post ): string {
+		$parts = self::date_parts( $post );
+
+		if ( null === $parts ) {
+			return '';
+		}
+
+		$off = PostTypes::EVENT === (string) $post->post_type && Cancel::is_cancelled( (int) $post->ID );
+
+		return sprintf(
+			'<time class="dgl-date%s" datetime="%s" aria-hidden="true"><span class="dgl-date__month">%s</span><span class="dgl-date__day">%s</span></time>',
+			$off ? ' dgl-date--off' : '',
+			esc_attr( $parts['iso'] ),
+			esc_html( $parts['month'] ),
+			esc_html( $parts['day'] )
+		);
+	}
+
+	/**
 	 * The picture, or a tile that stands in for one.
 	 *
 	 * @param string $size A registered image size.
