@@ -26,9 +26,9 @@ use WP_CLI;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Seven varied live events in one call, so the Events page, the calendar,
- * a series, a cancellation and a featured item can all be seen without
- * anybody filling in seven forms. Every one carries a marker, so `--remove`
+ * Seven varied live events, or seven training listings, in one call, so
+ * the public lists can be seen rendering without anybody filling in seven
+ * forms. Every one carries a marker, so `--remove`
  * takes exactly these away and nothing else.
  */
 final class Command {
@@ -256,19 +256,196 @@ final class Command {
 	}
 
 	/**
+	 * The seven training listings, dated from today.
+	 *
+	 * @param int[] $images
+	 * @return array<int, array<string, mixed>>
+	 */
+	public static function plan_training( array $images = [] ): array {
+		$tz    = wp_timezone();
+		$today = new \DateTimeImmutable( 'today', $tz );
+		$day   = static fn( int $days ): string => $today->modify( '+' . $days . ' days' )->format( 'Y-m-d' );
+		$pic   = static function () use ( &$images ): int {
+			return (int) ( array_shift( $images ) ?? 0 );
+		};
+		$hub   = [ 'location' => 'Armley Community Hub, Town Street, Armley', 'postcode' => 'LS12 1UP' ];
+
+		return [
+			[
+				'title'   => 'Safeguarding adults: level 1',
+				'summary' => 'The one-day course every volunteer and front-line worker should have done. Certificate on the day.',
+				'body'    => '<p>What safeguarding means, the kinds of harm to look out for, what to do if you are worried about someone, and how to record and report it. Taught through real cases from Leeds, with time for your own questions.</p><p>Meets the Leeds Safeguarding Adults Board level 1 standard. You get a certificate valid for three years.</p>',
+				'fields'  => [ 'provider' => 'Leeds Safeguarding Adults Board', 'start_date' => $day( 6 ), 'delivery' => 'in_person', 'who_for' => 'Volunteers, trustees and staff in any role that brings them into contact with adults who may be at risk. No prior training needed.' ] + $hub,
+				'cost'    => 'free',
+				'topics'  => [ 'health-and-social-care', 'safeguarding' ],
+				'access'  => 'Step-free venue, hearing loop, large-print handouts on request.',
+				'image'   => $pic(),
+				'note'    => 'one day, in person, free',
+			],
+			[
+				'title'   => 'Introduction to fundraising for small groups',
+				'summary' => 'Half a day online on where the money is and how to ask for it, for groups with no fundraiser.',
+				'body'    => '<p>Trusts and foundations, community grants, individual giving and events: which suit a group your size, what funders actually read, and how to write a case for support in an afternoon. You leave with a one-page fundraising plan.</p>',
+				'fields'  => [ 'provider' => 'Voluntary Action Leeds', 'start_date' => $day( 10 ), 'delivery' => 'online', 'who_for' => 'Anyone responsible for bringing money into a small charity or community group, especially if it is one job among many.' ],
+				'cost'    => 'paid',
+				'cost_detail' => '£25. Free for groups with an income under £10,000.',
+				'booking' => 'https://www.eventbrite.co.uk/',
+				'topics'  => [ 'grants-and-funding' ],
+				'image'   => 0,
+				'note'    => 'online, paid, no picture',
+			],
+			[
+				'title'   => 'First aid at work (three days)',
+				'summary' => 'The full HSE-approved course, three days in person, certificate valid three years.',
+				'body'    => '<p>CPR and defibrillators, choking, bleeding, burns, fractures, seizures, and how to manage an incident until help arrives. Assessed on the last day. Lunch provided.</p><p>Run by a Leeds trainer with twenty years in the ambulance service.</p>',
+				'fields'  => [ 'provider' => 'Yorkshire First Aid Training', 'start_date' => $day( 14 ), 'end_date' => $day( 16 ), 'delivery' => 'in_person', 'who_for' => 'Staff and volunteers who need a qualified first-aider certificate for their workplace or activity.' ] + $hub,
+				'cost'    => 'paid',
+				'cost_detail' => '£180 a person. Two places per organisation at £150.',
+				'booking' => 'https://www.eventbrite.co.uk/',
+				'topics'  => [ 'health-and-social-care' ],
+				'image'   => $pic(),
+				'note'    => 'three days, paid',
+			],
+			[
+				'title'   => 'Mental health first aid',
+				'summary' => 'Two days, blended: a morning online then a full day in the room. Funded places for Leeds groups.',
+				'body'    => '<p>How to spot the signs of a mental health problem, how to start a conversation, and where to point somebody for help in Leeds. The online morning covers the ground; the day in the room is practice.</p><p>Places are funded by the Leeds Community Foundation, so the course is free to organisations in the partnership.</p>',
+				'fields'  => [ 'provider' => 'Leeds Mind', 'start_date' => $day( 18 ), 'end_date' => $day( 25 ), 'delivery' => 'blended', 'who_for' => 'Anyone in a community role who wants to be a first point of contact for a colleague or member who is struggling.' ] + $hub,
+				'cost'    => 'free',
+				'topics'  => [ 'health-and-social-care', 'mental-health' ],
+				'access'  => 'Breaks every hour, quiet room available.',
+				'image'   => $pic(),
+				'note'    => 'blended, two dates',
+			],
+			[
+				'title'   => 'Trustee essentials: roles and responsibilities',
+				'summary' => 'An evening online for new and would-be trustees: what the law expects and what the job is really like.',
+				'body'    => '<p>The six duties of a trustee, what the Charity Commission needs from you, how to read a set of accounts, and how to be useful in a board meeting. Two current chairs answer questions in the second half.</p>',
+				'fields'  => [ 'provider' => 'Doing Good Leeds Partnership', 'start_date' => $day( 9 ), 'delivery' => 'online', 'who_for' => 'New trustees, people thinking about becoming one, and chairs who want to induct a new board member.' ],
+				'cost'    => 'free',
+				'booking' => 'https://www.eventbrite.co.uk/',
+				'topics'  => [ 'leadership' ],
+				'image'   => 0,
+				'note'    => 'online evening, no picture',
+			],
+			[
+				'title'   => 'Using Canva for charity communications',
+				'summary' => 'A hands-on afternoon making posters, social posts and a newsletter that look the part.',
+				'body'    => '<p>Bring a laptop. We set up a free Canva account, build a brand kit from your logo and colours, and make three things you can use next week: an A4 poster, a set of social posts and a newsletter header. No design experience needed.</p>',
+				'fields'  => [ 'provider' => 'Armley Community Hub', 'start_date' => $day( 21 ), 'delivery' => 'in_person', 'who_for' => 'Whoever does the posters, the Facebook page or the newsletter at your organisation.' ] + $hub,
+				'cost'    => 'donation',
+				'cost_detail' => 'Suggested £5 towards the room.',
+				'topics'  => [ 'data-and-digital', 'arts-culture-and-heritage' ],
+				'image'   => $pic(),
+				'note'    => 'donation',
+			],
+			[
+				'title'   => 'Volunteer management: recruit them and keep them',
+				'summary' => 'A day on finding volunteers, giving them a good start and keeping them coming back.',
+				'body'    => '<p>Writing a role people want, where to advertise in Leeds, the induction that makes the difference, expenses and insurance, and how to say thank you in ways that matter. Morning online, afternoon in the room.</p>',
+				'fields'  => [ 'provider' => 'Voluntary Action Leeds', 'start_date' => $day( 28 ), 'delivery' => 'blended', 'who_for' => 'Anyone who looks after volunteers, paid or not, in an organisation of any size.' ] + $hub,
+				'cost'    => 'paid',
+				'cost_detail' => '£40. Bursaries available, ask when you book.',
+				'booking' => 'https://www.eventbrite.co.uk/',
+				'topics'  => [ 'volunteering', 'leadership' ],
+				'image'   => $pic(),
+				'note'    => 'blended, paid with bursaries',
+			],
+		];
+	}
+
+	/**
+	 * Create seven demo training listings under an organisation, or remove them.
+	 *
+	 * ## OPTIONS
+	 *
+	 * [--org=<id>]
+	 * : The organisation the listings belong to. Required unless --remove.
+	 *
+	 * [--actor=<id>]
+	 * : User to record the changes against. Default 0, the system.
+	 *
+	 * [--images]
+	 * : Use the newest photos in the media library as the listings' pictures.
+	 *
+	 * [--remove]
+	 * : Delete every training listing this command made.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp dgl demo training --org=8438 --images
+	 *     wp dgl demo training --remove
+	 *
+	 * @when after_wp_load
+	 *
+	 * @param string[]              $args
+	 * @param array<string, string> $assoc
+	 */
+	public function training( array $args, array $assoc ): void {
+		if ( isset( $assoc['remove'] ) ) {
+			$gone = self::remove( PostTypes::TRAINING );
+			WP_CLI::success( sprintf( '%d demo training listing(s) removed.', count( $gone ) ) );
+			return;
+		}
+
+		$org = (int) ( $assoc['org'] ?? 0 );
+
+		if ( $org <= 0 || ! Org::exists( $org ) ) {
+			WP_CLI::error( 'Give --org=<id>: an organisation that exists.' );
+		}
+
+		$made = self::seed_training( $org, (int) ( $assoc['actor'] ?? 0 ), isset( $assoc['images'] ) ? self::photos( 5 ) : [] );
+		$rows = [];
+
+		foreach ( $made as $id ) {
+			$rows[] = [
+				'id'       => $id,
+				'title'    => get_the_title( $id ),
+				'starts'   => (string) get_post_meta( $id, 'dgl_start_date', true ),
+				'delivery' => (string) get_post_meta( $id, 'dgl_delivery', true ),
+				'cost'     => (string) get_post_meta( $id, 'dgl_cost', true ),
+				'picture'  => (int) get_post_meta( $id, 'dgl_image', true ) > 0 ? 'yes' : 'none',
+			];
+		}
+
+		\WP_CLI\Utils\format_items( 'table', $rows, [ 'id', 'title', 'starts', 'delivery', 'cost', 'picture' ] );
+		WP_CLI::success( sprintf( '%d demo training listing(s) made for %s.', count( $made ), get_the_title( $org ) ) );
+	}
+
+	/**
 	 * Make the seven. Returns their ids.
 	 *
 	 * @param int[] $images
 	 * @return int[]
 	 */
 	public static function seed( int $org, int $actor, array $images = [] ): array {
+		return self::make( PostTypes::EVENT, self::plan( $images ), $org, $actor );
+	}
+
+	/**
+	 * Make the seven training listings. Returns their ids.
+	 *
+	 * @param int[] $images
+	 * @return int[]
+	 */
+	public static function seed_training( int $org, int $actor, array $images = [] ): array {
+		return self::make( PostTypes::TRAINING, self::plan_training( $images ), $org, $actor );
+	}
+
+	/**
+	 * Write a plan's items as live listings of one type.
+	 *
+	 * @param array<int, array<string, mixed>> $plan
+	 * @return int[]
+	 */
+	private static function make( string $type, array $plan, int $org, int $actor ): array {
 		$now  = current_time( 'mysql', true );
 		$made = [];
 
-		foreach ( self::plan( $images ) as $p ) {
+		foreach ( $plan as $p ) {
 			$id = wp_insert_post(
 				[
-					'post_type'    => PostTypes::EVENT,
+					'post_type'    => $type,
 					'post_status'  => Statuses::LIVE,
 					'post_author'  => $actor,
 					'post_title'   => $p['title'],
@@ -285,28 +462,33 @@ final class Command {
 			update_post_meta( $id, self::MARKER, '1' );
 			update_post_meta( $id, Meta::ITEM_ORG, $org );
 
-			$values = [
-				'summary'        => $p['summary'],
-				'start_datetime' => $p['start'],
-				'end_datetime'   => $p['end'],
-				'repeat'         => $p['repeat'],
-				'format'         => $p['format'],
-				'venue_name'     => $p['venue'] ?? '',
-				'address'        => $p['address'] ?? '',
-				'postcode'       => $p['postcode'] ?? '',
-				'online_url'     => $p['online'] ?? '',
-				'cost'           => $p['cost'],
-				'cost_detail'    => $p['cost_detail'] ?? '',
-				'capacity'       => $p['capacity'] ?? '',
-				'booking_url'    => $p['booking'] ?? '',
-				'accessibility'  => $p['access'] ?? '',
-				'contact_name'   => 'Sam at the Hub',
-				'contact_email'  => 'hello@example.org',
-				'image'          => $p['image'],
-				'image_alt'      => $p['image'] > 0 ? 'Photo from a community event' : '',
+			$values = ( $p['fields'] ?? [] ) + [
+				'summary'       => $p['summary'],
+				'cost'          => $p['cost'],
+				'cost_detail'   => $p['cost_detail'] ?? '',
+				'booking_url'   => $p['booking'] ?? '',
+				'accessibility' => $p['access'] ?? '',
+				'contact_name'  => 'Sam at the Hub',
+				'contact_email' => 'hello@example.org',
+				'image'         => $p['image'],
+				'image_alt'     => $p['image'] > 0 ? 'Photo from a community event' : '',
 			];
 
-			Store::write( $id, PostTypes::EVENT, $values );
+			if ( PostTypes::EVENT === $type ) {
+				$values += [
+					'start_datetime' => $p['start'],
+					'end_datetime'   => $p['end'],
+					'repeat'         => $p['repeat'],
+					'format'         => $p['format'],
+					'venue_name'     => $p['venue'] ?? '',
+					'address'        => $p['address'] ?? '',
+					'postcode'       => $p['postcode'] ?? '',
+					'online_url'     => $p['online'] ?? '',
+					'capacity'       => $p['capacity'] ?? '',
+				];
+			}
+
+			Store::write( $id, $type, $values );
 			update_post_meta( $id, Meta::ITEM_SUBMITTED_AT, $now );
 			update_post_meta( $id, Meta::ITEM_APPROVED_AT, $now );
 
@@ -324,7 +506,7 @@ final class Command {
 				wp_set_object_terms( $id, $terms, Taxonomies::TOPIC, false );
 			}
 
-			Series::stamp( $id, PostTypes::EVENT );
+			Series::stamp( $id, $type );
 			Sync::sync( $id );
 
 			if ( ! empty( $p['pin'] ) ) {
@@ -335,7 +517,7 @@ final class Command {
 				Cancel::cancel( $id, (string) $p['cancel'], $actor );
 			}
 
-			Log::record( 'seeded', 'item', $id, $org, __( 'Demo event created by wp dgl demo events.', 'dgl-platform' ), [], $actor > 0 ? $actor : null );
+			Log::record( 'seeded', 'item', $id, $org, __( 'Demo listing created by wp dgl demo.', 'dgl-platform' ), [], $actor > 0 ? $actor : null );
 
 			$made[] = $id;
 		}
@@ -348,10 +530,10 @@ final class Command {
 	 *
 	 * @return int[]
 	 */
-	public static function remove(): array {
+	public static function remove( string $type = PostTypes::EVENT ): array {
 		$ids = get_posts(
 			[
-				'post_type'        => PostTypes::EVENT,
+				'post_type'        => $type,
 				'post_status'      => 'any',
 				'fields'           => 'ids',
 				'numberposts'      => -1,

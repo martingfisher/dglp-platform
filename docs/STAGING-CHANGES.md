@@ -918,3 +918,10 @@ clean. They are the only DGLP content on staging.
   audited as `seeded`. Run on production for Demo: Armley Community Hub
   (8438) with `--images`, so Martin can see the Events page render;
   `wp dgl demo events --remove` takes them away. Integration 1148.
+- **0.37.2 deployed and run** (27 September, production): `wp dgl demo
+  training`, seven demo training listings for Demo: Armley Community Hub:
+  safeguarding level 1, fundraising for small groups (online, paid), first
+  aid at work (three days, paid), mental health first aid (blended, two
+  dates, funded), trustee essentials (online evening), Canva for charity
+  comms (donation) and volunteer management (blended, paid with
+  bursaries). Same marker, same `--remove`. Integration 1155.

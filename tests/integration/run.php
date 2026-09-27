@@ -4326,6 +4326,19 @@ $ok( 7 === count( $demo_gone ) && [] === array_diff( $demo_ids, $demo_gone ), 'r
 $ok( null !== get_post( $other_evt ) && Statuses::LIVE === get_post_status( $other_evt ), 'and leaves the organisation\'s other event alone' );
 $ok( [] === \DGL\Demo\Command::remove(), 'a second remove finds nothing' );
 
+$demo_tr = \DGL\Demo\Command::seed_training( $demo_org, $mod, [] );
+foreach ( $demo_tr as $demo_id ) {
+	update_post_meta( $demo_id, DGL_FIXTURE_FLAG, '1' );
+}
+$ok( 7 === count( $demo_tr ) && 7 === count( array_filter( $demo_tr, static fn( int $id ): bool => PostTypes::TRAINING === get_post_type( $id ) && Statuses::LIVE === get_post_status( $id ) ) ), 'seven live training listings are made' );
+$ok( 7 === count( array_filter( $demo_tr, static fn( int $id ): bool => '' !== (string) get_post_meta( $id, 'dgl_start_date', true ) && '' !== (string) get_post_meta( $id, 'dgl_provider', true ) && '' !== (string) get_post_meta( $id, 'dgl_who_for', true ) ) ), 'each has a start date, a provider and who it is for' );
+$ok( 7 === count( array_filter( $demo_tr, static fn( int $id ): bool => '' !== (string) get_post_meta( $id, Meta::ITEM_EXPIRES_AT, true ) ) ), 'each has an expiry from its dates' );
+$demo_tr_index = ItemsTable::for_org( $demo_org, [ PostTypes::TRAINING ], [ Statuses::LIVE ], 50 );
+$ok( 7 === count( array_filter( $demo_tr, static fn( int $id ): bool => in_array( $id, $demo_tr_index, true ) ) ), 'and an index row' );
+$ok( 2 === count( array_filter( $demo_tr, static fn( int $id ): bool => 'blended' === get_post_meta( $id, 'dgl_delivery', true ) ) ) && 2 === count( array_filter( $demo_tr, static fn( int $id ): bool => 'online' === get_post_meta( $id, 'dgl_delivery', true ) ) ), 'two blended, two online, three in person' );
+$ok( 0 === count( \DGL\Demo\Command::remove() ), 'removing demo events leaves training alone' );
+$ok( 7 === count( \DGL\Demo\Command::remove( PostTypes::TRAINING ) ) && null === get_post( $demo_tr[0] ), 'removing demo training takes the seven' );
+
 /* ----------------------------------------------------------------- report */
 
 echo "\n" . str_repeat( '-', 60 ) . "\n";

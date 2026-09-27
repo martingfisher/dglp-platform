@@ -196,6 +196,11 @@ uses the newest photos in the media library; two are left without a
 picture on purpose. `--dry-run` lists them first. Every one carries
 `dgl_demo`, so `wp dgl demo events --remove` deletes exactly those.
 
+`wp dgl demo training --org=<id> --images` does the same for seven training
+listings: one-day, three-day and two-date courses, in person, online and
+blended, free, paid and donation, two without a picture.
+`wp dgl demo training --remove` deletes them.
+
 ## Staging to production
 
 Do **not** use Wordify's `push_staging` to move the plugin. That pushes the whole
