@@ -101,68 +101,35 @@ $mixed = [
 $result = Matcher::match( $sub( [ 'types' => [ PostTypes::EVENT ], 'topic_ids' => [ 3 ] ] ), $mixed );
 Harness::assert_same( [ 1, 6 ], $result, 'wrong type, wrong topic, own org and too old are all excluded' );
 
-Harness::group( 'Cadence: when the next one is owed' );
+Harness::group( 'Cadence: fixed slots in the site s own time' );
 
-Harness::assert_true( Frequency::is_valid( Frequency::DAILY ), 'daily is a cadence' );
-Harness::assert_false( Frequency::is_valid( 'hourly' ), 'hourly is not' );
+$tz  = new DateTimeZone( 'Europe/London' );
+$fmt = static fn( DateTimeImmutable $d ): string => $d->format( 'D Y-m-d H:i T' );
 
-// Daily, last sent yesterday morning: owed this morning.
-Harness::assert_true(
-	Frequency::is_due( Frequency::DAILY, '2026-09-13 07:00:00', $at( '2026-09-14 07:00:00' ) ),
-	'a daily digest is owed the next morning'
-);
-Harness::assert_false(
-	Frequency::is_due( Frequency::DAILY, '2026-09-14 07:00:00', $at( '2026-09-14 12:00:00' ) ),
-	'and not twice in one day'
-);
+Harness::assert_same( 'Tue 2026-09-29 08:00 BST', $fmt( Frequency::slot_after( Frequency::WEEKLY, $at( '2026-09-24 12:00:00' ), $tz ) ), 'the weekly slot after a Thursday is the next Tuesday at 08:00 local' );
+Harness::assert_same( 'Tue 2026-10-06 08:00 BST', $fmt( Frequency::slot_after( Frequency::WEEKLY, $at( '2026-09-29 07:00:00' ), $tz ) ), 'and after Tuesday 08:00 BST itself (07:00 UTC) it is the Tuesday after' );
+Harness::assert_same( 'Tue 2026-09-29 08:00 BST', $fmt( Frequency::slot_after( Frequency::WEEKLY, $at( '2026-09-29 06:59:00' ), $tz ) ), 'a minute before the slot, the slot is still to come' );
+Harness::assert_same( 'Tue 2026-10-27 08:00 GMT', $fmt( Frequency::slot_after( Frequency::WEEKLY, $at( '2026-10-24 12:00:00' ), $tz ) ), 'across the clock change the slot stays at 08:00 on the wall' );
+Harness::assert_same( 'Thu 2026-10-01 08:00 BST', $fmt( Frequency::slot_after( Frequency::MONTHLY, $at( '2026-09-15 12:00:00' ), $tz ) ), 'the monthly slot is the first of the month' );
+Harness::assert_same( 'Fri 2026-09-25 08:00 BST', $fmt( Frequency::slot_after( Frequency::DAILY, $at( '2026-09-24 23:30:00' ), $tz ) ), 'the daily slot is tomorrow morning' );
+Harness::assert_same( 'Thu 2026-09-24 08:00 BST', $fmt( Frequency::slot_after( Frequency::DAILY, $at( '2026-09-24 03:00:00' ), $tz ) ), 'or this morning, before 08:00' );
 
-Harness::assert_false(
-	Frequency::is_due( Frequency::WEEKLY, '2026-09-10 07:00:00', $at( '2026-09-14 07:00:00' ) ),
-	'a weekly digest is not owed after four days'
-);
-Harness::assert_true(
-	Frequency::is_due( Frequency::WEEKLY, '2026-09-07 07:00:00', $at( '2026-09-14 07:00:00' ) ),
-	'but is owed after seven'
-);
+Harness::assert_same( 'Tue 2026-09-29 08:00 BST', $fmt( Frequency::slot_before( Frequency::WEEKLY, $at( '2026-10-01 10:00:00' ), $tz ) ), 'the latest slot before a Thursday is that Tuesday' );
+Harness::assert_same( 'Tue 2026-09-29 08:00 BST', $fmt( Frequency::slot_before( Frequency::WEEKLY, $at( '2026-09-29 07:00:00' ), $tz ) ), 'at the slot itself, it is the slot' );
+Harness::assert_same( 'Tue 2026-09-22 08:00 BST', $fmt( Frequency::window_start( Frequency::WEEKLY, Frequency::slot_after( Frequency::WEEKLY, $at( '2026-09-24 12:00:00' ), $tz ), $tz ) ), 'a weekly digest looks back exactly one week from its slot' );
+Harness::assert_same( 'Tue 2026-09-01 08:00 BST', $fmt( Frequency::window_start( Frequency::MONTHLY, $at( '2026-10-01 07:00:00' ), $tz ) ), 'a monthly one looks back to the first of last month' );
 
-Harness::assert_false(
-	Frequency::is_due( Frequency::MONTHLY, '2026-09-01 07:00:00', $at( '2026-09-20 07:00:00' ) ),
-	'a monthly digest is not owed mid month'
-);
-Harness::assert_true(
-	Frequency::is_due( Frequency::MONTHLY, '2026-08-01 07:00:00', $at( '2026-09-01 07:00:00' ) ),
-	'but is owed a month later'
-);
+Harness::group( 'Cadence: what is owed, and when' );
 
-Harness::group( 'A missed run catches up rather than skipping' );
-
-/*
- * If the scheduler was down for three days, the daily digest is still owed.
- * Computing from the last send rather than from a calendar rule is what makes
- * that true, and it is why a member does not silently lose a period of content.
- */
-Harness::assert_true(
-	Frequency::is_due( Frequency::DAILY, '2026-09-10 07:00:00', $at( '2026-09-14 09:00:00' ) ),
-	'three days late is still owed, not skipped'
-);
-Harness::assert_true(
-	Frequency::is_due( Frequency::WEEKLY, '2026-07-01 07:00:00', $at( '2026-09-14 07:00:00' ) ),
-	'a long outage leaves the weekly digest owed'
-);
-
-Harness::group( 'A new subscriber is not emailed the moment they sign up' );
-
-Harness::assert_false(
-	Frequency::is_due( Frequency::DAILY, null, $at( '2026-09-14 23:30:00' ) ),
-	'signing up at half eleven at night does not trigger an instant email'
-);
-Harness::assert_same(
-	'2026-09-15 07:00:00',
-	Frequency::next_due_at( Frequency::DAILY, null, $at( '2026-09-14 23:30:00' ) )->format( 'Y-m-d H:i:s' ),
-	'their first digest is owed the next morning'
-);
-Harness::assert_same(
-	'2026-09-14 07:00:00',
-	Frequency::next_due_at( Frequency::DAILY, null, $at( '2026-09-14 03:00:00' ) )->format( 'Y-m-d H:i:s' ),
-	'signing up before the send hour is caught by that morning s run'
-);
+Harness::assert_false( Frequency::is_due( Frequency::WEEKLY, null, '2026-09-24 12:00:00', $at( '2026-09-28 12:00:00' ), $tz ), 'subscribed on Thursday, nothing is owed on Monday' );
+Harness::assert_true( Frequency::is_due( Frequency::WEEKLY, null, '2026-09-24 12:00:00', $at( '2026-09-29 07:05:00' ), $tz ), 'but at 08:05 on Tuesday the first digest is owed' );
+Harness::assert_same( 'Tue 2026-09-29 08:00 BST', $fmt( Frequency::due_slot( Frequency::WEEKLY, null, '2026-09-24 12:00:00', $at( '2026-09-29 07:05:00' ), $tz ) ), 'and the slot being handled is that Tuesday' );
+Harness::assert_false( Frequency::is_due( Frequency::WEEKLY, '2026-09-29 07:00:00', '2026-09-24 12:00:00', $at( '2026-09-29 09:00:00' ), $tz ), 'once that slot is stamped nothing is owed until the next' );
+Harness::assert_true( Frequency::is_due( Frequency::WEEKLY, '2026-09-29 07:00:00', '2026-09-24 12:00:00', $at( '2026-10-06 07:30:00' ), $tz ), 'which is the Tuesday after' );
+Harness::assert_false( Frequency::is_due( Frequency::WEEKLY, null, null, $at( '2026-10-21 12:00:00' ), $tz ), 'no consent and no send means nothing is ever owed' );
+Harness::assert_same( 'Tue 2026-10-20 08:00 BST', $fmt( Frequency::due_slot( Frequency::WEEKLY, '2026-09-22 07:00:00', null, $at( '2026-10-21 12:00:00' ), $tz ) ), 'after three missed weeks only the latest slot is handled, not all three' );
+Harness::assert_same( 'Tue 2026-10-06 08:00 BST', $fmt( Frequency::next_due_at( Frequency::WEEKLY, '2026-09-29 07:00:00', null, $at( '2026-09-29 09:00:00' ), $tz ) ), 'the next due date reads from the last slot handled' );
+Harness::assert_same( 'Tue 2026-09-29 08:00 BST', $fmt( Frequency::next_due_at( Frequency::WEEKLY, null, '2026-09-24 12:00:00', $at( '2026-09-24 13:00:00' ), $tz ) ), 'or from the subscription when nothing has been sent' );
+Harness::assert_true( Frequency::is_due( Frequency::DAILY, '2026-09-10 07:00:00', null, $at( '2026-09-14 09:00:00' ), $tz ), 'a daily subscriber three days late is owed today s' );
+Harness::assert_true( Frequency::is_due( Frequency::MONTHLY, '2026-08-01 07:00:00', null, $at( '2026-09-01 07:30:00' ), $tz ), 'a monthly one is owed on the first' );
+Harness::assert_false( Frequency::is_due( Frequency::MONTHLY, '2026-09-01 07:00:00', null, $at( '2026-09-20 07:00:00' ), $tz ), 'and not mid month' );

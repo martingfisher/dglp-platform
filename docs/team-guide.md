@@ -344,9 +344,12 @@ unless you have checked the list.
 Every decision above sends one email to the member: approved, sent back with
 your note, refused with your reason, organisation change accepted or refused,
 organisation verified or refused, and removed from an organisation. The
-review team is emailed when an organisation change is waiting. Digests go out
-daily, weekly or monthly to members who asked for them, and never when there
-is nothing new.
+review team is emailed when an organisation change is waiting. Every approved
+member gets a weekly round-up of new news, events and training on Tuesday
+mornings at 08:00, covering the previous week; they can narrow it, make it
+daily or monthly, or stop it from Email preferences or the link in the email,
+and nothing goes out in a quiet week. `wp dgl digest status` shows how many
+are subscribed and when the next slot is.
 
 ## System health
 

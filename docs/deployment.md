@@ -78,10 +78,19 @@ Then `wp option update dgl_mail_from partnership@doinggoodleeds.org.uk` and
 `wp dgl mail status` to confirm. See `docs/email.md` for why the redirect is a
 constant rather than an option.
 
-**2. Cron.** The expiry sweep and the digests need real cron. Enable system cron
-in Wordify and set `define( 'DISABLE_WP_CRON', true );`. Staging currently has
-system cron **off**, so digests will not send there until it is on. Check with
-`wp dgl digest status`, which prints the next scheduled run or NOT SCHEDULED.
+**2. Cron.** The expiry sweep and the digests need real cron. Enable Server
+Cron in Wordify (Sites > the site > Cron), 15 minutes. Production had it off
+until 27 September 2026, and every scheduled job sat overdue. Check with
+`wp dgl digest status`, which prints the next scheduled run or NOT SCHEDULED,
+and `wp cron event list`, where nothing should read "now" for long.
+
+**2a. The weekly round-up.** Every approved member is subscribed on approval
+(`Store::subscribe_default()`), and `wp dgl digest subscribe-approved`
+backfills members approved before 0.38.0. Slots are fixed in the site's
+timezone: Tuesday 08:00 weekly, 08:00 daily, the 1st at 08:00 monthly; each
+digest covers the one period before its slot. A quiet period sends nothing
+and still counts as handled. `wp dgl digest send <user>` sends one now,
+covering the last period up to this minute.
 
 **3. SmartCache exclusions.** A page cache that serves one member's dashboard to
 another is a privacy bug, not a tuning problem. Staging now excludes

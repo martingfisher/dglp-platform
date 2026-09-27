@@ -125,6 +125,7 @@ final class JoinCopy {
 					__( 'The DGLP team have verified %s. Anything you drafted while you waited can be sent for review now, and you can invite colleagues from the Members page.', 'dgl-platform' ),
 					$org_name
 				),
+				__( 'On Tuesday mornings we will email you a round-up of the news, events and training other member organisations posted that week. Change what it covers, or stop it, under Email preferences in your dashboard or from the link in every round-up.', 'dgl-platform' ),
 			],
 			cta_label: __( 'Go to your dashboard', 'dgl-platform' ),
 			cta_url: $dashboard_url

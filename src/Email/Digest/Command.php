@@ -73,6 +73,8 @@ final class Command {
 
 		$next = wp_next_scheduled( \DGL\Plugin::DIGEST_HOOK );
 		WP_CLI::log( 'Next scheduled run: ' . ( $next ? gmdate( 'Y-m-d H:i:s', (int) $next ) . ' UTC' : 'NOT SCHEDULED' ) );
+		WP_CLI::log( 'Next weekly slot: ' . Frequency::slot_after( Frequency::WEEKLY, $now, wp_timezone() )->format( 'D j M Y H:i T' ) );
+		WP_CLI::log( 'Approved members without a subscription row: ' . count( Store::approved_without_row() ) );
 		WP_CLI::log( '' );
 
 		WP_CLI\Utils\format_items( 'table', $rows, [ 'cadence', 'subscribed', 'due now' ] );
@@ -320,6 +322,48 @@ final class Command {
 			Frequency::label( $frequency ),
 			(string) ( $sub?->consent_at ?? 'now' )
 		) );
+	}
+
+	/**
+	 * Subscribe every approved member who has no subscription row yet.
+	 *
+	 * The default: every content type, every topic, once a week, own
+	 * organisation left out. Anyone with a row already, including anyone
+	 * who unsubscribed, is left alone.
+	 *
+	 * ## OPTIONS
+	 *
+	 * [--dry-run]
+	 * : Count them and stop.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp dgl digest subscribe-approved --dry-run
+	 *     wp dgl digest subscribe-approved
+	 *
+	 * @subcommand subscribe-approved
+	 * @when after_wp_load
+	 *
+	 * @param string[]              $args
+	 * @param array<string, string> $assoc
+	 */
+	public function subscribe_approved( array $args, array $assoc ): void {
+		$ids = Store::approved_without_row();
+
+		if ( isset( $assoc['dry-run'] ) ) {
+			WP_CLI::success( sprintf( 'Dry run: %d approved member(s) would be subscribed to the weekly round-up.', count( $ids ) ) );
+			return;
+		}
+
+		$done = 0;
+
+		foreach ( $ids as $id ) {
+			if ( Store::subscribe_default( $id, 'backfill' ) ) {
+				++$done;
+			}
+		}
+
+		WP_CLI::success( sprintf( '%d approved member(s) subscribed to the weekly round-up. Consent recorded via backfill.', $done ) );
 	}
 
 	/**

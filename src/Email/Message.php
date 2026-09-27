@@ -41,6 +41,7 @@ final readonly class Message {
 	 * @param array<int, array{title:string, meta:string, url:string, summary:string}> $items
 	 *                             A list, for a digest. Empty for everything else.
 	 * @param string[] $to         Recipient addresses. Filled in by the mailer.
+	 * @param string[] $headers    Extra mail headers, "Name: value". A digest's List-Unsubscribe pair.
 	 */
 	public function __construct(
 		public string $key,
@@ -57,6 +58,7 @@ final readonly class Message {
 		public array $footnotes = [],
 		public array $items = [],
 		public array $to = [],
+		public array $headers = [],
 	) {}
 
 	/**
@@ -66,6 +68,15 @@ final readonly class Message {
 	 */
 	public function for_recipients( array $to ): self {
 		return $this->with( [ 'to' => $to ] );
+	}
+
+	/**
+	 * The same message with extra mail headers.
+	 *
+	 * @param string[] $headers
+	 */
+	public function with_headers( array $headers ): self {
+		return $this->with( [ 'headers' => array_values( array_merge( $this->headers, $headers ) ) ] );
 	}
 
 	/**

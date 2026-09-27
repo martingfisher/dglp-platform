@@ -15,9 +15,10 @@ defined( 'ABSPATH' ) || exit;
  * What a subscriber asked for.
  *
  * Consent is stored alongside the preference rather than inferred from the
- * preference existing. Under PECR a marketing digest needs a recorded opt-in,
- * and "there is a row in the table" is not a record of consent: the timestamp
- * and the source are.
+ * preference existing. The record says when and how: at approval (the join
+ * form and the approval email say the round-up comes with membership and how
+ * to stop it), from the preferences screen, from an invitation, or by the
+ * team's backfill. An unsubscribe clears it and is never undone by the site.
  */
 final readonly class Subscription {
 

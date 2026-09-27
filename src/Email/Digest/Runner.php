@@ -31,9 +31,8 @@ defined( 'ABSPATH' ) || exit;
  * This part is querying, assembly and one call per subscriber.
  *
  * It is deliberately capable of doing nothing. A run that matches no content
- * sends no email and does not move the last-sent stamp, so a quiet month
- * produces silence rather than an empty newsletter, and the next digest covers
- * the whole gap.
+ * sends no email, but the slot is still marked handled, so a quiet week
+ * produces silence and the next digest still covers one week.
  */
 final class Runner {
 
@@ -75,7 +74,8 @@ final class Runner {
 		foreach ( Store::due( $frequency, $now, self::BATCH ) as $subscription ) {
 			++$stats['considered'];
 
-			$result = self::send_one( $subscription, $now, $dry_run );
+			$slot   = Frequency::due_slot( $frequency, $subscription->last_sent_at, $subscription->consent_at, $now, wp_timezone() ) ?? $now;
+			$result = self::send_one( $subscription, $now, $dry_run, $slot );
 
 			$stats[ $result['outcome'] ] = ( $stats[ $result['outcome'] ] ?? 0 ) + 1;
 			$stats['items']             += $result['items'];
@@ -85,18 +85,29 @@ final class Runner {
 	}
 
 	/**
-	 * Build and send one subscriber's digest.
+	 * Build and send one subscriber's digest for a slot.
+	 *
+	 * The slot is the send time being handled; the digest covers the one
+	 * period before it. A manual send passes now, so it covers the period up
+	 * to this minute. The slot is stamped on a real send and on a quiet
+	 * period alike, never on a dry run or a failure.
 	 *
 	 * @return array{outcome:string, items:int}
 	 */
-	public static function send_one( Subscription $subscription, DateTimeImmutable $now, bool $dry_run = false ): array {
+	public static function send_one( Subscription $subscription, DateTimeImmutable $now, bool $dry_run = false, ?DateTimeImmutable $slot = null ): array {
 		if ( ! $subscription->is_sendable() ) {
 			return [ 'outcome' => 'skipped_empty', 'items' => 0 ];
 		}
 
-		$matched = Matcher::match( $subscription, self::candidates( $subscription ) );
+		$slot    = $slot ?? $now;
+		$stamp   = $slot->setTimezone( new DateTimeZone( 'UTC' ) )->format( 'Y-m-d H:i:s' );
+		$matched = Matcher::match( $subscription, self::candidates( $subscription, $slot ) );
 
 		if ( ! Matcher::should_send( $matched ) ) {
+			if ( ! $dry_run ) {
+				Store::mark_sent( $subscription->user_id, $stamp );
+			}
+
 			return [ 'outcome' => 'skipped_empty', 'items' => 0 ];
 		}
 
@@ -120,6 +131,16 @@ final class Runner {
 			return [ 'outcome' => 'sent', 'items' => count( $items ) ];
 		}
 
+		// Mail clients show their own unsubscribe control from these, and
+		// Gmail's one-click POSTs to the same link the footer carries.
+		$unsubscribe = self::unsubscribe_url( $subscription->unsubscribe_token );
+		$message     = $message->with_headers(
+			[
+				'List-Unsubscribe: <' . $unsubscribe . '>',
+				'List-Unsubscribe-Post: List-Unsubscribe=One-Click',
+			]
+		);
+
 		$sent = Mailer::send( $message->for_recipients( [ $subscription->email ] ) );
 
 		if ( ! $sent ) {
@@ -131,27 +152,24 @@ final class Runner {
 			return [ 'outcome' => 'failed', 'items' => 0 ];
 		}
 
-		Store::mark_sent( $subscription->user_id, $now->format( 'Y-m-d H:i:s' ) );
+		Store::mark_sent( $subscription->user_id, $stamp );
 
 		return [ 'outcome' => 'sent', 'items' => count( $items ) ];
 	}
 
 	/**
-	 * Everything published since this subscriber last heard from us, as the
-	 * plain arrays {@see Matcher} reads.
-	 *
-	 * The window is deliberately generous when there is no last-sent stamp: a
-	 * brand new subscriber gets the last month rather than everything ever
-	 * posted, which would be a first email of several hundred items.
+	 * Everything published in the one period before a slot, as the plain
+	 * arrays {@see Matcher} reads. The Matcher then drops anything from
+	 * before the subscriber's last digest, so a manual send mid-week never
+	 * repeats what Tuesday's already carried.
 	 *
 	 * @return array<int, array{id:int, type:string, topics:int[], org_id:int, approved_at:string}>
 	 */
-	public static function candidates( Subscription $subscription ): array {
-		$since = $subscription->last_sent_at;
-
-		if ( null === $since || '' === $since ) {
-			$since = self::now()->modify( '-1 month' )->format( 'Y-m-d H:i:s' );
-		}
+	public static function candidates( Subscription $subscription, ?DateTimeImmutable $slot = null ): array {
+		$slot  = $slot ?? self::now();
+		$since = Frequency::window_start( $subscription->frequency, $slot, wp_timezone() )
+			->setTimezone( new DateTimeZone( 'UTC' ) )
+			->format( 'Y-m-d H:i:s' );
 
 		/*
 		 * Switched-off types are filtered here rather than in the Matcher.

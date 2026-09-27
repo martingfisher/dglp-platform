@@ -1581,6 +1581,7 @@ $group( 'Invitations: accepting creates exactly one account' );
 $before = count_users()['total_users'];
 
 $accept = Invites::accept( $token, 'New Comer', 'a-long-enough-password' );
+$ok( isset( $accept['user_id'] ) && DigestStore::for_user( (int) $accept['user_id'] )?->has_consent() === true, 'accepting an invitation subscribes the new member to the weekly round-up' );
 
 $ok( true === $accept['ok'], 'the invitation is accepted' );
 $ok( InviteRules::ACCEPT_CREATE === $accept['outcome'], 'and an account is created' );
@@ -1798,7 +1799,9 @@ $group( 'Digests: nothing goes out without recorded consent' );
 
 $ok( DigestStore::exists(), 'the digest table exists after migration' );
 
-$wpdb->query( 'DELETE FROM ' . DigestStore::name() . ' WHERE user_id IN (' . (int) $alice . ',' . (int) $aaron . ',' . (int) $bella . ')' );
+// Every approval and invitation above subscribed somebody. Only Bella is
+// under test here, so the table starts empty.
+$wpdb->query( 'DELETE FROM ' . DigestStore::name() ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 
 $ok( null === DigestStore::for_user( $alice ), 'somebody who has never been asked has no preferences' );
 
@@ -1824,7 +1827,15 @@ DigestStore::save( $bella, [ PostTypes::EVENT ], [], Frequency::WEEKLY, false );
 
 $group( 'Digests: a run that has nothing to say says nothing' );
 
-$now = new DateTimeImmutable( 'now', new DateTimeZone( 'UTC' ) );
+/*
+ * A fixed Wednesday well after every fixture this run has approved, so the
+ * Tuesday slots fall where the assertions expect and nothing else is in
+ * the window. The slot times come from the site's own timezone.
+ */
+$utc      = new DateTimeZone( 'UTC' );
+$now      = new DateTimeImmutable( '2027-01-06 10:00:00', $utc );
+$slot_of  = static fn( DateTimeImmutable $after ): DateTimeImmutable => Frequency::slot_after( Frequency::WEEKLY, $after, wp_timezone() );
+$stamp_of = static fn( DateTimeImmutable $d ): string => $d->setTimezone( $utc )->format( 'Y-m-d H:i:s' );
 
 /* Nothing has been approved since they subscribed. */
 $wpdb->query( $wpdb->prepare( 'UPDATE ' . DigestStore::name() . ' SET last_sent_at = %s WHERE user_id = %d', $now->format( 'Y-m-d H:i:s' ), $bella ) );
@@ -1887,7 +1898,8 @@ $digest = $captured[0]['message'] ?? null;
 
 $ok( null !== $digest, 'the digest message exists' );
 $ok( in_array( get_userdata( $bella )->user_email, (array) $captured[0]['to'], true ) || [] !== (array) $captured[0]['to'], 'addressed to the subscriber' );
-$ok( str_contains( $digest->subject, '1 new thing' ), 'the subject leads with the count, singular' );
+$ok( str_contains( $digest->subject, 'weekly round-up: 1 new thing' ), 'the subject names the period and the count, singular (' . $digest->subject . ')' );
+$ok( in_array( 'List-Unsubscribe-Post: List-Unsubscribe=One-Click', $digest->headers, true ) && 1 === count( array_filter( $digest->headers, static fn( string $h ): bool => str_starts_with( $h, 'List-Unsubscribe: <' ) && str_contains( $h, '/unsubscribe/' ) ) ), 'it carries the List-Unsubscribe pair for mail clients' );
 $ok( $digest->has_items(), 'the message carries its list' );
 
 $titles = array_column( $digest->items, 'title' );
@@ -1905,7 +1917,7 @@ $ok( str_contains( $unsub_line, DigestStore::for_user( $bella )->unsubscribe_tok
 $group( 'Digests: the stamp moves only on a real send' );
 
 $after = DigestStore::for_user( $bella );
-$ok( null !== $after->last_sent_at && $after->last_sent_at > $stamp_before, 'a sent digest moves the last-sent date' );
+$ok( null !== $after->last_sent_at && $after->last_sent_at > $stamp_before && $stamp_of( $slot_of( $now ) ) === $after->last_sent_at, 'a sent digest stamps the slot it handled, the Tuesday 08:00 after the last (' . $after->last_sent_at . ')' );
 
 $again = DigestRunner::run( Frequency::WEEKLY, $now->modify( '+8 days' ) );
 $ok( 0 === $again['sent'], 'running again immediately sends nothing, because nothing is owed' );
@@ -1941,20 +1953,57 @@ update_option( \DGL\Email\Routing::OPTION_ENABLED, 0 );
 DigestStore::save( $bella, [ PostTypes::EVENT ], [], Frequency::WEEKLY, false );
 $wpdb->query( $wpdb->prepare( 'UPDATE ' . DigestStore::name() . ' SET last_sent_at = %s WHERE user_id = %d', $now->format( 'Y-m-d H:i:s' ), $bella ) );
 
-$off = DigestRunner::run( Frequency::WEEKLY, $now->modify( '+30 days' ) );
+$off = DigestRunner::run( Frequency::WEEKLY, $now->modify( '+8 days' ) );
 $ok( 0 === $off['considered'], 'a site with sending off does not even look' );
 
 update_option( \DGL\Email\Routing::OPTION_ENABLED, 1 );
-$dry = DigestRunner::run( Frequency::WEEKLY, $now->modify( '+30 days' ), true );
+$dry = DigestRunner::run( Frequency::WEEKLY, $now->modify( '+8 days' ), true );
 $ok( $dry['considered'] > 0, 'but a dry run does the work' );
 $ok( $dry['sent'] > 0, 'and reports what it would send' );
 
 $dry_stamp = DigestStore::for_user( $bella )->last_sent_at;
-DigestRunner::run( Frequency::WEEKLY, $now->modify( '+31 days' ), true );
+DigestRunner::run( Frequency::WEEKLY, $now->modify( '+9 days' ), true );
 $ok( DigestStore::for_user( $bella )->last_sent_at === $dry_stamp, 'while moving nothing, so it can be run repeatedly' );
 
-update_option( \DGL\Email\Routing::OPTION_ENABLED, $mail_was );
+$group( 'Digests: a quiet week is stamped, so the next covers one week' );
+
+update_option( \DGL\Email\Routing::OPTION_ENABLED, 1 );
+DigestStore::save( $bella, [ PostTypes::EVENT ], [], Frequency::WEEKLY, false );
+$slot1 = $slot_of( $now->modify( '+20 days' ) );
+$slot2 = $slot_of( $slot1 );
+$slot3 = $slot_of( $slot2 );
+$wpdb->query( $wpdb->prepare( 'UPDATE ' . DigestStore::name() . ' SET last_sent_at = %s WHERE user_id = %d', $stamp_of( $slot1 ), $bella ) );
+update_post_meta( $fresh, Meta::ITEM_APPROVED_AT, $stamp_of( $slot1->modify( '-3 days' ) ) );
+\DGL\Index\Sync::sync( $fresh );
+$quiet_run = DigestRunner::run( Frequency::WEEKLY, $slot2->modify( '+1 hour' ) );
+$ok( 1 === $quiet_run['considered'] && 0 === $quiet_run['sent'] && $stamp_of( $slot2 ) === DigestStore::for_user( $bella )->last_sent_at, 'nothing new in the week: no email, and the slot is stamped (' . DigestStore::for_user( $bella )->last_sent_at . ')' );
+update_post_meta( $fresh, Meta::ITEM_APPROVED_AT, $stamp_of( $slot2->modify( '+2 days' ) ) );
+\DGL\Index\Sync::sync( $fresh );
+$captured = [];
+$next_run = DigestRunner::run( Frequency::WEEKLY, $slot3->modify( '+1 hour' ) );
+$ok( 1 === $next_run['sent'] && str_contains( implode( ' ', array_column( $captured[0]['message']->items ?? [], 'title' ) ), 'Coffee morning' ), 'the week after carries what was posted that week' );
+
+$group( 'Digests: approval subscribes, an unsubscribe sticks, backfill fills the gaps' );
+
 $wpdb->query( 'DELETE FROM ' . DigestStore::name() . ' WHERE user_id IN (' . (int) $alice . ',' . (int) $aaron . ',' . (int) $bella . ')' );
+$ok( DigestStore::subscribe_default( $alice, 'approval' ), 'an approved member with no row is subscribed' );
+$alice_sub = DigestStore::for_user( $alice );
+$ok( null !== $alice_sub && $alice_sub->has_consent() && Frequency::WEEKLY === $alice_sub->frequency && [] === array_diff( PostTypes::enabled_keys(), $alice_sub->types ) && ! $alice_sub->include_own_org, 'to the weekly round-up of every type, own organisation left out' );
+$alice_row = $wpdb->get_row( $wpdb->prepare( 'SELECT consent_source FROM ' . DigestStore::name() . ' WHERE user_id = %d', $alice ), ARRAY_A );
+$ok( 'approval' === ( $alice_row['consent_source'] ?? '' ), 'and the consent record says approval' );
+$ok( ! DigestStore::subscribe_default( $alice, 'approval' ), 'a second approval changes nothing' );
+DigestStore::unsubscribe( $alice );
+$ok( ! DigestStore::subscribe_default( $alice, 'approval' ) && ! DigestStore::for_user( $alice )->has_consent(), 'an unsubscribed member is never re-subscribed by an approval' );
+$gap = DigestStore::approved_without_row();
+$ok( in_array( $aaron, $gap, true ) && in_array( $bella, $gap, true ) && ! in_array( $alice, $gap, true ), 'approved members without a row are the backfill list' );
+foreach ( $gap as $gap_id ) {
+	DigestStore::subscribe_default( $gap_id, 'backfill' );
+}
+$ok( [] === DigestStore::approved_without_row(), 'and after the backfill it is empty' );
+$ok( DigestStore::for_user( $aaron )?->has_consent() && ! DigestStore::for_user( $alice )->has_consent(), 'the backfill subscribed the gaps and left the opt-out alone' );
+
+update_option( \DGL\Email\Routing::OPTION_ENABLED, $mail_was );
+$wpdb->query( 'DELETE FROM ' . DigestStore::name() . ' WHERE consent_source IN (\'approval\', \'backfill\') OR user_id IN (' . (int) $alice . ',' . (int) $aaron . ',' . (int) $bella . ')' );
 
 $group( 'Switched-off types are hidden, not deleted' );
 

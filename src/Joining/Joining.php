@@ -121,6 +121,10 @@ final class Joining {
 			return $user_id;
 		}
 
+		if ( UserContext::ACCOUNT_APPROVED === $status ) {
+			\DGL\Email\Digest\Store::subscribe_default( (int) $user_id, 'domain-join' );
+		}
+
 		Store::update( $signup->id, [ 'state' => Signup::JOINED, 'kind' => Signup::KIND_JOIN, 'org_id' => $org_id, 'user_id' => $user_id, 'completed_at' => Store::now() ] );
 		Log::record( 'join_completed', 'signup', $signup->id, $org_id, $signup->email, [ 'role' => [ '', $role ] ], $user_id );
 
@@ -379,6 +383,7 @@ final class Joining {
 		update_post_meta( $signup->org_id, Meta::ORG_STATUS, Meta::ORG_APPROVED );
 		update_user_meta( $signup->user_id, Meta::USER_ACCOUNT_STATUS, UserContext::ACCOUNT_APPROVED );
 		Access::forget( $signup->user_id );
+		\DGL\Email\Digest\Store::subscribe_default( $signup->user_id, 'approval' );
 		Store::update( $signup_id, [ 'state' => Signup::APPROVED, 'decided_at' => Store::now(), 'decided_by' => $actor_id ] );
 
 		Log::record( 'org_status_changed', 'org', $signup->org_id, $signup->org_id, __( 'Verified from a registration.', 'dgl-platform' ), [ 'status' => [ Meta::ORG_PENDING, Meta::ORG_APPROVED ] ], $actor_id );
@@ -489,6 +494,10 @@ final class Joining {
 		update_user_meta( $user_id, Meta::USER_ACCOUNT_STATUS, $status );
 		Access::forget( $user_id );
 
+		if ( UserContext::ACCOUNT_APPROVED === $status ) {
+			\DGL\Email\Digest\Store::subscribe_default( $user_id, 'approval' );
+		}
+
 		$copied = [];
 
 		if ( $duplicate > 0 ) {
@@ -594,6 +603,7 @@ final class Joining {
 		update_user_meta( $signup->user_id, Meta::USER_ORG_ROLE, $role );
 		update_user_meta( $signup->user_id, Meta::USER_ACCOUNT_STATUS, UserContext::ACCOUNT_APPROVED );
 		Access::forget( $signup->user_id );
+		\DGL\Email\Digest\Store::subscribe_default( $signup->user_id, 'approval' );
 		Store::update( $signup->id, [ 'state' => Signup::APPROVED, 'decided_at' => Store::now(), 'decided_by' => $actor_id ] );
 
 		Log::record( 'join_claim_approved', 'signup', $signup->id, $signup->org_id, $signup->email, [ 'role' => [ UserContext::ORG_CONTRIBUTOR, $role ] ], $actor_id );

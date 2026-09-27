@@ -376,6 +376,7 @@ final class Invites {
 		update_user_meta( $user_id, Meta::USER_ORG, $invite->org_id );
 		update_user_meta( $user_id, Meta::USER_ORG_ROLE, $invite->org_role );
 		update_user_meta( $user_id, Meta::USER_ACCOUNT_STATUS, UserContext::ACCOUNT_APPROVED );
+		\DGL\Email\Digest\Store::subscribe_default( $user_id, 'invite' );
 
 		$user = get_userdata( $user_id );
 

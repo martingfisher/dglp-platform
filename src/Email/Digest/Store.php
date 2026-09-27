@@ -152,7 +152,7 @@ final class Store {
 				continue;
 			}
 
-			if ( Frequency::is_due( $subscription->frequency, $subscription->last_sent_at, $now ) ) {
+			if ( Frequency::is_due( $subscription->frequency, $subscription->last_sent_at, $subscription->consent_at, $now, wp_timezone() ) ) {
 				$due[] = $subscription;
 			}
 		}
@@ -259,6 +259,52 @@ final class Store {
 	}
 
 	/**
+	 * The default subscription an approved member starts with: everything the
+	 * site offers, every topic, once a week, their own organisation's posts
+	 * left out because they have seen those. Only for somebody with no row at
+	 * all: an unsubscribe is a record, and a later approval never undoes it.
+	 *
+	 * @param string $source How they came to be subscribed, for the consent record.
+	 */
+	public static function subscribe_default( int $user_id, string $source ): bool {
+		if ( $user_id <= 0 || ! self::exists() || null !== self::for_user( $user_id ) ) {
+			return false;
+		}
+
+		$types = array_values( \DGL\PostTypes::enabled_keys() );
+
+		return [] !== $types && self::save( $user_id, $types, [], Frequency::WEEKLY, false, $source );
+	}
+
+	/**
+	 * Approved member accounts that have never had a digest row.
+	 *
+	 * @return int[]
+	 */
+	public static function approved_without_row(): array {
+		global $wpdb;
+
+		$ids = get_users(
+			[
+				'meta_key'   => \DGL\Meta::USER_ACCOUNT_STATUS, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+				'meta_value' => \DGL\Access\UserContext::ACCOUNT_APPROVED, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
+				'fields'     => 'ID',
+				'number'     => -1,
+			]
+		);
+
+		if ( [] === $ids ) {
+			return [];
+		}
+
+		$table = self::name();
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery
+		$have = array_map( 'intval', (array) $wpdb->get_col( "SELECT user_id FROM {$table}" ) );
+
+		return array_values( array_diff( array_map( 'intval', $ids ), $have ) );
+	}
+
+	/**
 	 * Stop sending, keeping the record of what they had asked for.
 	 *
 	 * Consent is cleared rather than the row deleted. Deleting it would lose
@@ -282,12 +328,9 @@ final class Store {
 	}
 
 	/**
-	 * Record that a digest went out.
-	 *
-	 * Only called when something was actually sent. A run that matched nothing
-	 * deliberately leaves the stamp alone, so a monthly subscriber with a quiet
-	 * quarter gets one digest covering the quarter rather than three empty ones
-	 * or a silently skipped window.
+	 * Record the slot that was handled, whether a digest went out or the
+	 * period was quiet. Each digest then covers exactly one period, and a
+	 * quiet week is a week with no email, not a week folded into the next.
 	 */
 	public static function mark_sent( int $user_id, string $at ): bool {
 		global $wpdb;

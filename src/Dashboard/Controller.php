@@ -2418,7 +2418,8 @@ final class Controller {
 	 * One click, no confirmation step, no sign-in. The token identifies the
 	 * subscriber, so there is nothing to ask them. A screen that says "are you
 	 * sure" to somebody who has already decided is a screen that gets the
-	 * message marked as spam instead.
+	 * message marked as spam instead, so it is one button, no sign-in, and
+	 * only the POST is needed because link scanners open links.
 	 */
 	private static function unsubscribe( string $token ): void {
 		$subscription = '' !== $token ? DigestStore::for_token( $token ) : null;
@@ -2430,6 +2431,28 @@ final class Controller {
 				[
 					'done'  => false,
 					'error' => __( 'That link is not valid. If you are signed in you can change your email preferences in your profile.', 'dgl-platform' ),
+				],
+				$title
+			);
+
+			return;
+		}
+
+		/*
+		 * A plain visit shows one button; the POST does it. Mail scanners
+		 * open every link in an email, and a link that unsubscribes on being
+		 * opened unsubscribes people who never clicked. A mail client's own
+		 * one-click control POSTs here too, so it lands on the same branch.
+		 * No nonce: the token is the secret, and that POST carries no nonce.
+		 */
+		if ( 'POST' !== ( $_SERVER['REQUEST_METHOD'] ?? 'GET' ) ) {
+			self::screen(
+				'unsubscribe',
+				[
+					'done'    => false,
+					'confirm' => true,
+					'error'   => '',
+					'email'   => $subscription->email,
 				],
 				$title
 			);

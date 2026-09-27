@@ -245,10 +245,13 @@ final class Mailer {
 		$body    = Template::render( $message, Logo::email_url() );
 		$text    = $message->to_text();
 
-		$headers = [
-			self::AUTO_HEADER,
-			'X-DGL-Message: ' . $message->key . '/' . $message->audience,
-		];
+		$headers = array_merge(
+			[
+				self::AUTO_HEADER,
+				'X-DGL-Message: ' . $message->key . '/' . $message->audience,
+			],
+			$message->headers
+		);
 
 		$html_type  = static fn(): string => 'text/html';
 		$from_email = static fn( string $original ): string => Routing::from_address() ?: $original;

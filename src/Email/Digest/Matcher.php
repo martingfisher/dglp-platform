@@ -95,10 +95,8 @@ final class Matcher {
 	/**
 	 * Whether this digest is worth sending.
 	 *
-	 * An empty digest is never sent, and the last-sent stamp is deliberately not
-	 * advanced when nothing matched. A monthly subscriber with a quiet quarter
-	 * then gets one digest covering the whole quarter, rather than three empty
-	 * emails or a silently skipped window.
+	 * An empty digest is never sent. The runner still marks the slot handled,
+	 * so the next digest covers one period, not two.
 	 *
 	 * @param int[] $matched
 	 */

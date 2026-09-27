@@ -937,3 +937,22 @@ clean. They are the only DGLP content on staging.
   event or course (on the leaf) and the date it was listed are never
   confused. A series says its pattern in the line and its next date on the
   leaf. Martin's feedback, 27 September.
+- **0.38.0 deployed and run** (27 September, production): the weekly
+  round-up as Martin intended it. Every approval subscribes the member
+  (`Store::subscribe_default()` from the five approval paths: join
+  approval, claim approval, domain join, merged registration, invitation),
+  and `wp dgl digest subscribe-approved` backfilled members approved before
+  this. Send slots are fixed in the site's timezone (`Frequency`): Tuesday
+  08:00 weekly, 08:00 daily, the 1st at 08:00 monthly; a digest covers the
+  one period before its slot; a quiet period sends nothing but is stamped,
+  so the next one still covers one period. This also fixes the first-send
+  bug: "never sent" used to be worked out from the current clock, so cron
+  never sent anyone their first digest. Subject "Your weekly round-up: N
+  new things from ...". `List-Unsubscribe` and one-click POST headers on
+  every digest; the unsubscribe page shows one button on a visit and acts
+  on the POST, so link scanners cannot unsubscribe people. The join form,
+  the approval email and the Email preferences tab say the round-up comes
+  with membership and how to stop it. Wordify server cron switched on
+  (every 15 minutes): every WordPress scheduled job had been overdue since
+  23 September. Mail redirect to Martin kept until launch. Unit 2019,
+  integration 1174.

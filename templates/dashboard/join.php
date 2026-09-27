@@ -323,6 +323,8 @@ $reasons_of = static function ( array $match ): string {
 				<input class="dgl-field" type="password" id="dgl_password_confirm" name="dgl_password_confirm" required minlength="<?php echo (int) InviteRules::PASSWORD_MIN; ?>" autocomplete="new-password">
 			</div>
 
+			<p class="dgl-help"><?php esc_html_e( 'Once your account is approved we will email you a weekly round-up of the news, events and training other member organisations post. You can change what it covers or stop it at any time, from your dashboard or from the link in every email.', 'dgl-platform' ); ?></p>
+
 			<button class="dgl-button" type="submit" data-dgl-working="<?php esc_attr_e( 'Working…', 'dgl-platform' ); ?>"><?php esc_html_e( 'Continue', 'dgl-platform' ); ?></button>
 		</form>
 	<?php endif; ?>

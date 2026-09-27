@@ -89,6 +89,13 @@ because somebody reading in plain text is reading the whole message.
 does nothing is worse than saying plainly what the email is. Digest preferences
 are separate and live in the dashboard.
 
+The round-up is the exception: every one carries a tokenised unsubscribe link
+and a preferences link in the footer, and `List-Unsubscribe` plus
+`List-Unsubscribe-Post: List-Unsubscribe=One-Click` headers so mail clients
+show their own control. The unsubscribe page acts on a POST only (the button,
+or a mail client's one-click), never on a plain visit, because link scanners
+open every link in an email.
+
 ## Organisation change decisions
 
 Added 17 September 2026. When the review team accepts or refuses a name or

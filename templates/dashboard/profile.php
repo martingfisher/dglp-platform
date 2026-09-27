@@ -450,10 +450,10 @@ $is_owner = $user instanceof UserContext && $user->is_org_owner();
 	<?php endif; ?>
 
 	<section class="dgl-card">
-		<h2 class="dgl-section__title"><?php esc_html_e( 'Subscribe to DGLP email updates', 'dgl-platform' ); ?></h2>
+		<h2 class="dgl-section__title"><?php esc_html_e( 'Your round-up email', 'dgl-platform' ); ?></h2>
 
 		<p>
-			<?php esc_html_e( 'A round-up of what other member organisations have posted. Tick what you want to hear about. Tick nothing and we will not send it.', 'dgl-platform' ); ?>
+			<?php esc_html_e( 'A round-up of what other member organisations have posted. It comes weekly on Tuesday mornings once your account is approved. Tick what you want it to cover, or tick nothing to stop it.', 'dgl-platform' ); ?>
 		</p>
 
 		<form method="post" class="dgl-form">

@@ -47,17 +47,24 @@ final class Copy {
 		$count = count( $items );
 		$site  = '' !== trim( $site_name ) ? $site_name : __( 'the partnership', 'dgl-platform' );
 
+		$period = match ( $frequency ) {
+			Frequency::DAILY   => __( 'daily', 'dgl-platform' ),
+			Frequency::MONTHLY => __( 'monthly', 'dgl-platform' ),
+			default            => __( 'weekly', 'dgl-platform' ),
+		};
+
 		$subject = sprintf(
-			/* translators: 1: number of items, 2: site name. */
-			_n( '%1$d new thing from %2$s', '%1$d new things from %2$s', $count, 'dgl-platform' ),
+			/* translators: 1: daily, weekly or monthly, 2: number of items, 3: site name. */
+			_n( 'Your %1$s round-up: %2$d new thing from %3$s', 'Your %1$s round-up: %2$d new things from %3$s', $count, 'dgl-platform' ),
+			$period,
 			$count,
 			$site
 		);
 
 		$cadence = match ( $frequency ) {
-			Frequency::DAILY   => __( 'You asked to hear about these every day.', 'dgl-platform' ),
-			Frequency::MONTHLY => __( 'You asked to hear about these once a month.', 'dgl-platform' ),
-			default            => __( 'You asked to hear about these once a week.', 'dgl-platform' ),
+			Frequency::DAILY   => __( 'You get this every morning.', 'dgl-platform' ),
+			Frequency::MONTHLY => __( 'You get this on the first of the month.', 'dgl-platform' ),
+			default            => __( 'You get this on Tuesday mornings.', 'dgl-platform' ),
 		};
 
 		return new Message(
@@ -71,12 +78,11 @@ final class Copy {
 				$site
 			),
 			paragraphs: [
-				_n(
-					'Here is what member organisations have posted since your last digest.',
-					'Here is what member organisations have posted since your last digest.',
-					$count,
-					'dgl-platform'
-				),
+				match ( $frequency ) {
+					Frequency::DAILY   => __( 'Here is what member organisations posted yesterday.', 'dgl-platform' ),
+					Frequency::MONTHLY => __( 'Here is what member organisations posted last month.', 'dgl-platform' ),
+					default            => __( 'Here is what member organisations posted in the last week.', 'dgl-platform' ),
+				},
 			],
 			cta_label: '' !== $browse_url ? __( 'See everything', 'dgl-platform' ) : '',
 			cta_url: $browse_url,
