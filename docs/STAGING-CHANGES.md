@@ -930,3 +930,10 @@ clean. They are the only DGLP content on staging.
   day, white card, left of the picture (`Cards::date_block()`). A series
   shows its next date; a cancelled event's leaf is faded. Events only for
   now, training to follow once Martin has seen it. AAA contrast walk clean.
+- **0.37.4 deployed** (27 September, production): the calendar leaf on
+  Training too, and on the featured item, with the start time under the
+  day when there is one. The meta line no longer repeats the date of the
+  thing: it says where, who, and "Posted: <date>", so the date of the
+  event or course (on the leaf) and the date it was listed are never
+  confused. A series says its pattern in the line and its next date on the
+  leaf. Martin's feedback, 27 September.

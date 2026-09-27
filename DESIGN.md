@@ -337,7 +337,7 @@ shadows, no gradients, no icons unless the label needs one.
 - The server never relies on the hiding: a sub-switch that was not posted is off, and a master that is off clears everything under it.
 
 ### Calendar leaf
-- On an event row and the side cards beside the hero, a 64px white card with a 1px Cloud Grey border and 12px radius sits left of the picture: the month in 0.68rem teal uppercase over the day in 1.55rem bold. Decorative to assistive tech (`aria-hidden`), with the date on the `<time>`. A cancelled event's leaf drops to 55% opacity. 56px beside the hero and at phone width.
+- On an event or training row, the side cards beside the hero and the featured item itself, a 64px white card with a 1px Cloud Grey border and 12px radius sits left of the picture: the month in 0.68rem teal uppercase over the day in 1.55rem bold, with the start time under it in 0.7rem muted when there is one. The meta line then says where, who, and "Posted: <date>": the date of the thing is on the leaf, the date it was listed is in words, and the two are never confused. Decorative to assistive tech (`aria-hidden`), with the date on the `<time>`. A cancelled event's leaf drops to 55% opacity. 56px beside the hero and at phone width.
 
 ### Social card
 - Made on the server when an item, organisation or list has no picture of its own: 1200 by 630, Council Navy ground, the type as a small pale kicker, the title in Montserrat Bold (64, 54 or 44 to fit three or four lines), a thin rule, then who posted it in white and the site name in pale on the right. Nothing else: the card is read at thumbnail size in a feed.

@@ -25,6 +25,7 @@ $label = Frontend::type_label( $type, true );
 $filter_args = \DGL\Frontend\Filters::args_from( wp_unslash( $_GET ), $type );
 $topics      = \DGL\Frontend\Filters::topics();
 $whens       = \DGL\PostTypes::EVENT === $type ? \DGL\Frontend\Filters::whens() : [];
+$dated       = in_array( $type, [ \DGL\PostTypes::EVENT, \DGL\PostTypes::TRAINING ], true ); // These carry a calendar leaf.
 $orgs        = \DGL\Frontend\Filters::orgs( $type );
 $filtering   = \DGL\Frontend\Filters::is_active( $filter_args );
 $filters_on  = count( array_filter( $filter_args ) );
@@ -70,6 +71,7 @@ $meta_line = static function ( WP_Post $item ): string {
 				<article class="dgl-hero__lead<?php echo Cards::has_picture( $lead ) ? '' : ' dgl-hero__lead--nopic'; ?>">
 					<?php echo Cards::picture( $lead, 'large', true ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside. ?>
 					<div class="dgl-hero__body">
+						<?php echo $dated ? Cards::date_block( $lead ) : ''; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside. ?>
 						<?php if ( \DGL\Workflow\Pins::is_pinned( (int) $lead->ID ) ) : ?>
 							<p class="dgl-pub__pin dgl-pub__pin--onpic"><?php esc_html_e( 'Featured', 'dgl-platform' ); ?></p>
 						<?php elseif ( \DGL\Events\Cancel::is_cancelled( (int) $lead->ID ) ) : ?>
@@ -90,7 +92,7 @@ $meta_line = static function ( WP_Post $item ): string {
 					for ( $i = 0; $i < $side_count; $i++ ) :
 						?>
 						<?php the_post(); $item = get_post(); ?>
-						<?php $leaf = \DGL\PostTypes::EVENT === $type ? Cards::date_block( $item ) : ''; ?>
+						<?php $leaf = $dated ? Cards::date_block( $item ) : ''; ?>
 						<article class="dgl-hero__item<?php echo '' !== $leaf ? ' dgl-card--dated' : ''; ?>">
 							<?php echo $leaf; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside. ?>
 							<a class="dgl-card__pic" href="<?php the_permalink(); ?>" tabindex="-1" aria-hidden="true"><?php echo Cards::picture( $item, 'medium' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside. ?></a>

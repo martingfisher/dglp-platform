@@ -3815,14 +3815,17 @@ update_post_meta( $cd_event, 'dgl_format', 'in_person' );
 update_post_meta( $cd_event, 'dgl_venue_name', 'The Hub' );
 \DGL\Events\Series::stamp( $cd_event, PostTypes::EVENT );
 $cd_emeta = \DGL\Frontend\Cards::meta( get_post( $cd_event ) );
-$ok( 3 === count( $cd_emeta ) && str_contains( $cd_emeta[0], '2031' ) && str_contains( $cd_emeta[0], '18:30' ) && 'The Hub' === $cd_emeta[1] && 'Org A' === $cd_emeta[2], 'a one-off event: when, where, organisation (' . implode( ' / ', $cd_emeta ) . ')' );
+$ok( 3 === count( $cd_emeta ) && 'The Hub' === $cd_emeta[0] && 'Org A' === $cd_emeta[1] && str_starts_with( $cd_emeta[2], 'Posted: ' ) && ! str_contains( implode( ' ', $cd_emeta ), '2031' ), 'a one-off event: where, organisation, when it was posted; the event date is on the leaf (' . implode( ' / ', $cd_emeta ) . ')' );
+$cd_leaf = \DGL\Frontend\Cards::date_parts( get_post( $cd_event ) );
+$ok( null !== $cd_leaf && 'Mar' === $cd_leaf['month'] && '4' === $cd_leaf['day'] && '18:30' === $cd_leaf['time'] && '2031-03-04T18:30' === $cd_leaf['iso'], 'the leaf carries the event date and time (' . implode( ' ', $cd_leaf ?? [] ) . ')' );
 $cd_series = $make_item( $org_a, $alice, Statuses::LIVE );
 $cd_tue = ( new DateTimeImmutable( 'today', wp_timezone() ) )->modify( '+1 day' );
 update_post_meta( $cd_series, 'dgl_start_datetime', $cd_tue->format( 'Y-m-d' ) . ' 13:00:00' );
 update_post_meta( $cd_series, 'dgl_repeat', [ 'freq' => 'weekly', 'weekdays' => [ (int) $cd_tue->format( 'N' ) ], 'until' => $cd_tue->modify( '+2 months' )->format( 'Y-m-d' ) ] );
 \DGL\Events\Series::stamp( $cd_series, PostTypes::EVENT );
 $cd_smeta = \DGL\Frontend\Cards::meta( get_post( $cd_series ) );
-$ok( str_starts_with( $cd_smeta[0], 'Next ' ) && str_contains( $cd_smeta[0], '13:00' ), 'a series: its next date (' . $cd_smeta[0] . ')' );
+$ok( str_starts_with( $cd_smeta[0], 'Every ' ) && str_contains( $cd_smeta[0], '13:00' ) && str_starts_with( end( $cd_smeta ), 'Posted: ' ), 'a series: its pattern, then when it was posted (' . implode( ' / ', $cd_smeta ) . ')' );
+$ok( '13:00' === \DGL\Frontend\Cards::date_parts( get_post( $cd_series ) )['time'], 'and its leaf carries the next date\'s time' );
 \DGL\Events\Cancel::cancel( $cd_event, '', $alice );
 $ok( 'Cancelled' === \DGL\Frontend\Cards::meta( get_post( $cd_event ) )[0], 'a cancelled event says so first' );
 
@@ -4343,6 +4346,9 @@ $ok( 7 === count( array_filter( $demo_tr, static fn( int $id ): bool => '' !== (
 $demo_tr_index = ItemsTable::for_org( $demo_org, [ PostTypes::TRAINING ], [ Statuses::LIVE ], 50 );
 $ok( 7 === count( array_filter( $demo_tr, static fn( int $id ): bool => in_array( $id, $demo_tr_index, true ) ) ), 'and an index row' );
 $ok( 2 === count( array_filter( $demo_tr, static fn( int $id ): bool => 'blended' === get_post_meta( $id, 'dgl_delivery', true ) ) ) && 2 === count( array_filter( $demo_tr, static fn( int $id ): bool => 'online' === get_post_meta( $id, 'dgl_delivery', true ) ) ), 'two blended, two online, three in person' );
+$demo_tr_leaf = \DGL\Frontend\Cards::date_parts( get_post( $demo_tr[0] ) );
+$ok( null !== $demo_tr_leaf && '' === $demo_tr_leaf['time'] && $demo_tr_leaf['iso'] === get_post_meta( $demo_tr[0], 'dgl_start_date', true ), 'a training listing\'s leaf is its start date with no time' );
+$ok( str_starts_with( end( \DGL\Frontend\Cards::meta( get_post( $demo_tr[0] ) ) ) ?: '', 'Posted: ' ), 'and its line ends with when it was posted' );
 $ok( 0 === count( \DGL\Demo\Command::remove() ), 'removing demo events leaves training alone' );
 $ok( 7 === count( \DGL\Demo\Command::remove( PostTypes::TRAINING ) ) && null === get_post( $demo_tr[0] ), 'removing demo training takes the seven' );
 

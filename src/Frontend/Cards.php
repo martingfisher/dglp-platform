@@ -54,15 +54,29 @@ final class Cards {
 			return array_values( array_filter( [ $org, self::posted( $post ), self::reading_time( $post ) ] ) );
 		}
 
+		/*
+		 * The date of the thing itself is on the calendar leaf beside the
+		 * row, so the line does not repeat it. What it does say is when the
+		 * listing was posted, labelled, so nobody takes one date for the
+		 * other. A series says its pattern, because the leaf can only show
+		 * one date of it.
+		 */
 		$parts = [];
 
 		if ( PostTypes::EVENT === $type && Cancel::is_cancelled( (int) $post->ID ) ) {
 			$parts[] = __( 'Cancelled', 'dgl-platform' );
 		}
 
-		$parts[] = self::when( $post );
+		$rule = Series::rule_for( (int) $post->ID );
+
+		if ( null !== $rule ) {
+			$parts[] = \DGL\Events\Wording::with_times( $rule->to_meta(), $rule->start->format( 'Y-m-d H:i:s' ), '' );
+		}
+
 		$parts[] = Frontend::where( $post );
 		$parts[] = $org;
+		/* translators: %s: a date like "24 Sep 2026". */
+		$parts[] = sprintf( __( 'Posted: %s', 'dgl-platform' ), self::posted( $post ) );
 
 		return array_values( array_filter( $parts ) );
 	}
@@ -115,20 +129,22 @@ final class Cards {
 
 	/**
 	 * The day an event or a course happens, as a calendar leaf: the month
-	 * over the day number. A series shows its next date. Nothing for news,
-	 * which has no date worth a glance.
+	 * over the day number, and the time when there is one. A series shows
+	 * its next date. Nothing for news, which has no date worth a glance.
 	 *
-	 * @return array{month:string, day:string, weekday:string, iso:string}|null
+	 * @return array{month:string, day:string, weekday:string, time:string, iso:string}|null
 	 */
 	public static function date_parts( WP_Post $post ): ?array {
-		$id = (int) $post->ID;
-		$ts = null;
+		$id    = (int) $post->ID;
+		$ts    = null;
+		$timed = false;
 
 		if ( Series::is_series( $id ) ) {
 			$next = Series::next_dates( $id, 1 );
 
 			if ( [] !== $next ) {
-				$ts = $next[0]->start->getTimestamp();
+				$ts    = $next[0]->start->getTimestamp();
+				$timed = true;
 			}
 		}
 
@@ -138,7 +154,8 @@ final class Cards {
 
 				if ( '' !== $raw ) {
 					try {
-						$ts = ( new \DateTimeImmutable( $raw, wp_timezone() ) )->getTimestamp();
+						$ts    = ( new \DateTimeImmutable( $raw, wp_timezone() ) )->getTimestamp();
+						$timed = str_contains( $raw, ':' );
 					} catch ( \Exception ) {
 						$ts = null;
 					}
@@ -155,7 +172,8 @@ final class Cards {
 			'month'   => (string) wp_date( 'M', $ts ),
 			'day'     => (string) wp_date( 'j', $ts ),
 			'weekday' => (string) wp_date( 'D', $ts ),
-			'iso'     => (string) wp_date( 'Y-m-d', $ts ),
+			'time'    => $timed ? (string) wp_date( 'H:i', $ts ) : '',
+			'iso'     => (string) wp_date( $timed ? 'Y-m-d\\TH:i' : 'Y-m-d', $ts ),
 		];
 	}
 
@@ -174,11 +192,12 @@ final class Cards {
 		$off = PostTypes::EVENT === (string) $post->post_type && Cancel::is_cancelled( (int) $post->ID );
 
 		return sprintf(
-			'<time class="dgl-date%s" datetime="%s" aria-hidden="true"><span class="dgl-date__month">%s</span><span class="dgl-date__day">%s</span></time>',
+			'<time class="dgl-date%s" datetime="%s" aria-hidden="true"><span class="dgl-date__month">%s</span><span class="dgl-date__day">%s</span>%s</time>',
 			$off ? ' dgl-date--off' : '',
 			esc_attr( $parts['iso'] ),
 			esc_html( $parts['month'] ),
-			esc_html( $parts['day'] )
+			esc_html( $parts['day'] ),
+			'' !== $parts['time'] ? '<span class="dgl-date__time">' . esc_html( $parts['time'] ) . '</span>' : ''
 		);
 	}
 

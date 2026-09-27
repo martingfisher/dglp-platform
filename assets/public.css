@@ -563,6 +563,17 @@
 	font-variant-numeric: tabular-nums;
 }
 
+.dgl-date__time {
+	margin-top: 2px;
+	font-size: 0.7rem;
+	font-weight: 600;
+	color: var(--dgl-text-muted);
+	font-variant-numeric: tabular-nums;
+}
+
+/* On the featured picture the leaf sits above the chip, the same white card. */
+.dgl-hero__body .dgl-date { margin: 0 0 10px; }
+
 /* Cancelled: the leaf goes quiet, the row's Cancelled stamp does the talking. */
 .dgl-date--off { opacity: 0.55; }
 
