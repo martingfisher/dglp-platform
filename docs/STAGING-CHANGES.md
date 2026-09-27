@@ -907,3 +907,14 @@ clean. They are the only DGLP content on staging.
   to look in Rank Math > Dashboard), and the site is set to discourage
   search engines, so every page still carries core's noindex until that is
   switched off at launch.
+- **0.37.1 deployed and run** (27 September, production): `wp dgl demo
+  events` (`src/Demo/Command.php`), which makes seven varied live events in
+  one call and removes them in one: a weekly Tuesday coffee morning
+  (series), the autumn fair (featured for 14 days), a hybrid volunteer
+  induction with a booking link, an online paid money workshop with no
+  picture, a wellbeing walk with an accessibility note, a trustee evening
+  with a capacity, and a family craft afternoon that is then cancelled.
+  Every one carries `dgl_demo`, is indexed with a next date, and is
+  audited as `seeded`. Run on production for Demo: Armley Community Hub
+  (8438) with `--images`, so Martin can see the Events page render;
+  `wp dgl demo events --remove` takes them away. Integration 1148.

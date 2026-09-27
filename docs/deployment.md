@@ -186,6 +186,16 @@ The topic list ships in the plugin and seeds itself:
   then every page carries noindex from WordPress core, whatever else is
   printed.
 
+## Demo content
+
+`wp dgl demo events --org=<id> --images` makes seven varied live events
+under an organisation in one call: a weekly series, a featured one, a
+hybrid one with a booking link, an online paid one, one with an
+accessibility note, one with a capacity, and one cancelled. `--images`
+uses the newest photos in the media library; two are left without a
+picture on purpose. `--dry-run` lists them first. Every one carries
+`dgl_demo`, so `wp dgl demo events --remove` deletes exactly those.
+
 ## Staging to production
 
 Do **not** use Wordify's `push_staging` to move the plugin. That pushes the whole

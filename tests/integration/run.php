@@ -4299,6 +4299,33 @@ update_post_meta( $seo_org, $seo_logo_field->meta_key(), $seo_att );
 $ok( str_ends_with( \DGL\Frontend\Seo::image_for_post( get_post( $seo_event ) )['url'], '/2026/09/seo-hero.png' ), 'else the organisation logo' );
 wp_delete_attachment( $seo_att, true );
 
+$group( 'Demo events: seven in one call, and gone in one call' );
+
+$demo_org  = $make_org( 'Demo Seed Org' );
+$other_evt = $make_item( $demo_org, $alice, Statuses::LIVE );
+$demo_ids  = \DGL\Demo\Command::seed( $demo_org, $mod, [] );
+foreach ( $demo_ids as $demo_id ) {
+	update_post_meta( $demo_id, DGL_FIXTURE_FLAG, '1' );
+}
+$ok( 7 === count( $demo_ids ), 'seven events are made (' . count( $demo_ids ) . ')' );
+$demo_live = array_filter( $demo_ids, static fn( int $id ): bool => Statuses::LIVE === get_post_status( $id ) && '1' === get_post_meta( $id, \DGL\Demo\Command::MARKER, true ) && $demo_org === (int) get_post_meta( $id, Meta::ITEM_ORG, true ) );
+$ok( 7 === count( $demo_live ), 'all live, marked, and under the organisation' );
+$demo_next = array_filter( $demo_ids, static fn( int $id ): bool => '' !== (string) get_post_meta( $id, Meta::ITEM_NEXT_AT, true ) );
+$ok( 7 === count( $demo_next ), 'every one has a next date for the list order' );
+$demo_in_index = ItemsTable::for_org( $demo_org, [ PostTypes::EVENT ], [ Statuses::LIVE ], 50 );
+$demo_rows = array_filter( $demo_ids, static fn( int $id ): bool => in_array( $id, $demo_in_index, true ) );
+$ok( 7 === count( $demo_rows ), 'and an index row' );
+$ok( 1 === count( array_filter( $demo_ids, static fn( int $id ): bool => \DGL\Events\Series::is_series( $id ) ) ), 'one is a series' );
+$ok( 1 === count( array_filter( $demo_ids, static fn( int $id ): bool => \DGL\Events\Cancel::is_cancelled( $id ) ) ), 'one is cancelled' );
+$ok( 1 === count( array_filter( $demo_ids, static fn( int $id ): bool => \DGL\Workflow\Pins::is_pinned( $id ) ) ), 'one is featured' );
+$demo_online = array_values( array_filter( $demo_ids, static fn( int $id ): bool => 'online' === get_post_meta( $id, 'dgl_format', true ) ) );
+$ok( 1 === count( $demo_online ) && '' === (string) get_post_meta( $demo_online[0], 'dgl_venue_name', true ) && '' !== (string) get_post_meta( $demo_online[0], 'dgl_online_url', true ), 'the online one has a link and no venue' );
+$ok( in_array( 'seeded', array_column( Log::for_org( $demo_org ), 'action' ), true ), 'each is audited as seeded' );
+$demo_gone = \DGL\Demo\Command::remove();
+$ok( 7 === count( $demo_gone ) && [] === array_diff( $demo_ids, $demo_gone ), 'remove takes exactly the seven' );
+$ok( null !== get_post( $other_evt ) && Statuses::LIVE === get_post_status( $other_evt ), 'and leaves the organisation\'s other event alone' );
+$ok( [] === \DGL\Demo\Command::remove(), 'a second remove finds nothing' );
+
 /* ----------------------------------------------------------------- report */
 
 echo "\n" . str_repeat( '-', 60 ) . "\n";

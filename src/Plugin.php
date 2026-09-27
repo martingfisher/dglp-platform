@@ -114,6 +114,7 @@ final class Plugin {
 			\DGL\Schema\LinksCommand::register();
 			\DGL\Tools\LinksCommand::register();
 			\DGL\News\Command::register();
+			\DGL\Demo\Command::register();
 		}
 
 		\DGL\Admin\Health::watch();
