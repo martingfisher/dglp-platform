@@ -45,6 +45,10 @@ final class ProbeCommand {
 	 * "dgl[title]=Hello&dgl[body]=<p>Hi</p>". For finding out whether a
 	 * firewall in front of WordPress rejects a form before it arrives.
 	 *
+	 * [--referer=<url>]
+	 * : With --post, send this Referer header, as a browser would. The
+	 * enquiry form on a venue page drops a post with no Referer or Origin.
+	 *
 	 * [--multipart]
 	 * : Send the --post fields as multipart/form-data, the way a form with
 	 * a file control posts.
@@ -196,7 +200,19 @@ final class ProbeCommand {
 			[ $body, $type ] = self::multipart( $post, (string) ( $assoc['file'] ?? '' ) );
 			$response        = wp_remote_post( $url, [ 'timeout' => 20, 'redirection' => 0, 'sslverify' => false, 'body' => $body, 'headers' => [ 'Content-Type' => $type ] ] );
 		} else {
-			$response = wp_remote_post( $url, [ 'timeout' => 20, 'redirection' => 0, 'sslverify' => false, 'body' => $post, 'headers' => [ 'Content-Type' => 'application/x-www-form-urlencoded' ] ] );
+			$headers = [ 'Content-Type' => 'application/x-www-form-urlencoded' ];
+
+			// A form that checks where it was posted from (the enquiry form)
+			// needs a Referer, as a browser would send.
+			if ( '' !== (string) ( $assoc['referer'] ?? '' ) ) {
+				$headers['Referer'] = (string) $assoc['referer'];
+			}
+
+			$response = wp_remote_post( $url, [ 'timeout' => 20, 'redirection' => 0, 'sslverify' => false, 'body' => $post, 'headers' => $headers ] );
+		}
+
+		if ( ! is_wp_error( $response ) && '' !== (string) wp_remote_retrieve_header( $response, 'location' ) ) {
+			WP_CLI::log( 'Location: ' . wp_remote_retrieve_header( $response, 'location' ) );
 		}
 
 		if ( is_wp_error( $response ) ) {
