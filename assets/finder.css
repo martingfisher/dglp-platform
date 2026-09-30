@@ -143,14 +143,20 @@ html.dgl-js .dgl-finder-item { display: list-item; }
 	font: inherit;
 	font-size: 1rem;
 	color: var(--dgl-text);
-	background: var(--dgl-white);
-	border: var(--dgl-field-border, 1px) solid var(--dgl-field-outline);
+	background: var(--dgl-white) !important;
+	border: var(--dgl-field-border, 1px) solid var(--dgl-field-outline) !important;
 	border-radius: var(--dgl-radius-field, 10px);
+	box-shadow: none !important;
 	-webkit-appearance: none;
 	appearance: none;
 }
 
-.dgl-finder__input:focus { border-color: var(--dgl-focus); outline: 2px solid var(--dgl-focus); outline-offset: 0; }
+.dgl-finder__input:focus {
+	border-color: var(--dgl-focus) !important;
+	outline: 2px solid var(--dgl-focus) !important;
+	outline-offset: 0 !important;
+	box-shadow: none !important;
+}
 
 .dgl-finder__go {
 	flex: none;

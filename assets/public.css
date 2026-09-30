@@ -1332,19 +1332,31 @@ h2.dgl-listing__heading:only-child,
 
 .dgl-search__kinds { margin-top: 12px; }
 
-.dgl-search__input {
+/*
+ * The theme styles every search input itself (page-coloured ground, a
+ * teal border and a teal glow on focus), and those rules outrank one
+ * class, so the box read as an empty line until it was clicked. Hence the
+ * !important on ground, border and shadow, as on the member area's fields.
+ */
+.dgl-pub .dgl-search__input {
 	flex: 1 1 auto;
 	min-width: 0;
-	min-height: 44px;
+	min-height: var(--dgl-field-height, 45px);
 	padding: 8px 14px;
 	font: inherit;
 	color: var(--dgl-text);
-	background: var(--dgl-white);
-	border: var(--dgl-field-border) solid var(--dgl-field-outline);
+	background: var(--dgl-white) !important;
+	border: var(--dgl-field-border) solid var(--dgl-field-outline) !important;
 	border-radius: var(--dgl-radius-field, 10px);
+	box-shadow: none !important;
 }
 
-.dgl-search__input:focus { outline: 3px solid var(--dgl-focus); outline-offset: 2px; }
+.dgl-pub .dgl-search__input:focus {
+	border-color: var(--dgl-focus) !important;
+	outline: 2px solid var(--dgl-focus) !important;
+	outline-offset: 0 !important;
+	box-shadow: none !important;
+}
 
 .dgl-search__go {
 	flex: none;

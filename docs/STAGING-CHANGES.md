@@ -1045,3 +1045,21 @@ clean. They are the only DGLP content on staging.
   and answered 302 to `?sent=1`, which the code reaches only after the
   message is handed to `wp_mail()` and the audit row is written. Mail is
   still redirected to martingfisher@gmail.com, so that is where it lands.
+- **0.42.0 deployed** (30 September, production): the header's search box
+  is replaced by a magnifying glass that opens a search dialog in the
+  middle of the screen with a row of kinds to look in (All, Events, News,
+  Training, Spaces to hire, Organisations). The theme's Blocksy Pro "Search
+  Input" element is dropped from the header layout as it is read
+  (`theme_mod_header_placements`), so nothing stored changes; the button
+  joins the Top Bar menu and, for the phone drawer, the Main Menu
+  (`wp_nav_menu_items`); the dialog is printed once on `wp_footer`. The
+  results page carries the same chips and offers the spaces list when
+  nothing matches. "Spaces to hire" added to the main menu before Contact
+  (`wp menu item add-custom`). `src/Frontend/Finder.php`,
+  `templates/public/finder.php`, `assets/finder.css`, `assets/finder.js`,
+  tests, docs. Unit 2235, integration 1352.
+- **0.42.1 deployed** (30 September, production): the search boxes on the
+  results page and in the dialog keep a white ground and one navy ring on
+  focus. The theme's own search-input rules had outranked the plugin's
+  class, so the box was invisible until clicked and then wore a teal double
+  ring.
