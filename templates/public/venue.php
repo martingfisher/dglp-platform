@@ -213,7 +213,7 @@ $phone   = $value( 'contact_phone' );
 							<dt><?php esc_html_e( 'Contact', 'dgl-platform' ); ?></dt>
 							<dd><?php echo esc_html( $value( 'contact_name' ) ); ?></dd>
 						<?php endif; ?>
-						<?php if ( 1 === preg_match( '/\d{5,}/', $phone ) ) : ?>
+						<?php if ( strlen( (string) preg_replace( '/\D/', '', $phone ) ) >= 5 ) : ?>
 							<dt><?php esc_html_e( 'Phone', 'dgl-platform' ); ?></dt>
 							<dd><a href="tel:<?php echo esc_attr( preg_replace( '/[^\d+]/', '', $phone ) ); ?>"><?php echo esc_html( $phone ); ?></a></dd>
 						<?php endif; ?>

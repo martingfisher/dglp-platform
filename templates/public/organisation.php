@@ -257,7 +257,7 @@ foreach ( ItemsTable::for_org( $id, PostTypes::feed_keys(), [ Statuses::LIVE ], 
 							<dt><?php esc_html_e( 'Email', 'dgl-platform' ); ?></dt>
 							<dd><a href="mailto:<?php echo esc_attr( $meta( 'email' ) ); ?>"><?php echo esc_html( $meta( 'email' ) ); ?></a></dd>
 						<?php endif; ?>
-						<?php if ( 1 === preg_match( '/\d{5,}/', $meta( 'phone' ) ) ) : ?>
+						<?php if ( strlen( (string) preg_replace( '/\D/', '', $meta( 'phone' ) ) ) >= 5 ) : ?>
 							<dt><?php esc_html_e( 'Phone', 'dgl-platform' ); ?></dt>
 							<dd><a href="tel:<?php echo esc_attr( preg_replace( '/\s+/', '', $meta( 'phone' ) ) ); ?>"><?php echo esc_html( $meta( 'phone' ) ); ?></a></dd>
 						<?php endif; ?>

@@ -394,12 +394,14 @@ final class SpacesQuery {
 	public static function space_meta( int $space_id ): array {
 		$meta = [];
 
-		foreach ( [ 'space_type', 'size_m2', 'space_facilities', 'rate', 'rate_unit', 'rate_note', 'summary', 'image' ] as $key ) {
-			$meta[ $key ] = get_post_meta( $space_id, 'dgl_' . $key, true );
-		}
-
-		foreach ( array_keys( Space::LAYOUTS ) as $key ) {
-			$meta[ $key ] = get_post_meta( $space_id, 'dgl_' . $key, true );
+		foreach ( array_merge( [ 'space_type', 'size_m2', 'space_facilities', 'rate', 'rate_unit', 'rate_note', 'summary', 'image' ], array_keys( Space::LAYOUTS ) ) as $key ) {
+			/*
+			 * Raw, not get_post_meta: every field is registered with a typed
+			 * default, so a space with no rate would read back as 0.0 and be
+			 * called "Free". No row means no answer, and that is "Price on
+			 * request".
+			 */
+			$meta[ $key ] = get_metadata_raw( 'post', $space_id, 'dgl_' . $key, true ) ?? '';
 		}
 
 		return $meta;

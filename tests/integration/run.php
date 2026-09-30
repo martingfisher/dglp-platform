@@ -4823,6 +4823,56 @@ $geo_schema = \DGL\Frontend\Seo::schema_for_post( get_post( $sq_armley ), [ 'url
 $ok( 53.7965 === ( $geo_schema['geo']['latitude'] ?? null ), 'and its schema has GeoCoordinates' );
 remove_filter( 'pre_http_request', $geo_stub, 10 );
 
+$group( 'Demo spaces: three venues and nine spaces in one call, and gone in one call' );
+
+$ds_org   = $make_org( 'Demo Spaces Org' );
+$ds_other = \DGL\Dashboard\Wizard::create( PostTypes::VENUE, $alice, 0 );
+update_post_meta( $ds_other, Meta::ITEM_ORG, $ds_org );
+update_post_meta( $ds_other, DGL_FIXTURE_FLAG, '1' );
+$ds_calls = 0;
+$ds_stub  = static function ( $pre, array $parsed, string $url ) use ( &$ds_calls ) {
+	if ( ! str_starts_with( $url, \DGL\Spaces\Geocode::ENDPOINT ) ) {
+		return $pre;
+	}
+	++$ds_calls;
+	return [
+		'headers'  => [],
+		'body'     => '{"status":200,"result":{"latitude":53.8,"longitude":-1.6}}',
+		'response' => [ 'code' => 200, 'message' => 'OK' ],
+		'cookies'  => [],
+		'filename' => null,
+	];
+};
+add_filter( 'pre_http_request', $ds_stub, 10, 3 );
+foreach ( [ 'LS12 3QP', 'LS12 1SR', 'LS6 1JD' ] as $ds_pc ) {
+	delete_transient( 'dgl_geo_' . md5( str_replace( ' ', '', $ds_pc ) ) );
+}
+$ds_made = \DGL\Demo\Command::seed_spaces( $ds_org, $mod, \DGL\Demo\Command::plan_spaces( [] ) );
+foreach ( array_merge( $ds_made['venues'], $ds_made['spaces'] ) as $ds_id ) {
+	update_post_meta( $ds_id, DGL_FIXTURE_FLAG, '1' );
+}
+remove_filter( 'pre_http_request', $ds_stub, 10 );
+$ok( 3 === count( $ds_made['venues'] ) && 9 === count( $ds_made['spaces'] ), 'three venues and nine spaces are made (' . count( $ds_made['venues'] ) . ', ' . count( $ds_made['spaces'] ) . ')' );
+$ok( 3 === count( array_filter( $ds_made['venues'], static fn( int $id ): bool => PostTypes::VENUE === get_post_type( $id ) && Statuses::LIVE === get_post_status( $id ) && '1' === get_post_meta( $id, \DGL\Demo\Command::MARKER, true ) && $ds_org === (int) get_post_meta( $id, Meta::ITEM_ORG, true ) ) ), 'the venues are live, marked and under the organisation' );
+$ok( 9 === count( array_filter( $ds_made['spaces'], static fn( int $id ): bool => PostTypes::SPACE === get_post_type( $id ) && Statuses::LIVE === get_post_status( $id ) && in_array( \DGL\Spaces\Link::venue_of( $id ), $ds_made['venues'], true ) ) ), 'every space is live and fixed to one of them' );
+$ds_children = array_sum( array_map( static fn( int $id ): int => count( ItemsTable::children( $id, [ Statuses::LIVE ], 50 ) ), $ds_made['venues'] ) );
+$ok( 9 === $ds_children, 'the index knows each space\'s venue (' . $ds_children . ')' );
+$ok( 3 === $ds_calls && 3 === count( array_filter( $ds_made['venues'], static fn( int $id ): bool => null !== \DGL\Spaces\Geocode::coords( $id ) ) ), 'each venue is looked up once and pinned' );
+$ok( 3 === count( array_filter( $ds_made['venues'], static fn( int $id ): bool => '' === (string) get_post_meta( $id, Meta::ITEM_EXPIRES_AT, true ) ) ), 'no venue expires' );
+$ds_rates = array_map( static fn( int $id ): string => (string) \DGL\Spaces\SpacesQuery::space_meta( $id )['rate'], $ds_made['spaces'] );
+$ok( 0.0 === get_post_meta( $ds_made['spaces'][2], 'dgl_rate', true ) && '' === $ds_rates[2], 'a space with no rate reads raw as blank, not as the registered 0.0 default' );
+$ok( 1 === count( array_filter( $ds_rates, static fn( string $r ): bool => '' === $r ) ) && 1 === count( array_filter( $ds_rates, static fn( string $r ): bool => '' !== $r && 0.0 === (float) $r ) ), 'one space is price on request and one is free' );
+$ds_find = \DGL\Spaces\SpacesQuery::run( \DGL\Spaces\SpacesQuery::args_from( [ 'price' => 'over_30' ] ) )['ids'];
+$ok( [] !== array_intersect( $ds_find, $ds_made['venues'] ), 'the over £30 band finds a demo venue' );
+$ds_page = \DGL\Dashboard\View::render( 'public/venue', \DGL\Spaces\Pages::venue_data( get_post( $ds_made['venues'][0] ) ) );
+$ok( str_contains( $ds_page, 'Whole centre' ) && str_contains( $ds_page, 'Price on request' ) && str_contains( $ds_page, '£35 an hour' ), 'the first venue\'s page shows its rooms and rates' );
+$ok( in_array( 'seeded', array_column( Log::for_org( $ds_org ), 'action' ), true ), 'each is audited as seeded' );
+$ds_gone_spaces = \DGL\Demo\Command::remove( PostTypes::SPACE );
+$ds_gone_venues = \DGL\Demo\Command::remove( PostTypes::VENUE );
+$ok( 9 === count( $ds_gone_spaces ) && 3 === count( $ds_gone_venues ) && [] === array_diff( $ds_made['venues'], $ds_gone_venues ), 'remove takes exactly the twelve' );
+$ok( null !== get_post( $ds_other ) && PostTypes::VENUE === get_post_type( $ds_other ), 'and leaves the organisation\'s own venue alone' );
+$ok( [] === \DGL\Demo\Command::remove( PostTypes::SPACE ) && [] === \DGL\Demo\Command::remove( PostTypes::VENUE ), 'a second remove finds nothing' );
+
 /* ----------------------------------------------------------------- report */
 
 echo "\n" . str_repeat( '-', 60 ) . "\n";

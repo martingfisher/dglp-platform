@@ -664,7 +664,7 @@ final class Seo {
 
 		$phone = (string) Frontend::value( $post, 'contact_phone' );
 
-		if ( 1 === preg_match( '/\d{5,}/', $phone ) ) {
+		if ( strlen( (string) preg_replace( '/\D/', '', $phone ) ) >= 5 ) {
 			$parts['telephone'] = $phone;
 		}
 
