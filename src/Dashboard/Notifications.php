@@ -74,6 +74,8 @@ final class Notifications {
 			'cascaded'                    => [ 'title' => __( 'Its spaces went with it', 'dgl-platform' ), 'tone' => 'quiet' ],
 			'moved_with_venue'            => [ 'title' => __( 'Moved with its venue', 'dgl-platform' ), 'tone' => 'quiet' ],
 			'enquiry_sent'                => [ 'title' => __( 'Somebody enquired about a space', 'dgl-platform' ), 'tone' => 'good' ],
+			'hidden'                      => [ 'title' => __( 'Hidden from the site', 'dgl-platform' ), 'tone' => 'quiet' ],
+			'shown'                       => [ 'title' => __( 'Shown on the site again', 'dgl-platform' ), 'tone' => 'good' ],
 		];
 	}
 

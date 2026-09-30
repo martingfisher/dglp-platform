@@ -2254,3 +2254,73 @@ body.dgl-body {
 .dgl-join__exists .dgl-form__actions { margin: 12px 0; }
 
 .dgl-upload-status { margin: 6px 0 0; min-height: 1.4em; }
+
+/* ---- The on/off switch on a live venue or space ------------------------- */
+
+.dgl-visibility__row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--dgl-gap-lg);
+}
+
+.dgl-visibility__row .dgl-section__title { margin-bottom: 4px; }
+
+.dgl-visibility__row .dgl-help { margin: 0; max-width: 60ch; }
+
+.dgl-visibility + .dgl-card,
+.dgl-visibility + .dgl-detail { margin-top: var(--dgl-gap-lg); }
+
+.dgl-switch {
+	display: inline-flex;
+	align-items: center;
+	gap: 10px;
+	flex: none;
+	padding: 6px;
+	margin: -6px;
+	font: var(--dgl-weight-button) 15px / 1 var(--dgl-font);
+	color: var(--dgl-text);
+	background: none;
+	border: 0;
+	border-radius: var(--dgl-radius-button);
+	cursor: pointer;
+}
+
+.dgl-switch:focus-visible { outline: 2px solid var(--dgl-focus); outline-offset: 2px; }
+
+.dgl-switch__track {
+	position: relative;
+	display: block;
+	width: 52px;
+	height: 30px;
+	background: color-mix(in srgb, var(--dgl-ink) 40%, transparent);
+	border-radius: 999px;
+	transition: background var(--dgl-motion);
+}
+
+.dgl-switch__knob {
+	position: absolute;
+	top: 3px;
+	left: 3px;
+	width: 24px;
+	height: 24px;
+	background: var(--dgl-white);
+	border-radius: 50%;
+	box-shadow: 0 1px 2px rgb(30 50 50 / 30%);
+	transition: transform var(--dgl-motion);
+}
+
+.dgl-switch[aria-checked="true"] .dgl-switch__track { background: var(--dgl-navy); }
+
+.dgl-switch[aria-checked="true"] .dgl-switch__knob { transform: translateX(22px); }
+
+.dgl-switch__label { min-width: 3.5em; text-align: left; }
+
+.dgl-chip--hidden {
+	color: var(--dgl-text);
+	background: color-mix(in srgb, var(--dgl-ink) 10%, var(--dgl-white));
+}
+
+@media ( max-width: 560px ) {
+	.dgl-visibility__row { flex-direction: column; align-items: flex-start; gap: 12px; }
+}

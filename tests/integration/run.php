@@ -4919,6 +4919,31 @@ delete_post_meta( $sq_bramley, Meta::VENUE_LNG );
 $vp_none = \DGL\Dashboard\View::render( 'public/venue', \DGL\Spaces\Pages::venue_data( get_post( $sq_bramley ) ) );
 $ok( ! str_contains( $vp_none, 'data-dgl-map-open' ) && ! str_contains( $vp_none, 'dgl-venue-map-dialog' ), 'one without a pin offers neither' );
 
+$group( 'Hide and show: a live venue or space off the site and back, at once, no review' );
+
+$vs_owner_ctx = \DGL\Access\Access::user_context( $sp_owner );
+$vs_other_ctx = \DGL\Access\Access::user_context( $alice );
+$vs_pending   = \DGL\Dashboard\Wizard::create( PostTypes::VENUE, $sp_owner, 0 );
+update_post_meta( $vs_pending, Meta::ITEM_ORG, $sp_org );
+update_post_meta( $vs_pending, DGL_FIXTURE_FLAG, '1' );
+$ok( \DGL\Spaces\Visibility::can_toggle( $vs_owner_ctx, get_post( $sq_armley ) ) && ! \DGL\Spaces\Visibility::can_toggle( $vs_other_ctx, get_post( $sq_armley ) ) && ! \DGL\Spaces\Visibility::can_toggle( $vs_owner_ctx, get_post( $vs_pending ) ) && ! \DGL\Spaces\Visibility::can_toggle( $vs_owner_ctx, get_post( $seo_news ) ), 'the switch is for the organisation\'s own live venues and spaces, not a draft, not another organisation, not a story' );
+$ok( is_wp_error( \DGL\Spaces\Visibility::hide( $sq_armley, $vs_other_ctx ) ) && ! \DGL\Spaces\Visibility::is_hidden( $sq_armley ), 'somebody else cannot hide it' );
+$vs_before = \DGL\Spaces\SpacesQuery::run( \DGL\Spaces\SpacesQuery::args_from( [] ) )['ids'];
+$ok( true === \DGL\Spaces\Visibility::hide( $sq_armley, $vs_owner_ctx ) && \DGL\Spaces\Visibility::is_hidden( $sq_armley ) && Statuses::LIVE === get_post_status( $sq_armley ), 'the owner hides it; it stays live' );
+$vs_after = \DGL\Spaces\SpacesQuery::run( \DGL\Spaces\SpacesQuery::args_from( [] ) )['ids'];
+$ok( in_array( $sq_armley, $vs_before, true ) && ! in_array( $sq_armley, $vs_after, true ) && count( $vs_after ) === count( $vs_before ) - 1, 'Find a space drops it and only it' );
+$ok( ! in_array( $sq_armley, array_column( \DGL\Spaces\SpacesQuery::pins( \DGL\Spaces\SpacesQuery::args_from( [ 'ward' => 'armley' ] ) ), 'id' ), true ), 'and so does the map' );
+$ok( ! in_array( $sq_armley, \DGL\Frontend\Search::item_ids( 'Armley Centre', PostTypes::VENUE ), true ), 'and the search' );
+$vs_orgpage = \DGL\Dashboard\View::render( 'public/organisation', [ 'org' => get_post( $sp_org ) ] );
+$ok( ! str_contains( $vs_orgpage, 'Armley Centre' ), 'and the organisation\'s page' );
+$ok( false === \DGL\Spaces\Enquiry::state( get_post( $sq_armley ) )['show'] && 'off' === \DGL\Spaces\Enquiry::submit( $sq_armley, [], [] )['status'], 'and enquiries stop' );
+$ok( '' !== \DGL\Spaces\Visibility::hidden_since( $sq_armley ) && in_array( 'hidden', array_column( Log::for_object( 'item', $sq_armley ), 'action' ), true ), 'audited as hidden, with a time' );
+$vs_check = array_values( array_filter( \DGL\Moderation\Checks::run( $sq_hall, PostTypes::SPACE ), static fn( array $r ): bool => 'venue' === $r['key'] ) )[0] ?? [];
+$ok( \DGL\Moderation\Checks::WARN === ( $vs_check['status'] ?? '' ) && str_contains( (string) ( $vs_check['detail'] ?? '' ), 'hidden' ), 'a space under a hidden venue gets a warning in its checks' );
+$ok( true === \DGL\Spaces\Visibility::show( $sq_armley, $vs_owner_ctx ) && ! \DGL\Spaces\Visibility::is_hidden( $sq_armley ) && in_array( $sq_armley, \DGL\Spaces\SpacesQuery::run( \DGL\Spaces\SpacesQuery::args_from( [] ) )['ids'], true ) && in_array( 'shown', array_column( Log::for_object( 'item', $sq_armley ), 'action' ), true ), 'shown again: back in the results at once, audited' );
+$ok( true === \DGL\Spaces\Visibility::hide( $sq_hall, $vs_owner_ctx ) && ! in_array( $sq_hall, array_map( static fn( array $s ): int => (int) $s['post']->ID, \DGL\Spaces\SpacesQuery::spaces( $sq_armley ) ), true ) && ! isset( \DGL\Spaces\Enquiry::options( $sq_armley )[ (string) $sq_hall ] ), 'a hidden space leaves the venue page and the enquiry form' );
+\DGL\Spaces\Visibility::show( $sq_hall, $vs_owner_ctx );
+
 /* ----------------------------------------------------------------- report */
 
 echo "\n" . str_repeat( '-', 60 ) . "\n";

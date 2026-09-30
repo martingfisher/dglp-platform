@@ -27,6 +27,17 @@ $pending  = $revision instanceof WP_Post && Statuses::PENDING === $revision->pos
 	</div>
 <?php endif; ?>
 
+<?php if ( 'hide' === (string) ( $data['visibility'] ?? '' ) ) : ?>
+	<div class="dgl-alert dgl-alert--good" role="status">
+		<p><strong><?php esc_html_e( 'Hidden from the site.', 'dgl-platform' ); ?></strong>
+		<?php esc_html_e( 'Its details are kept. Switch it on again whenever you are ready and it is back at once.', 'dgl-platform' ); ?></p>
+	</div>
+<?php elseif ( 'show' === (string) ( $data['visibility'] ?? '' ) ) : ?>
+	<div class="dgl-alert dgl-alert--good" role="status">
+		<p><strong><?php esc_html_e( 'Back on the site.', 'dgl-platform' ); ?></strong></p>
+	</div>
+<?php endif; ?>
+
 <?php if ( ! empty( $data['restored'] ) ) : ?>
 	<div class="dgl-alert dgl-alert--good" role="status">
 		<p><strong><?php esc_html_e( 'Sent to the review team.', 'dgl-platform' ); ?></strong>
@@ -191,10 +202,15 @@ $pending  = $revision instanceof WP_Post && Statuses::PENDING === $revision->pos
 		<form method="post" class="dgl-inline-form">
 			<?php wp_nonce_field( \DGL\Dashboard\Wizard::NONCE ); ?>
 			<button type="submit" class="dgl-button dgl-button--secondary" name="dgl_intent" value="archive"
-				data-dgl-confirm="<?php echo Statuses::LIVE === $post->post_status
-					? esc_attr__( 'Take this off the site? It goes to your archive, and you can put it back on the site later.', 'dgl-platform' )
-					: esc_attr__( 'Archive this? You can restore it later.', 'dgl-platform' ); ?>">
-				<?php echo Statuses::LIVE === $post->post_status
+				<?php $has_switch = ! empty( $data['can_toggle_visibility'] ); ?>
+				data-dgl-confirm="<?php if ( $has_switch ) {
+					esc_attr_e( 'Archive this? It comes off the site and goes to your archive, and putting it back later goes through the review team. To hide it for a while, use the switch above instead.', 'dgl-platform' );
+				} elseif ( Statuses::LIVE === $post->post_status ) {
+					esc_attr_e( 'Take this off the site? It goes to your archive, and you can put it back on the site later.', 'dgl-platform' );
+				} else {
+					esc_attr_e( 'Archive this? You can restore it later.', 'dgl-platform' );
+				} ?>">
+				<?php echo Statuses::LIVE === $post->post_status && ! $has_switch
 					? esc_html__( 'Take off the site', 'dgl-platform' )
 					: esc_html__( 'Archive', 'dgl-platform' ); ?>
 			</button>
@@ -211,6 +227,32 @@ $pending  = $revision instanceof WP_Post && Statuses::PENDING === $revision->pos
 		</form>
 	<?php endif; ?>
 </header>
+
+<?php if ( ! empty( $data['can_toggle_visibility'] ) ) : ?>
+	<?php $is_hidden = ! empty( $data['hidden'] ); ?>
+	<section class="dgl-card dgl-visibility<?php echo $is_hidden ? ' dgl-visibility--hidden' : ''; ?>" aria-labelledby="dgl-visibility-title">
+		<div class="dgl-visibility__row">
+			<div>
+				<h2 class="dgl-section__title" id="dgl-visibility-title"><?php esc_html_e( 'On the site', 'dgl-platform' ); ?></h2>
+				<p class="dgl-help">
+					<?php if ( $is_hidden ) : ?>
+						<?php echo esc_html( \DGL\PostTypes::KIND_SPACE === (string) ( $data['kind'] ?? '' ) ? __( 'Hidden. Nobody can find or enquire about this space until you switch it on again. Its details are kept.', 'dgl-platform' ) : __( 'Hidden. Nobody can find this venue or its spaces, or enquire, until you switch it on again. Its details are kept.', 'dgl-platform' ) ); ?>
+					<?php else : ?>
+						<?php echo esc_html( \DGL\PostTypes::KIND_SPACE === (string) ( $data['kind'] ?? '' ) ? __( 'Shown. Switch it off to hide this space for a while, for example while it is out of use. It comes back the moment you switch it on, with no review.', 'dgl-platform' ) : __( 'Shown. Switch it off to hide this venue and its spaces for a while, for example during a refurbishment. It comes back the moment you switch it on, with no review.', 'dgl-platform' ) ); ?>
+					<?php endif; ?>
+				</p>
+			</div>
+			<form method="post" class="dgl-inline-form" action="<?php echo esc_url( Router::url( 'item', (string) $post->ID ) ); ?>">
+				<?php wp_nonce_field( \DGL\Dashboard\Wizard::NONCE ); ?>
+				<input type="hidden" name="dgl_intent" value="<?php echo $is_hidden ? 'show' : 'hide'; ?>">
+				<button type="submit" class="dgl-switch" role="switch" aria-checked="<?php echo $is_hidden ? 'false' : 'true'; ?>" aria-labelledby="dgl-visibility-title">
+					<span class="dgl-switch__track" aria-hidden="true"><span class="dgl-switch__knob"></span></span>
+					<span class="dgl-switch__label"><?php echo $is_hidden ? esc_html__( 'Hidden', 'dgl-platform' ) : esc_html__( 'Shown', 'dgl-platform' ); ?></span>
+				</button>
+			</form>
+		</div>
+	</section>
+<?php endif; ?>
 
 <?php
 /*

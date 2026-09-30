@@ -85,6 +85,16 @@ final class Checks {
 
 		$live = Statuses::LIVE === $venue->post_status;
 
+		if ( $live && \DGL\Spaces\Visibility::is_hidden( (int) $venue->ID ) ) {
+			return [
+				'key'    => 'venue',
+				'label'  => __( 'Venue', 'dgl-platform' ),
+				'status' => self::WARN,
+				/* translators: %s: the venue's name. */
+				'detail' => sprintf( __( 'At %s, which the organisation has hidden from the site for now. The space is not shown until they show the venue again; approving it now is fine.', 'dgl-platform' ), (string) $venue->post_title ),
+			];
+		}
+
 		return [
 			'key'    => 'venue',
 			'label'  => __( 'Venue', 'dgl-platform' ),

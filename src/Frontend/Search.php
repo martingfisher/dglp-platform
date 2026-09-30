@@ -154,6 +154,7 @@ final class Search {
 				 LEFT JOIN {$wpdb->postmeta} nx ON nx.post_id = p.ID AND nx.meta_key = %s
 				 WHERE p.post_type = %s AND p.post_status = %s
 				   AND ( p.post_title LIKE %s OR p.post_content LIKE %s OR sm.meta_value LIKE %s )
+				   AND " . \DGL\Spaces\Visibility::sql_shown( 'p.ID' ) . "
 				 GROUP BY p.ID",
 				Meta::ITEM_NEXT_AT,
 				$post_type,

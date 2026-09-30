@@ -264,10 +264,11 @@ final class SpacesQuery {
 		$params[] = PostTypes::VENUE;
 		$where[]  = 'p.post_status = %s';
 		$params[] = Statuses::LIVE;
+		$where[]  = Visibility::sql_shown( 'p.ID' );
 
-		// At least one live space that meets the space filters.
+		// At least one live, shown space that meets the space filters.
 		$space_joins  = [];
-		$space_where  = [ 'si.parent_id = p.ID', 'si.post_type = %s', 'si.status = %s' ];
+		$space_where  = [ 'si.parent_id = p.ID', 'si.post_type = %s', 'si.status = %s', Visibility::sql_shown( 'si.post_id' ) ];
 		$space_params = [ PostTypes::SPACE, Statuses::LIVE ];
 
 		if ( '' !== (string) ( $args['type'] ?? '' ) ) {
@@ -363,7 +364,7 @@ final class SpacesQuery {
 		foreach ( $ids as $id ) {
 			$post = get_post( $id );
 
-			if ( $post instanceof WP_Post ) {
+			if ( $post instanceof WP_Post && ! Visibility::is_hidden( $id ) ) {
 				$out[] = [ 'post' => $post, 'meta' => self::space_meta( $id ) ];
 			}
 		}

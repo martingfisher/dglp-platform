@@ -63,7 +63,7 @@ final class Enquiry {
 	public static function state( WP_Post $venue ): array {
 		$to = self::recipients( (int) $venue->ID );
 
-		if ( PostTypes::VENUE !== $venue->post_type || Statuses::LIVE !== $venue->post_status || [] === $to ) {
+		if ( PostTypes::VENUE !== $venue->post_type || Statuses::LIVE !== $venue->post_status || [] === $to || Visibility::is_hidden( (int) $venue->ID ) ) {
 			return [ 'show' => false, 'off' => false ];
 		}
 
@@ -270,7 +270,7 @@ final class Enquiry {
 		$venue = get_post( $venue_id );
 		$to    = self::recipients( $venue_id );
 
-		if ( ! $venue instanceof WP_Post || PostTypes::VENUE !== $venue->post_type || Statuses::LIVE !== $venue->post_status || [] === $to || ! Routing::is_enabled() ) {
+		if ( ! $venue instanceof WP_Post || PostTypes::VENUE !== $venue->post_type || Statuses::LIVE !== $venue->post_status || [] === $to || ! Routing::is_enabled() || Visibility::is_hidden( $venue_id ) ) {
 			return [ 'status' => 'off' ];
 		}
 

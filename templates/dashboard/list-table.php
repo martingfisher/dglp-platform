@@ -45,7 +45,7 @@ $action = (string) ( $data['action'] ?? '' );
 							<span class="dgl-edit-flag"><?php esc_html_e( 'Edit', 'dgl-platform' ); ?></span>
 						<?php endif; ?>
 					</td>
-					<td><?php echo View::chip( $row['status'] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></td>
+					<td><?php echo View::chip( $row['status'] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?><?php if ( ! empty( $row['hidden'] ) ) : ?> <span class="dgl-chip dgl-chip--hidden"><?php esc_html_e( 'Hidden', 'dgl-platform' ); ?></span><?php endif; ?></td>
 					<td><?php echo esc_html( View::date( $row['updated'], true ) ); ?></td>
 					<?php if ( '' !== $action ) : ?>
 						<td class="dgl-table__action">

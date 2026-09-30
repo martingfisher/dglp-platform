@@ -1608,6 +1608,20 @@ final class Controller {
 				default   => '',
 			};
 
+			// Hide and show are the organisation's own switch: instant, no review.
+			if ( 'hide' === $intent || 'show' === $intent ) {
+				$flip = 'hide' === $intent
+					? \DGL\Spaces\Visibility::hide( $post_id, $user )
+					: \DGL\Spaces\Visibility::show( $post_id, $user );
+
+				if ( is_wp_error( $flip ) ) {
+					$action_error = $flip->get_error_message();
+				} else {
+					wp_safe_redirect( add_query_arg( 'visibility', $intent, Router::url( 'item', (string) $post_id ) ) );
+					exit;
+				}
+			}
+
 			// A copy is a new draft with the dates blank; the wizard opens on step 1.
 			if ( 'copy' === $intent ) {
 				$copy = Wizard::copy( $post_id, $user->user_id );
@@ -1740,6 +1754,9 @@ final class Controller {
 				'can_copy'   => PostTypes::REVISION !== $post->post_type && Access::can( $user->user_id, Policy::CREATE_ITEM ),
 				'can_archive' => null === $revision && Access::can( $user->user_id, Policy::ARCHIVE_ITEM, $post_id ),
 				'can_restore' => Access::can( $user->user_id, Policy::RESTORE_ITEM, $post_id ),
+				'can_toggle_visibility' => \DGL\Spaces\Visibility::can_toggle( $user, $post ),
+				'hidden'      => \DGL\Spaces\Visibility::is_hidden( $post_id ),
+				'visibility'  => isset( $_GET['visibility'] ) ? sanitize_key( wp_unslash( $_GET['visibility'] ) ) : '', // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 				'action_error' => $action_error,
 				'submitted'  => isset( $_GET['submitted'] ), // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 				'discarded'  => isset( $_GET['discarded'] ), // phpcs:ignore WordPress.Security.NonceVerification.Recommended
@@ -2131,6 +2148,7 @@ final class Controller {
 				: $def['singular'],
 			'is_edit'  => $is_edit,
 			'status'   => $post->post_status,
+			'hidden'   => \DGL\Spaces\Visibility::is_hidden( $post_id ),
 			'updated'  => is_string( $modified ) ? $modified : null,
 			'url'      => $for_review
 				? Router::url( 'review', (string) $post_id )

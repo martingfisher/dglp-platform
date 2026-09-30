@@ -192,6 +192,12 @@ archives it at once, and on the archived listing "Put back on the site",
 which sends it to your queue rather than straight back, so a listing that
 has been off for months is read again before it shows.
 
+A live venue or space has an "On the site" switch as well, for a
+refurbishment or a room out of use: off hides it at once, on brings it
+back at once, no review either way. You see a "Hidden" chip in the lists
+and on its review screen. It is still live; the organisation brings it
+back themselves. Enquiries stop while it is hidden.
+
 ## Spaces to hire
 
 Member organisations list venues (a building at one address) and the

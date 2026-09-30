@@ -48,6 +48,9 @@ final class Meta {
 	/** On a space: the venue it belongs to. Set when the space is started, mirrored into the index as parent_id. */
 	public const SPACE_VENUE = 'dgl_venue';
 
+	/** '1' while the organisation has switched a live venue or space off the site. */
+	public const ITEM_HIDDEN = 'dgl_hidden';
+
 	/** On a venue: where its postcode is, written once by the geocoder. Strings, decimal degrees. */
 	public const VENUE_LAT = 'dgl_lat';
 	public const VENUE_LNG = 'dgl_lng';

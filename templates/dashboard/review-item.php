@@ -56,6 +56,9 @@ $check_word = static fn( string $status ): string => match ( $status ) {
 		<h1 class="dgl-page-head__title">
 			<?php echo esc_html( $post->post_title !== '' ? $post->post_title : __( 'Untitled', 'dgl-platform' ) ); ?>
 		</h1>
+		<?php if ( \DGL\Spaces\Visibility::is_hidden( (int) $post->ID ) ) : ?>
+			<p class="dgl-page-head__lede"><span class="dgl-chip dgl-chip--hidden"><?php esc_html_e( 'Hidden', 'dgl-platform' ); ?></span> <?php esc_html_e( 'The organisation has switched this off the site for now. It is still live; they bring it back themselves.', 'dgl-platform' ); ?></p>
+		<?php endif; ?>
 		<?php if ( ( $data['venue'] ?? null ) instanceof WP_Post ) : ?>
 			<p class="dgl-page-head__lede">
 				<?php

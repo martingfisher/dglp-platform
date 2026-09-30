@@ -60,6 +60,21 @@ space wizard under that venue. "Post something > Space" asks which venue
 first when the organisation has more than one. A venue's screen lists its
 spaces with their states; a space's screen names its venue.
 
+## Hiding a venue or space for a while
+
+A live venue or space has an "On the site" switch on its dashboard page,
+for the organisation and the team. Off hides it at once: off Find a space,
+the search, the organisation's page and the map, its page answers 404, and
+enquiries stop; a hidden venue takes its spaces with it. Its details,
+photos and spaces are kept, and on brings it back the moment it is
+pressed. No review either way, because nothing about the listing changes
+(decided 30 September 2026, after Martin asked how a venue closed for a
+refurbishment would come back without the review team). The flag is
+`dgl_hidden` post meta; the queries keep hidden items out with a NOT
+EXISTS on it; hidden things show a "Hidden" chip in the dashboard lists
+and on the review screen. Archiving stays for taking something down for
+good, and that road back runs through the review team.
+
 ## What happens to spaces when a venue changes
 
 A venue's status carries its spaces with it, as the same actor, in one

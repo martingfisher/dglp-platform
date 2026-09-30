@@ -1109,3 +1109,14 @@ clean. They are the only DGLP content on staging.
 - **0.43.6 deployed** (30 September, production): on a venue's dashboard
   page the "Spaces at this venue" card sat flush on top of the two columns
   below it (0px above, 24px between). It keeps the same 24px below.
+- **0.44.0 deployed** (30 September, production): an "On the site" switch
+  on every live venue and space for the organisation (and the team). Off
+  hides it at once: off Find a space, the search, the organisation's page
+  and the map, its page answers 404, enquiries stop, a hidden venue takes
+  its spaces with it; on brings it back at once. No review either way.
+  Audited as hidden/shown; a "Hidden" chip in the dashboard lists and on
+  the review screen; the checks warn on a space under a hidden venue.
+  On venues and spaces the archive button reads "Archive" with a confirm
+  that points at the switch for a temporary closure. Martin's case: a
+  venue shut for a refurbishment, and members not knowing how to get it
+  back from the archive. `src/Spaces/Visibility.php`, help, docs, tests.

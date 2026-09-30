@@ -100,6 +100,7 @@ final class Plugin {
 		\DGL\Spaces\Cascade::init();
 		\DGL\Spaces\Enquiry::init();
 		\DGL\Spaces\Geocode::init();
+		\DGL\Spaces\Visibility::init();
 		Invites::init();
 		Privacy::init();
 

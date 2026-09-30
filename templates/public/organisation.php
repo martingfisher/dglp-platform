@@ -63,6 +63,10 @@ $facts = array_filter(
 // The buildings they hire out, with what is in each: the door for anybody looking for a room.
 $venues = [];
 foreach ( ItemsTable::for_org( $id, [ PostTypes::VENUE ], [ Statuses::LIVE ], 20 ) as $venue_id ) {
+	if ( \DGL\Spaces\Visibility::is_hidden( (int) $venue_id ) ) {
+		continue;
+	}
+
 	$venue_post = get_post( (int) $venue_id );
 	if ( $venue_post instanceof WP_Post ) {
 		$venue_spaces = \DGL\Spaces\SpacesQuery::spaces( (int) $venue_id );
