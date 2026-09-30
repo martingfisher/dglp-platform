@@ -136,18 +136,21 @@
 			document.body.classList.add( 'dgl-mapdialog-open' );
 			opener.setAttribute( 'aria-expanded', 'true' );
 
+			var marker = null;
+
 			if ( ! large ) {
 				large = L.map( box, { scrollWheelZoom: true } );
 				tiles( large );
-				L.marker( [ pin.lat, pin.lng ], { title: pin.title } ).addTo( large ).bindPopup( pin.title ).openPopup();
+				marker = L.marker( [ pin.lat, pin.lng ], { title: pin.title } ).addTo( large ).bindPopup( pin.title );
+				large.dglMarker = marker;
 			}
 
-			large.setView( [ pin.lat, pin.lng ], 16 );
-
-			// The box had no size while hidden; Leaflet has to measure it now.
+			// The box had no size while hidden; Leaflet has to measure it
+			// before the view and the popup can be placed.
 			window.setTimeout( function () {
 				large.invalidateSize();
 				large.setView( [ pin.lat, pin.lng ], 16 );
+				large.dglMarker.openPopup();
 			}, 30 );
 
 			dialog.querySelector( '[data-dgl-map-close]:not(.dgl-mapdialog__scrim)' ).focus();

@@ -1074,7 +1074,8 @@ clean. They are the only DGLP content on staging.
   Show-on-the-site toggle would be better; decided against, because off is
   instant and on is a request, which a toggle cannot show. The review
   team's own "Restore and review again" is unchanged.
-- **0.43.0 deployed** (30 September, production): on a venue page the
+- **0.43.1 deployed** (30 September, production; 0.43.0 was built and not
+  installed): on a venue page the
   summary moves into the main column so the enquiry card starts level with
   it, the card stays in place as the page scrolls (scrolling inside itself
   when taller than the window), and a "Bigger map" button on the small map
