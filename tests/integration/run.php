@@ -4772,6 +4772,57 @@ $en_page = \DGL\Dashboard\View::render( 'public/venue', \DGL\Spaces\Pages::venue
 $ok( str_contains( $en_page, 'name="dgl_enquiry"' ) && str_contains( $en_page, 'name="' . \DGL\Joining\Guard::STAMP . '"' ) && str_contains( $en_page, 'Send enquiry' ) && str_contains( $en_page, 'dgl-venue__bar' ) && ! str_contains( $en_page, 'venue@example.test' ), 'the venue page carries the form, the stamp, the phone bar, and no longer prints the contact email' );
 remove_action( 'dgl_mail_sent', $en_hook, 10 );
 
+$group( 'Geocoding and the map: a pin from the postcode, once, with the lookup stubbed' );
+
+$geo_calls = 0;
+$geo_stub  = static function ( $pre, array $args, string $url ) use ( &$geo_calls ) {
+	if ( ! str_starts_with( $url, \DGL\Spaces\Geocode::ENDPOINT ) ) {
+		return $pre;
+	}
+	++$geo_calls;
+	if ( str_contains( $url, 'LS11AA' ) ) {
+		return [ 'response' => [ 'code' => 200 ], 'body' => '{"status":200,"result":{"postcode":"LS1 1AA","latitude":53.7965,"longitude":-1.5412}}' ];
+	}
+	if ( str_contains( $url, 'ZZ99' ) ) {
+		return [ 'response' => [ 'code' => 404 ], 'body' => '{"status":404,"error":"Postcode not found"}' ];
+	}
+	return new WP_Error( 'http_request_failed', 'no network' );
+};
+add_filter( 'pre_http_request', $geo_stub, 10, 3 );
+delete_transient( 'dgl_geo_' . md5( 'LS11AA' ) );
+delete_transient( 'dgl_geo_' . md5( 'ZZ99ZZ' ) );
+delete_transient( 'dgl_geo_' . md5( 'LS29AA' ) );
+
+$geo_first = \DGL\Spaces\Geocode::lookup( 'ls1 1aa' );
+$ok( [ 'lat' => 53.7965, 'lng' => -1.5412 ] === $geo_first && 1 === $geo_calls, 'a postcode is looked up, whatever the case and spacing' );
+$geo_again = \DGL\Spaces\Geocode::lookup( 'LS1 1AA' );
+$ok( $geo_first === $geo_again && 1 === $geo_calls, 'a second ask is answered from the cache' );
+$ok( null === \DGL\Spaces\Geocode::lookup( 'ZZ99 ZZ' ) && null === \DGL\Spaces\Geocode::lookup( 'ZZ99 ZZ' ) && 2 === $geo_calls, 'an unknown postcode is asked once and remembered as unknown' );
+$ok( null === \DGL\Spaces\Geocode::lookup( 'LS2 9AA' ) && 3 === $geo_calls, 'a network failure gives nothing' );
+
+// Approving a venue places it; the fixture venues from earlier groups were approved before the stub, so place one now.
+$ok( [ 'lat' => 53.7965, 'lng' => -1.5412 ] === \DGL\Spaces\Geocode::stamp( $sq_armley ) && [ 'lat' => 53.7965, 'lng' => -1.5412 ] === \DGL\Spaces\Geocode::coords( $sq_armley ), 'stamping a venue writes its pin from its postcode' );
+$geo_new = $sq_make_venue( $sp_org, $sp_owner, 'Pinned Hall', 'armley' );
+$ok( null !== \DGL\Spaces\Geocode::coords( $geo_new ), 'a venue approved after the geocoder is on gets its pin on approval' );
+update_post_meta( $geo_new, 'dgl_postcode', 'ZZ99 ZZ' );
+$ok( null === \DGL\Spaces\Geocode::stamp( $geo_new ) && null === \DGL\Spaces\Geocode::coords( $geo_new ), 'a postcode that cannot be placed clears the pin' );
+$ok( in_array( $geo_new, \DGL\Spaces\Geocode::unplaced(), true ) && ! in_array( $sq_armley, \DGL\Spaces\Geocode::unplaced(), true ), 'the backfill lists live venues without a pin' );
+update_post_meta( $geo_new, 'dgl_postcode', 'LS1 1AA' );
+\DGL\Spaces\Geocode::stamp( $geo_new );
+
+$geo_pins = \DGL\Spaces\SpacesQuery::pins( \DGL\Spaces\SpacesQuery::args_from( [ 'ward' => 'armley' ] ) );
+$geo_pin_ids = array_column( $geo_pins, 'id' );
+$geo_result = \DGL\Spaces\SpacesQuery::run( \DGL\Spaces\SpacesQuery::args_from( [ 'ward' => 'armley' ] ) )['ids'];
+$ok( in_array( $sq_armley, $geo_pin_ids, true ) && [] === array_diff( $geo_pin_ids, $geo_result ) && ! in_array( $sq_bramley, $geo_pin_ids, true ) && 53.7965 === $geo_pins[ array_search( $sq_armley, $geo_pin_ids, true ) ]['lat'], 'the map pins are matching venues that have a pin, and only those' );
+$ok( \DGL\Spaces\MapAssets::available(), 'Leaflet ships with the plugin' );
+$geo_find = \DGL\Dashboard\View::render( 'public/spaces', \DGL\Spaces\Pages::find_data( [ 'ward' => 'armley' ] ) );
+$ok( str_contains( $geo_find, 'id="dgl-map-data"' ) && str_contains( $geo_find, 'data-dgl-view="map"' ) && str_contains( $geo_find, 'Armley Centre' ), 'the find page carries the pins and the List / Map toggle' );
+$geo_page = \DGL\Dashboard\View::render( 'public/venue', \DGL\Spaces\Pages::venue_data( get_post( $sq_armley ) ) );
+$ok( str_contains( $geo_page, 'id="dgl-venue-map"' ) && str_contains( $geo_page, '53.7965' ), 'a placed venue\'s page carries its pin' );
+$geo_schema = \DGL\Frontend\Seo::schema_for_post( get_post( $sq_armley ), [ 'url' => '', 'width' => 0, 'height' => 0, 'alt' => '' ], 'x' );
+$ok( 53.7965 === ( $geo_schema['geo']['latitude'] ?? null ), 'and its schema has GeoCoordinates' );
+remove_filter( 'pre_http_request', $geo_stub, 10 );
+
 /* ----------------------------------------------------------------- report */
 
 echo "\n" . str_repeat( '-', 60 ) . "\n";

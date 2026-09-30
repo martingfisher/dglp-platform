@@ -48,6 +48,30 @@ if ( ! function_exists( 'esc_url' ) ) {
 	}
 }
 
+if ( ! function_exists( 'sanitize_text_field' ) ) {
+	function sanitize_text_field( string $text ): string {
+		return trim( (string) preg_replace( '/[\r\n\t ]+/', ' ', strip_tags( $text ) ) );
+	}
+}
+
+if ( ! function_exists( 'sanitize_textarea_field' ) ) {
+	function sanitize_textarea_field( string $text ): string {
+		return trim( strip_tags( $text ) );
+	}
+}
+
+if ( ! function_exists( 'is_email' ) ) {
+	function is_email( string $email ): string|false {
+		return false !== filter_var( $email, FILTER_VALIDATE_EMAIL ) ? $email : false;
+	}
+}
+
+if ( ! function_exists( 'sanitize_key' ) ) {
+	function sanitize_key( string $key ): string {
+		return (string) preg_replace( '/[^a-z0-9_\-]/', '', strtolower( $key ) );
+	}
+}
+
 if ( ! function_exists( 'get_bloginfo' ) ) {
 	function get_bloginfo( string $show = '' ): string {
 		return 'Test Site';

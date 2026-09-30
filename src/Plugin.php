@@ -98,6 +98,7 @@ final class Plugin {
 		Mailer::init();
 		\DGL\Spaces\Cascade::init();
 		\DGL\Spaces\Enquiry::init();
+		\DGL\Spaces\Geocode::init();
 		Invites::init();
 		Privacy::init();
 
@@ -117,6 +118,7 @@ final class Plugin {
 			\DGL\Tools\LinksCommand::register();
 			\DGL\News\Command::register();
 			\DGL\Demo\Command::register();
+			\DGL\Spaces\Command::register();
 		}
 
 		\DGL\Admin\Health::watch();
