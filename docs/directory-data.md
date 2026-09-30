@@ -39,7 +39,8 @@ and nothing else. Stored values are stable keys, so labels can be reworded.
 Read-only, shown under "From Forum Central's records": Contact ID, Volition
 membership, LOPF membership, Age and Dementia Friendly Business, whether
 permission to publish was given to Forum Central, and the import date.
-Latitude and longitude are stored for a map later and not shown.
+Latitude and longitude are stored and not shown. (A venue listed for hire
+carries its own pin, found from its postcode; see `docs/spaces.md`.)
 
 Dropped: Postal Greeting, Email Greeting, Street Name, Network/Board name,
 Contact Type, Sort Name, Addressee, State (a county code), PCN (empty in every

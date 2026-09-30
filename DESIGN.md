@@ -365,6 +365,32 @@ over it); focus draws the card's ring. Filters sit under the lead as one
 quiet line on a hairline: an "All news" heading left, small selects and a
 40px outlined Show right; under 560px they fold behind "Filters".
 
+### Venue rows and space cards
+Find a space lists one row per venue on the public-list card pattern:
+square photo, name, type and ward as the meta line, then its spaces as a
+compact list (the whole-building option first, tagged so it cannot be
+taken for a room) with the largest capacity and the rate at the right.
+On a venue page each space is a card: photo at the left, name, kind and
+floor area on the top line, capacities as a four-cell strip with the
+layout name in 11px uppercase over the number in 700, facilities as
+chips, the rate in 700 with its note beside it, and a 40px outlined
+Enquire that pre-selects the space in the form.
+
+### Quick facts and the sticky bar
+Under a venue's gallery a hairline strip of four facts separated by
+space: spaces, most people, "From £X an hour" or "Price on request", and
+the first access feature. Under 900px the same rate and Enquire sit in a
+bar fixed to the foot of the screen, white on a hairline, so the price
+and the way in stay in view while the cards scroll.
+
+### Map
+Leaflet with OpenStreetMap tiles, drawn only when asked for: on Find a
+space a List / Map toggle (aria-pressed pair, the pressed one filled
+navy) swaps the list for a 480px map with one default marker per placed
+venue and a popup that is the venue's name as a link; on a venue page a
+240px map with one marker, no dragging or zoom controls. Attribution is
+the OpenStreetMap line their policy asks for.
+
 ### Status stamp
 The chip is the system's signature: every list, every detail header and every
 email carries the same six words in the same six tints. A member learns them

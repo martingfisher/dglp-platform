@@ -161,14 +161,25 @@ assembly and CSV export columns. Around 300 lines, and it removes the ACF depend
 
 ### Data model
 
-**Five CPTs**: `dgl_news`, `dgl_event`, `dgl_training`, `dgl_grant`, `dgl_volunteering`. Separate
-types give clean archives, per-type permalinks, per-type Rank Math config and per-type capabilities.
-The schema registry keeps the engine type-agnostic despite five types.
+**Seven CPTs**: `dgl_news`, `dgl_event`, `dgl_training`, `dgl_grant`, `dgl_volunteering`, and since
+0.41.0 `dgl_venue` and `dgl_space`. Separate types give clean archives, per-type permalinks, per-type
+Rank Math config and per-type capabilities. The schema registry keeps the engine type-agnostic.
+Each definition carries a `kind`: `listing` (the five), `venue` or `space`. `PostTypes::feed_keys()`
+is the listings only (digests, email preferences, search item groups); `menu()` leaves out spaces,
+which are started from their venue; `has_page()` is false for a space, whose public address is its
+venue's page plus `#space-<id>`.
+
+**A space belongs to a venue**, fixed at creation in `dgl_venue` post meta and mirrored to the index
+as `parent_id` (`KEY parent (parent_id, status)`), so "the live spaces of this venue" is an index read.
+`Spaces\Cascade` listens on `dgl_item_transitioned` and carries a venue's archive, take-down, reject
+and restore to its spaces through `Transition::apply` as the same actor, with `Mailer` quiet, so one
+venue action sends one email. A space has no contact step (`TypeDefinition::has_contact()`) and
+neither has topics (`has_topics()`).
 
 **`dgl_org` CPT** for organisations — they carry fields, a logo, an approval status, a trust level
 and an owner. Users link via `dgl_org_id` user meta plus an org role of `owner` or `contributor`.
 
-**Shared taxonomy `dgl_topic`** across all five CPTs. This is what "all events of type X" means in
+**Shared taxonomy `dgl_topic`** across the five listing CPTs (venues and spaces have no topics). This is what "all events of type X" means in
 the digest preferences. Term relationships are indexed, so topic filtering stays fast.
 
 **Custom post statuses**: `dgl_pending`, `dgl_changes`, `dgl_expired`, `dgl_archived`,

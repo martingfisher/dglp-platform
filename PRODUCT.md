@@ -83,6 +83,13 @@ resubmitting it is a stateful document, not a form entry.
 - Built 22 September 2026: an imported organisation is asked, on the dashboard
   and the Organisation tab, to check its details and rewrite its overview,
   until an owner saves the tab.
+- Built 30 September 2026: spaces to hire. Member organisations list venues
+  and the spaces inside them; the public find them at `/spaces/` by size,
+  ward, kind, price and access, on a list or a map, and enquire by email
+  from the venue page. Decided the same day: members only, enquiry only,
+  prices optional with "Price on request" and priced venues first, no
+  member rate, map in version one, every new venue and space reviewed.
+  `docs/spaces.md`.
 - Not yet built, and known: Microsoft and Google sign-in; consent records at
   registration; Turnstile on the join form; member-initiated account closure.
 - Constraint: the plugin must not depend on the theme's markup. Theme updates

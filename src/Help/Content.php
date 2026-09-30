@@ -143,6 +143,20 @@ final class Content {
 					],
 				],
 				[
+					'id'      => 'spaces',
+					'heading' => __( 'Listing a venue and its spaces to hire', 'dgl-platform' ),
+					'blocks'  => [
+						[ 'p', __( 'A venue is a building at one address: its photos, type, address, ward, access features, facilities, how to get there, when it is available and the contact details enquiries go to. A space is something inside it that people can hire: a hall, a meeting room, a studio, a kitchen, an outdoor space, or the whole building at once. List the building once as a venue, then each thing that can be hired on its own as a space.', 'dgl-platform' ) ],
+						[ 'ol', [
+							__( 'Post something > Venue. Four steps, like any listing. Give the postcode carefully: it puts the venue on the map.', 'dgl-platform' ),
+							__( 'On the venue\'s screen press "Add a space". Three steps: the basics and a photo, the details, then check and send. A space has no contact step because enquiries go to the venue\'s contact.', 'dgl-platform' ),
+							__( 'Give the number of people for each layout the space is used in and leave the others blank. A rate is optional: leave it blank to show "Price on request", enter 0 if it is free. Venues with a priced space come higher in the results.', 'dgl-platform' ),
+						] ],
+						[ 'p', __( 'The review team look at each new venue and space. A space shows on the site once it and its venue are both live. Archiving a venue, or taking it off the site, does the same to its spaces in one go. A space stays with the venue it was made under; to list it somewhere else, archive it and add it again there.', 'dgl-platform' ) ],
+						[ 'p', __( 'Enquiries arrive by email at the venue\'s contact address, with the enquirer\'s address to reply to. They are not kept on the site, so answer from your inbox. The public find your venues at /spaces/ and on your organisation\'s directory page.', 'dgl-platform' ) ],
+					],
+				],
+				[
 					'id'      => 'taking-down',
 					'heading' => __( 'Taking things down, archiving and copying', 'dgl-platform' ),
 					'blocks'  => [
@@ -251,6 +265,15 @@ final class Content {
 					'blocks'  => [
 						[ 'p', __( 'A repeating event is one listing. Two weeks before its end date the organisation\'s owners are emailed a one-click button that keeps it listed for six more months; if nobody clicks, it comes off on its last date. Owners change a live event\'s dates and times from its screen without review, and mark it cancelled (it stays a week with a Cancelled stamp, then comes off) or cancel one date of a series. The words and pictures still come to you; the dates and cancellations do not. Take something down yourself only if it should go at once.', 'dgl-platform' ) ],
 						[ 'p', __( 'News stays on the site until its organisation archives it, or until you take it down from the review screen. Nothing comes off on its own.', 'dgl-platform' ) ],
+					],
+				],
+				[
+					'id'      => 'spaces',
+					'heading' => __( 'Spaces to hire: venues, spaces and enquiries', 'dgl-platform' ),
+					'blocks'  => [
+						[ 'p', __( 'A venue is a building an organisation hires out; a space is one thing inside it that can be hired. Both come to the queue like anything else. Approve the venue first: a space whose venue is not live stays pending, its checks say "the venue is not live yet", and it will not show until the venue does. A venue\'s public page lists only its live spaces.', 'dgl-platform' ) ],
+						[ 'p', __( 'Archiving, taking down, rejecting or restoring a venue does the same to its spaces in one go, with one email to the member. Moving a venue to another organisation moves its spaces with it; a space cannot be moved on its own.', 'dgl-platform' ) ],
+						[ 'p', __( 'Enquiries go by email straight to the venue\'s contact address, or to the organisation\'s owners when the venue has none. They never come to you and are not kept on the site; the audit trail records that one was sent. A venue is placed on the map from its postcode when it goes live. One without a pin is not wrong, only not placed yet.', 'dgl-platform' ) ],
 					],
 				],
 				[

@@ -203,6 +203,23 @@ The topic list ships in the plugin and seeds itself:
   then every page carries noindex from WordPress core, whatever else is
   printed.
 
+## After 0.41.0
+
+- Spaces to hire: two new post types, a `parent_id` column on the index
+  (schema 11, added on activation) and two public routes, `/spaces/` and
+  `/spaces/<slug>/`. Rewrites are flushed by the version bump; if `/spaces/`
+  answers 404, Settings > Permalinks > Save.
+- Leaflet is vendored inside the plugin; the map's tiles come from
+  `tile.openstreetmap.org`. Nothing to configure.
+- Geocoding calls `api.postcodes.io` from the server when a venue goes
+  live. Check the host can reach it: `wp dgl probe page
+  https://api.postcodes.io/postcodes/LS13AD status` should show
+  `"status":200`. Then `wp dgl spaces geocode` places any venue that went
+  live while it could not.
+- The enquiry form posts to the venue page. SmartCache and the CDN must
+  pass POST requests through to PHP (they do by default); a form that
+  reloads the page with nothing sent means a cached POST response.
+
 ## Demo content
 
 `wp dgl demo events --org=<id> --images` makes seven varied live events
@@ -217,6 +234,12 @@ picture on purpose. `--dry-run` lists them first. Every one carries
 listings: one-day, three-day and two-date courses, in person, online and
 blended, free, paid and donation, two without a picture.
 `wp dgl demo training --remove` deletes them.
+
+`wp dgl demo spaces --org=<id> --images` makes three venues with nine
+spaces to hire: every price band, a day rate, a session rate, a free
+studio and a kitchen at Price on request. Each venue is placed on the map
+as it is made unless `--skip-geocode` is given. `wp dgl demo spaces
+--remove` deletes the spaces, then the venues.
 
 ## The home page: shortcodes for a page built in the theme
 

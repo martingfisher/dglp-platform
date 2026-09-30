@@ -103,9 +103,9 @@ picture when one is missing.
 
 ## Site search
 
-The search box in the site header looks through organisations, news, events
-and training, and the results page shows each kind in its own section, in
-that order, with a count and a "See all" link when there are more than six.
+The search box in the site header looks through organisations, news, events,
+training and spaces to hire, and the results page shows each kind in its own
+section, in that order, with a count and a "See all" link when there are more than six.
 A word is matched in the title, the body and the summary of an item, and in
 the name and description of an organisation. Only live items and listed,
 approved organisations appear. Nothing found offers the four lists to browse.
@@ -181,6 +181,26 @@ Open any live item from the queue or from the member's list. The last section
 on the page is "Take it off the site". A note is required. The item comes off
 the public site, goes back into the queue as needing changes, and the member
 is emailed your note.
+
+## Spaces to hire
+
+Member organisations list venues (a building at one address) and the
+spaces inside them (a hall, a room, a kitchen, a garden or the whole
+building) from the dashboard, and the public find them at `/spaces/` and
+send an enquiry from the venue's page. Both kinds come to the queue like
+anything else. Approve the venue first: a space under a venue that is not
+live stays pending and its checks say so. A venue's page shows only its
+live spaces. Archiving, taking down, rejecting or restoring a venue does
+the same to its spaces in one go, with one email to the member; moving a
+venue to another organisation moves its spaces too. A space cannot be
+moved on its own.
+
+Enquiries go by email to the venue's contact address (or the
+organisation's owners when it has none), never to you, and are not kept
+on the site; the audit trail records that one was sent. The map places a
+venue from its postcode when it goes live. A venue without a pin is not
+wrong, just not placed yet: `wp dgl spaces geocode` from the console
+places every live venue. The full account is in `docs/spaces.md`.
 
 ## Organisations: trust, people and details
 
