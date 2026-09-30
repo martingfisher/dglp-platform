@@ -11,6 +11,7 @@
 declare( strict_types=1 );
 
 use DGL\Dashboard\View;
+use DGL\Frontend\Finder;
 use DGL\Frontend\Frontend;
 use DGL\Frontend\Search;
 use DGL\PostTypes;
@@ -27,8 +28,16 @@ $total  = (int) ( $data['total'] ?? 0 );
 		<h1 class="dgl-pub__title"><?php esc_html_e( 'Search', 'dgl-platform' ); ?></h1>
 		<form class="dgl-search__form" role="search" method="get" action="<?php echo esc_url( home_url( '/' ) ); ?>">
 			<label class="screen-reader-text" for="dgl-search-q"><?php esc_html_e( 'Search the site', 'dgl-platform' ); ?></label>
-			<input class="dgl-search__input" id="dgl-search-q" type="search" name="s" value="<?php echo esc_attr( $term ); ?>" placeholder="<?php esc_attr_e( 'Organisations, news, events, training', 'dgl-platform' ); ?>" autocomplete="off">
-			<button class="dgl-search__go" type="submit"><?php esc_html_e( 'Search', 'dgl-platform' ); ?></button>
+			<div class="dgl-search__row">
+				<input class="dgl-search__input" id="dgl-search-q" type="search" name="s" value="<?php echo esc_attr( $term ); ?>" placeholder="<?php esc_attr_e( 'An organisation, a place, a subject', 'dgl-platform' ); ?>" autocomplete="off">
+				<button class="dgl-search__go" type="submit"><?php esc_html_e( 'Search', 'dgl-platform' ); ?></button>
+			</div>
+			<fieldset class="dgl-finder__kinds dgl-search__kinds">
+				<legend class="dgl-finder__legend"><?php esc_html_e( 'Look in', 'dgl-platform' ); ?></legend>
+				<div class="dgl-finder__chips">
+					<?php echo Finder::chips( Finder::categories(), $only, 'dgl-search-kind' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside. ?>
+				</div>
+			</fieldset>
 		</form>
 		<p class="dgl-pub__lede" aria-live="polite">
 			<?php
@@ -56,6 +65,7 @@ $total  = (int) ( $data['total'] ?? 0 );
 				<li><a href="<?php echo esc_url( Frontend::archive_url( PostTypes::NEWS ) ); ?>"><?php esc_html_e( 'News', 'dgl-platform' ); ?></a></li>
 				<li><a href="<?php echo esc_url( Frontend::archive_url( PostTypes::EVENT ) ); ?>"><?php esc_html_e( 'Events', 'dgl-platform' ); ?></a></li>
 				<li><a href="<?php echo esc_url( Frontend::archive_url( PostTypes::TRAINING ) ); ?>"><?php esc_html_e( 'Training', 'dgl-platform' ); ?></a></li>
+				<li><a href="<?php echo esc_url( Frontend::archive_url( PostTypes::VENUE ) ); ?>"><?php esc_html_e( 'Spaces to hire', 'dgl-platform' ); ?></a></li>
 			</ul>
 		</div>
 	<?php endif; ?>

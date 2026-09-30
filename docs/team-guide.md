@@ -103,9 +103,14 @@ picture when one is missing.
 
 ## Site search
 
-The search box in the site header looks through organisations, news, events,
-training and spaces to hire, and the results page shows each kind in its own
-section, in that order, with a count and a "See all" link when there are more than six.
+The magnifying glass at the top right of the header (and "Search" in the
+phone menu) opens a search box in the middle of the screen with a row of
+kinds to look in: All, Events, News, Training, Spaces to hire,
+Organisations. The theme's own search box is switched off by the plugin
+while this is in use; it comes back the moment the plugin is deactivated,
+and the header builder still holds its settings. Search looks through
+organisations, news, events, training and spaces to hire, and the results
+page shows each kind in its own section, in that order, with a count and a "See all" link when there are more than six.
 A word is matched in the title, the body and the summary of an item, and in
 the name and description of an organisation. Only live items and listed,
 approved organisations appear. Nothing found offers the four lists to browse.

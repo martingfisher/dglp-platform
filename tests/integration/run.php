@@ -4873,6 +4873,42 @@ $ok( [] === array_diff( $ds_made['spaces'], $ds_gone_spaces ) && [] === array_di
 $ok( null !== get_post( $ds_other ) && PostTypes::VENUE === get_post_type( $ds_other ), 'and leaves the organisation\'s own venue alone' );
 $ok( [] === \DGL\Demo\Command::remove( PostTypes::SPACE ) && [] === \DGL\Demo\Command::remove( PostTypes::VENUE ), 'a second remove finds nothing' );
 
+$group( 'Finder: the magnifier in the menus, the theme box gone, and the dialog at the foot of the page' );
+
+$fx_menus = [];
+foreach ( [ 'Top Bar', 'Main Menu', 'Footer' ] as $fx_name ) {
+	$fx_existing = wp_get_nav_menu_object( $fx_name );
+	$fx_menus[ $fx_name ] = $fx_existing instanceof WP_Term ? (int) $fx_existing->term_id : (int) wp_create_nav_menu( $fx_name );
+	wp_update_nav_menu_item( $fx_menus[ $fx_name ], 0, [ 'menu-item-title' => 'News', 'menu-item-url' => home_url( '/news/' ), 'menu-item-status' => 'publish' ] );
+}
+$fx_top   = wp_nav_menu( [ 'menu' => $fx_menus['Top Bar'], 'echo' => false, 'container' => false, 'fallback_cb' => false ] );
+$fx_main  = wp_nav_menu( [ 'menu' => $fx_menus['Main Menu'], 'echo' => false, 'container' => false, 'fallback_cb' => false ] );
+$fx_other = wp_nav_menu( [ 'menu' => $fx_menus['Footer'], 'echo' => false, 'container' => false, 'fallback_cb' => false ] );
+$ok( str_contains( $fx_top, 'dgl-finder-item--top-bar' ) && str_contains( $fx_top, 'data-dgl-finder-open' ) && 1 === substr_count( $fx_top, 'dgl-finder-trigger"' ), 'the Top Bar menu carries one trigger' );
+$ok( strrpos( $fx_top, '<li' ) === strrpos( $fx_top, '<li class="menu-item dgl-finder-item' ), 'as its last item' );
+$ok( str_contains( $fx_top, 'aria-haspopup="dialog"' ) && str_contains( $fx_top, 'aria-controls="dgl-finder"' ) && str_contains( $fx_top, '<svg' ) && str_contains( $fx_top, '>Search</span>' ), 'a button with a magnifier, a label and the dialog named' );
+$ok( str_contains( $fx_main, 'dgl-finder-item--main' ), 'the Main Menu carries it too, for the phone drawer' );
+$ok( ! str_contains( $fx_other, 'dgl-finder' ), 'any other menu is left alone' );
+foreach ( $fx_menus as $fx_id ) {
+	wp_delete_nav_menu( $fx_id );
+}
+
+set_theme_mod( 'header_placements', [ 'sections' => [ [ 'items' => [ [ 'id' => 'search-input' ] ], 'desktop' => [ [ 'placements' => [ [ 'id' => 'end', 'items' => [ 'search-input', 'menu-secondary', 'account' ] ] ] ] ] ] ] ] );
+$fx_layout = get_theme_mod( 'header_placements' );
+$ok( [ 'menu-secondary', 'account' ] === $fx_layout['sections'][0]['desktop'][0]['placements'][0]['items'] && 'search-input' === $fx_layout['sections'][0]['items'][0]['id'], 'the header layout is read without the theme search box, its settings kept' );
+remove_theme_mod( 'header_placements' );
+
+ob_start();
+\DGL\Frontend\Finder::overlay();
+$fx_overlay = (string) ob_get_clean();
+$ok( str_contains( $fx_overlay, 'id="dgl-finder"' ) && str_contains( $fx_overlay, ' hidden' ) && str_contains( $fx_overlay, 'role="dialog"' ) && str_contains( $fx_overlay, 'aria-modal="true"' ) && str_contains( $fx_overlay, 'aria-labelledby="dgl-finder-title"' ), 'the dialog is printed hidden, as a labelled modal dialog' );
+$ok( 6 === substr_count( $fx_overlay, 'type="radio" name="type"' ) && str_contains( $fx_overlay, 'value="spaces"' ) && str_contains( $fx_overlay, 'value="" checked' ), 'six kinds to look in, All chosen to begin with' );
+$ok( str_contains( $fx_overlay, 'action="' . esc_url( home_url( '/' ) ) . '"' ) && str_contains( $fx_overlay, 'name="s"' ) && str_contains( $fx_overlay, 'data-dgl-finder-close' ), 'the form is the ordinary site search, with a way to close' );
+
+$fx_page = \DGL\Dashboard\View::render( 'public/search', \DGL\Frontend\Search::view_data( [ 's' => 'zzqx-nothing', 'type' => 'events' ] ) );
+$ok( str_contains( $fx_page, 'value="events" checked' ) && 6 === substr_count( $fx_page, 'type="radio" name="type"' ), 'the results page carries the same kinds with the current one chosen' );
+$ok( str_contains( $fx_page, '>Spaces to hire</a>' ), 'and offers the spaces list when nothing matches' );
+
 /* ----------------------------------------------------------------- report */
 
 echo "\n" . str_repeat( '-', 60 ) . "\n";

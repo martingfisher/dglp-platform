@@ -347,6 +347,7 @@ shadows, no gradients, no icons unless the label needs one.
 - **Account block:** at the foot, above a 20% white rule: name in 600, organisation in 80% white, then "Sign out" as an outlined white button 44px tall.
 - **Top bar:** white, 1px divider, logo left with a "Member area" label, text links right, the "Back to the website" link in Partnership Purple.
 - **Tabs:** text tabs on a 1px rule; the open tab is a filled Council Navy block with white bold text and 8px top corners. `aria-current="page"` on the open one.
+- **Public header search:** a magnifier drawn in the menu's text colour (20px, 2.2 stroke, `currentColor`) as the last item of the Top Bar menu, 44px hit area, its "Search" label visually hidden; in the phone drawer the same button shows the word beside the icon. It opens a dialog, not a page: a Paper White card 680px wide with the card radius, 12vh from the top on a Council Navy scrim, "Search the site" in navy 1.15rem, a 45px field and a primary Search beside it, then "Look in" as an uppercase label over a row of pill chips (All, Events, News, Training, Spaces to hire, Organisations), the chosen one filled Council Navy. Focus opens in the field, stays inside, and returns to the magnifier on close. Under 560px the field and button stack.
 
 ### Public list cards
 The news and events pages open with one item large and three beside it,
@@ -441,11 +442,12 @@ sit in a plain card because they are information.
 ## Search results
 
 `/?s=term` renders `templates/public/search.php` inside the public wrapper.
-Four sections in a fixed order (organisations, news, events, training), each
-with a heading, a muted count and a "See all N" link when the overview holds
-back (six per section). Items use the same `public/card-row` partial as the
+Five sections in a fixed order (organisations, news, events, training,
+spaces to hire), each with a heading, a muted count and a "See all N" link
+when the overview holds back (six per section). Items use the same `public/card-row` partial as the
 lists; organisations use the same `public/org-card` partial as the directory,
 so a result looks like the thing it opens. The search form at the top repeats
-the term for refining. Nothing found: one sentence and the four lists as
-links. `?type=news` narrows to one section, up to 100, with an "All results"
+the term for refining, with the same "Look in" chips as the header dialog
+so the kind can be changed without going back. Nothing found: one sentence
+and the five lists as links. `?type=news` narrows to one section, up to 100, with an "All results"
 link back.

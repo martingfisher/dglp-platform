@@ -24,6 +24,7 @@ require __DIR__ . '/test-invites.php';
 require __DIR__ . '/test-content.php';
 require __DIR__ . '/test-directory.php';
 require __DIR__ . '/test-chrome.php';
+require __DIR__ . '/test-finder.php';
 require __DIR__ . '/test-recurrence.php';
 require __DIR__ . '/test-repeat-field.php';
 require __DIR__ . '/test-ics.php';

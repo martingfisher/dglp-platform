@@ -220,6 +220,26 @@ The topic list ships in the plugin and seeds itself:
   pass POST requests through to PHP (they do by default); a form that
   reloads the page with nothing sent means a cached POST response.
 
+## After 0.42.0
+
+- The header's search box (Blocksy Pro's "Search Input" element) is taken
+  out of the header layout by the plugin as the layout is read
+  (`theme_mod_header_placements`). Nothing stored changes: it is still in
+  the header builder's settings and comes back when the plugin is
+  deactivated. To bring it back while the plugin runs, drop the filter in
+  `Finder::init()`.
+- The magnifying glass is a menu item the plugin appends to the Top Bar
+  menu (slug `top-bar`) and the Main Menu (slug `main-menu`, for the phone
+  drawer). If either menu is renamed, change the two constants at the top
+  of `src/Frontend/Finder.php`.
+- The "Spaces to hire" link is an ordinary menu item, added on 30
+  September 2026 with
+  `wp menu item add-custom main-menu "Spaces to hire" /spaces/` and moved
+  before Contact. Appearance > Menus to move or rename it.
+- Check after installing: the home page source has `dgl-finder-trigger`
+  in the top bar and no `ct-search-box`; `dgl probe page / ct-search-box`
+  should find nothing.
+
 ## Demo content
 
 `wp dgl demo events --org=<id> --images` makes seven varied live events

@@ -1321,11 +1321,16 @@ h2.dgl-listing__heading:only-child,
  * thing it links to.
  */
 .dgl-search__form {
-	display: flex;
-	gap: 8px;
 	max-width: 640px;
 	margin: 12px 0 8px;
 }
+
+.dgl-search__row {
+	display: flex;
+	gap: 8px;
+}
+
+.dgl-search__kinds { margin-top: 12px; }
 
 .dgl-search__input {
 	flex: 1 1 auto;
@@ -1398,7 +1403,7 @@ h2.dgl-listing__heading:only-child,
 .dgl-search__browse a { font-weight: 600; }
 
 @media ( max-width: 560px ) {
-	.dgl-search__form { flex-direction: column; }
+	.dgl-search__row { flex-direction: column; }
 	.dgl-search__grouphead { flex-direction: column; align-items: flex-start; gap: 4px; }
 }
 

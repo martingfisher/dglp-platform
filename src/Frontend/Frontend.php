@@ -270,6 +270,12 @@ final class Frontend {
 	}
 
 	public static function assets(): void {
+		// The magnifying glass in the header is on every page, so its
+		// stylesheet and script are too: small, and nothing else loads
+		// on a theme page.
+		Assets::style( 'assets/finder.css', 'dgl-finder' );
+		Assets::script( 'assets/finder.js', 'dgl-finder' );
+
 		if ( ! self::is_ours() ) {
 			return;
 		}
