@@ -233,12 +233,13 @@ $pending  = $revision instanceof WP_Post && Statuses::PENDING === $revision->pos
 	<section class="dgl-card dgl-visibility<?php echo $is_hidden ? ' dgl-visibility--hidden' : ''; ?>" aria-labelledby="dgl-visibility-title">
 		<div class="dgl-visibility__row">
 			<div>
-				<h2 class="dgl-section__title" id="dgl-visibility-title"><?php esc_html_e( 'On the site', 'dgl-platform' ); ?></h2>
-				<p class="dgl-help">
+				<?php $is_space = \DGL\PostTypes::KIND_SPACE === (string) ( $data['kind'] ?? '' ); ?>
+				<h2 class="dgl-section__title" id="dgl-visibility-title"><?php echo $is_hidden ? esc_html__( 'Hidden on the site', 'dgl-platform' ) : esc_html__( 'Visible on the site', 'dgl-platform' ); ?></h2>
+				<p class="dgl-visibility__text">
 					<?php if ( $is_hidden ) : ?>
-						<?php echo esc_html( \DGL\PostTypes::KIND_SPACE === (string) ( $data['kind'] ?? '' ) ? __( 'Hidden. Nobody can find or enquire about this space until you switch it on again. Its details are kept.', 'dgl-platform' ) : __( 'Hidden. Nobody can find this venue or its spaces, or enquire, until you switch it on again. Its details are kept.', 'dgl-platform' ) ); ?>
+						<?php echo esc_html( $is_space ? __( 'Nobody can find this space, or enquire, until you switch it on again. Its details are kept hidden.', 'dgl-platform' ) : __( 'Nobody can find this venue or its spaces, or enquire, until you switch it on again. Its details are kept hidden.', 'dgl-platform' ) ); ?>
 					<?php else : ?>
-						<?php echo esc_html( \DGL\PostTypes::KIND_SPACE === (string) ( $data['kind'] ?? '' ) ? __( 'Shown. Switch it off to hide this space for a while, for example while it is out of use. It comes back the moment you switch it on, with no review.', 'dgl-platform' ) : __( 'Shown. Switch it off to hide this venue and its spaces for a while, for example during a refurbishment. It comes back the moment you switch it on, with no review.', 'dgl-platform' ) ); ?>
+						<?php echo esc_html( $is_space ? __( 'Toggle this off to hide this space for a while, for example while it is out of use. It comes back the moment you switch it on, with no review.', 'dgl-platform' ) : __( 'Toggle this off to hide this venue and its spaces for a while, for example during a refurbishment. It comes back the moment you switch it on, with no review.', 'dgl-platform' ) ); ?>
 					<?php endif; ?>
 				</p>
 			</div>
@@ -247,7 +248,7 @@ $pending  = $revision instanceof WP_Post && Statuses::PENDING === $revision->pos
 				<input type="hidden" name="dgl_intent" value="<?php echo $is_hidden ? 'show' : 'hide'; ?>">
 				<button type="submit" class="dgl-switch" role="switch" aria-checked="<?php echo $is_hidden ? 'false' : 'true'; ?>" aria-labelledby="dgl-visibility-title">
 					<span class="dgl-switch__track" aria-hidden="true"><span class="dgl-switch__knob"></span></span>
-					<span class="dgl-switch__label"><?php echo $is_hidden ? esc_html__( 'Hidden', 'dgl-platform' ) : esc_html__( 'Shown', 'dgl-platform' ); ?></span>
+					<span class="dgl-switch__label"><?php echo $is_hidden ? esc_html__( 'Off', 'dgl-platform' ) : esc_html__( 'On', 'dgl-platform' ); ?></span>
 				</button>
 			</form>
 		</div>

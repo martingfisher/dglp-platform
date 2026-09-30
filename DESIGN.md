@@ -402,8 +402,8 @@ the OpenStreetMap line their policy asks for.
 One control means "on or off, now, and back again": the "On the site"
 switch on a live venue or space. A `button[role=switch]` with
 `aria-checked`, a 52 by 30 pill track (ink at 40% off, Council Navy on)
-and a 24px white knob that slides 22px, the word "Shown" or "Hidden"
-beside it in 15px medium. It sits right of its heading and one line of
+and a 24px white knob that slides 22px, the word "On" or "Off"
+beside it in 15px medium, the whole button 48px tall with a hover fill. It sits right of its heading and one line of
 help in a card, stacks under 560px, and never asks to confirm: the
 opposite press undoes it. Anything that is not instant and symmetric is
 a button with a confirm, not a switch.

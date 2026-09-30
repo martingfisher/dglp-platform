@@ -154,7 +154,7 @@ final class Content {
 						] ],
 						[ 'p', __( 'The review team look at each new venue and space. A space shows on the site once it and its venue are both live. A space stays with the venue it was made under; to list it somewhere else, archive it and add it again there.', 'dgl-platform' ) ],
 						[ 'h3', __( 'Hiding a venue for a while', 'dgl-platform' ) ],
-						[ 'p', __( 'Closed for a refurbishment, or a room out of use for a term? Open the venue or the space and use the "On the site" switch. Off hides it at once: nobody can find it or enquire, and its details, photos and spaces are kept. On brings it back the moment you press it, with no review. Archiving is for taking something down for good; putting an archived listing back goes through the review team.', 'dgl-platform' ) ],
+						[ 'p', __( 'Closed for a refurbishment, or a room out of use for a term? Open the venue or the space and use the "Visible on the site" switch. Off hides it at once: nobody can find it or enquire, and its details, photos and spaces are kept. On brings it back the moment you press it, with no review. Archiving is for taking something down for good; putting an archived listing back goes through the review team.', 'dgl-platform' ) ],
 						[ 'p', __( 'Enquiries arrive by email at the venue\'s contact address, with the enquirer\'s address to reply to. They are not kept on the site, so answer from your inbox. The public find your venues at /spaces/ and on your organisation\'s directory page.', 'dgl-platform' ) ],
 					],
 				],
@@ -275,7 +275,7 @@ final class Content {
 					'blocks'  => [
 						[ 'p', __( 'A venue is a building an organisation hires out; a space is one thing inside it that can be hired. Both come to the queue like anything else. Approve the venue first: a space whose venue is not live stays pending, its checks say "the venue is not live yet", and it will not show until the venue does. A venue\'s public page lists only its live spaces.', 'dgl-platform' ) ],
 						[ 'p', __( 'Archiving, taking down, rejecting or restoring a venue does the same to its spaces in one go, with one email to the member. Moving a venue to another organisation moves its spaces with it; a space cannot be moved on its own.', 'dgl-platform' ) ],
-						[ 'p', __( 'A live venue or space also has an "On the site" switch for the organisation: off hides it at once (off the lists, the search and the map, its page gone) and on brings it back, no review either way, because nothing about the listing changes. A hidden one shows a "Hidden" chip in the lists and on its review screen; it is still live, and the organisation brings it back themselves.', 'dgl-platform' ) ],
+						[ 'p', __( 'A live venue or space also has an "Visible on the site" switch for the organisation: off hides it at once (off the lists, the search and the map, its page gone) and on brings it back, no review either way, because nothing about the listing changes. A hidden one shows a "Hidden" chip in the lists and on its review screen; it is still live, and the organisation brings it back themselves.', 'dgl-platform' ) ],
 						[ 'p', __( 'Enquiries go by email straight to the venue\'s contact address, or to the organisation\'s owners when the venue has none. They never come to you and are not kept on the site; the audit trail records that one was sent. A venue is placed on the map from its postcode when it goes live. One without a pin is not wrong, only not placed yet.', 'dgl-platform' ) ],
 					],
 				],

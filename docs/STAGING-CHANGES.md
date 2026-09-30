@@ -1120,3 +1120,7 @@ clean. They are the only DGLP content on staging.
   that points at the switch for a temporary closure. Martin's case: a
   venue shut for a refurbishment, and members not knowing how to get it
   back from the archive. `src/Spaces/Visibility.php`, help, docs, tests.
+- **0.44.1 deployed** (30 September, production): the switch card reads
+  "Visible on the site" / "Hidden on the site" with Martin's wording at
+  full text strength, the switch's own word is On/Off, and the whole
+  button is 48px tall with a hover fill so it is easy to hit.

@@ -62,7 +62,7 @@ spaces with their states; a space's screen names its venue.
 
 ## Hiding a venue or space for a while
 
-A live venue or space has an "On the site" switch on its dashboard page,
+A live venue or space has an "Visible on the site" switch on its dashboard page,
 for the organisation and the team. Off hides it at once: off Find a space,
 the search, the organisation's page and the map, its page answers 404, and
 enquiries stop; a hidden venue takes its spaces with it. Its details,

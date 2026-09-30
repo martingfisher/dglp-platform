@@ -2268,31 +2268,45 @@ body.dgl-body {
 
 .dgl-visibility__row .dgl-help { margin: 0; max-width: 60ch; }
 
+/* Body text, not help text: this is the instruction, so it reads at full strength. */
+.dgl-visibility__text { margin: 0; max-width: 60ch; font-size: 0.95em; line-height: 1.5; color: var(--dgl-text); }
+
 .dgl-visibility + .dgl-card,
 .dgl-visibility + .dgl-detail { margin-top: var(--dgl-gap-lg); }
 
+/*
+ * The whole button is the target, 48px tall and wide enough to take the
+ * word: a press anywhere on the track, the knob or the word flips it,
+ * and the hover shows it is one control.
+ */
 .dgl-switch {
 	display: inline-flex;
 	align-items: center;
-	gap: 10px;
+	gap: 12px;
 	flex: none;
-	padding: 6px;
-	margin: -6px;
+	min-height: 48px;
+	padding: 6px 12px;
+	margin: -6px -12px -6px 0;
 	font: var(--dgl-weight-button) 15px / 1 var(--dgl-font);
 	color: var(--dgl-text);
 	background: none;
 	border: 0;
 	border-radius: var(--dgl-radius-button);
 	cursor: pointer;
+	touch-action: manipulation;
 }
 
+.dgl-switch:hover { background: var(--dgl-surface); }
+
 .dgl-switch:focus-visible { outline: 2px solid var(--dgl-focus); outline-offset: 2px; }
+
+.dgl-switch > * { pointer-events: none; }
 
 .dgl-switch__track {
 	position: relative;
 	display: block;
-	width: 52px;
-	height: 30px;
+	width: 56px;
+	height: 32px;
 	background: color-mix(in srgb, var(--dgl-ink) 40%, transparent);
 	border-radius: 999px;
 	transition: background var(--dgl-motion);
@@ -2302,8 +2316,8 @@ body.dgl-body {
 	position: absolute;
 	top: 3px;
 	left: 3px;
-	width: 24px;
-	height: 24px;
+	width: 26px;
+	height: 26px;
 	background: var(--dgl-white);
 	border-radius: 50%;
 	box-shadow: 0 1px 2px rgb(30 50 50 / 30%);
@@ -2312,9 +2326,9 @@ body.dgl-body {
 
 .dgl-switch[aria-checked="true"] .dgl-switch__track { background: var(--dgl-navy); }
 
-.dgl-switch[aria-checked="true"] .dgl-switch__knob { transform: translateX(22px); }
+.dgl-switch[aria-checked="true"] .dgl-switch__knob { transform: translateX(24px); }
 
-.dgl-switch__label { min-width: 3.5em; text-align: left; }
+.dgl-switch__label { min-width: 2.2em; text-align: left; }
 
 .dgl-chip--hidden {
 	color: var(--dgl-text);
