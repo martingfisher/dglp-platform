@@ -187,6 +187,11 @@ on the page is "Take it off the site". A note is required. The item comes off
 the public site, goes back into the queue as needing changes, and the member
 is emailed your note.
 
+Members have their own pair on a live listing: "Take off the site", which
+archives it at once, and on the archived listing "Put back on the site",
+which sends it to your queue rather than straight back, so a listing that
+has been off for months is read again before it shows.
+
 ## Spaces to hire
 
 Member organisations list venues (a building at one address) and the

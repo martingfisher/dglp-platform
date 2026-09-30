@@ -23,14 +23,14 @@ $pending  = $revision instanceof WP_Post && Statuses::PENDING === $revision->pos
 <?php if ( ! empty( $data['archived'] ) ) : ?>
 	<div class="dgl-alert dgl-alert--good" role="status">
 		<p><strong><?php esc_html_e( 'Archived.', 'dgl-platform' ); ?></strong>
-		<?php esc_html_e( 'It is off the site and kept here. Restore it at any time; it goes back through review first.', 'dgl-platform' ); ?></p>
+		<?php esc_html_e( 'It is off the site and kept here. Put it back at any time; it goes to the review team first.', 'dgl-platform' ); ?></p>
 	</div>
 <?php endif; ?>
 
 <?php if ( ! empty( $data['restored'] ) ) : ?>
 	<div class="dgl-alert dgl-alert--good" role="status">
-		<p><strong><?php esc_html_e( 'Restored and sent for review.', 'dgl-platform' ); ?></strong>
-		<?php esc_html_e( 'The team will read it again before it goes back on the site.', 'dgl-platform' ); ?></p>
+		<p><strong><?php esc_html_e( 'Sent to the review team.', 'dgl-platform' ); ?></strong>
+		<?php esc_html_e( 'It is back on the site when they approve it.', 'dgl-platform' ); ?></p>
 	</div>
 <?php endif; ?>
 
@@ -192,7 +192,7 @@ $pending  = $revision instanceof WP_Post && Statuses::PENDING === $revision->pos
 			<?php wp_nonce_field( \DGL\Dashboard\Wizard::NONCE ); ?>
 			<button type="submit" class="dgl-button dgl-button--secondary" name="dgl_intent" value="archive"
 				data-dgl-confirm="<?php echo Statuses::LIVE === $post->post_status
-					? esc_attr__( 'Take this off the site? It goes to your archive, and you can restore it later.', 'dgl-platform' )
+					? esc_attr__( 'Take this off the site? It goes to your archive, and you can put it back on the site later.', 'dgl-platform' )
 					: esc_attr__( 'Archive this? You can restore it later.', 'dgl-platform' ); ?>">
 				<?php echo Statuses::LIVE === $post->post_status
 					? esc_html__( 'Take off the site', 'dgl-platform' )
@@ -205,8 +205,8 @@ $pending  = $revision instanceof WP_Post && Statuses::PENDING === $revision->pos
 		<form method="post" class="dgl-inline-form">
 			<?php wp_nonce_field( \DGL\Dashboard\Wizard::NONCE ); ?>
 			<button type="submit" class="dgl-button" name="dgl_intent" value="restore"
-				data-dgl-confirm="<?php esc_attr_e( 'Restore this? It goes to the review team before it is back on the site.', 'dgl-platform' ); ?>">
-				<?php esc_html_e( 'Restore', 'dgl-platform' ); ?>
+				data-dgl-confirm="<?php esc_attr_e( 'Put this back on the site? It goes to the review team first, and is back on the site when they approve it.', 'dgl-platform' ); ?>">
+				<?php esc_html_e( 'Put back on the site', 'dgl-platform' ); ?>
 			</button>
 		</form>
 	<?php endif; ?>

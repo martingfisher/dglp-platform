@@ -51,7 +51,7 @@ final class Notifications {
 			StateMachine::REOPEN          => [ 'title' => __( 'Being looked at again', 'dgl-platform' ), 'tone' => 'quiet' ],
 			StateMachine::EXPIRE          => [ 'title' => __( 'Came off the site on its date', 'dgl-platform' ), 'tone' => 'quiet' ],
 			StateMachine::ARCHIVE         => [ 'title' => __( 'Archived', 'dgl-platform' ), 'tone' => 'quiet' ],
-			StateMachine::RESTORE         => [ 'title' => __( 'Restored from the archive', 'dgl-platform' ), 'tone' => 'quiet' ],
+			StateMachine::RESTORE         => [ 'title' => __( 'Put back on the site, for review', 'dgl-platform' ), 'tone' => 'quiet' ],
 			'series_extended'             => [ 'title' => __( 'Kept on the site for another six months', 'dgl-platform' ), 'tone' => 'good' ],
 			'pinned'                      => [ 'title' => __( 'Featured at the top of its list', 'dgl-platform' ), 'tone' => 'good' ],
 			'unpinned'                    => [ 'title' => __( 'No longer featured', 'dgl-platform' ), 'tone' => 'quiet' ],

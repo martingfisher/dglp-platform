@@ -1066,3 +1066,11 @@ clean. They are the only DGLP content on staging.
 - **0.42.2 deployed** (30 September, production): the magnifier sits in a
   Council Navy disc with the icon in white, and the theme's fill on menu
   svgs is turned off, which had painted the lens as a solid disc.
+- **0.42.3 deployed** (30 September, production): the member's pair on a
+  listing reads "Take off the site" and, once archived, "Put back on the
+  site", with the confirm, the archived note, the flash, the help page and
+  the activity line all saying that putting it back goes through the
+  review team first. "Restore" was hiding that. Martin asked whether a
+  Show-on-the-site toggle would be better; decided against, because off is
+  instant and on is a request, which a toggle cannot show. The review
+  team's own "Restore and review again" is unchanged.

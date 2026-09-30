@@ -162,7 +162,7 @@ final class Content {
 					'blocks'  => [
 						[ 'ul', [
 							__( '"Take off the site" on a live listing removes it from the public site at once and keeps it in your archive.', 'dgl-platform' ),
-							__( '"Archive" on anything not with the team moves it out of the way. "Restore" brings an archived listing back, through review.', 'dgl-platform' ),
+							__( '"Archive" on anything not with the team moves it out of the way. "Put back on the site" brings an archived listing back, through review.', 'dgl-platform' ),
 							__( '"Copy to a new draft" makes a fresh draft from any listing: the words, picture, venue, contact details and topics come across, the dates do not. Use it for the next run of something.', 'dgl-platform' ),
 						] ],
 					],
