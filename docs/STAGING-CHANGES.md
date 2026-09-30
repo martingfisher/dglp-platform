@@ -1096,3 +1096,11 @@ clean. They are the only DGLP content on staging.
   resize); otherwise it sits in the flow and the page is at least as deep
   as the card. Martin saw the card cut off at the foot of a short venue
   page.
+- **0.43.5 deployed** (30 September, production): Martin found the bigger
+  map opened once in Chrome on the live site and not again after closing
+  by clicking outside; not reproduced locally (opens and closes repeatedly
+  in Chromium). The "Bigger map" button moves to the top corner of the
+  small map above every Leaflet layer (it sat partly under the attribution
+  strip, which is layered higher), the open and close clicks are delegated
+  at document level in the capture phase, the hidden attribute is set and
+  removed explicitly, and the button no longer carries aria-expanded.

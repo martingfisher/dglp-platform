@@ -151,8 +151,8 @@
 		function open() {
 			lastFocus = document.activeElement;
 			dialog.hidden = false;
+			dialog.removeAttribute( 'hidden' );
 			document.body.classList.add( 'dgl-mapdialog-open' );
-			opener.setAttribute( 'aria-expanded', 'true' );
 
 			var marker = null;
 
@@ -176,20 +176,29 @@
 
 		function close() {
 			dialog.hidden = true;
+			dialog.setAttribute( 'hidden', '' );
 			document.body.classList.remove( 'dgl-mapdialog-open' );
-			opener.setAttribute( 'aria-expanded', 'false' );
 
 			if ( lastFocus && typeof lastFocus.focus === 'function' ) {
 				lastFocus.focus();
 			}
 		}
 
-		opener.setAttribute( 'aria-expanded', 'false' );
-		opener.addEventListener( 'click', open );
+		// Delegated, so nothing the theme does to the button or the dialog
+		// after load can detach the handlers.
+		document.addEventListener( 'click', function ( event ) {
+			if ( event.target.closest( '[data-dgl-map-open]' ) ) {
+				event.preventDefault();
+				event.stopPropagation();
+				open();
+				return;
+			}
 
-		Array.prototype.forEach.call( dialog.querySelectorAll( '[data-dgl-map-close]' ), function ( el ) {
-			el.addEventListener( 'click', close );
-		} );
+			if ( ! dialog.hidden && event.target.closest( '[data-dgl-map-close]' ) ) {
+				event.preventDefault();
+				close();
+			}
+		}, true );
 
 		document.addEventListener( 'keydown', function ( event ) {
 			if ( dialog.hidden ) {

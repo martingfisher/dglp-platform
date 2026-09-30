@@ -225,11 +225,12 @@
 
 .dgl-venue__mapwrap .dgl-venue__map { margin-top: 0; }
 
+/* Top corner, above every Leaflet layer (its controls sit at 800), clear of the attribution strip. */
 .dgl-pub .dgl-venue__mapbig {
 	position: absolute;
+	top: 10px;
 	right: 10px;
-	bottom: 10px;
-	z-index: 500;
+	z-index: 1000;
 	min-height: 36px;
 	padding: 0 14px;
 	font: var(--dgl-weight-button) 14px / 1 var(--dgl-font);
