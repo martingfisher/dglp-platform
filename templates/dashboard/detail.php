@@ -30,7 +30,7 @@ $pending  = $revision instanceof WP_Post && Statuses::PENDING === $revision->pos
 <?php if ( 'hide' === (string) ( $data['visibility'] ?? '' ) ) : ?>
 	<div class="dgl-alert dgl-alert--good" role="status">
 		<p><strong><?php esc_html_e( 'Hidden from the site.', 'dgl-platform' ); ?></strong>
-		<?php esc_html_e( 'Its details are kept. Switch it on again whenever you are ready and it is back at once.', 'dgl-platform' ); ?></p>
+		<?php esc_html_e( 'Its details are kept. Choose Visible on the site again whenever you are ready and it is back at once.', 'dgl-platform' ); ?></p>
 	</div>
 <?php elseif ( 'show' === (string) ( $data['visibility'] ?? '' ) ) : ?>
 	<div class="dgl-alert dgl-alert--good" role="status">

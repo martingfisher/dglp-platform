@@ -1124,7 +1124,8 @@ clean. They are the only DGLP content on staging.
   "Visible on the site" / "Hidden on the site" with Martin's wording at
   full text strength, the switch's own word is On/Off, and the whole
   button is 48px tall with a hover fill so it is easy to hit.
-- **0.44.2 deployed** (30 September, production): the switch becomes two
+- **0.44.3 deployed** (30 September, production; 0.44.2 built, not
+  installed): the switch becomes two
   radio choices, Visible on the site and Hidden on the site, with a Save
   button, because the change reloads the page and the wait made people
   press the switch again. On submit the Save reads "Saving…" and the form
