@@ -283,6 +283,44 @@
 
 .dgl-venue__aside { scroll-margin-top: 24px; }
 
+/* ---- The enquiry form ------------------------------------------------- */
+
+.dgl-enquiry__form { display: grid; gap: 12px; margin-top: 12px; }
+
+.dgl-enquiry__row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.dgl-enquiry__field { display: grid; gap: 6px; min-width: 0; }
+
+.dgl-pub .dgl-enquiry__field .dgl-dir__input { width: 100%; }
+
+.dgl-pub .dgl-enquiry__text { min-height: 104px; padding: 10px 12px; resize: vertical; line-height: 1.5; }
+
+.dgl-enquiry__field--error .dgl-dir__input { border-color: var(--dgl-danger); }
+
+.dgl-enquiry__msg { margin: 0; font-size: 0.85em; font-weight: 600; color: var(--dgl-danger); }
+
+.dgl-enquiry__help { margin: 0; font-size: 0.82em; color: var(--dgl-text-muted); line-height: 1.45; }
+
+.dgl-pub .dgl-enquiry__send {
+	width: 100%;
+	margin-top: 4px;
+	border: 0;
+	font: var(--dgl-weight-button) 1em / 1.2 var(--dgl-font);
+	cursor: pointer;
+}
+
+.dgl-enquiry__sent,
+.dgl-enquiry__error { display: grid; gap: 6px; margin: 12px 0 0; padding: 14px 16px; border-radius: 12px; font-size: 0.95em; }
+
+.dgl-enquiry__sent { background: #eaf4e6; color: #1f4a15; }
+
+.dgl-enquiry__error { background: color-mix(in srgb, var(--dgl-danger) 10%, var(--dgl-white)); color: var(--dgl-danger); }
+
+.dgl-enquiry__sent p,
+.dgl-enquiry__error p { margin: 0; }
+
+.dgl-nohoney { position: absolute; left: -10000px; top: auto; width: 1px; height: 1px; overflow: hidden; }
+
 /* ---- The bar that keeps Enquire in reach on a phone ------------------- */
 
 .dgl-venue__bar { display: none; }
@@ -308,6 +346,7 @@
 	.dgl-space { grid-template-columns: minmax(0, 1fr); padding: 14px; gap: 10px; }
 	.dgl-space__pic { width: 100%; height: 140px; }
 	.dgl-spaces__map { height: 360px; }
+	.dgl-enquiry__row { grid-template-columns: minmax(0, 1fr); }
 	.dgl-venue { padding-bottom: 96px; }
 	.dgl-venue__bar {
 		position: fixed;

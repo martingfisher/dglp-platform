@@ -4708,6 +4708,70 @@ $ok( [ 'Armley', 'Spaces Org' ] === \DGL\Frontend\Cards::meta( get_post( $sq_arm
 $sq_schema = \DGL\Frontend\Seo::schema_for_post( get_post( $sq_armley ), [ 'url' => '', 'width' => 0, 'height' => 0, 'alt' => '' ], 'Summary.' );
 $ok( 'EventVenue' === $sq_schema['@type'] && 'LS1 1AA' === ( $sq_schema['address']['postalCode'] ?? '' ) && 200 === ( $sq_schema['maximumAttendeeCapacity'] ?? 0 ) && 'Spaces Org' === ( $sq_schema['parentOrganization']['name'] ?? '' ), 'a venue is an EventVenue with its address, capacity and organisation' );
 
+$group( 'Enquiries: one email to the venue, the enquirer as Reply-To, robots and floods dropped' );
+
+update_option( \DGL\Email\Routing::OPTION_ENABLED, 1 );
+$en_sent = [];
+$en_hook = static function ( $sent, $message, $to ) use ( &$en_sent ): void {
+	if ( \DGL\Email\SpacesCopy::ENQUIRY === $message->key ) {
+		$en_sent[] = [ 'to' => (array) $to, 'message' => $message ];
+	}
+};
+add_action( 'dgl_mail_sent', $en_hook, 10, 3 );
+
+$en_state = \DGL\Spaces\Enquiry::state( get_post( $sq_armley ) );
+$ok( true === $en_state['show'] && '' !== $en_state['stamp'] && [ 'venue@example.test' ] === \DGL\Spaces\Enquiry::recipients( $sq_armley ), 'a live venue with a contact email shows the form, addressed to that contact' );
+$en_opts = \DGL\Spaces\Enquiry::options( $sq_armley );
+$ok( 4 === count( $en_opts ) && 'Not sure yet' === end( $en_opts ) && isset( $en_opts[ (string) $sq_hall ] ), 'the space picker offers the three live spaces and "Not sure yet"' );
+$ok( [ 'venue@example.test' ] === \DGL\Spaces\Enquiry::recipients( $sq_bramley ), 'recipients come from the venue contact' );
+delete_post_meta( $sq_bramley, 'dgl_contact_email' );
+$ok( in_array( get_userdata( $sp_owner )->user_email, \DGL\Spaces\Enquiry::recipients( $sq_bramley ), true ), 'with no contact email, the organisation\'s owners' );
+update_post_meta( $sq_bramley, 'dgl_contact_email', 'venue@example.test' );
+
+$en_today  = new DateTimeImmutable( 'today', wp_timezone() );
+$en_good   = [ 'space' => (string) $sq_hall, 'date' => $en_today->modify( '+10 days' )->format( 'Y-m-d' ), 'time_from' => '18:00', 'time_to' => '21:30', 'people' => '40', 'message' => 'A community meeting with a hot lunch, we would need the kitchen too.', 'name' => 'Pat Example', 'email' => 'Pat@Example.test', 'phone' => '' ];
+$en_check  = \DGL\Spaces\Enquiry::validate( $en_good, $en_opts, $en_today );
+$ok( [] === $en_check['errors'] && 'pat@example.test' === $en_check['values']['email'] && '40' === $en_check['values']['people'], 'a complete enquiry validates, the email lower-cased' );
+$en_bad = \DGL\Spaces\Enquiry::validate( [ 'space' => '999999', 'date' => $en_today->modify( '-1 day' )->format( 'Y-m-d' ), 'time_from' => '9am', 'people' => 'lots', 'message' => 'Hi', 'name' => '', 'email' => 'nope' ], $en_opts, $en_today );
+$ok( [ 'space', 'date', 'time_from', 'people', 'message', 'name', 'email' ] === array_keys( $en_bad['errors'] ), 'every rule has a message: unknown space, past date, bad time, people not a number, short message, no name, bad email' );
+$ok( [] === \DGL\Spaces\Enquiry::validate( [ 'space' => 'any', 'date' => $en_today->format( 'Y-m-d' ), 'message' => 'Ten chars!!', 'name' => 'A', 'email' => 'a@b.test' ], $en_opts, $en_today )['errors'], '"Not sure yet", today and the shortest message are fine' );
+$en_evil = \DGL\Spaces\Enquiry::reply_to( "Pat\r\nBcc: x@y.test\r\n Example", "pat@example.test\r\n" );
+$ok( 'Reply-To: Pat Example <pat@example.test>' === \DGL\Spaces\Enquiry::reply_to( 'Pat Example', 'pat@example.test' ) && 1 !== preg_match( '/[\r\n]/', $en_evil ) && str_ends_with( $en_evil, '<pat@example.test>' ), 'the Reply-To header cannot carry a second header' );
+
+$en_server = [ 'REQUEST_METHOD' => 'POST', 'HTTP_ORIGIN' => home_url( '/' ), 'REMOTE_ADDR' => '203.0.113.9' ];
+$en_post   = $en_good + [ \DGL\Joining\Guard::STAMP => \DGL\Joining\Guard::stamp( time() - 30, \DGL\Spaces\Enquiry::CONTEXT ), \DGL\Joining\Guard::HONEYPOT => '' ];
+\DGL\Joining\Guard::reset( 'pat@example.test', '203.0.113.9', \DGL\Spaces\Enquiry::CONTEXT );
+$en_r = \DGL\Spaces\Enquiry::submit( $sq_armley, $en_post, $en_server );
+$ok( 'sent' === $en_r['status'] && 1 === count( $en_sent ), 'a good enquiry sends exactly one email (' . $en_r['status'] . ', ' . count( $en_sent ) . ')' );
+$en_msg = $en_sent[0]['message'] ?? null;
+$ok( null !== $en_msg && [ 'venue@example.test' ] === $en_sent[0]['to'] && in_array( 'Reply-To: Pat Example <pat@example.test>', $en_msg->headers, true ), 'to the venue contact, with the enquirer as Reply-To' );
+$ok( null !== $en_msg && 'Enquiry about Big hall at Armley Centre' === $en_msg->subject && str_contains( $en_msg->note, 'hot lunch' ) && ( $en_msg->facts['People'] ?? '' ) === '40' && str_contains( (string) ( $en_msg->facts['When'] ?? '' ), '18:00 to 21:30' ), 'the subject names the space and venue; the message and facts are in it' );
+$en_log = array_values( array_filter( \DGL\Audit\Log::for_object( 'item', $sq_armley ), static fn( array $row ): bool => 'enquiry_sent' === (string) ( $row['action'] ?? '' ) ) );
+$ok( 1 === count( $en_log ) && ! str_contains( (string) $en_log[0]['note'], 'example.test' ) && ! str_contains( (string) $en_log[0]['note'], 'Pat' ), 'one audit line, with no personal details in it' );
+
+$en_sent = [];
+$en_r = \DGL\Spaces\Enquiry::submit( $sq_armley, $en_post, [ 'REQUEST_METHOD' => 'POST', 'HTTP_ORIGIN' => 'https://elsewhere.example', 'REMOTE_ADDR' => '203.0.113.9' ] );
+$ok( 'dropped' === $en_r['status'] && [] === $en_sent, 'a post from another site is dropped' );
+$en_r = \DGL\Spaces\Enquiry::submit( $sq_armley, [ \DGL\Joining\Guard::HONEYPOT => 'http://spam', \DGL\Joining\Guard::STAMP => \DGL\Joining\Guard::stamp( time() - 30, \DGL\Spaces\Enquiry::CONTEXT ) ] + $en_good, $en_server );
+$ok( 'dropped' === $en_r['status'] && [] === $en_sent, 'a filled honeypot is dropped' );
+$en_r = \DGL\Spaces\Enquiry::submit( $sq_armley, [ \DGL\Joining\Guard::STAMP => \DGL\Joining\Guard::stamp( time() - 30, 'join' ) ] + $en_good, $en_server );
+$ok( 'dropped' === $en_r['status'], 'a stamp from the join form is not good here' );
+$en_r = \DGL\Spaces\Enquiry::submit( $sq_armley, [ 'message' => 'x' ] + $en_post, $en_server );
+$ok( 'invalid' === $en_r['status'] && isset( $en_r['errors']['message'] ) && 'Pat Example' === ( $en_r['values']['name'] ?? '' ), 'a bad enquiry comes back with its errors and what was typed' );
+for ( $i = 0; $i < \DGL\Spaces\Enquiry::PER_EMAIL; $i++ ) {
+	$en_r = \DGL\Spaces\Enquiry::submit( $sq_armley, $en_post, $en_server );
+}
+$ok( 'limited' === $en_r['status'], 'the eleventh from one address in an hour is refused' );
+\DGL\Joining\Guard::reset( 'pat@example.test', '203.0.113.9', \DGL\Spaces\Enquiry::CONTEXT );
+$ok( count( $en_sent ) === \DGL\Spaces\Enquiry::PER_EMAIL - 1, 'and the ones before it were sent (' . count( $en_sent ) . ')' );
+
+update_option( \DGL\Email\Routing::OPTION_ENABLED, 0 );
+$ok( 'off' === \DGL\Spaces\Enquiry::submit( $sq_armley, $en_post, $en_server )['status'] && true === \DGL\Spaces\Enquiry::state( get_post( $sq_armley ) )['off'], 'with mail off nothing is sent and the page says so' );
+update_option( \DGL\Email\Routing::OPTION_ENABLED, 1 );
+$en_page = \DGL\Dashboard\View::render( 'public/venue', \DGL\Spaces\Pages::venue_data( get_post( $sq_armley ) ) );
+$ok( str_contains( $en_page, 'name="dgl_enquiry"' ) && str_contains( $en_page, 'name="' . \DGL\Joining\Guard::STAMP . '"' ) && str_contains( $en_page, 'Send enquiry' ) && str_contains( $en_page, 'dgl-venue__bar' ) && ! str_contains( $en_page, 'venue@example.test' ), 'the venue page carries the form, the stamp, the phone bar, and no longer prints the contact email' );
+remove_action( 'dgl_mail_sent', $en_hook, 10 );
+
 /* ----------------------------------------------------------------- report */
 
 echo "\n" . str_repeat( '-', 60 ) . "\n";

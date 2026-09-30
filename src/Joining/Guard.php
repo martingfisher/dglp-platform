@@ -52,10 +52,10 @@ final class Guard {
 	/**
 	 * The stamp to put in the form: the time, signed so it cannot be forged.
 	 */
-	public static function stamp( ?int $now = null ): string {
+	public static function stamp( ?int $now = null, string $context = 'join' ): string {
 		$now = $now ?? time();
 
-		return $now . '.' . self::sign( (string) $now );
+		return $now . '.' . self::sign( (string) $now, $context );
 	}
 
 	/**
@@ -63,7 +63,7 @@ final class Guard {
 	 *
 	 * @param array<string, mixed> $post The raw POST.
 	 */
-	public static function is_robot( array $post, ?int $now = null ): bool {
+	public static function is_robot( array $post, ?int $now = null, string $context = 'join' ): bool {
 		$now = $now ?? time();
 
 		if ( '' !== trim( (string) ( $post[ self::HONEYPOT ] ?? '' ) ) ) {
@@ -79,7 +79,7 @@ final class Guard {
 
 		[ $at, $sig ] = array_pad( explode( '.', $stamp, 2 ), 2, '' );
 
-		if ( ! ctype_digit( $at ) || ! hash_equals( self::sign( $at ), $sig ) ) {
+		if ( ! ctype_digit( $at ) || ! hash_equals( self::sign( $at, $context ), $sig ) ) {
 			return true;
 		}
 
@@ -93,14 +93,18 @@ final class Guard {
 	 *
 	 * @return string '' when fine, else the message for the person.
 	 */
-	public static function limited( string $email, string $ip ): string {
-		$email = strtolower( trim( $email ) );
+	public static function limited( string $email, string $ip, string $context = 'join', ?int $per_email = null, ?int $per_ip = null ): string {
+		$email     = strtolower( trim( $email ) );
+		$per_email = $per_email ?? self::PER_EMAIL;
+		$per_ip    = $per_ip ?? self::PER_IP;
 
-		if ( '' !== $email && self::bump( 'email_' . md5( $email ) ) > self::PER_EMAIL ) {
-			return __( 'Enough links have been sent to that address for now. Check your inbox and junk folder, or try again in an hour.', 'dgl-platform' );
+		if ( '' !== $email && self::bump( 'email_' . md5( $email ), $context ) > $per_email ) {
+			return 'join' === $context
+				? __( 'Enough links have been sent to that address for now. Check your inbox and junk folder, or try again in an hour.', 'dgl-platform' )
+				: __( 'Enough has been sent from that address for now. Try again in an hour.', 'dgl-platform' );
 		}
 
-		if ( '' !== $ip && self::bump( 'ip_' . md5( $ip ) ) > self::PER_IP ) {
+		if ( '' !== $ip && self::bump( 'ip_' . md5( $ip ), $context ) > $per_ip ) {
 			return __( 'Too many attempts from your connection. Try again in an hour.', 'dgl-platform' );
 		}
 
@@ -121,12 +125,12 @@ final class Guard {
 	}
 
 	/** Forget the counts, for tests and for the team. */
-	public static function reset( string $email = '', string $ip = '' ): void {
+	public static function reset( string $email = '', string $ip = '', string $context = 'join' ): void {
 		if ( '' !== $email ) {
-			delete_transient( self::key( 'email_' . md5( strtolower( trim( $email ) ) ) ) );
+			delete_transient( self::key( 'email_' . md5( strtolower( trim( $email ) ) ), $context ) );
 		}
 		if ( '' !== $ip ) {
-			delete_transient( self::key( 'ip_' . md5( $ip ) ) );
+			delete_transient( self::key( 'ip_' . md5( $ip ), $context ) );
 		}
 	}
 
@@ -135,8 +139,8 @@ final class Guard {
 		return isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( (string) $_SERVER['REMOTE_ADDR'] ) ) : '';
 	}
 
-	private static function bump( string $what ): int {
-		$key   = self::key( $what );
+	private static function bump( string $what, string $context = 'join' ): int {
+		$key   = self::key( $what, $context );
 		$count = (int) get_transient( $key ) + 1;
 
 		set_transient( $key, $count, self::WINDOW );
@@ -144,11 +148,16 @@ final class Guard {
 		return $count;
 	}
 
-	private static function key( string $what ): string {
-		return 'dgl_join_' . $what;
+	/**
+	 * Each form keeps its own counts and its own signature, so an enquiry
+	 * never spends a sign-up's allowance and a stamp from one form is not
+	 * good on another.
+	 */
+	private static function key( string $what, string $context = 'join' ): string {
+		return 'dgl_' . sanitize_key( $context ) . '_' . $what;
 	}
 
-	private static function sign( string $at ): string {
-		return substr( hash_hmac( 'sha256', 'dgl-join-stamp|' . $at, wp_salt( 'nonce' ) ), 0, 20 );
+	private static function sign( string $at, string $context = 'join' ): string {
+		return substr( hash_hmac( 'sha256', 'dgl-' . sanitize_key( $context ) . '-stamp|' . $at, wp_salt( 'nonce' ) ), 0, 20 );
 	}
 }

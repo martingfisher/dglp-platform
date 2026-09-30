@@ -97,6 +97,7 @@ final class Plugin {
 		Revisions::init();
 		Mailer::init();
 		\DGL\Spaces\Cascade::init();
+		\DGL\Spaces\Enquiry::init();
 		Invites::init();
 		Privacy::init();
 
