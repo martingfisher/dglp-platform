@@ -1104,3 +1104,5 @@ clean. They are the only DGLP content on staging.
   strip, which is layered higher), the open and close clicks are delegated
   at document level in the capture phase, the hidden attribute is set and
   removed explicitly, and the button no longer carries aria-expanded.
+  Martin confirmed on the live site in Chrome that it opens again after
+  closing.
