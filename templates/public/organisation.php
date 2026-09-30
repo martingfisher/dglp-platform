@@ -60,9 +60,25 @@ $facts = array_filter(
 	]
 );
 
+// The buildings they hire out, with what is in each: the door for anybody looking for a room.
+$venues = [];
+foreach ( ItemsTable::for_org( $id, [ PostTypes::VENUE ], [ Statuses::LIVE ], 20 ) as $venue_id ) {
+	$venue_post = get_post( (int) $venue_id );
+	if ( $venue_post instanceof WP_Post ) {
+		$venue_spaces = \DGL\Spaces\SpacesQuery::spaces( (int) $venue_id );
+		$venues[]     = [
+			'post'   => $venue_post,
+			'ward'   => \DGL\Schema\Types\Venue::wards()[ (string) Frontend::value( $venue_post, 'ward' ) ] ?? '',
+			'facts'  => \DGL\Spaces\SpacesQuery::quick_facts( array_column( $venue_spaces, 'meta' ) ),
+			'types'  => array_values( array_unique( array_filter( array_map( static fn( array $s ): string => \DGL\Schema\Types\Venue::labelled( \DGL\Schema\Types\Space::TYPES )[ (string) ( $s['meta']['space_type'] ?? '' ) ] ?? '', $venue_spaces ) ) ) ),
+		];
+	}
+}
+$venue_space_total = array_sum( array_map( static fn( array $v ): int => (int) $v['facts']['count'], $venues ) );
+
 // Their live listings, newest first, so the page is a door into what they are doing now.
 $live = [];
-foreach ( ItemsTable::for_org( $id, PostTypes::enabled_keys(), [ Statuses::LIVE ], 6 ) as $live_id ) {
+foreach ( ItemsTable::for_org( $id, PostTypes::feed_keys(), [ Statuses::LIVE ], 6 ) as $live_id ) {
 	$item = get_post( (int) $live_id );
 	if ( $item instanceof WP_Post ) {
 		$live[] = $item;
@@ -178,6 +194,41 @@ foreach ( ItemsTable::for_org( $id, PostTypes::enabled_keys(), [ Statuses::LIVE 
 						<?php endif; ?>
 					</section>
 				<?php endforeach; ?>
+
+				<?php if ( [] !== $venues ) : ?>
+					<section class="dgl-org__section dgl-org__venues" aria-labelledby="dgl-org-venues">
+						<div class="dgl-org__sechead">
+							<h2 class="dgl-org__h2" id="dgl-org-venues">
+								<?php
+								/* translators: %s: a number. */
+								echo esc_html( sprintf( _n( 'Spaces to hire at %s venue', 'Spaces to hire at %s venues', count( $venues ), 'dgl-platform' ), number_format_i18n( count( $venues ) ) ) );
+								?>
+							</h2>
+							<a href="<?php echo esc_url( Frontend::archive_url( PostTypes::VENUE ) ); ?>"><?php esc_html_e( 'All spaces to hire', 'dgl-platform' ); ?></a>
+						</div>
+						<ul class="dgl-org__venuelist">
+							<?php foreach ( $venues as $v ) : ?>
+								<li class="dgl-org__venue">
+									<a class="dgl-org__venuepic" href="<?php echo esc_url( (string) get_permalink( $v['post'] ) ); ?>" tabindex="-1" aria-hidden="true"><?php echo \DGL\Frontend\Cards::picture( $v['post'], 'medium' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside. ?></a>
+									<div class="dgl-org__venuebody">
+										<h3 class="dgl-org__venuename"><a href="<?php echo esc_url( (string) get_permalink( $v['post'] ) ); ?>"><?php echo esc_html( get_the_title( $v['post'] ) ); ?></a></h3>
+										<p class="dgl-card__meta">
+											<?php if ( '' !== $v['ward'] ) : ?><span><?php echo esc_html( $v['ward'] ); ?></span><?php endif; ?>
+											<?php if ( $v['facts']['max_people'] > 0 ) : ?><span><?php echo esc_html( sprintf( /* translators: %s: a number. */ __( 'up to %s people', 'dgl-platform' ), number_format_i18n( $v['facts']['max_people'] ) ) ); ?></span><?php endif; ?>
+										</p>
+										<?php if ( [] !== $v['types'] ) : ?>
+											<ul class="dgl-org__tags dgl-org__venuetags">
+												<?php foreach ( $v['types'] as $type_label ) : ?>
+													<li class="dgl-dir__tag"><?php echo esc_html( $type_label ); ?></li>
+												<?php endforeach; ?>
+											</ul>
+										<?php endif; ?>
+									</div>
+								</li>
+							<?php endforeach; ?>
+						</ul>
+					</section>
+				<?php endif; ?>
 
 				<?php if ( [] !== $live ) : ?>
 					<section class="dgl-org__section">

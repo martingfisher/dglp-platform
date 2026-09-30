@@ -1402,6 +1402,33 @@ h2.dgl-listing__heading:only-child,
 	.dgl-search__grouphead { flex-direction: column; align-items: flex-start; gap: 4px; }
 }
 
+/* ---- The organisation page's Spaces to hire block ---------------------- */
+.dgl-org__sechead { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 6px 16px; margin-bottom: 12px; }
+
+.dgl-org__sechead a { font-size: 0.9em; font-weight: 600; color: var(--dgl-link); }
+
+.dgl-org__venuelist { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--dgl-gap); margin: 0; padding: 0; list-style: none; }
+
+.dgl-org__venue { border: 1px solid var(--dgl-border); border-radius: var(--dgl-radius-card); overflow: hidden; background: var(--dgl-white); box-shadow: var(--dgl-shadow-rest); }
+
+.dgl-org__venuepic { display: block; height: 130px; background: var(--dgl-surface); }
+
+.dgl-org__venuepic .dgl-card__img { display: block; width: 100%; height: 100%; object-fit: cover; }
+
+.dgl-org__venuepic .dgl-card__img--none { display: grid; place-items: center; height: 100%; background: var(--dgl-navy); color: var(--dgl-white); font-weight: 600; }
+
+.dgl-org__venuebody { padding: 14px 16px 16px; }
+
+.dgl-org__venuename { margin: 0 0 4px; font-size: 1rem; line-height: 1.3; }
+
+.dgl-org__venuename a { color: var(--dgl-navy); text-decoration: none; }
+
+.dgl-org__venuename a:hover,
+.dgl-org__venuename a:focus { text-decoration: underline; }
+
+.dgl-org__venuetags { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; padding: 0; list-style: none; }
+
+
 /* ---- The home page: the sample page and the shortcode blocks ----------- */
 
 /*

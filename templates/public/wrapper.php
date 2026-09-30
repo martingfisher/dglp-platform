@@ -23,8 +23,12 @@ $dgl_archive = Frontend::archive_type();
 
 if ( Frontend::search_request() ) {
 	View::output( 'public/search', \DGL\Frontend\Search::view_data( wp_unslash( $_GET ) ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+} elseif ( \DGL\PostTypes::VENUE === $dgl_single ) {
+	View::output( 'public/venue', \DGL\Spaces\Pages::venue_data( get_post() ) );
 } elseif ( null !== $dgl_single ) {
 	View::output( 'public/single', [ 'post' => get_post(), 'type' => $dgl_single ] );
+} elseif ( \DGL\PostTypes::VENUE === $dgl_archive ) {
+	View::output( 'public/spaces', \DGL\Spaces\Pages::find_data( wp_unslash( $_GET ) ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 } elseif ( null !== $dgl_archive ) {
 	View::output( 'public/archive', [ 'type' => $dgl_archive ] );
 } elseif ( \DGL\Frontend\Home::is_request() ) {

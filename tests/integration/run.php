@@ -4624,6 +4624,90 @@ $ok( true === \DGL\Org\Org::reassign( $sp_venue, $sp_other, $mod ) && $sp_other 
 // Digests and preferences never carry a venue.
 $ok( ! in_array( PostTypes::VENUE, \DGL\PostTypes::feed_keys(), true ), 'venues are outside the digest types' );
 
+$group( 'Find a space: the query, the filters, the ranking, the pages' );
+
+// Fixtures: two venues for Spaces Org, one for the other, with rooms of different sizes and prices.
+$sq_make_venue = static function ( int $org, int $owner, string $title, string $ward, array $access = [] ) use ( $mod ): int {
+	$id = \DGL\Dashboard\Wizard::create( PostTypes::VENUE, $owner );
+	update_post_meta( $id, DGL_FIXTURE_FLAG, '1' );
+	\DGL\Dashboard\Wizard::save_step( $id, PostTypes::VENUE, 1, [ 'title' => $title, 'summary' => 'Summary of ' . $title . '.', 'body' => '<p>About it.</p>' ] );
+	\DGL\Dashboard\Wizard::save_step( $id, PostTypes::VENUE, 2, [ 'venue_type' => 'community_centre', 'address' => '1 Test Street', 'postcode' => 'LS1 1AA', 'ward' => $ward, 'access' => $access ] );
+	\DGL\Dashboard\Wizard::save_step( $id, PostTypes::VENUE, 3, [ 'contact_name' => 'Manager', 'contact_email' => 'venue@example.test' ] );
+	Transition::apply( $id, StateMachine::SUBMIT, $owner );
+	Transition::apply( $id, StateMachine::APPROVE, $mod );
+	return $id;
+};
+$sq_make_space = static function ( int $venue, int $owner, string $title, array $fields ) use ( $mod ): int {
+	$id = \DGL\Dashboard\Wizard::create( PostTypes::SPACE, $owner, $venue );
+	update_post_meta( $id, DGL_FIXTURE_FLAG, '1' );
+	\DGL\Dashboard\Wizard::save_step( $id, PostTypes::SPACE, 1, [ 'title' => $title, 'summary' => 'A room.', 'body' => '<p>Room.</p>' ] );
+	\DGL\Dashboard\Wizard::save_step( $id, PostTypes::SPACE, 2, $fields );
+	Transition::apply( $id, StateMachine::SUBMIT, $owner );
+	Transition::apply( $id, StateMachine::APPROVE, $mod );
+	return $id;
+};
+
+$sq_armley = $sq_make_venue( $sp_org, $sp_owner, 'Armley Centre', 'armley', [ 'step_free', 'hearing_loop' ] );
+$sq_hall   = $sq_make_space( $sq_armley, $sp_owner, 'Big hall', [ 'space_type' => 'hall', 'cap_theatre' => '150', 'cap_cabaret' => '80', 'rate' => '35', 'rate_unit' => 'hour' ] );
+$sq_room   = $sq_make_space( $sq_armley, $sp_owner, 'Small room', [ 'space_type' => 'meeting_room', 'cap_boardroom' => '12', 'rate' => '12', 'rate_unit' => 'hour' ] );
+$sq_whole  = $sq_make_space( $sq_armley, $sp_owner, 'Whole centre', [ 'space_type' => 'whole_building', 'cap_standing' => '200', 'rate' => '250', 'rate_unit' => 'day' ] );
+$sq_bramley = $sq_make_venue( $sp_org, $sp_owner, 'Bramley Hut', 'bramley_and_stanningley', [ 'step_free' ] );
+$sq_free    = $sq_make_space( $sq_bramley, $sp_owner, 'Scout hall', [ 'space_type' => 'hall', 'cap_theatre' => '60', 'rate' => '0', 'rate_unit' => 'hour' ] );
+$sq_other  = $sq_make_venue( $sp_other, $sp_stranger, 'Chapel Rooms', 'armley' );
+$sq_ask    = $sq_make_space( $sq_other, $sp_stranger, 'Upper room', [ 'space_type' => 'meeting_room', 'cap_theatre' => '30' ] );
+$sq_empty  = $sq_make_venue( $sp_other, $sp_stranger, 'Empty Venue', 'armley' );
+
+$sq_ids = static fn( array $get ): array => \DGL\Spaces\SpacesQuery::run( \DGL\Spaces\SpacesQuery::args_from( $get ) )['ids'];
+$sq_ours = static fn( array $ids ): array => array_values( array_intersect( $ids, [ $sq_armley, $sq_bramley, $sq_other, $sq_empty ] ) );
+
+$sq_all = $sq_ids( [] );
+$ok( in_array( $sq_armley, $sq_all, true ) && in_array( $sq_bramley, $sq_all, true ) && in_array( $sq_other, $sq_all, true ) && ! in_array( $sq_empty, $sq_all, true ), 'every live venue with a live space is listed; one with no spaces is not' );
+$sq_pos = static fn( int $id ) => array_search( $id, $sq_all, true );
+$ok( $sq_pos( $sq_armley ) < $sq_pos( $sq_other ) && $sq_pos( $sq_bramley ) < $sq_pos( $sq_other ), 'priced venues come before one whose only space is price on request' );
+$ok( $sq_pos( $sq_armley ) < $sq_pos( $sq_bramley ), 'and within that, A to Z' );
+$ok( [ $sq_armley, $sq_other ] === $sq_ours( $sq_ids( [ 'ward' => 'armley' ] ) ), 'the ward filter keeps the two in Armley' );
+$ok( [ $sq_armley ] === $sq_ours( $sq_ids( [ 'people' => '100' ] ) ), 'people 100: only the venue with a room that size, in any layout' );
+$ok( [ $sq_armley, $sq_bramley, $sq_other ] === $sq_ours( $sq_ids( [ 'people' => '30' ] ) ), 'people 30: all three' );
+$ok( [ $sq_armley, $sq_other ] === $sq_ours( $sq_ids( [ 'type' => 'meeting_room' ] ) ), 'type: venues with a meeting room' );
+$ok( [ $sq_armley ] === $sq_ours( $sq_ids( [ 'access' => [ 'step_free', 'hearing_loop' ] ] ) ), 'access: every ticked need must be met' );
+$ok( [ $sq_armley, $sq_bramley ] === $sq_ours( $sq_ids( [ 'access' => [ 'step_free' ] ] ) ), 'one need, two venues' );
+$ok( [ $sq_bramley ] === $sq_ours( $sq_ids( [ 'price' => 'free' ] ) ), 'price free' );
+$ok( [ $sq_armley ] === $sq_ours( $sq_ids( [ 'price' => 'up_to_15' ] ) ), 'price up to £15 an hour' );
+$ok( [ $sq_armley ] === $sq_ours( $sq_ids( [ 'price' => 'over_30' ] ) ), 'price over £30 an hour' );
+$ok( [] === $sq_ours( $sq_ids( [ 'price' => '15_30' ] ) ), 'no room is £15 to £30' );
+$ok( [ $sq_other ] === $sq_ours( $sq_ids( [ 'price' => 'on_request' ] ) ), 'price on request' );
+$ok( [ $sq_armley ] === $sq_ours( $sq_ids( [ 'q' => 'armley cen' ] ) ), 'a word from the name' );
+$ok( [ $sq_bramley ] === $sq_ours( $sq_ids( [ 'q' => 'Summary of Bramley' ] ) ), 'or from the summary' );
+$ok( [ $sq_armley ] === $sq_ours( $sq_ids( [ 'ward' => 'armley', 'people' => '10', 'type' => 'meeting_room', 'price' => 'up_to_15' ] ) ), 'filters combine' );
+$sq_args = \DGL\Spaces\SpacesQuery::args_from( [ 'ward' => 'nowhere', 'type' => 'shed', 'price' => 'cheap', 'people' => '99999', 'access' => [ 'step_free', 'lift', 'x' ], 'pg' => '0' ] );
+$ok( '' === $sq_args['ward'] && '' === $sq_args['type'] && '' === $sq_args['price'] && 5000 === $sq_args['people'] && [ 'step_free', 'lift' ] === $sq_args['access'] && 1 === $sq_args['page'], 'unknown values are dropped, people is capped, the page is at least one' );
+$ok( ! \DGL\Spaces\SpacesQuery::is_active( \DGL\Spaces\SpacesQuery::args_from( [] ) ) && \DGL\Spaces\SpacesQuery::is_active( $sq_args ), 'is_active knows an empty search from a real one' );
+
+$sq_spaces = \DGL\Spaces\SpacesQuery::spaces( $sq_armley );
+$ok( 3 === count( $sq_spaces ) && $sq_whole === (int) $sq_spaces[0]['post']->ID && $sq_hall === (int) $sq_spaces[1]['post']->ID, 'a venue\'s spaces come whole building first, then the biggest' );
+$sq_facts = \DGL\Spaces\SpacesQuery::quick_facts( array_column( $sq_spaces, 'meta' ) );
+$ok( 3 === $sq_facts['count'] && 200 === $sq_facts['max_people'] && 12.0 === $sq_facts['from'] && 'hour' === $sq_facts['from_unit'] && ! $sq_facts['on_request'], 'quick facts: three spaces, up to 200, from £12 an hour' );
+$ok( '£35 an hour' === \DGL\Spaces\SpacesQuery::rate_words( $sq_spaces[1]['meta'] ) && 'Free' === \DGL\Spaces\SpacesQuery::rate_words( [ 'rate' => '0' ] ) && 'Price on request' === \DGL\Spaces\SpacesQuery::rate_words( [] ), 'rates in words' );
+$ok( \DGL\Spaces\SpacesQuery::space_matches( $sq_spaces[1]['meta'], \DGL\Spaces\SpacesQuery::args_from( [ 'people' => '120' ] ) ) && ! \DGL\Spaces\SpacesQuery::space_matches( $sq_spaces[2]['meta'], \DGL\Spaces\SpacesQuery::args_from( [ 'people' => '120' ] ) ), 'the exact match says which room fits' );
+
+// The pages.
+$sq_find = \DGL\Dashboard\View::render( 'public/spaces', \DGL\Spaces\Pages::find_data( [ 'ward' => 'armley' ] ) );
+$ok( str_contains( $sq_find, 'Find a space in Leeds' ) && str_contains( $sq_find, 'Armley Centre' ) && str_contains( $sq_find, 'Chapel Rooms' ) && ! str_contains( $sq_find, 'Bramley Hut' ) && str_contains( $sq_find, 'Big hall' ) && str_contains( $sq_find, '£35 an hour' ) && str_contains( $sq_find, 'Whole building' ), 'the find page lists the Armley venues with their rooms and rates' );
+$ok( str_contains( $sq_find, 'name="ward"' ) && str_contains( $sq_find, 'name="access[]"' ) && str_contains( $sq_find, 'name="price"' ) && str_contains( $sq_find, 'venues match' ), 'with the form and the count' );
+$sq_page = \DGL\Dashboard\View::render( 'public/venue', \DGL\Spaces\Pages::venue_data( get_post( $sq_armley ) ) );
+$ok( str_contains( $sq_page, 'Armley Centre' ) && str_contains( $sq_page, 'id="space-' . $sq_hall . '"' ) && str_contains( $sq_page, 'Spaces at this venue' ) && str_contains( $sq_page, 'Up to <b>200</b> people' ) && str_contains( $sq_page, 'From <b>£12</b> an hour' ) && str_contains( $sq_page, 'Step-free entrance' ) && str_contains( $sq_page, 'Theatre' ), 'the venue page shows the rooms, the quick facts and the access' );
+$ok( str_contains( $sq_page, 'venue@example.test' ), 'and, with no enquiry form yet, the venue\'s email' );
+update_post_meta( $sp_org, Meta::ORG_IN_DIRECTORY, '1' );
+$sq_orgpage = \DGL\Dashboard\View::render( 'public/organisation', [ 'org' => get_post( $sp_org ) ] );
+$ok( 1 === preg_match( '/Spaces to hire at 3 venues/', $sq_orgpage ) && str_contains( $sq_orgpage, 'Armley Centre' ) && str_contains( $sq_orgpage, 'Bramley Hut' ) && str_contains( $sq_orgpage, 'up to 200 people' ) && ! str_contains( $sq_orgpage, 'On the site now' ), 'the organisation page has the venues block and no venue in "On the site now"' );
+$ok( isset( \DGL\Frontend\Search::groups()['spaces'] ) && PostTypes::VENUE === \DGL\Frontend\Search::groups()['spaces'], 'site search has a Spaces to hire group' );
+$sq_hits = \DGL\Frontend\Search::results( 'Bramley Hut' );
+$ok( isset( $sq_hits['spaces'] ) && in_array( $sq_bramley, $sq_hits['spaces']['ids'], true ), 'and finds a venue by name' );
+$ok( [ 'Armley', 'Spaces Org' ] === \DGL\Frontend\Cards::meta( get_post( $sq_armley ) ), 'a venue\'s card line is its ward and organisation' );
+
+$sq_schema = \DGL\Frontend\Seo::schema_for_post( get_post( $sq_armley ), [ 'url' => '', 'width' => 0, 'height' => 0, 'alt' => '' ], 'Summary.' );
+$ok( 'EventVenue' === $sq_schema['@type'] && 'LS1 1AA' === ( $sq_schema['address']['postalCode'] ?? '' ) && 200 === ( $sq_schema['maximumAttendeeCapacity'] ?? 0 ) && 'Spaces Org' === ( $sq_schema['parentOrganization']['name'] ?? '' ), 'a venue is an EventVenue with its address, capacity and organisation' );
+
 /* ----------------------------------------------------------------- report */
 
 echo "\n" . str_repeat( '-', 60 ) . "\n";

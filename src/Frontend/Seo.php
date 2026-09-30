@@ -282,11 +282,51 @@ final class Seo {
 
 		$type = Frontend::archive_type();
 
+		if ( PostTypes::VENUE === $type ) {
+			return self::for_spaces();
+		}
+
 		if ( null !== $type ) {
 			return self::for_archive( $type );
 		}
 
 		return null;
+	}
+
+	/**
+	 * Find a space. Its list is the plugin's own query, not the main one.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private static function for_spaces(): array {
+		$base  = Frontend::archive_url( PostTypes::VENUE );
+		$args  = \DGL\Spaces\SpacesQuery::args_from( wp_unslash( $_GET ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- read only, sanitised inside.
+		$run   = \DGL\Spaces\SpacesQuery::run( $args );
+		$name  = __( 'Spaces to hire in Leeds', 'dgl-platform' );
+		$desc  = __( 'Rooms, halls and whole buildings to hire from voluntary and community organisations across Leeds, with capacity, facilities, access and rates, and an enquiry straight to the venue.', 'dgl-platform' );
+		$busy  = \DGL\Spaces\SpacesQuery::is_active( $args ) || $args['page'] > 1;
+		$url   = $args['page'] > 1 ? add_query_arg( 'pg', $args['page'], $base ) : $base;
+		$items = [];
+
+		foreach ( $run['ids'] as $id ) {
+			$items[] = [ (string) get_permalink( (int) $id ), self::plain( (string) get_the_title( (int) $id ) ) ];
+		}
+
+		return [
+			'kind'        => 'spaces',
+			'title'       => self::plain( wp_get_document_title() ),
+			'description' => $desc,
+			'url'         => $url,
+			'og_type'     => 'website',
+			'robots'      => $busy ? 'noindex,follow' : 'index',
+			'image'       => self::card( 'list-' . PostTypes::VENUE, $name, '', '' ),
+			'published'   => '',
+			'modified'    => '',
+			'schema'      => [
+				'main'        => self::collection( $name, $url, $desc, $items ),
+				'breadcrumbs' => self::breadcrumbs( [ [ Frontend::type_label( PostTypes::VENUE, true ), $base ] ] ),
+			],
+		];
 	}
 
 	/* ---- Each kind of page ----------------------------------------------- */
@@ -587,7 +627,69 @@ final class Seo {
 			return $common + self::training_parts( $post, $organiser );
 		}
 
+		if ( PostTypes::VENUE === $type ) {
+			return $common + self::venue_parts( $post, $organiser );
+		}
+
 		return $common + [ '@type' => 'WebPage', 'publisher' => self::site() ];
+	}
+
+	/**
+	 * A venue is a place you can hire: an EventVenue with its address, its
+	 * coordinates once geocoded, the organisation that runs it and every
+	 * photo. The rooms are not separate entities; they are what the page
+	 * describes.
+	 *
+	 * @param array<string, mixed> $organiser
+	 * @return array<string, mixed>
+	 */
+	private static function venue_parts( WP_Post $post, array $organiser ): array {
+		$parts = [
+			'@type'              => 'EventVenue',
+			'parentOrganization' => $organiser,
+		];
+
+		$address = self::postal_address( (string) Frontend::value( $post, 'address' ), '', (string) Frontend::value( $post, 'postcode' ) );
+
+		if ( null !== $address ) {
+			$parts['address'] = $address;
+		}
+
+		$lat = (string) get_post_meta( (int) $post->ID, \DGL\Meta::VENUE_LAT, true );
+		$lng = (string) get_post_meta( (int) $post->ID, \DGL\Meta::VENUE_LNG, true );
+
+		if ( '' !== $lat && '' !== $lng ) {
+			$parts['geo'] = [ '@type' => 'GeoCoordinates', 'latitude' => (float) $lat, 'longitude' => (float) $lng ];
+		}
+
+		$phone = (string) Frontend::value( $post, 'contact_phone' );
+
+		if ( 1 === preg_match( '/\d{5,}/', $phone ) ) {
+			$parts['telephone'] = $phone;
+		}
+
+		$photos = [];
+
+		foreach ( [ 'image', 'image_2', 'image_3', 'image_4' ] as $key ) {
+			$id  = (int) Frontend::value( $post, $key );
+			$url = $id > 0 ? wp_get_attachment_image_url( $id, 'large' ) : false;
+
+			if ( is_string( $url ) ) {
+				$photos[] = $url;
+			}
+		}
+
+		if ( [] !== $photos ) {
+			$parts['image'] = $photos;
+		}
+
+		$facts = \DGL\Spaces\SpacesQuery::quick_facts( array_column( \DGL\Spaces\SpacesQuery::spaces( (int) $post->ID ), 'meta' ) );
+
+		if ( $facts['max_people'] > 0 ) {
+			$parts['maximumAttendeeCapacity'] = $facts['max_people'];
+		}
+
+		return $parts;
 	}
 
 	/**

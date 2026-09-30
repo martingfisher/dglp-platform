@@ -54,6 +54,13 @@ final class Cards {
 			return array_values( array_filter( [ $org, self::posted( $post ), self::reading_time( $post ) ] ) );
 		}
 
+		// A venue: where it is and who runs it. When it was posted is no help.
+		if ( PostTypes::VENUE === $type ) {
+			$ward = \DGL\Schema\Types\Venue::wards()[ (string) Frontend::value( $post, 'ward' ) ] ?? '';
+
+			return array_values( array_filter( [ $ward, $org ] ) );
+		}
+
 		/*
 		 * The date of the thing itself is on the calendar leaf beside the
 		 * row, so the line does not repeat it. What it does say is when the

@@ -278,6 +278,18 @@ final class Frontend {
 		// design tokens are always loaded first.
 		Assets::style( 'assets/public.css', 'dgl-public' );
 		Assets::autoload();
+
+		if ( self::spaces_request() ) {
+			Assets::style( 'assets/spaces.css', 'dgl-spaces', [ 'dgl-public' ] );
+			\DGL\Spaces\MapAssets::enqueue();
+		}
+	}
+
+	/**
+	 * Whether this is the Find a space page or a venue page.
+	 */
+	public static function spaces_request(): bool {
+		return PostTypes::VENUE === self::archive_type() || PostTypes::VENUE === self::single_type();
 	}
 
 	/**
@@ -302,6 +314,17 @@ final class Frontend {
 		}
 
 		if ( null === $type ) {
+			return;
+		}
+
+		/*
+		 * Find a space runs its own query (venues filtered by their spaces),
+		 * so the main query is only asked for one row to keep the archive
+		 * a 200 rather than fetch twenty venues nobody renders.
+		 */
+		if ( PostTypes::VENUE === $type ) {
+			$query->set( 'posts_per_page', 1 );
+			$query->set( 'no_found_rows', true );
 			return;
 		}
 

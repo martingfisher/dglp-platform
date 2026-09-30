@@ -46,6 +46,7 @@ final class Search {
 			'news'          => PostTypes::NEWS,
 			'events'        => PostTypes::EVENT,
 			'training'      => PostTypes::TRAINING,
+			'spaces'        => PostTypes::VENUE,
 		];
 	}
 
@@ -53,6 +54,7 @@ final class Search {
 		return match ( $group ) {
 			'organisations' => __( 'Organisations', 'dgl-platform' ),
 			'news'          => __( 'News', 'dgl-platform' ),
+			'spaces'        => __( 'Spaces to hire', 'dgl-platform' ),
 			'events'        => __( 'Events', 'dgl-platform' ),
 			'training'      => __( 'Training', 'dgl-platform' ),
 			default         => $group,
