@@ -1038,3 +1038,10 @@ clean. They are the only DGLP content on staging.
   until corrected by hand to LS12 1SF and re-placed with `wp dgl spaces
   geocode`; the seeder carries the real one now. The spaces commands
   print raw titles, not `&#8217;`.
+- **0.41.3 deployed** (30 September, production): `wp dgl probe page
+  --post=... --referer=<url>` sends a Referer, so the enquiry form can be
+  posted from the console the way a browser posts it. A test enquiry about
+  the Main hall at Westside Community Centre was posted from the server
+  and answered 302 to `?sent=1`, which the code reaches only after the
+  message is handed to `wp_mail()` and the audit row is written. Mail is
+  still redirected to martingfisher@gmail.com, so that is where it lands.
