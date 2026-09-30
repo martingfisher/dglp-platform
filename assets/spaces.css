@@ -206,16 +206,17 @@
 .dgl-venue__main .dgl-venue__standfirst { max-width: 60ch; margin-top: 0; }
 
 /*
- * The enquiry card keeps its place as the rooms scroll by. Taller than the
- * window, it scrolls inside itself rather than losing its foot.
+ * The enquiry card keeps its place as the rooms scroll by, when it fits in
+ * the window: the script adds the class after measuring. A card taller
+ * than the window is never clipped or scrolled inside itself; it sits in
+ * the flow and the page is at least as deep as the card, because the grid
+ * row is as tall as its tallest column.
  */
-.dgl-venue__aside {
+.dgl-venue__aside { align-self: start; }
+
+.dgl-venue__aside--sticky {
 	position: sticky;
 	top: var(--dgl-gap-lg);
-	align-self: start;
-	max-height: calc(100vh - 2 * var(--dgl-gap-lg));
-	overflow-y: auto;
-	overscroll-behavior: contain;
 }
 
 /* ---- A bigger map in a dialog ---------------------------------------- */
@@ -324,7 +325,7 @@ body.dgl-mapdialog-open { overflow: hidden; }
 
 @media ( max-width: 900px ) {
 	.dgl-mapdialog__card { width: 100%; height: min(80vh, 700px); }
-	.dgl-venue__aside { position: static; max-height: none; overflow: visible; }
+	.dgl-venue__aside--sticky { position: static; }
 }
 
 .dgl-venue__spaces { margin: 0 0 var(--dgl-gap-lg); }

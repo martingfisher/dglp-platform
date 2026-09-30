@@ -393,8 +393,9 @@ venue and a popup that is the venue's name as a link; on a venue page a
 white "Bigger map" button in its corner that opens the same map in a
 dialog 60vw wide (max 1200px, 76vh tall) with dragging, zoom and a popup
 naming the venue; under 900px the dialog fills the width. The enquiry
-card is sticky at the gap-lg offset and scrolls inside itself when taller
-than the window. Attribution is
+card is sticky at the gap-lg offset when it fits in the window, and in
+the flow, never clipped, when it does not; the page is at least as deep
+as the card. Attribution is
 the OpenStreetMap line their policy asks for.
 
 ### Status stamp

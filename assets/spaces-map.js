@@ -9,6 +9,24 @@
 ( function () {
 	'use strict';
 
+	/* ---- The enquiry card: sticky only when it fits ------------------- */
+
+	var aside = document.querySelector( '.dgl-venue__aside' );
+
+	if ( aside ) {
+		var fits = function () {
+			var room = window.innerHeight - 2 * 24;
+			aside.classList.toggle( 'dgl-venue__aside--sticky', aside.offsetHeight <= room );
+		};
+
+		fits();
+		window.addEventListener( 'resize', fits );
+
+		if ( window.ResizeObserver ) {
+			new ResizeObserver( fits ).observe( aside );
+		}
+	}
+
 	if ( ! window.L || ! window.dglMap ) {
 		return;
 	}

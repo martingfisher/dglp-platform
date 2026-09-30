@@ -97,8 +97,9 @@ the address, contact name, phone, website and ward, and the map with one
 pin and a "Bigger map" button that opens it in a dialog about 60% of the
 screen wide, draggable and zoomable. The summary sits at the top of the
 main column so the enquiry card starts level with it, and the card stays
-in place as the rooms scroll past, scrolling inside itself when it is
-taller than the window. On a phone a bar at the foot of the screen keeps the rate and Enquire
+in place as the rooms scroll past when it fits in the window; taller than
+the window it sits in the flow, never clipped, and the page is at least as
+deep as the card. On a phone a bar at the foot of the screen keeps the rate and Enquire
 in view while the cards scroll.
 
 **The organisation's page** in the directory has a "Spaces to hire at N

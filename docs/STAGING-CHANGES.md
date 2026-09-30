@@ -1090,3 +1090,9 @@ clean. They are the only DGLP content on staging.
   glow had shown inside the plugin's ring as a double edge.
   Leaflet's attribution links read in navy rather than its own blue,
   which was 4.65:1 on the map's ground.
+- **0.43.4 deployed** (30 September, production): the enquiry card is no
+  longer clipped to the window and scrolled inside itself. It sticks only
+  when it fits in the window (measured by the script, re-measured on
+  resize); otherwise it sits in the flow and the page is at least as deep
+  as the card. Martin saw the card cut off at the foot of a short venue
+  page.
