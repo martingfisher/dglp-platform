@@ -12,12 +12,13 @@ namespace DGL\Schema;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * What makes each of the five types different.
+ * What makes each type different.
  *
  * Steps 1 and 3 of the wizard are the same everywhere, so they live in
  * {@see FieldRegistry}. A type definition supplies step 2, the part the
- * wireframe labels "fields specific to events", and says which date, if any,
- * takes the item off the listings.
+ * wireframe labels "fields specific to events", says which date, if any,
+ * takes the item off the listings, and whether the shared contact step and
+ * the topic picker apply to it at all.
  */
 interface TypeDefinition {
 
@@ -39,4 +40,16 @@ interface TypeDefinition {
 	 * start but no end still has to come down.
 	 */
 	public static function expiry_fallback(): ?string;
+
+	/**
+	 * Whether the shared contact step (step 3) is asked. A space at a venue
+	 * has no contact of its own: enquiries go to the venue's.
+	 */
+	public static function has_contact(): bool;
+
+	/**
+	 * Whether the topic picker is offered. Topics feed the digest and the
+	 * public filters, which venues and spaces are not part of.
+	 */
+	public static function has_topics(): bool;
 }

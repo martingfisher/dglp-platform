@@ -46,7 +46,7 @@ final class Wizard {
 	 *
 	 * @return int|WP_Error
 	 */
-	public static function create( string $post_type, int $user_id ) {
+	public static function create( string $post_type, int $user_id, int $parent_id = 0 ) {
 		if ( ! PostTypes::is_submittable( $post_type ) ) {
 			return new WP_Error( 'dgl_bad_type', __( 'That is not something you can submit.', 'dgl-platform' ) );
 		}
@@ -62,6 +62,21 @@ final class Wizard {
 		}
 
 		/*
+		 * A space belongs to a venue for life, so it is started from one:
+		 * one of this organisation's own, and not one that has been refused
+		 * or archived. Anything else has no venue and needs none.
+		 */
+		$is_space = PostTypes::SPACE === $post_type;
+
+		if ( $is_space && ( $parent_id <= 0 || ! \DGL\Spaces\Link::can_add_space( $parent_id, $org_id ) ) ) {
+			return new WP_Error( 'dgl_no_venue', __( 'Pick one of your venues to add the space to.', 'dgl-platform' ) );
+		}
+
+		if ( ! $is_space ) {
+			$parent_id = 0;
+		}
+
+		/*
 		 * Every visit to "New event" used to insert a post, so a member who
 		 * clicked it, thought better of it and went back to the list left an
 		 * Untitled draft behind each time; one test account had 47. An empty
@@ -72,6 +87,10 @@ final class Wizard {
 		if ( null !== $existing ) {
 			// Fills blanks only, so a reused draft gets the same start as a new one.
 			self::prefill_contact( $existing, $org_id, $user_id );
+
+			if ( $parent_id > 0 ) {
+				update_post_meta( $existing, Meta::SPACE_VENUE, $parent_id );
+			}
 
 			return $existing;
 		}
@@ -92,6 +111,10 @@ final class Wizard {
 
 		// Written after insert, which is why Index\Sync also watches meta writes.
 		update_post_meta( $post_id, Meta::ITEM_ORG, $org_id );
+
+		if ( $parent_id > 0 ) {
+			update_post_meta( $post_id, Meta::SPACE_VENUE, $parent_id );
+		}
 
 		self::prefill_contact( (int) $post_id, $org_id, $user_id );
 
@@ -162,6 +185,15 @@ final class Wizard {
 			}
 		}
 
+		// A copied space stays at the same venue: that is not a field, it is where it is.
+		if ( PostTypes::SPACE === $post_type ) {
+			$venue_id = (int) get_post_meta( $source_id, Meta::SPACE_VENUE, true );
+
+			if ( $venue_id > 0 ) {
+				update_post_meta( (int) $post_id, Meta::SPACE_VENUE, $venue_id );
+			}
+		}
+
 		$topics = wp_get_object_terms( $source_id, Taxonomies::TOPIC, [ 'fields' => 'ids' ] );
 
 		if ( is_array( $topics ) && [] !== $topics ) {
@@ -197,6 +229,11 @@ final class Wizard {
 	public const CONTACT_KEYS = [ 'contact_name', 'contact_email', 'contact_phone', 'website' ];
 
 	private static function prefill_contact( int $post_id, int $org_id, int $user_id ): void {
+		// A type with no contact step (a space) has nothing to prefill.
+		if ( null === FieldRegistry::find( (string) get_post_type( $post_id ), 'contact_email' ) ) {
+			return;
+		}
+
 		$values = [];
 		$latest = get_posts(
 			[

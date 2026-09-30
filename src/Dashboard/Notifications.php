@@ -71,6 +71,9 @@ final class Notifications {
 			'directory_unhidden'          => [ 'title' => __( 'Your organisation is back in the directory', 'dgl-platform' ), 'tone' => 'quiet' ],
 			'member_removed'              => [ 'title' => __( 'Somebody was removed from your organisation', 'dgl-platform' ), 'tone' => 'quiet' ],
 			'member_role_changed'         => [ 'title' => __( 'What a colleague can do has changed', 'dgl-platform' ), 'tone' => 'quiet' ],
+			'cascaded'                    => [ 'title' => __( 'Its spaces went with it', 'dgl-platform' ), 'tone' => 'quiet' ],
+			'moved_with_venue'            => [ 'title' => __( 'Moved with its venue', 'dgl-platform' ), 'tone' => 'quiet' ],
+			'enquiry_sent'                => [ 'title' => __( 'Somebody enquired about a space', 'dgl-platform' ), 'tone' => 'good' ],
 		];
 	}
 

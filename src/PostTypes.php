@@ -1,6 +1,6 @@
 <?php
 /**
- * The five submittable content types, plus organisations and pending revisions.
+ * The submittable content types, plus organisations and pending revisions.
  *
  * @package DGL
  */
@@ -24,6 +24,17 @@ final class PostTypes {
 	public const TRAINING     = 'dgl_training';
 	public const GRANT        = 'dgl_grant';
 	public const VOLUNTEERING = 'dgl_volunteering';
+
+	/** A building with spaces for hire, owned by a member organisation. */
+	public const VENUE = 'dgl_venue';
+
+	/** A room, hall, kitchen, garden or whole building at a venue. */
+	public const SPACE = 'dgl_space';
+
+	/** Kinds of submittable type: a dated or newsy listing, a venue, or a space at a venue. */
+	public const KIND_LISTING = 'listing';
+	public const KIND_VENUE   = 'venue';
+	public const KIND_SPACE   = 'space';
 
 	/** An organisation. Carries its own fields, logo, approval state and trust level. */
 	public const ORG = 'dgl_org';
@@ -71,7 +82,7 @@ final class PostTypes {
 	/**
 	 * Singular and plural labels, and the public URL base, for each type.
 	 *
-	 * @return array<string, array{singular: string, plural: string, slug: string}>
+	 * @return array<string, array{singular: string, plural: string, slug: string, kind: string}>
 	 */
 	public static function definitions(): array {
 		/*
@@ -89,16 +100,39 @@ final class PostTypes {
 				'singular' => __( 'News item', 'dgl-platform' ),
 				'plural'   => __( 'News', 'dgl-platform' ),
 				'slug'     => 'news',
+				'kind'     => self::KIND_LISTING,
 			],
 			self::EVENT        => [
 				'singular' => __( 'Event', 'dgl-platform' ),
 				'plural'   => __( 'Events', 'dgl-platform' ),
 				'slug'     => 'events',
+				'kind'     => self::KIND_LISTING,
 			],
 			self::TRAINING     => [
 				'singular' => __( 'Training opportunity', 'dgl-platform' ),
 				'plural'   => __( 'Training', 'dgl-platform' ),
 				'slug'     => 'training',
+				'kind'     => self::KIND_LISTING,
+			],
+			/*
+			 * Spaces to hire: a venue is a building an organisation lets
+			 * out, a space is one room, hall or garden in it, or the whole
+			 * building. The venue owns the public page (/spaces/ and
+			 * /spaces/<venue>/); a space has no page of its own and lives
+			 * on its venue's. Members start a space from the venue, so the
+			 * space type is reachable in the dashboard but not on the menu.
+			 */
+			self::VENUE        => [
+				'singular' => __( 'Venue', 'dgl-platform' ),
+				'plural'   => __( 'Spaces to hire', 'dgl-platform' ),
+				'slug'     => 'spaces',
+				'kind'     => self::KIND_VENUE,
+			],
+			self::SPACE        => [
+				'singular' => __( 'Space', 'dgl-platform' ),
+				'plural'   => __( 'Spaces', 'dgl-platform' ),
+				'slug'     => 'space',
+				'kind'     => self::KIND_SPACE,
 			],
 			self::GRANT        => [
 				/*
@@ -116,11 +150,13 @@ final class PostTypes {
 				'singular' => __( 'Grant', 'dgl-platform' ),
 				'plural'   => __( 'Grants', 'dgl-platform' ),
 				'slug'     => 'grants',
+				'kind'     => self::KIND_LISTING,
 			],
 			self::VOLUNTEERING => [
 				'singular' => __( 'Volunteering opportunity', 'dgl-platform' ),
 				'plural'   => __( 'Volunteering', 'dgl-platform' ),
 				'slug'     => 'volunteering',
+				'kind'     => self::KIND_LISTING,
 			],
 		];
 	}
@@ -182,6 +218,51 @@ final class PostTypes {
 	}
 
 	/**
+	 * What kind of thing a type is: a listing, a venue or a space.
+	 */
+	public static function kind_of( string $post_type ): string {
+		return (string) ( self::definitions()[ $post_type ]['kind'] ?? self::KIND_LISTING );
+	}
+
+	/**
+	 * The enabled types that go in feeds: digests, email preferences, site
+	 * search results, an organisation's "on the site now". News, events and
+	 * training, in short. A venue is a place, not news, so it stays out.
+	 *
+	 * @return string[]
+	 */
+	public static function feed_keys(): array {
+		return array_values(
+			array_filter(
+				self::enabled_keys(),
+				static fn( string $post_type ): bool => self::KIND_LISTING === self::kind_of( $post_type )
+			)
+		);
+	}
+
+	/**
+	 * The enabled types on the dashboard menu and the submit tiles. A space
+	 * is started from its venue, so it has no tile of its own.
+	 *
+	 * @return array<string, array{singular: string, plural: string, slug: string, kind: string}>
+	 */
+	public static function menu(): array {
+		return array_filter(
+			self::enabled(),
+			static fn( string $post_type ): bool => self::KIND_SPACE !== self::kind_of( $post_type ),
+			ARRAY_FILTER_USE_KEY
+		);
+	}
+
+	/**
+	 * Whether a type has public pages of its own: an archive and a single.
+	 * A space is shown on its venue's page and has neither.
+	 */
+	public static function has_page( string $post_type ): bool {
+		return self::KIND_SPACE !== self::kind_of( $post_type );
+	}
+
+	/**
 	 * Register every post type. Hooked on `init`.
 	 */
 	public static function register(): void {
@@ -204,6 +285,8 @@ final class PostTypes {
 	 * @return array<string, mixed>
 	 */
 	private static function submittable_args( array $def, bool $enabled = true ): array {
+		$has_page = self::KIND_SPACE !== (string) ( $def['kind'] ?? self::KIND_LISTING );
+
 		return [
 			'labels'          => self::labels( $def['singular'], $def['plural'] ),
 			/*
@@ -214,14 +297,17 @@ final class PostTypes {
 			 * into data nobody can reach.
 			 */
 			'public'          => $enabled,
+			// A space is on its venue's page: no page, no archive, no URL of its own.
+			'publicly_queryable' => $enabled && $has_page,
+			'exclude_from_search' => ! ( $enabled && $has_page ),
 			'show_ui'         => $enabled,
 			'show_in_menu'    => $enabled,
 			'show_in_rest'    => $enabled,
-			'has_archive'     => $enabled ? $def['slug'] : false,
-			'rewrite'         => [
+			'has_archive'     => $enabled && $has_page ? $def['slug'] : false,
+			'rewrite'         => $has_page ? [
 				'slug'       => $def['slug'],
 				'with_front' => false,
-			],
+			] : false,
 			'menu_icon'       => 'dashicons-megaphone',
 			'supports'        => [ 'title', 'editor', 'thumbnail', 'author', 'revisions' ],
 			'capability_type' => [ 'dgl_item', 'dgl_items' ],

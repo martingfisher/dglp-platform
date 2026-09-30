@@ -142,6 +142,18 @@ $pending  = $revision instanceof WP_Post && Statuses::PENDING === $revision->pos
 		<h1 class="dgl-page-head__title">
 			<?php echo esc_html( $post->post_title !== '' ? $post->post_title : __( 'Untitled', 'dgl-platform' ) ); ?>
 		</h1>
+		<?php if ( ( $data['venue'] ?? null ) instanceof WP_Post ) : ?>
+			<p class="dgl-page-head__lede">
+				<?php esc_html_e( 'A space at', 'dgl-platform' ); ?>
+				<a href="<?php echo esc_url( Router::url( 'item', (string) $data['venue']->ID ) ); ?>"><?php echo esc_html( '' !== $data['venue']->post_title ? $data['venue']->post_title : __( 'Untitled venue', 'dgl-platform' ) ); ?></a>
+				<?php if ( Statuses::LIVE !== $data['venue']->post_status ) : ?>
+					<span class="dgl-help"><?php esc_html_e( 'The venue is not on the site yet, so this space is not shown until it is.', 'dgl-platform' ); ?></span>
+				<?php endif; ?>
+			</p>
+		<?php endif; ?>
+		<?php if ( '' !== (string) ( $data['public_url'] ?? '' ) ) : ?>
+			<p class="dgl-page-head__lede"><a href="<?php echo esc_url( (string) $data['public_url'] ); ?>" rel="noopener"><?php esc_html_e( 'See it on the site', 'dgl-platform' ); ?></a></p>
+		<?php endif; ?>
 	</div>
 
 	<?php if ( ! empty( $data['can_edit'] ) && ! $pending ) : ?>
@@ -215,6 +227,27 @@ if ( $revision instanceof WP_Post ) {
 	);
 }
 ?>
+
+<?php if ( \DGL\PostTypes::KIND_VENUE === (string) ( $data['kind'] ?? '' ) ) : ?>
+	<section class="dgl-card dgl-spaces" aria-labelledby="dgl-spaces-title">
+		<div class="dgl-section__head">
+			<h2 class="dgl-section__title" id="dgl-spaces-title"><?php esc_html_e( 'Spaces at this venue', 'dgl-platform' ); ?></h2>
+			<?php if ( '' !== (string) ( $data['add_space_url'] ?? '' ) ) : ?>
+				<a class="dgl-button dgl-button--small" href="<?php echo esc_url( (string) $data['add_space_url'] ); ?>"><?php esc_html_e( 'Add a space', 'dgl-platform' ); ?></a>
+			<?php endif; ?>
+		</div>
+		<p class="dgl-help"><?php esc_html_e( 'Each room, hall or garden you hire out is a space, with its own capacity, facilities and rate. Add the whole building as a space too if it can be hired at once. Each one is reviewed on its own.', 'dgl-platform' ); ?></p>
+		<?php
+		View::output(
+			'dashboard/list-table',
+			[
+				'items' => $data['children'] ?? [],
+				'empty' => __( 'No spaces yet. Add the first one.', 'dgl-platform' ),
+			]
+		);
+		?>
+	</section>
+<?php endif; ?>
 
 <?php if ( empty( $data['can_schedule'] ) && ! empty( $data['can_extend'] ) ) : ?>
 	<section class="dgl-card dgl-schedule" aria-labelledby="dgl-listed-title">

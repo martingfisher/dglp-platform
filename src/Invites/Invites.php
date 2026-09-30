@@ -445,7 +445,8 @@ final class Invites {
 	public static function can_post_sentence(): string {
 		$labels = array_map(
 			static fn( array $def ): string => strtolower( (string) $def['plural'] ),
-			array_values( \DGL\PostTypes::enabled() )
+			// The types with a tile: a space is added from its venue, not from a menu.
+			array_values( \DGL\PostTypes::menu() )
 		);
 
 		if ( [] === $labels ) {

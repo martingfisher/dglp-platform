@@ -36,6 +36,7 @@ Harness::assert_true( str_contains( $items, 'KEY org_status (org_id,status,updat
 Harness::assert_true( str_contains( $items, 'KEY queue (status,submitted_at)' ), 'queue index matches the moderation queue query' );
 Harness::assert_true( str_contains( $items, 'KEY digest (post_type,status,approved_at)' ), 'digest index matches the digest query' );
 Harness::assert_true( str_contains( $items, 'KEY expiry (expires_at,status)' ), 'expiry index matches the expiry sweep' );
+Harness::assert_true( str_contains( $items, 'KEY parent (parent_id,status)' ), 'parent index matches the spaces-of-a-venue query' );
 
 // Zero dates are rejected under MySQL strict mode, so no column may default to one.
 Harness::assert_false( str_contains( $items, "'0000-00-00" ), 'no column defaults to a zero date' );
@@ -58,8 +59,8 @@ Harness::group( 'Volunteering and grants are switched off for this release' );
 
 use DGL\PostTypes;
 
-Harness::assert_same( 5, count( PostTypes::definitions() ), 'all five types still exist in the code' );
-Harness::assert_same( 3, count( PostTypes::enabled() ), 'three are enabled' );
+Harness::assert_same( 7, count( PostTypes::definitions() ), 'all seven types still exist in the code' );
+Harness::assert_same( 5, count( PostTypes::enabled() ), 'five are enabled: three listings, venues and spaces' );
 
 Harness::assert_false( PostTypes::is_enabled( PostTypes::VOLUNTEERING ), 'volunteering is off' );
 Harness::assert_false( PostTypes::is_enabled( PostTypes::GRANT ), 'grants is off' );
@@ -77,16 +78,16 @@ Harness::assert_same( 'grants', PostTypes::definitions()[ PostTypes::GRANT ]['sl
 
 Harness::assert_true( in_array( PostTypes::GRANT, PostTypes::submittable(), true ), 'and stays submittable, so permissions and the index still work for anything already stored' );
 
-Harness::assert_same( [ PostTypes::NEWS, PostTypes::EVENT, PostTypes::TRAINING ], PostTypes::enabled_keys(), 'enabled types keep their display order: news, events, training' );
+Harness::assert_same( [ PostTypes::NEWS, PostTypes::EVENT, PostTypes::TRAINING, PostTypes::VENUE, PostTypes::SPACE ], PostTypes::enabled_keys(), 'enabled types keep their display order: news, events, training, venues, spaces' );
 
 Harness::group( 'Switching one back on is deleting a string' );
 
 add_filter_stub( 'dgl_disabled_types', static fn(): array => [ PostTypes::VOLUNTEERING ] );
 
 Harness::assert_true( PostTypes::is_enabled( PostTypes::GRANT ), 'grants comes back when it is off the list' );
-Harness::assert_same( 4, count( PostTypes::enabled() ), 'and the enabled set grows' );
+Harness::assert_same( 6, count( PostTypes::enabled() ), 'and the enabled set grows' );
 Harness::assert_false( PostTypes::is_enabled( PostTypes::VOLUNTEERING ), 'while volunteering stays off' );
 
 clear_filter_stubs();
 
-Harness::assert_same( 3, count( PostTypes::enabled() ), 'and the default is restored for anything that runs after this' );
+Harness::assert_same( 5, count( PostTypes::enabled() ), 'and the default is restored for anything that runs after this' );

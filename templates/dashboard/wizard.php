@@ -21,7 +21,11 @@ $errors   = $data['errors'] ?? [];
 $values   = $data['values'] ?? [];
 $singular = (string) $data['singular'];
 
-$heading = FieldRegistry::steps()[ $step ] ?? '';
+$steps    = (array) ( $data['steps'] ?? FieldRegistry::steps() );
+$position = (int) ( $data['position'] ?? $step );
+$venue    = $data['venue'] ?? null;
+
+$heading = $steps[ $step ] ?? '';
 
 if ( FieldRegistry::STEP_DETAILS === $step ) {
 	/* translators: %s: content type name. */
@@ -34,6 +38,7 @@ if ( FieldRegistry::STEP_DETAILS === $step ) {
 		'dashboard/wizard-progress',
 		[
 			'step'     => $step,
+			'steps'    => $steps,
 			'post_id'  => $post->ID,
 			'singular' => $singular,
 		]
@@ -43,14 +48,20 @@ if ( FieldRegistry::STEP_DETAILS === $step ) {
 	<div class="dgl-wizard__main">
 		<header class="dgl-page-head">
 			<div>
+				<?php if ( $venue instanceof WP_Post ) : ?>
+					<p class="dgl-crumbs">
+						<?php esc_html_e( 'At', 'dgl-platform' ); ?>
+						<a href="<?php echo esc_url( Router::url( 'item', (string) $venue->ID ) ); ?>"><?php echo esc_html( '' !== $venue->post_title ? $venue->post_title : __( 'Untitled venue', 'dgl-platform' ) ); ?></a>
+					</p>
+				<?php endif; ?>
 				<h1 class="dgl-page-head__title"><?php echo esc_html( $heading ); ?></h1>
 				<p class="dgl-page-head__lede">
 					<?php
 					printf(
 						/* translators: 1: current step, 2: total steps. */
 						esc_html__( 'Step %1$d of %2$d.', 'dgl-platform' ),
-						(int) $step,
-						count( FieldRegistry::steps() )
+						(int) $position,
+						count( $steps )
 					);
 					?>
 					<?php if ( FieldRegistry::STEP_DETAILS === $step ) : ?>

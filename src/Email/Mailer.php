@@ -66,6 +66,11 @@ final class Mailer {
 			return;
 		}
 
+		// A venue's spaces going with it is one piece of news, already sent for the venue.
+		if ( \DGL\Spaces\Cascade::is_active() ) {
+			return;
+		}
+
 		$context = self::context( $post_id, $actor_id, $note );
 
 		if ( null === $context ) {
@@ -191,13 +196,8 @@ final class Mailer {
 	 * thing that generates a support call.
 	 */
 	private static function public_url( WP_Post $post ): string {
-		if ( Statuses::LIVE !== $post->post_status ) {
-			return '';
-		}
-
-		$url = get_permalink( $post );
-
-		return is_string( $url ) ? $url : '';
+		// A space's public address is on its venue's page; Link knows that.
+		return \DGL\Spaces\Link::public_url( $post );
 	}
 
 	/**

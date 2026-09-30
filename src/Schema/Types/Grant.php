@@ -91,4 +91,12 @@ final class Grant implements TypeDefinition {
 	public static function expiry_fallback(): ?string {
 		return null;
 	}
+
+	public static function has_contact(): bool {
+		return true;
+	}
+
+	public static function has_topics(): bool {
+		return true;
+	}
 }

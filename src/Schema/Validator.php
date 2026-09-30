@@ -100,16 +100,30 @@ final class Validator {
 			}
 
 			if ( self::has_value( $values[ $field->required_with ] ?? null ) && ! self::has_value( $values[ $field->key ] ?? null ) ) {
-				$errors[ $field->key ] = self::required_with_message( $field );
+				$errors[ $field->key ] = self::required_with_message( $field, $fields );
 			}
 		}
 
 		return $errors;
 	}
 
-	private static function required_with_message( Field $field ): string {
-		/* translators: %s: field label. */
-		return sprintf( __( '%s is needed when there is a picture.', 'dgl-platform' ), $field->label );
+	private static function required_with_message( Field $field, array $fields = [] ): string {
+		$other = null;
+
+		foreach ( $fields as $candidate ) {
+			if ( $candidate->key === $field->required_with ) {
+				$other = $candidate;
+				break;
+			}
+		}
+
+		if ( null !== $other && Field::IMAGE === $other->type ) {
+			/* translators: %s: field label. */
+			return sprintf( __( '%s is needed when there is a picture.', 'dgl-platform' ), $field->label );
+		}
+
+		/* translators: 1: field label, 2: the other field's label. */
+		return sprintf( __( '%1$s is needed when %2$s is filled in.', 'dgl-platform' ), $field->label, null !== $other ? $other->label : $field->required_with );
 	}
 
 	/**

@@ -61,6 +61,7 @@ final class Sync {
 			Meta::ITEM_APPROVED_AT,
 			Meta::ITEM_EXPIRES_AT,
 			Meta::ITEM_NEXT_AT,
+			Meta::SPACE_VENUE,
 		];
 	}
 
@@ -129,6 +130,9 @@ final class Sync {
 
 		$org_id = Org::for_item( $org_source );
 
+		// A space's venue rides on the same row; an edit to a space reads its parent's.
+		$parent_id = (int) get_post_meta( $org_source, Meta::SPACE_VENUE, true );
+
 		$result = ItemsTable::upsert(
 			[
 				'post_id'              => $post_id,
@@ -143,6 +147,7 @@ final class Sync {
 				'expires_at'           => self::meta_or_null( $post_id, Meta::ITEM_EXPIRES_AT ),
 				'next_at'              => self::meta_or_null( $post_id, Meta::ITEM_NEXT_AT ),
 				'updated_at'           => get_post_modified_time( 'Y-m-d H:i:s', true, $post ) ?: current_time( 'mysql', true ),
+				'parent_id'            => $parent_id,
 			]
 		);
 

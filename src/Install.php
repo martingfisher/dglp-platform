@@ -176,6 +176,9 @@ final class Install {
 		// moderators gain the capability to set them (roles are only otherwise
 		// written on activation, which an upgrade never fires).
 		\DGL\Org\Trust::migrate_levels();
+		// Schema 11: the index gains parent_id (a space's venue). dbDelta adds
+		// the column and its key above; no spaces existed before it, so
+		// there is nothing to backfill.
 		\DGL\Roles::install();
 
 		update_option( self::DB_VERSION_OPTION, DB_VERSION, false );

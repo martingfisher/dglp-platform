@@ -162,4 +162,12 @@ final class Event implements TypeDefinition {
 	public static function expiry_fallback(): ?string {
 		return 'start_datetime';
 	}
+
+	public static function has_contact(): bool {
+		return true;
+	}
+
+	public static function has_topics(): bool {
+		return true;
+	}
 }

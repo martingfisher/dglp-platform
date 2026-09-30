@@ -14,6 +14,8 @@ use DGL\Schema\Types\Event;
 use DGL\Schema\Types\Grant;
 use DGL\Schema\Types\News;
 use DGL\Schema\Types\Training;
+use DGL\Schema\Types\Venue;
+use DGL\Schema\Types\Space;
 use DGL\Schema\Types\Volunteering;
 
 defined( 'ABSPATH' ) || exit;
@@ -60,6 +62,8 @@ final class FieldRegistry {
 			PostTypes::TRAINING     => Training::class,
 			PostTypes::GRANT        => Grant::class,
 			PostTypes::VOLUNTEERING => Volunteering::class,
+			PostTypes::VENUE        => Venue::class,
+			PostTypes::SPACE        => Space::class,
 		];
 	}
 
@@ -181,7 +185,33 @@ final class FieldRegistry {
 			return [];
 		}
 
-		return array_merge( self::basics(), $definition::fields(), self::contact() );
+		return array_merge( self::basics(), $definition::fields(), $definition::has_contact() ? self::contact() : [] );
+	}
+
+	/**
+	 * The wizard steps a type actually has, in order: step number => label.
+	 * A type without a contact step goes basics, details, review.
+	 *
+	 * @return array<int, string>
+	 */
+	public static function steps_for( string $post_type ): array {
+		$definition = self::definitions()[ $post_type ] ?? null;
+		$steps      = self::steps();
+
+		if ( null !== $definition && ! $definition::has_contact() ) {
+			unset( $steps[ self::STEP_CONTACT ] );
+		}
+
+		return $steps;
+	}
+
+	/**
+	 * Whether a type offers the topic picker.
+	 */
+	public static function has_topics( string $post_type ): bool {
+		$definition = self::definitions()[ $post_type ] ?? null;
+
+		return null !== $definition && $definition::has_topics();
 	}
 
 	/**

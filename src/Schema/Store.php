@@ -96,18 +96,27 @@ final class Store {
 	 * an old description, or a new description for an old picture, both land.
 	 */
 	public static function describe_image( int $post_id, string $post_type ): void {
-		$image = FieldRegistry::find( $post_type, 'image' );
-		$alt   = FieldRegistry::find( $post_type, 'image_alt' );
+		$fields = FieldRegistry::for_type( $post_type );
 
-		if ( null === $image || null === $alt ) {
-			return;
-		}
+		// Every "describe this picture" field, not only the first: a venue
+		// carries up to four photos and each has its own words.
+		foreach ( $fields as $alt ) {
+			if ( null === $alt->suggested_from ) {
+				continue;
+			}
 
-		$attachment_id = (int) get_post_meta( $post_id, $image->meta_key(), true );
-		$text          = trim( (string) get_post_meta( $post_id, $alt->meta_key(), true ) );
+			$image = FieldRegistry::find( $post_type, $alt->suggested_from );
 
-		if ( $attachment_id > 0 && '' !== $text && 'attachment' === get_post_type( $attachment_id ) ) {
-			update_post_meta( $attachment_id, '_wp_attachment_image_alt', $text );
+			if ( null === $image || Field::IMAGE !== $image->type ) {
+				continue;
+			}
+
+			$attachment_id = (int) get_post_meta( $post_id, $image->meta_key(), true );
+			$text          = trim( (string) get_post_meta( $post_id, $alt->meta_key(), true ) );
+
+			if ( $attachment_id > 0 && '' !== $text && 'attachment' === get_post_type( $attachment_id ) ) {
+				update_post_meta( $attachment_id, '_wp_attachment_image_alt', $text );
+			}
 		}
 	}
 

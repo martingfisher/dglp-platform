@@ -45,6 +45,13 @@ final class Meta {
 	/** Wall-clock datetime of the next occurrence that has not finished; a one-off's start. Mirrored into the index. */
 	public const ITEM_NEXT_AT = 'dgl_next_at';
 
+	/** On a space: the venue it belongs to. Set when the space is started, mirrored into the index as parent_id. */
+	public const SPACE_VENUE = 'dgl_venue';
+
+	/** On a venue: where its postcode is, written once by the geocoder. Strings, decimal degrees. */
+	public const VENUE_LAT = 'dgl_lat';
+	public const VENUE_LNG = 'dgl_lng';
+
 	/** One row per email domain an organisation uses. Lower-case, exact. */
 	public const ORG_DOMAIN = 'dgl_org_domain';
 

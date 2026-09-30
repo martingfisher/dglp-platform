@@ -21,9 +21,13 @@ foreach ( PostTypes::submittable() as $type ) {
 	$keys = array_map( static fn( Field $f ): string => $f->key, $fields );
 	Harness::assert_same( count( $keys ), count( array_unique( $keys ) ), $type . ' has no duplicate field keys' );
 
-	foreach ( [ 'title', 'summary', 'body', 'contact_email' ] as $shared ) {
+	foreach ( [ 'title', 'summary', 'body' ] as $shared ) {
 		Harness::assert_true( in_array( $shared, $keys, true ), $type . ' includes the shared field ' . $shared );
 	}
+
+	// The contact step is shared by every type that has one; a space takes its venue's.
+	$has_contact = PostTypes::SPACE !== $type;
+	Harness::assert_same( $has_contact, in_array( 'contact_email', $keys, true ), $type . ( $has_contact ? ' includes' : ' leaves out' ) . ' the shared field contact_email' );
 
 	foreach ( $fields as $field ) {
 		Harness::assert_true( in_array( $field->type, Field::types(), true ), $type . '.' . $field->key . ' has a known field type' );

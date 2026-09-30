@@ -96,6 +96,7 @@ final class Plugin {
 		Guard::init();
 		Revisions::init();
 		Mailer::init();
+		\DGL\Spaces\Cascade::init();
 		Invites::init();
 		Privacy::init();
 

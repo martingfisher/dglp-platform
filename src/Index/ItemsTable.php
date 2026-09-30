@@ -60,13 +60,15 @@ final class ItemsTable {
 	updated_at datetime NOT NULL default '1970-01-01 00:00:00',
 	expires_at datetime default NULL,
 	next_at datetime default NULL,
+	parent_id bigint(20) unsigned NOT NULL default 0,
 	PRIMARY KEY  (post_id),
 	KEY org_status (org_id,status,updated_at),
 	KEY queue (status,submitted_at),
 	KEY digest (post_type,status,approved_at),
 	KEY expiry (expires_at,status),
 	KEY author (author_id,updated_at),
-	KEY next_up (post_type,status,next_at)
+	KEY next_up (post_type,status,next_at),
+	KEY parent (parent_id,status)
 ) {$collate};";
 	}
 
@@ -96,7 +98,8 @@ final class ItemsTable {
 	 * @param array{
 	 *     post_id:int, post_type:string, org_id:int, author_id:int, status:string,
 	 *     trust_level?:int, has_pending_revision?:bool,
-	 *     submitted_at?:?string, approved_at?:?string, updated_at?:string, expires_at?:?string
+	 *     submitted_at?:?string, approved_at?:?string, updated_at?:string, expires_at?:?string,
+	 *     next_at?:?string, parent_id?:int
 	 * } $row Row values.
 	 */
 	public static function upsert( array $row ): bool {
@@ -115,6 +118,8 @@ final class ItemsTable {
 			'updated_at'           => $row['updated_at'] ?? current_time( 'mysql', true ),
 			'expires_at'           => $row['expires_at'] ?? null,
 			'next_at'              => $row['next_at'] ?? null,
+			// A space's venue. Zero for everything else.
+			'parent_id'            => (int) ( $row['parent_id'] ?? 0 ),
 		];
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -181,6 +186,63 @@ final class ItemsTable {
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		return array_map( 'intval', (array) $wpdb->get_col( $wpdb->prepare( $sql, $params ) ) );
+	}
+
+	/**
+	 * The items under one parent: a venue's spaces. Newest activity first,
+	 * so the venue screen and the public page read one indexed query.
+	 *
+	 * Uses the `parent` index.
+	 *
+	 * @param string[]|null $statuses Restrict to these statuses, or null for all.
+	 * @return int[] Post IDs.
+	 */
+	public static function children( int $parent_id, ?array $statuses = null, int $limit = 100 ): array {
+		global $wpdb;
+
+		$sql    = 'SELECT post_id FROM ' . self::name() . ' WHERE parent_id = %d' . self::content_only();
+		$params = [ $parent_id ];
+
+		if ( ! empty( $statuses ) ) {
+			$sql   .= ' AND status IN (' . implode( ',', array_fill( 0, count( $statuses ), '%s' ) ) . ')';
+			$params = array_merge( $params, $statuses );
+		}
+
+		$sql     .= ' ORDER BY updated_at DESC LIMIT %d';
+		$params[] = $limit;
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		return array_map( 'intval', (array) $wpdb->get_col( $wpdb->prepare( $sql, $params ) ) );
+	}
+
+	/**
+	 * How many children each of several parents has in one status. Parents
+	 * with none are present with a zero, so callers can read blindly.
+	 *
+	 * @param int[] $parent_ids
+	 * @return array<int, int> parent id => count.
+	 */
+	public static function child_counts( array $parent_ids, string $status ): array {
+		global $wpdb;
+
+		$parent_ids = array_values( array_filter( array_map( 'intval', $parent_ids ) ) );
+		$counts     = array_fill_keys( $parent_ids, 0 );
+
+		if ( [] === $parent_ids ) {
+			return $counts;
+		}
+
+		$sql    = 'SELECT parent_id, COUNT(*) AS total FROM ' . self::name()
+			. ' WHERE status = %s AND parent_id IN (' . implode( ',', array_fill( 0, count( $parent_ids ), '%d' ) ) . ')'
+			. self::content_only() . ' GROUP BY parent_id';
+		$params = array_merge( [ $status ], $parent_ids );
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		foreach ( (array) $wpdb->get_results( $wpdb->prepare( $sql, $params ), ARRAY_A ) as $row ) {
+			$counts[ (int) $row['parent_id'] ] = (int) $row['total'];
+		}
+
+		return $counts;
 	}
 
 	/**

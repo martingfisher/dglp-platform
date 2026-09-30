@@ -89,7 +89,7 @@ $ready = empty( $all_errors ) && ( ! $is_edit || ! empty( $changes ) );
 		<?php endif; ?>
 
 		<div class="dgl-review">
-			<?php foreach ( FieldRegistry::steps() as $number => $step_label ) : ?>
+			<?php foreach ( FieldRegistry::steps_for( $post_type ) as $number => $step_label ) : ?>
 				<?php
 				$step_fields = FieldRegistry::for_step( $post_type, $number );
 

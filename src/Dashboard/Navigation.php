@@ -51,7 +51,8 @@ final class Navigation {
 		];
 
 		if ( $has_own_work ) {
-			foreach ( PostTypes::enabled() as $post_type => $def ) {
+			// Spaces are reached through their venue, so the menu stops at venues.
+			foreach ( PostTypes::menu() as $post_type => $def ) {
 				$items[] = [
 					'label'   => $def['plural'],
 					'url'     => Router::url( $def['slug'] ),

@@ -56,6 +56,18 @@ $check_word = static fn( string $status ): string => match ( $status ) {
 		<h1 class="dgl-page-head__title">
 			<?php echo esc_html( $post->post_title !== '' ? $post->post_title : __( 'Untitled', 'dgl-platform' ) ); ?>
 		</h1>
+		<?php if ( ( $data['venue'] ?? null ) instanceof WP_Post ) : ?>
+			<p class="dgl-page-head__lede">
+				<?php
+				printf(
+					/* translators: 1: a link to the venue, 2: its status. */
+					esc_html__( 'A space at %1$s (%2$s).', 'dgl-platform' ),
+					'<a href="' . esc_url( Router::url( 'review', (string) $data['venue']->ID ) ) . '">' . esc_html( $data['venue']->post_title ) . '</a>',
+					esc_html( strtolower( \DGL\Statuses::label( (string) $data['venue']->post_status ) ) )
+				);
+				?>
+			</p>
+		<?php endif; ?>
 		<?php
 		$submitted_on = View::date( get_post_meta( $post->ID, \DGL\Meta::ITEM_SUBMITTED_AT, true ), true );
 		$who          = $data['submitter'] ? $data['submitter']->display_name : __( 'someone', 'dgl-platform' );
@@ -111,9 +123,9 @@ $check_word = static fn( string $status ): string => match ( $status ) {
 			<strong><?php esc_html_e( 'This is an edit to something already on the site.', 'dgl-platform' ); ?></strong>
 			<?php esc_html_e( 'The published version is unchanged and still live. Approving this replaces it. Refusing it leaves the site exactly as it is.', 'dgl-platform' ); ?>
 		</p>
-		<?php if ( $parent instanceof WP_Post ) : ?>
+		<?php if ( $parent instanceof WP_Post && '' !== (string) ( $data['public_url'] ?? '' ) ) : ?>
 			<p class="dgl-alert__actions">
-				<a class="dgl-button dgl-button--small dgl-button--quiet" href="<?php echo esc_url( (string) get_permalink( $parent ) ); ?>" rel="noopener">
+				<a class="dgl-button dgl-button--small dgl-button--quiet" href="<?php echo esc_url( (string) $data['public_url'] ); ?>" rel="noopener">
 					<?php esc_html_e( 'See the published version', 'dgl-platform' ); ?>
 				</a>
 			</p>

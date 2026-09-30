@@ -500,8 +500,17 @@ final class Org {
 			return new \WP_Error( 'dgl_same_org', __( 'It already belongs to that organisation.', 'dgl-platform' ) );
 		}
 
+		// A space goes where its venue goes, never on its own.
+		if ( PostTypes::SPACE === (string) $post->post_type ) {
+			return new \WP_Error( 'dgl_move_venue', __( 'A space stays with its venue. Move the venue instead and its spaces go with it.', 'dgl-platform' ) );
+		}
+
 		update_post_meta( $post_id, Meta::ITEM_ORG, $org_id );
 		Sync::sync( $post_id );
+
+		if ( PostTypes::VENUE === (string) $post->post_type ) {
+			\DGL\Spaces\Cascade::reassign_children( $post_id, $org_id, $actor_id );
+		}
 
 		Log::record(
 			'reassigned',

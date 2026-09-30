@@ -51,12 +51,49 @@ final class Checks {
 	 * @return array<int, array{key:string, label:string, status:string, detail:string}>
 	 */
 	public static function run( int $post_id, string $post_type ): array {
-		return [
+		$rows = [
 			self::required_fields( $post_id, $post_type ),
 			self::image( $post_id, $post_type ),
 			self::duplicates( $post_id, $post_type ),
-			// Last, so the row sits right above the button that runs it.
-			self::links( $post_id, $post_type ),
+		];
+
+		// A space is only ever seen on its venue's page, so the venue's state matters here.
+		if ( \DGL\PostTypes::SPACE === $post_type ) {
+			$rows[] = self::venue( $post_id );
+		}
+
+		// Last, so the row sits right above the button that runs it.
+		$rows[] = self::links( $post_id, $post_type );
+
+		return $rows;
+	}
+
+	/**
+	 * The venue a space belongs to is on the site, or will be.
+	 */
+	private static function venue( int $post_id ): array {
+		$venue = \DGL\Spaces\Link::venue_post( $post_id );
+
+		if ( null === $venue ) {
+			return [
+				'key'    => 'venue',
+				'label'  => __( 'Venue', 'dgl-platform' ),
+				'status' => self::FAIL,
+				'detail' => __( 'This space has no venue, so it can never be shown. It should not have been possible to submit.', 'dgl-platform' ),
+			];
+		}
+
+		$live = Statuses::LIVE === $venue->post_status;
+
+		return [
+			'key'    => 'venue',
+			'label'  => __( 'Venue', 'dgl-platform' ),
+			'status' => $live ? self::PASS : self::WARN,
+			'detail' => $live
+				/* translators: %s: the venue's name. */
+				? sprintf( __( 'At %s, which is on the site.', 'dgl-platform' ), (string) $venue->post_title )
+				/* translators: 1: the venue's name, 2: its status. */
+				: sprintf( __( 'At %1$s, which is %2$s. The space is not shown until the venue is on the site; approving it now is fine.', 'dgl-platform' ), (string) $venue->post_title, strtolower( Statuses::label( (string) $venue->post_status ) ) ),
 		];
 	}
 

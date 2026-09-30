@@ -1177,7 +1177,10 @@ final class Controller {
 				'can_take_down' => Access::can( $user->user_id, Policy::TAKE_DOWN_ITEM, $post_id ),
 				// A refusal or an archive can be sent back through the queue.
 				'can_reopen'    => Access::can( $user->user_id, Policy::REOPEN_ITEM, $post_id ),
-				'can_pin'       => ! $is_edit && Access::can( $user->user_id, Policy::PIN_ITEM, $post_id ),
+				// Featuring is for the listings; a venue is found, not featured.
+				'can_pin'       => ! $is_edit && PostTypes::KIND_LISTING === PostTypes::kind_of( $schema_type ) && Access::can( $user->user_id, Policy::PIN_ITEM, $post_id ),
+				'venue'         => PostTypes::SPACE === $schema_type ? \DGL\Spaces\Link::venue_post( $post_id ) : null,
+				'public_url'    => $is_edit && $parent instanceof \WP_Post ? \DGL\Spaces\Link::public_url( $parent ) : '',
 				// The team can put an item under the organisation it belongs to.
 				'can_reassign'  => Access::can( $user->user_id, Policy::REASSIGN_ITEM, $is_edit ? (int) $parent->ID : $post_id ),
 				'orgs'          => Access::can( $user->user_id, Policy::REASSIGN_ITEM, $is_edit ? (int) $parent->ID : $post_id ) ? \DGL\Org\Org::approved() : [],
@@ -1212,7 +1215,30 @@ final class Controller {
 			return;
 		}
 
-		$post_id = Wizard::create( $post_type, $user->user_id );
+		/*
+		 * A space is started from its venue. Without one named, the member
+		 * is shown their venues to pick from; with none to pick, they are
+		 * pointed at adding a venue first.
+		 */
+		$venue_id = isset( $_GET['venue'] ) ? (int) $_GET['venue'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- a choice, not a write.
+
+		if ( PostTypes::SPACE === $post_type && $venue_id <= 0 ) {
+			$venues = null !== $user->org_id ? \DGL\Spaces\Link::venues_for_org( $user->org_id ) : [];
+
+			self::screen(
+				'pick-venue',
+				[
+					'user'      => $user,
+					'venues'    => $venues,
+					'venue_url' => Router::url( 'new', PostTypes::definitions()[ PostTypes::VENUE ]['slug'] ),
+				],
+				__( 'Which venue?', 'dgl-platform' ),
+				$user
+			);
+			return;
+		}
+
+		$post_id = Wizard::create( $post_type, $user->user_id, $venue_id );
 
 		if ( is_wp_error( $post_id ) ) {
 			self::screen( 'error', [ 'user' => $user, 'message' => $post_id->get_error_message() ], __( 'Cannot start', 'dgl-platform' ), $user );
@@ -1280,6 +1306,21 @@ final class Controller {
 			return;
 		}
 
+		/*
+		 * The steps this type has. A space skips the contact step, so its
+		 * next and back land on the steps it actually has, and a step it
+		 * does not have opens on the first one instead.
+		 */
+		$steps     = FieldRegistry::steps_for( $schema_type );
+		$step_keys = array_keys( $steps );
+
+		if ( ! in_array( $step, $step_keys, true ) ) {
+			wp_safe_redirect( Router::url( 'edit', (string) $post_id, (string) $step_keys[0] ) );
+			exit;
+		}
+
+		$position = (int) array_search( $step, $step_keys, true );
+
 		if ( ! Access::can( $user->user_id, Policy::EDIT_ITEM, $post_id ) ) {
 			self::screen(
 				'error',
@@ -1333,7 +1374,9 @@ final class Controller {
 					exit;
 				}
 
-				$next = 'back' === $intent ? max( 1, $step - 1 ) : min( FieldRegistry::STEP_REVIEW, $step + 1 );
+				$next = 'back' === $intent
+					? $step_keys[ max( 0, $position - 1 ) ]
+					: $step_keys[ min( count( $step_keys ) - 1, $position + 1 ) ];
 				wp_safe_redirect( Router::url( 'edit', (string) $post_id, (string) $next ) );
 				exit;
 			}
@@ -1380,6 +1423,8 @@ final class Controller {
 				'plural'    => $def['plural'],
 				'slug'      => $def['slug'],
 				'step'      => $step,
+				'steps'     => $steps,
+				'position'  => $position + 1,
 				'fields'    => FieldRegistry::for_step( $schema_type, $step ),
 				'values'    => $values,
 				'errors'    => $errors,
@@ -1387,8 +1432,10 @@ final class Controller {
 				'copied'    => isset( $_GET['copied'] ), // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 				'is_edit'   => $is_edit,
 				'parent'    => $parent,
+				// A space says which venue it is at, above the form, on every step.
+				'venue'     => PostTypes::SPACE === $schema_type ? \DGL\Spaces\Link::venue_post( $post_id ) : null,
 				'changes'   => $is_edit && FieldRegistry::STEP_REVIEW === $step ? Revisions::changed_fields( $post_id ) : [],
-				'topics'    => get_terms( [ 'taxonomy' => Taxonomies::TOPIC, 'hide_empty' => false ] ),
+				'topics'    => FieldRegistry::has_topics( $schema_type ) ? get_terms( [ 'taxonomy' => Taxonomies::TOPIC, 'hide_empty' => false ] ) : [],
 				'chosen'    => wp_get_object_terms( $post_id, Taxonomies::TOPIC, [ 'fields' => 'ids' ] ),
 				'chosen_names' => wp_get_object_terms( $post_id, Taxonomies::TOPIC, [ 'fields' => 'names' ] ),
 				'all_errors' => FieldRegistry::STEP_REVIEW === $step
@@ -1656,6 +1703,19 @@ final class Controller {
 		$def      = PostTypes::definitions()[ $post->post_type ];
 		$revision = Revisions::open_for( $post_id );
 
+		// A venue lists its spaces; a space names its venue.
+		$children = [];
+
+		if ( PostTypes::VENUE === $post->post_type ) {
+			foreach ( \DGL\Spaces\Link::spaces_of( $post_id, null ) as $child_id ) {
+				$row = self::row( $child_id );
+
+				if ( [] !== $row ) {
+					$children[] = $row;
+				}
+			}
+		}
+
 		self::screen(
 			'detail',
 			[
@@ -1663,6 +1723,13 @@ final class Controller {
 				'post'       => $post,
 				'singular'   => $def['singular'],
 				'slug'       => $def['slug'],
+				'kind'       => PostTypes::kind_of( (string) $post->post_type ),
+				'children'   => $children,
+				'venue'      => PostTypes::SPACE === $post->post_type ? \DGL\Spaces\Link::venue_post( $post_id ) : null,
+				'add_space_url' => PostTypes::VENUE === $post->post_type && null !== $user->org_id && Access::can( $user->user_id, Policy::CREATE_ITEM ) && \DGL\Spaces\Link::can_add_space( $post_id, $user->org_id )
+					? \DGL\Spaces\Link::add_space_url( $post_id )
+					: '',
+				'public_url' => \DGL\Spaces\Link::public_url( $post ),
 				'fields'     => FieldRegistry::for_type( (string) $post->post_type ),
 				'values'     => Wizard::values( $post_id, (string) $post->post_type ),
 				// One timeline, with any edits folded in. Two separate histories
@@ -2086,11 +2153,12 @@ final class Controller {
 			PostTypes::TRAINING     => __( 'Provider, cost, dates, who it is for.', 'dgl-platform' ),
 			PostTypes::GRANT        => __( 'Amount, deadline, eligibility.', 'dgl-platform' ),
 			PostTypes::VOLUNTEERING => __( 'Role, commitment, location, contact.', 'dgl-platform' ),
+			PostTypes::VENUE        => __( 'A building you hire out: photos, access, then each room as a space.', 'dgl-platform' ),
 		];
 
 		$tiles = [];
 
-		foreach ( PostTypes::enabled() as $post_type => $def ) {
+		foreach ( PostTypes::menu() as $post_type => $def ) {
 			$tiles[] = [
 				'label' => $def['plural'],
 				'blurb' => $blurbs[ $post_type ] ?? '',

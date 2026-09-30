@@ -1378,7 +1378,7 @@ $group( 'Reordering the labels moved no data' );
  */
 $defs = PostTypes::definitions();
 
-$ok( [ 'dgl_news', 'dgl_event', 'dgl_training', 'dgl_grant', 'dgl_volunteering' ] === array_keys( $defs ), 'news, events, training lead, and the keys are unchanged' );
+$ok( [ 'dgl_news', 'dgl_event', 'dgl_training', 'dgl_venue', 'dgl_space', 'dgl_grant', 'dgl_volunteering' ] === array_keys( $defs ), 'news, events, training lead, then venues and spaces, and the keys are unchanged' );
 $ok( PostTypes::submittable() === array_keys( $defs ), 'the submittable list follows the same order rather than restating it' );
 $ok( 'grants' === $defs[ PostTypes::GRANT ]['slug'], 'the grants slug is untouched, so no published URL breaks' );
 $ok( 'events' === $defs[ PostTypes::EVENT ]['slug'], 'and so is events' );
@@ -1539,7 +1539,7 @@ $ok( '' !== $link, 'an email went out with a link in it' );
  * invitee is not promised something the site will not let them do.
  */
 $invite_body = implode( ' ', $sent_bodies );
-$ok( str_contains( $invite_body, 'news, events and training' ), 'the email names exactly the enabled types, in their display order' );
+$ok( str_contains( $invite_body, 'news, events, training and spaces to hire' ), 'the email names exactly the types on the menu, in their display order' );
 $ok( ! str_contains( strtolower( $invite_body ), 'volunteering' ), 'and not volunteering' );
 $ok( ! str_contains( strtolower( $invite_body ), 'grant' ), 'nor grants' );
 $ok( str_contains( (string) end( $sent_to ), 'newcomer@example.test' ) || '' !== (string) end( $sent_to ), 'addressed to somebody' );
@@ -2011,7 +2011,7 @@ $group( 'Digests: approval subscribes, an unsubscribe sticks, backfill fills the
 $wpdb->query( 'DELETE FROM ' . DigestStore::name() . ' WHERE user_id IN (' . (int) $alice . ',' . (int) $aaron . ',' . (int) $bella . ')' );
 $ok( DigestStore::subscribe_default( $alice, 'approval' ), 'an approved member with no row is subscribed' );
 $alice_sub = DigestStore::for_user( $alice );
-$ok( null !== $alice_sub && $alice_sub->has_consent() && Frequency::WEEKLY === $alice_sub->frequency && [] === array_diff( PostTypes::enabled_keys(), $alice_sub->types ) && ! $alice_sub->include_own_org, 'to the weekly round-up of every type, own organisation left out' );
+$ok( null !== $alice_sub && $alice_sub->has_consent() && Frequency::WEEKLY === $alice_sub->frequency && [] === array_diff( PostTypes::feed_keys(), $alice_sub->types ) && ! $alice_sub->include_own_org, 'to the weekly round-up of every feed type, own organisation left out' );
 $alice_row = $wpdb->get_row( $wpdb->prepare( 'SELECT consent_source FROM ' . DigestStore::name() . ' WHERE user_id = %d', $alice ), ARRAY_A );
 $ok( 'approval' === ( $alice_row['consent_source'] ?? '' ), 'and the consent record says approval' );
 $ok( ! DigestStore::subscribe_default( $alice, 'approval' ), 'a second approval changes nothing' );
@@ -3621,7 +3621,10 @@ $ok( in_array( $fl_soon, $fl_week, true ) && ! in_array( $fl_far, $fl_week, true
 $fl_topic = $fl_run( [ 'topic' => $fl_slug ] );
 $ok( [ $fl_soon ] === array_values( array_intersect( $fl_topic, [ $fl_soon, $fl_far, $fl_none ] ) ), 'the topic keeps only the tagged one' );
 $fl_both = $fl_run( [ 'topic' => $fl_slug, 'when' => 'next-month' ] );
-$ok( ! in_array( $fl_soon, $fl_both, true ) && ! in_array( $fl_far, $fl_both, true ), 'topic and window together: nothing of ours is tagged and next month' );
+// Two days from now is next month at a month's end, so the expectation follows the calendar.
+$fl_nm      = \DGL\Frontend\Filters::window( 'next-month', $fl_today );
+$fl_soon_nm = $fl_today->modify( '+2 days' ) >= $fl_nm['from'] && $fl_today->modify( '+2 days' ) <= $fl_nm['to'];
+$ok( $fl_soon_nm === in_array( $fl_soon, $fl_both, true ) && ! in_array( $fl_far, $fl_both, true ), 'topic and window together: only the tagged one, and only when it falls next month' );
 $fl_series = $make_item( $org_a, $alice, Statuses::LIVE );
 // Starts tomorrow and repeats on tomorrow's weekday, whatever day the suite
 // runs. "next tuesday" was here once, and on a Tuesday that is seven days
@@ -3631,7 +3634,8 @@ update_post_meta( $fl_series, 'dgl_start_datetime', $fl_tue->format( 'Y-m-d' ) .
 update_post_meta( $fl_series, 'dgl_repeat', [ 'freq' => 'weekly', 'weekdays' => [ (int) $fl_tue->format( 'N' ) ], 'until' => $fl_today->modify( '+3 months' )->format( 'Y-m-d' ) ] );
 \DGL\Events\Series::stamp( $fl_series, PostTypes::EVENT );
 $ok( in_array( $fl_series, $fl_run( [ 'when' => 'week' ] ), true ), 'a weekly series with a date in the window is in it' );
-$fl_ordered = $fl_run( [ 'when' => 'month' ] );
+// The week window holds both whatever the date; a month window is one day long on the last day of a month.
+$fl_ordered = $fl_run( [ 'when' => 'week' ] );
 $fl_pos_a   = array_search( $fl_soon, $fl_ordered, true );
 $fl_pos_b   = array_search( $fl_series, $fl_ordered, true );
 $fl_next_a  = (string) get_post_meta( $fl_soon, Meta::ITEM_NEXT_AT, true );
@@ -4524,6 +4528,101 @@ $ok( is_array( $home_seo ) && 'home' === $home_seo['kind'] && 'noindex,follow' =
 $ok( str_starts_with( \DGL\Frontend\Frontend::directory_title( 'x' ), 'Home page sample | ' ), 'and the title says what it is' );
 set_query_var( \DGL\Frontend\Home::QUERY_VAR, '' );
 \DGL\Frontend\Seo::reset();
+
+/* ------------------------------------------------------ spaces to hire */
+
+$group( 'Spaces to hire: a venue and its spaces through the wizard, the index and the cascade' );
+
+$sp_org   = $make_org( 'Spaces Org' );
+$sp_owner = $make_member( 'dgl_spaces_owner', $sp_org, 'owner' );
+$sp_other = $make_org( 'Other Spaces Org' );
+$sp_stranger = $make_member( 'dgl_spaces_stranger', $sp_other, 'owner' );
+
+$ok( in_array( PostTypes::VENUE, PostTypes::enabled_keys(), true ) && in_array( PostTypes::SPACE, PostTypes::enabled_keys(), true ), 'venues and spaces are enabled types' );
+$ok( ! in_array( PostTypes::VENUE, PostTypes::feed_keys(), true ) && ! in_array( PostTypes::SPACE, PostTypes::feed_keys(), true ) && [ PostTypes::NEWS, PostTypes::EVENT, PostTypes::TRAINING ] === PostTypes::feed_keys(), 'neither is a feed type: digests and search stay news, events, training' );
+$ok( isset( PostTypes::menu()[ PostTypes::VENUE ] ) && ! isset( PostTypes::menu()[ PostTypes::SPACE ] ), 'venues are on the menu, spaces are reached through their venue' );
+$sp_type_obj = get_post_type_object( PostTypes::SPACE );
+$sp_venue_obj = get_post_type_object( PostTypes::VENUE );
+$ok( $sp_type_obj instanceof WP_Post_Type && false === $sp_type_obj->publicly_queryable && false === $sp_type_obj->has_archive && false === $sp_type_obj->rewrite, 'a space has no public page, archive or address of its own' );
+$ok( $sp_venue_obj instanceof WP_Post_Type && 'spaces' === $sp_venue_obj->has_archive && true === $sp_venue_obj->publicly_queryable, 'a venue has /spaces/ and a page' );
+$ok( [ 1, 2, 3, 4 ] === array_keys( \DGL\Schema\FieldRegistry::steps_for( PostTypes::VENUE ) ) && [ 1, 2, 4 ] === array_keys( \DGL\Schema\FieldRegistry::steps_for( PostTypes::SPACE ) ), 'a venue has four wizard steps, a space three' );
+$ok( null === \DGL\Schema\FieldRegistry::find( PostTypes::SPACE, 'contact_email' ) && null !== \DGL\Schema\FieldRegistry::find( PostTypes::VENUE, 'contact_email' ), 'a space has no contact fields, a venue does' );
+$ok( ! \DGL\Schema\FieldRegistry::has_topics( PostTypes::VENUE ) && ! \DGL\Schema\FieldRegistry::has_topics( PostTypes::SPACE ) && \DGL\Schema\FieldRegistry::has_topics( PostTypes::EVENT ), 'neither offers topics; events still do' );
+$ok( null === \DGL\Schema\FieldRegistry::expiry_for( PostTypes::VENUE, [ 'postcode' => 'LS12 3QP' ] ), 'a venue never expires on its own' );
+
+$sp_no_venue = \DGL\Dashboard\Wizard::create( PostTypes::SPACE, $sp_owner );
+$ok( is_wp_error( $sp_no_venue ) && 'dgl_no_venue' === $sp_no_venue->get_error_code(), 'a space cannot be started without a venue' );
+
+$sp_venue = \DGL\Dashboard\Wizard::create( PostTypes::VENUE, $sp_owner );
+$ok( is_int( $sp_venue ) && $sp_venue > 0 && PostTypes::VENUE === get_post_type( $sp_venue ) && $sp_org === \DGL\Org\Org::for_item( $sp_venue ), 'a venue draft is started for the organisation' );
+update_post_meta( $sp_venue, DGL_FIXTURE_FLAG, '1' );
+$sp_step1 = \DGL\Dashboard\Wizard::save_step( $sp_venue, PostTypes::VENUE, 1, [ 'title' => 'Stanhope Road Community Centre', 'summary' => 'A 1930s former school on the edge of Armley Park.', 'body' => '<p>Big windows and a sprung floor.</p>' ] );
+$sp_step2 = \DGL\Dashboard\Wizard::save_step( $sp_venue, PostTypes::VENUE, 2, [ 'venue_type' => 'community_centre', 'address' => '14 Stanhope Road, Armley', 'postcode' => 'ls123qp', 'ward' => 'armley', 'access' => [ 'step_free', 'hearing_loop' ], 'facilities' => [ 'wifi' ], 'reply_time' => 'two_days' ] );
+$sp_step3 = \DGL\Dashboard\Wizard::save_step( $sp_venue, PostTypes::VENUE, 3, [ 'contact_name' => 'Centre manager', 'contact_email' => 'centre@example.test', 'contact_phone' => '0113 000 0000', 'website' => '' ] );
+$ok( [] === $sp_step1 && [] === $sp_step2 && [] === $sp_step3, 'the three venue steps save without errors (' . implode( '; ', array_merge( $sp_step1, $sp_step2, $sp_step3 ) ) . ')' );
+$ok( 'LS12 3QP' === (string) get_post_meta( $sp_venue, 'dgl_postcode', true ) && [ 'step_free', 'hearing_loop' ] === (array) get_post_meta( $sp_venue, 'dgl_access', true ), 'the postcode is normalised and the access choices stored' );
+$ok( [] === \DGL\Dashboard\Wizard::validate_all( $sp_venue, PostTypes::VENUE ), 'a venue with a name, description, type, address, postcode, ward and contact is complete' );
+
+$sp_space_wrong = \DGL\Dashboard\Wizard::create( PostTypes::SPACE, $sp_stranger, $sp_venue );
+$ok( is_wp_error( $sp_space_wrong ) && 'dgl_no_venue' === $sp_space_wrong->get_error_code(), 'another organisation cannot add a space to it' );
+$sp_space = \DGL\Dashboard\Wizard::create( PostTypes::SPACE, $sp_owner, $sp_venue );
+$ok( is_int( $sp_space ) && $sp_space > 0 && $sp_venue === (int) get_post_meta( $sp_space, Meta::SPACE_VENUE, true ), 'the owner starts a space under it and the venue is set' );
+update_post_meta( $sp_space, DGL_FIXTURE_FLAG, '1' );
+$ok( $sp_venue === \DGL\Spaces\Link::venue_of( $sp_space ) && in_array( $sp_space, ItemsTable::children( $sp_venue, null ), true ), 'the index carries the link: the space is among the venue\'s children' );
+$ok( '' === (string) get_post_meta( $sp_space, 'dgl_contact_email', true ), 'nothing was prefilled into contact fields the space does not have' );
+$sp_s1 = \DGL\Dashboard\Wizard::save_step( $sp_space, PostTypes::SPACE, 1, [ 'title' => 'Main hall', 'summary' => 'Sprung floor, stage, seats 150.', 'body' => '<p>The big room.</p>' ] );
+$sp_s2_bad = \DGL\Dashboard\Wizard::save_step( $sp_space, PostTypes::SPACE, 2, [ 'space_type' => 'hall', 'cap_theatre' => '150', 'rate' => '£35' ] );
+$ok( isset( $sp_s2_bad['rate_unit'] ) && str_contains( $sp_s2_bad['rate_unit'], 'Rate in pounds' ), 'a rate without a unit is refused, naming the rate field (' . ( $sp_s2_bad['rate_unit'] ?? '' ) . ')' );
+$sp_s2 = \DGL\Dashboard\Wizard::save_step( $sp_space, PostTypes::SPACE, 2, [ 'space_type' => 'hall', 'cap_theatre' => '150', 'cap_cabaret' => '80', 'cap_standing' => '180', 'size_m2' => '154', 'space_facilities' => [ 'stage', 'sprung_floor' ], 'rate' => '£35', 'rate_unit' => 'hour' ] );
+$ok( [] === $sp_s1 && [] === $sp_s2 && 35.0 === (float) get_post_meta( $sp_space, 'dgl_rate', true ) && 150 === (int) get_post_meta( $sp_space, 'dgl_cap_theatre', true ), 'the space saves with its capacities and rate' );
+$ok( [] === \DGL\Dashboard\Wizard::validate_all( $sp_space, PostTypes::SPACE ), 'and is complete without a contact step' );
+
+$sp_r = Transition::apply( $sp_space, StateMachine::SUBMIT, $sp_owner );
+$ok( true === $sp_r && Statuses::PENDING === get_post_status( $sp_space ), 'the space can be submitted while the venue is still a draft' );
+$sp_rows = array_column( Checks::run( $sp_space, PostTypes::SPACE ), 'status', 'key' );
+$ok( Checks::WARN === ( $sp_rows['venue'] ?? '' ), 'the review checks warn that the venue is not on the site yet' );
+$sp_r = Transition::apply( $sp_venue, StateMachine::SUBMIT, $sp_owner );
+$ok( true === $sp_r && Statuses::PENDING === get_post_status( $sp_venue ), 'the venue is submitted' );
+$ok( true === Transition::apply( $sp_venue, StateMachine::APPROVE, $mod ) && Statuses::LIVE === get_post_status( $sp_venue ), 'and approved' );
+$ok( '' === (string) get_post_meta( $sp_venue, Meta::ITEM_EXPIRES_AT, true ), 'with no expiry stamped' );
+$ok( Checks::PASS === ( array_column( Checks::run( $sp_space, PostTypes::SPACE ), 'status', 'key' )['venue'] ?? '' ), 'the space\'s venue check now passes' );
+$ok( true === Transition::apply( $sp_space, StateMachine::APPROVE, $mod ) && Statuses::LIVE === get_post_status( $sp_space ), 'the space is approved' );
+$ok( [ $sp_space ] === \DGL\Spaces\Link::spaces_of( $sp_venue ), 'the venue has one live space' );
+$ok( str_ends_with( \DGL\Spaces\Link::public_url( get_post( $sp_space ) ), '#space-' . $sp_space ) && str_contains( \DGL\Spaces\Link::public_url( get_post( $sp_space ) ), '/spaces/' ), 'a space\'s public address is a spot on its venue\'s page' );
+$ok( isset( \DGL\Spaces\Link::venues_for_org( $sp_org )[ $sp_venue ] ) && ! isset( \DGL\Spaces\Link::venues_for_org( $sp_other )[ $sp_venue ] ), 'the venue picker offers the venue to its own organisation only' );
+
+// A second space, and a copy of the first, both under the venue.
+$sp_space2 = \DGL\Dashboard\Wizard::create( PostTypes::SPACE, $sp_owner, $sp_venue );
+update_post_meta( $sp_space2, DGL_FIXTURE_FLAG, '1' );
+\DGL\Dashboard\Wizard::save_step( $sp_space2, PostTypes::SPACE, 1, [ 'title' => 'Garden room', 'summary' => 'Opens to the garden.', 'body' => '<p>Small and bright.</p>' ] );
+\DGL\Dashboard\Wizard::save_step( $sp_space2, PostTypes::SPACE, 2, [ 'space_type' => 'meeting_room', 'cap_theatre' => '40' ] );
+Transition::apply( $sp_space2, StateMachine::SUBMIT, $sp_owner );
+$sp_copy = \DGL\Dashboard\Wizard::copy( $sp_space, $sp_owner );
+$ok( is_int( $sp_copy ) && $sp_venue === (int) get_post_meta( $sp_copy, Meta::SPACE_VENUE, true ) && 'hall' === (string) get_post_meta( $sp_copy, 'dgl_space_type', true ), 'a copied space stays at the same venue with its details' );
+update_post_meta( $sp_copy, DGL_FIXTURE_FLAG, '1' );
+$ok( 3 === count( ItemsTable::children( $sp_venue, null ) ) && [ $sp_venue => 1 ] === ItemsTable::child_counts( [ $sp_venue ], Statuses::LIVE ), 'three children in the index, one of them live' );
+
+// Cascades: archive the venue.
+$sent_to = [];
+$ok( true === Transition::apply( $sp_venue, StateMachine::ARCHIVE, $sp_owner ), 'the owner archives the venue' );
+$ok( Statuses::ARCHIVED === get_post_status( $sp_space ) && Statuses::ARCHIVED === get_post_status( $sp_copy ) && Statuses::PENDING === get_post_status( $sp_space2 ), 'the live space and the draft copy went with it; the pending one waits for the team' );
+$sp_cascade_log = array_filter( \DGL\Audit\Log::for_object( 'item', $sp_venue ), static fn( array $row ): bool => 'cascaded' === (string) ( $row['action'] ?? '' ) );
+$ok( 1 === count( $sp_cascade_log ) && str_contains( (string) ( reset( $sp_cascade_log )['note'] ?? '' ), '2 spaces archived' ), 'one audit line on the venue says two spaces went with it' );
+$ok( count( $sent_to ) <= 1, 'at most one email went out for the whole archive (' . count( $sent_to ) . ')' );
+$ok( true === Transition::apply( $sp_venue, StateMachine::RESTORE, $sp_owner ) && Statuses::PENDING === get_post_status( $sp_venue ) && Statuses::PENDING === get_post_status( $sp_space ), 'restoring the venue brings its archived space back for review too' );
+Transition::apply( $sp_venue, StateMachine::APPROVE, $mod );
+Transition::apply( $sp_space, StateMachine::APPROVE, $mod );
+$ok( true === Transition::apply( $sp_venue, StateMachine::TAKE_DOWN, $mod, 'Reported.' ) && Statuses::PENDING === get_post_status( $sp_space ), 'taking the venue down takes its live space down with it' );
+Transition::apply( $sp_venue, StateMachine::APPROVE, $mod );
+
+// Reassigning.
+$sp_move_space = \DGL\Org\Org::reassign( $sp_space, $sp_other, $mod );
+$ok( is_wp_error( $sp_move_space ) && 'dgl_move_venue' === $sp_move_space->get_error_code(), 'a space cannot be moved on its own' );
+$ok( true === \DGL\Org\Org::reassign( $sp_venue, $sp_other, $mod ) && $sp_other === \DGL\Org\Org::for_item( $sp_space ) && $sp_other === \DGL\Org\Org::for_item( $sp_space2 ) && $sp_other === \DGL\Org\Org::for_item( $sp_copy ), 'moving the venue moves every space with it' );
+\DGL\Org\Org::reassign( $sp_venue, $sp_org, $mod );
+
+// Digests and preferences never carry a venue.
+$ok( ! in_array( PostTypes::VENUE, \DGL\PostTypes::feed_keys(), true ), 'venues are outside the digest types' );
 
 /* ----------------------------------------------------------------- report */
 

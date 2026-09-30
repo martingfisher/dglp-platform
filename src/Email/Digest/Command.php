@@ -318,14 +318,14 @@ final class Command {
 		$requested = (string) ( $assoc['types'] ?? 'all' );
 
 		$types = 'all' === $requested
-			? array_values( \DGL\PostTypes::enabled_keys() )
+			? array_values( \DGL\PostTypes::feed_keys() )
 			: array_values( array_filter(
 				array_map( 'trim', explode( ',', $requested ) ),
-				static fn( string $t ): bool => in_array( $t, \DGL\PostTypes::enabled_keys(), true )
+				static fn( string $t ): bool => in_array( $t, \DGL\PostTypes::feed_keys(), true )
 			) );
 
 		if ( [] === $types ) {
-			WP_CLI::error( sprintf( 'None of "%s" is a content type. Known types: %s', $requested, implode( ', ', \DGL\PostTypes::enabled_keys() ) ) );
+			WP_CLI::error( sprintf( 'None of "%s" is a content type. Known types: %s', $requested, implode( ', ', \DGL\PostTypes::feed_keys() ) ) );
 		}
 
 		$frequency = (string) ( $assoc['frequency'] ?? Frequency::WEEKLY );
