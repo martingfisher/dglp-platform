@@ -1303,6 +1303,9 @@ body.dgl-body {
 /* Cards stacked in the main column keep the same breathing room as the side. */
 .dgl-detail > div > .dgl-card + .dgl-card { margin-top: var(--dgl-gap); }
 
+/* A card above the two columns (a venue's spaces) keeps the columns' own gap below it. */
+.dgl-card + .dgl-detail { margin-top: var(--dgl-gap-lg); }
+
 .dgl-card {
 	padding: 20px 22px;
 	border: 1px solid var(--dgl-border);

@@ -1106,3 +1106,6 @@ clean. They are the only DGLP content on staging.
   removed explicitly, and the button no longer carries aria-expanded.
   Martin confirmed on the live site in Chrome that it opens again after
   closing.
+- **0.43.6 deployed** (30 September, production): on a venue's dashboard
+  page the "Spaces at this venue" card sat flush on top of the two columns
+  below it (0px above, 24px between). It keeps the same 24px below.
