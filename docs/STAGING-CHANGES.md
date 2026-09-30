@@ -1063,3 +1063,6 @@ clean. They are the only DGLP content on staging.
   focus. The theme's own search-input rules had outranked the plugin's
   class, so the box was invisible until clicked and then wore a teal double
   ring.
+- **0.42.2 deployed** (30 September, production): the magnifier sits in a
+  Council Navy disc with the icon in white, and the theme's fill on menu
+  svgs is turned off, which had painted the lens as a solid disc.

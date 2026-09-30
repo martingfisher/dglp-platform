@@ -24,11 +24,34 @@ html.dgl-js .dgl-finder-item { display: list-item; }
 	cursor: pointer;
 }
 
-.dgl-finder-trigger:hover { color: var(--dgl-navy); }
-
 .dgl-finder-trigger:focus-visible { outline: 2px solid var(--dgl-focus); outline-offset: 2px; }
 
-.dgl-finder-icon { flex: none; }
+/* The magnifier sits in a Council Navy disc, the one colour that means "press". */
+.dgl-finder-trigger__ring {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: none;
+	width: 38px;
+	height: 38px;
+	color: var(--dgl-white) !important;
+	background: var(--dgl-navy);
+	border-radius: 50%;
+	transition: background var(--dgl-motion, 150ms ease-out);
+}
+
+.dgl-finder-trigger:hover .dgl-finder-trigger__ring { background: var(--dgl-sidebar, var(--dgl-navy)); }
+
+.dgl-finder-icon {
+	flex: none;
+	display: block;
+	width: 18px;
+	height: 18px;
+	fill: none !important;
+	stroke: currentColor !important;
+}
+
+.dgl-finder-icon * { fill: none !important; stroke: currentColor !important; }
 
 /* In the desktop header the icon is enough; the words stay for screen readers. */
 .dgl-finder-trigger__label {
