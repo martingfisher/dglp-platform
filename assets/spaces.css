@@ -420,7 +420,7 @@ body.dgl-mapdialog-open { overflow: hidden; }
 
 .dgl-pub .dgl-enquiry__text { min-height: 104px; padding: 10px 12px; resize: vertical; line-height: 1.5; }
 
-.dgl-enquiry__field--error .dgl-dir__input { border-color: var(--dgl-danger); }
+.dgl-pub .dgl-enquiry__field--error .dgl-dir__input { border-color: var(--dgl-danger) !important; }
 
 .dgl-enquiry__msg { margin: 0; font-size: 0.85em; font-weight: 600; color: var(--dgl-danger); }
 

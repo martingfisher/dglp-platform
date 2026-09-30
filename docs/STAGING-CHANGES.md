@@ -1083,3 +1083,7 @@ clean. They are the only DGLP content on staging.
   and a popup. "Spaces to hire" moved from the Main Menu to the Top Bar
   after Jobs (`wp menu item add-custom top-bar`, main-menu item 9497
   deleted).
+- **0.43.2 deployed** (30 September, production): every public field
+  (directory search, Find a space filters, the enquiry form) keeps a white
+  ground and one navy ring on focus. The theme's teal focus border and
+  glow had shown inside the plugin's ring as a double edge.

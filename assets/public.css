@@ -785,21 +785,30 @@ h2.dgl-listing__heading:only-child,
 	color: var(--dgl-text-muted);
 }
 
+/*
+ * Ground, border and shadow are !important: the theme styles every input
+ * itself (page-coloured ground, a teal border and a teal glow on focus)
+ * and those rules outrank a class, which left a navy ring around a teal
+ * one. One ring: the border and a flush outline both turn Council Navy.
+ */
 .dgl-pub .dgl-dir__input {
 	box-sizing: border-box;
 	width: 100%;
 	min-height: var(--dgl-field-height);
 	padding: 0 12px;
-	border: var(--dgl-field-border) solid var(--dgl-field-outline);
+	border: var(--dgl-field-border) solid var(--dgl-field-outline) !important;
 	border-radius: var(--dgl-radius-field);
-	background: var(--dgl-white);
+	background: var(--dgl-white) !important;
+	box-shadow: none !important;
 	color: var(--dgl-text);
 	font: var(--dgl-weight-body) 15px / var(--dgl-line) var(--dgl-font);
 }
 
-.dgl-pub .dgl-dir__input:focus-visible {
-	outline: 3px solid var(--dgl-focus);
-	outline-offset: 2px;
+.dgl-pub .dgl-dir__input:focus {
+	border-color: var(--dgl-focus) !important;
+	outline: 2px solid var(--dgl-focus) !important;
+	outline-offset: 0 !important;
+	box-shadow: none !important;
 }
 
 .dgl-dir__actions { display: flex; align-items: center; gap: 12px; }
