@@ -27,8 +27,8 @@ use WP_CLI;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Seven varied live events, seven training listings, or three venues with
- * nine spaces to hire, in one call, so the public lists can be seen
+ * Seven varied live events, seven training listings, or five venues with
+ * fourteen spaces to hire, in one call, so the public lists can be seen
  * rendering without anybody filling in the forms. Every item carries a
  * marker, so `--remove` takes exactly these away and nothing else.
  */
@@ -414,7 +414,7 @@ final class Command {
 	}
 
 	/**
-	 * Create three demo venues with nine spaces to hire under an
+	 * Create five demo venues with fourteen spaces to hire under an
 	 * organisation, or remove them.
 	 *
 	 * ## OPTIONS
@@ -486,7 +486,7 @@ final class Command {
 			$coords = Geocode::coords( $id );
 			$rows[] = [
 				'id'       => $id,
-				'title'    => wp_specialchars_decode( get_the_title( $id ), ENT_QUOTES ),
+				'title'    => (string) get_post( $id )?->post_title,
 				'kind'     => 'venue',
 				'postcode' => (string) get_post_meta( $id, 'dgl_postcode', true ),
 				'rate'     => '',
@@ -498,7 +498,7 @@ final class Command {
 		foreach ( $made['spaces'] as $id ) {
 			$rows[] = [
 				'id'       => $id,
-				'title'    => wp_specialchars_decode( get_the_title( $id ), ENT_QUOTES ),
+				'title'    => (string) get_post( $id )?->post_title,
 				'kind'     => 'space of #' . (int) get_post_meta( $id, Meta::SPACE_VENUE, true ),
 				'postcode' => '',
 				'rate'     => \DGL\Spaces\SpacesQuery::rate_words( \DGL\Spaces\SpacesQuery::space_meta( $id ) ),
@@ -615,10 +615,11 @@ final class Command {
 	}
 
 	/**
-	 * Three venues and nine spaces: a community centre with a whole-building
-	 * option and a kitchen at "Price on request", a church hall with a
-	 * session rate, and a studio that is free to hire. Between them every
-	 * price band, every capacity layout, a day rate and a session rate.
+	 * Five venues and fourteen spaces: a community centre with a
+	 * whole-building option and a kitchen at "Price on request", a church
+	 * hall with a session rate, a studio that is free to hire, a scout hut
+	 * and a sports pavilion. Between them every price band, every capacity
+	 * layout, every reply time, day rates and session rates.
 	 *
 	 * @param int[] $images
 	 * @return array<int, array<string, mixed>>
@@ -874,6 +875,151 @@ final class Command {
 							'rate'             => 20,
 							'rate_unit'        => 'hour',
 							'rate_note'        => 'Coffee and tea included.',
+						],
+					],
+				],
+			],
+			[
+				'title'  => 'Cross Gates Scout Hut',
+				'body'   => '<p>A timber scout hut on the edge of the playing fields, run by the 14th Leeds Scout Group. One big room, a small kitchen and a fenced grass area outside. The scouts use it on weeknights; it is free most weekends and every weekday daytime.</p>',
+				'fields' => [
+					'summary'       => 'A scout hut by the playing fields with one big room and a fenced grass area, free most weekends.',
+					'image'         => $photo( 1 ),
+					'image_alt'     => $alt( 1, 'The scout hut from the field' ),
+					'venue_type'    => 'other',
+					'address'       => 'Poole Road, Cross Gates, Leeds',
+					'postcode'      => 'LS15 7SJ',
+					'ward'          => 'cross_gates_and_whinmoor',
+					'access'        => [ 'step_free', 'blue_badge_parking' ],
+					'facilities'    => [ 'kitchen', 'tables_chairs', 'parking' ],
+					'getting_there' => 'Ten minutes on foot from Cross Gates station. Parking for about twenty cars on the field entrance.',
+					'availability'  => 'Weekdays until 5pm and most weekends. Not Monday, Tuesday or Thursday evenings.',
+					'good_to_know'  => 'Bring your own crockery. The heating takes half an hour to warm the hall in winter, so come early.',
+					'reply_time'    => 'week',
+					'contact_name'  => 'Dave Hirst',
+					'contact_email' => 'hut@example.org',
+					'contact_phone' => '07700 900123',
+					'website'       => '',
+				],
+				'spaces' => [
+					[
+						'title'  => 'Whole hut',
+						'body'   => '<p>The hall, the kitchen and the grass outside for a whole day. Birthday parties, family gatherings and training days.</p>',
+						'fields' => [
+							'summary'          => 'The hall, the kitchen and the grass outside for the day.',
+							'image'            => $photo( 1 ),
+							'image_alt'        => $alt( 1, 'The scout hut from the field' ),
+							'space_type'       => 'whole_building',
+							'cap_theatre'      => 60,
+							'cap_cabaret'      => 48,
+							'cap_boardroom'    => '',
+							'cap_standing'     => 100,
+							'size_m2'          => 95,
+							'space_facilities' => [ 'opens_outside', 'ovens' ],
+							'rate'             => 120,
+							'rate_unit'        => 'day',
+							'rate_note'        => 'Weekends only. Bring your own crockery.',
+						],
+					],
+					[
+						'title'  => 'Main room',
+						'body'   => '<p>A wooden hall with a serving hatch, benches and stacking chairs. Good for a class, a rehearsal or a meeting on a weekday daytime.</p>',
+						'fields' => [
+							'summary'          => 'A wooden hall with a serving hatch, benches and stacking chairs.',
+							'image'            => 0,
+							'image_alt'        => '',
+							'space_type'       => 'hall',
+							'cap_theatre'      => 60,
+							'cap_cabaret'      => 40,
+							'cap_boardroom'    => 20,
+							'cap_standing'     => 80,
+							'size_m2'          => 80,
+							'space_facilities' => [ 'opens_outside' ],
+							'rate'             => 12,
+							'rate_unit'        => 'hour',
+							'rate_note'        => 'Weekday daytimes.',
+						],
+					],
+				],
+			],
+			[
+				'title'  => 'Roundhay Pavilion',
+				'body'   => '<p>The sports pavilion by the pitches on Soldiers Field, run by Roundhay Community Sports. A clubroom with a bar counter, changing rooms with showers, a kitchen and the pitches themselves. Used by cricket, football and running clubs and available to community groups between fixtures.</p>',
+				'fields' => [
+					'summary'       => 'The pavilion on Soldiers Field: a clubroom, changing rooms, a kitchen and the pitches, between fixtures.',
+					'image'         => $photo( 2 ),
+					'image_alt'     => $alt( 2, 'The pavilion and the pitches' ),
+					'venue_type'    => 'sports',
+					'address'       => 'Soldiers Field, Roundhay Park, Leeds',
+					'postcode'      => 'LS8 2HH',
+					'ward'          => 'roundhay',
+					'access'        => [ 'step_free', 'accessible_toilet', 'hearing_loop', 'blue_badge_parking' ],
+					'facilities'    => [ 'wifi', 'kitchen', 'parking', 'projector', 'tables_chairs', 'baby_changing', 'bike_racks' ],
+					'getting_there' => 'Buses 2, 12 and X98 stop on Roundhay Road. The car park by the pavilion is free.',
+					'availability'  => 'Weekday daytimes and evenings. Weekends depend on fixtures; ask.',
+					'good_to_know'  => 'Studded boots are not allowed in the clubroom. The bar can be opened for evening bookings by arrangement.',
+					'reply_time'    => 'same_day',
+					'contact_name'  => 'Jo Barraclough',
+					'contact_email' => 'pavilion@example.org',
+					'contact_phone' => '0113 496 0789',
+					'website'       => 'https://example.org',
+				],
+				'spaces' => [
+					[
+						'title'  => 'Clubroom',
+						'body'   => '<p>A bright room over the changing rooms with a bar counter, a screen and a hearing loop, looking out over the pitches. Committee meetings, talks, presentations and small parties.</p>',
+						'fields' => [
+							'summary'          => 'A bright room over the changing rooms with a bar counter, a screen and a hearing loop.',
+							'image'            => $photo( 2 ),
+							'image_alt'        => $alt( 2, 'The pavilion and the pitches' ),
+							'space_type'       => 'meeting_room',
+							'cap_theatre'      => 30,
+							'cap_cabaret'      => 24,
+							'cap_boardroom'    => 16,
+							'cap_standing'     => 50,
+							'size_m2'          => 55,
+							'space_facilities' => [ 'screen', 'hearing_loop', 'flipchart' ],
+							'rate'             => 15,
+							'rate_unit'        => 'hour',
+							'rate_note'        => 'Evenings by arrangement.',
+						],
+					],
+					[
+						'title'  => 'Pitch and field',
+						'body'   => '<p>A marked grass pitch and the open field beside it, with the changing rooms. Sports days, fun runs, festivals and outdoor classes. Marquees by arrangement.</p>',
+						'fields' => [
+							'summary'          => 'A marked grass pitch and the open field beside it, with the changing rooms.',
+							'image'            => 0,
+							'image_alt'        => '',
+							'space_type'       => 'outdoor',
+							'cap_theatre'      => '',
+							'cap_cabaret'      => '',
+							'cap_boardroom'    => '',
+							'cap_standing'     => 200,
+							'size_m2'          => '',
+							'space_facilities' => [],
+							'rate'             => '',
+							'rate_unit'        => '',
+							'rate_note'        => 'Depends on the event and the time of year.',
+						],
+					],
+					[
+						'title'  => 'Kitchen',
+						'body'   => '<p>A catering kitchen behind the clubroom with an oven, a hob, a fridge and a dishwasher. Hired with the clubroom or on its own for a session.</p>',
+						'fields' => [
+							'summary'          => 'A catering kitchen behind the clubroom, with the clubroom or on its own.',
+							'image'            => 0,
+							'image_alt'        => '',
+							'space_type'       => 'kitchen',
+							'cap_theatre'      => '',
+							'cap_cabaret'      => '',
+							'cap_boardroom'    => '',
+							'cap_standing'     => 6,
+							'size_m2'          => 18,
+							'space_facilities' => [ 'ovens', 'dishwasher' ],
+							'rate'             => 25,
+							'rate_unit'        => 'session',
+							'rate_note'        => '',
 						],
 					],
 				],

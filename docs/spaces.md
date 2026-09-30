@@ -159,10 +159,11 @@ wp dgl demo spaces --org=<id> [--images] [--skip-geocode] [--dry-run]
 wp dgl demo spaces --remove
 ```
 
-The demo makes three venues and nine spaces: a community centre with a
+The demo makes five venues and fourteen spaces: a community centre with a
 whole-building day rate and a kitchen at Price on request, a church hall
-with a session rate, and a converted print works with a free studio.
-Between them every price band, every layout and every reply time.
+with a session rate, a converted print works with a free studio, a scout
+hut and a sports pavilion. Between them every price band, every layout
+and every reply time.
 
 ## Not built, and known
 

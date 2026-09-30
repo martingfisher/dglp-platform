@@ -235,7 +235,7 @@ listings: one-day, three-day and two-date courses, in person, online and
 blended, free, paid and donation, two without a picture.
 `wp dgl demo training --remove` deletes them.
 
-`wp dgl demo spaces --org=<id> --images` makes three venues with nine
+`wp dgl demo spaces --org=<id> --images` makes five venues with fourteen
 spaces to hire: every price band, a day rate, a session rate, a free
 studio and a kitchen at Price on request. Each venue is placed on the map
 as it is made unless `--skip-geocode` is given. `wp dgl demo spaces
