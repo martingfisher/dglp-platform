@@ -34,7 +34,11 @@ $pending  = $revision instanceof WP_Post && Statuses::PENDING === $revision->pos
 	</div>
 <?php elseif ( 'show' === (string) ( $data['visibility'] ?? '' ) ) : ?>
 	<div class="dgl-alert dgl-alert--good" role="status">
-		<p><strong><?php esc_html_e( 'Back on the site.', 'dgl-platform' ); ?></strong></p>
+		<p><strong><?php esc_html_e( 'Visible on the site again.', 'dgl-platform' ); ?></strong></p>
+	</div>
+<?php elseif ( 'same' === (string) ( $data['visibility'] ?? '' ) ) : ?>
+	<div class="dgl-alert" role="status">
+		<p><?php esc_html_e( 'Nothing changed: that was already chosen.', 'dgl-platform' ); ?></p>
 	</div>
 <?php endif; ?>
 
@@ -229,29 +233,34 @@ $pending  = $revision instanceof WP_Post && Statuses::PENDING === $revision->pos
 </header>
 
 <?php if ( ! empty( $data['can_toggle_visibility'] ) ) : ?>
-	<?php $is_hidden = ! empty( $data['hidden'] ); ?>
+	<?php
+	$is_hidden = ! empty( $data['hidden'] );
+	$is_space  = \DGL\PostTypes::KIND_SPACE === (string) ( $data['kind'] ?? '' );
+	?>
 	<section class="dgl-card dgl-visibility<?php echo $is_hidden ? ' dgl-visibility--hidden' : ''; ?>" aria-labelledby="dgl-visibility-title">
-		<div class="dgl-visibility__row">
-			<div>
-				<?php $is_space = \DGL\PostTypes::KIND_SPACE === (string) ( $data['kind'] ?? '' ); ?>
-				<h2 class="dgl-section__title" id="dgl-visibility-title"><?php echo $is_hidden ? esc_html__( 'Hidden on the site', 'dgl-platform' ) : esc_html__( 'Visible on the site', 'dgl-platform' ); ?></h2>
-				<p class="dgl-visibility__text">
-					<?php if ( $is_hidden ) : ?>
-						<?php echo esc_html( $is_space ? __( 'Nobody can find this space, or enquire, until you switch it on again. Its details are kept hidden.', 'dgl-platform' ) : __( 'Nobody can find this venue or its spaces, or enquire, until you switch it on again. Its details are kept hidden.', 'dgl-platform' ) ); ?>
-					<?php else : ?>
-						<?php echo esc_html( $is_space ? __( 'Toggle this off to hide this space for a while, for example while it is out of use. It comes back the moment you switch it on, with no review.', 'dgl-platform' ) : __( 'Toggle this off to hide this venue and its spaces for a while, for example during a refurbishment. It comes back the moment you switch it on, with no review.', 'dgl-platform' ) ); ?>
-					<?php endif; ?>
-				</p>
-			</div>
-			<form method="post" class="dgl-inline-form" action="<?php echo esc_url( Router::url( 'item', (string) $post->ID ) ); ?>">
-				<?php wp_nonce_field( \DGL\Dashboard\Wizard::NONCE ); ?>
-				<input type="hidden" name="dgl_intent" value="<?php echo $is_hidden ? 'show' : 'hide'; ?>">
-				<button type="submit" class="dgl-switch" role="switch" aria-checked="<?php echo $is_hidden ? 'false' : 'true'; ?>" aria-labelledby="dgl-visibility-title">
-					<span class="dgl-switch__track" aria-hidden="true"><span class="dgl-switch__knob"></span></span>
-					<span class="dgl-switch__label"><?php echo $is_hidden ? esc_html__( 'Off', 'dgl-platform' ) : esc_html__( 'On', 'dgl-platform' ); ?></span>
-				</button>
-			</form>
-		</div>
+		<h2 class="dgl-section__title" id="dgl-visibility-title"><?php esc_html_e( 'On the site', 'dgl-platform' ); ?></h2>
+		<form method="post" class="dgl-visibility__form" action="<?php echo esc_url( Router::url( 'item', (string) $post->ID ) ); ?>">
+			<?php wp_nonce_field( \DGL\Dashboard\Wizard::NONCE ); ?>
+			<input type="hidden" name="dgl_intent" value="visibility">
+			<fieldset class="dgl-choices dgl-visibility__choices">
+				<legend class="screen-reader-text"><?php esc_html_e( 'Visible or hidden', 'dgl-platform' ); ?></legend>
+				<label class="dgl-check">
+					<input type="radio" name="dgl_visibility" value="visible"<?php checked( ! $is_hidden ); ?>>
+					<span>
+						<strong><?php esc_html_e( 'Visible on the site', 'dgl-platform' ); ?></strong>
+						<span class="dgl-visibility__text"><?php echo esc_html( $is_space ? __( 'Choose Hidden to hide this space for a while, for example while it is out of use. It comes back the moment you choose Visible again, with no review.', 'dgl-platform' ) : __( 'Choose Hidden to hide this venue and its spaces for a while, for example during a refurbishment. It comes back the moment you choose Visible again, with no review.', 'dgl-platform' ) ); ?></span>
+					</span>
+				</label>
+				<label class="dgl-check">
+					<input type="radio" name="dgl_visibility" value="hidden"<?php checked( $is_hidden ); ?>>
+					<span>
+						<strong><?php esc_html_e( 'Hidden on the site', 'dgl-platform' ); ?></strong>
+						<span class="dgl-visibility__text"><?php echo esc_html( $is_space ? __( 'Nobody can find this space, or enquire, until you make it visible again. Its details are kept hidden.', 'dgl-platform' ) : __( 'Nobody can find this venue or its spaces, or enquire, until you make it visible again. Its details are kept hidden.', 'dgl-platform' ) ); ?></span>
+					</span>
+				</label>
+			</fieldset>
+			<button type="submit" class="dgl-button dgl-visibility__save" data-dgl-busy="<?php esc_attr_e( 'Saving…', 'dgl-platform' ); ?>"><?php esc_html_e( 'Save', 'dgl-platform' ); ?></button>
+		</form>
 	</section>
 <?php endif; ?>
 

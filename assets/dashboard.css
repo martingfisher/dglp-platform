@@ -2255,86 +2255,22 @@ body.dgl-body {
 
 .dgl-upload-status { margin: 6px 0 0; min-height: 1.4em; }
 
-/* ---- The on/off switch on a live venue or space ------------------------- */
+/* ---- Visible or hidden, on a live venue or space ----------------------- */
 
-.dgl-visibility__row {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: var(--dgl-gap-lg);
-}
+.dgl-visibility__form { display: grid; gap: 14px; }
 
-.dgl-visibility__row .dgl-section__title { margin-bottom: 4px; }
+.dgl-visibility__choices { margin: 0; }
 
-.dgl-visibility__row .dgl-help { margin: 0; max-width: 60ch; }
+.dgl-visibility__text { display: block; margin-top: 2px; font-size: 0.95em; line-height: 1.5; color: var(--dgl-text); }
 
-/* Body text, not help text: this is the instruction, so it reads at full strength. */
-.dgl-visibility__text { margin: 0; max-width: 60ch; font-size: 0.95em; line-height: 1.5; color: var(--dgl-text); }
+.dgl-visibility__save { justify-self: start; min-width: 120px; }
+
+.dgl-form--busy .dgl-visibility__choices { opacity: 0.6; }
 
 .dgl-visibility + .dgl-card,
 .dgl-visibility + .dgl-detail { margin-top: var(--dgl-gap-lg); }
 
-/*
- * The whole button is the target, 48px tall and wide enough to take the
- * word: a press anywhere on the track, the knob or the word flips it,
- * and the hover shows it is one control.
- */
-.dgl-switch {
-	display: inline-flex;
-	align-items: center;
-	gap: 12px;
-	flex: none;
-	min-height: 48px;
-	padding: 6px 12px;
-	margin: -6px -12px -6px 0;
-	font: var(--dgl-weight-button) 15px / 1 var(--dgl-font);
-	color: var(--dgl-text);
-	background: none;
-	border: 0;
-	border-radius: var(--dgl-radius-button);
-	cursor: pointer;
-	touch-action: manipulation;
-}
-
-.dgl-switch:hover { background: var(--dgl-surface); }
-
-.dgl-switch:focus-visible { outline: 2px solid var(--dgl-focus); outline-offset: 2px; }
-
-.dgl-switch > * { pointer-events: none; }
-
-.dgl-switch__track {
-	position: relative;
-	display: block;
-	width: 56px;
-	height: 32px;
-	background: color-mix(in srgb, var(--dgl-ink) 40%, transparent);
-	border-radius: 999px;
-	transition: background var(--dgl-motion);
-}
-
-.dgl-switch__knob {
-	position: absolute;
-	top: 3px;
-	left: 3px;
-	width: 26px;
-	height: 26px;
-	background: var(--dgl-white);
-	border-radius: 50%;
-	box-shadow: 0 1px 2px rgb(30 50 50 / 30%);
-	transition: transform var(--dgl-motion);
-}
-
-.dgl-switch[aria-checked="true"] .dgl-switch__track { background: var(--dgl-navy); }
-
-.dgl-switch[aria-checked="true"] .dgl-switch__knob { transform: translateX(24px); }
-
-.dgl-switch__label { min-width: 2.2em; text-align: left; }
-
 .dgl-chip--hidden {
 	color: var(--dgl-text);
 	background: color-mix(in srgb, var(--dgl-ink) 10%, var(--dgl-white));
-}
-
-@media ( max-width: 560px ) {
-	.dgl-visibility__row { flex-direction: column; align-items: flex-start; gap: 12px; }
 }

@@ -192,9 +192,10 @@ archives it at once, and on the archived listing "Put back on the site",
 which sends it to your queue rather than straight back, so a listing that
 has been off for months is read again before it shows.
 
-A live venue or space has an "Visible on the site" switch as well, for a
-refurbishment or a room out of use: off hides it at once, on brings it
-back at once, no review either way. You see a "Hidden" chip in the lists
+A live venue or space has a Visible or Hidden choice under "On the site" as
+well, saved with a button, for a refurbishment or a room out of use:
+Hidden takes it off at once, Visible brings it back at once, no review
+either way. You see a "Hidden" chip in the lists
 and on its review screen. It is still live; the organisation brings it
 back themselves. Enquiries stop while it is hidden.
 

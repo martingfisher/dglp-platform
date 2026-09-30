@@ -1142,3 +1142,41 @@
 		init();
 	}
 }() );
+	/**
+	 * A form whose submit button carries data-dgl-busy: on submit the button
+	 * takes that text, every submit in the form is disabled and the form is
+	 * marked busy, so a change that takes the server a few seconds is seen
+	 * to be happening and a second press does nothing.
+	 */
+	( function () {
+		Array.prototype.forEach.call( document.querySelectorAll( 'form [data-dgl-busy]' ), function ( button ) {
+			var form = button.form;
+
+			if ( ! form || form.dglBusyBound ) {
+				return;
+			}
+
+			form.dglBusyBound = true;
+
+			form.addEventListener( 'submit', function ( event ) {
+				if ( form.getAttribute( 'aria-busy' ) === 'true' ) {
+					event.preventDefault();
+					return;
+				}
+
+				form.setAttribute( 'aria-busy', 'true' );
+				form.classList.add( 'dgl-form--busy' );
+
+				window.setTimeout( function () {
+					Array.prototype.forEach.call( form.querySelectorAll( 'button[type="submit"], input[type="submit"]' ), function ( b ) {
+						if ( b.hasAttribute( 'data-dgl-busy' ) ) {
+							b.textContent = b.getAttribute( 'data-dgl-busy' );
+						}
+
+						b.disabled = true;
+					} );
+				}, 0 );
+			} );
+		} );
+	} )();
+

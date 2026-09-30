@@ -398,15 +398,16 @@ the flow, never clipped, when it does not; the page is at least as deep
 as the card. Attribution is
 the OpenStreetMap line their policy asks for.
 
-### Switch
-One control means "on or off, now, and back again": the "On the site"
-switch on a live venue or space. A `button[role=switch]` with
-`aria-checked`, a 52 by 30 pill track (ink at 40% off, Council Navy on)
-and a 24px white knob that slides 22px, the word "On" or "Off"
-beside it in 15px medium, the whole button 48px tall with a hover fill. It sits right of its heading and one line of
-help in a card, stacks under 560px, and never asks to confirm: the
-opposite press undoes it. Anything that is not instant and symmetric is
-a button with a confirm, not a switch.
+### Visible or hidden
+The "On the site" card on a live venue or space is two radio choices in
+the wizard's check style ("Visible on the site", "Hidden on the site",
+each with one line of body text under its bold label) and a primary Save.
+Not a switch: the change reloads the page and takes the server a few
+seconds, and a switch that does nothing visible for that long gets
+pressed again. On submit the Save reads "Saving…", every submit in the
+form is disabled and the choices dim, so the wait is seen to be a wait.
+Anything instant and symmetric can be a switch; anything that reloads is
+a choice and a Save.
 
 ### Status stamp
 The chip is the system's signature: every list, every detail header and every

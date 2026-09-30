@@ -1608,16 +1608,23 @@ final class Controller {
 				default   => '',
 			};
 
-			// Hide and show are the organisation's own switch: instant, no review.
-			if ( 'hide' === $intent || 'show' === $intent ) {
-				$flip = 'hide' === $intent
+			// Visible or hidden is the organisation's own choice: instant, no review.
+			if ( 'visibility' === $intent ) {
+				$want_hidden = 'hidden' === ( isset( $_POST['dgl_visibility'] ) ? sanitize_key( wp_unslash( $_POST['dgl_visibility'] ) ) : '' );
+
+				if ( $want_hidden === \DGL\Spaces\Visibility::is_hidden( $post_id ) ) {
+					wp_safe_redirect( add_query_arg( 'visibility', 'same', Router::url( 'item', (string) $post_id ) ) );
+					exit;
+				}
+
+				$flip = $want_hidden
 					? \DGL\Spaces\Visibility::hide( $post_id, $user )
 					: \DGL\Spaces\Visibility::show( $post_id, $user );
 
 				if ( is_wp_error( $flip ) ) {
 					$action_error = $flip->get_error_message();
 				} else {
-					wp_safe_redirect( add_query_arg( 'visibility', $intent, Router::url( 'item', (string) $post_id ) ) );
+					wp_safe_redirect( add_query_arg( 'visibility', $want_hidden ? 'hide' : 'show', Router::url( 'item', (string) $post_id ) ) );
 					exit;
 				}
 			}
