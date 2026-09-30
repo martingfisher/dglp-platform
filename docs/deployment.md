@@ -232,10 +232,11 @@ The topic list ships in the plugin and seeds itself:
   menu (slug `top-bar`) and the Main Menu (slug `main-menu`, for the phone
   drawer). If either menu is renamed, change the two constants at the top
   of `src/Frontend/Finder.php`.
-- The "Spaces to hire" link is an ordinary menu item, added on 30
-  September 2026 with
-  `wp menu item add-custom main-menu "Spaces to hire" /spaces/` and moved
-  before Contact. Appearance > Menus to move or rename it.
+- The "Spaces to hire" link is an ordinary menu item in the Top Bar menu
+  after Jobs, added on 30 September 2026 with
+  `wp menu item add-custom top-bar "Spaces to hire" /spaces/ --position=4`
+  (it sat in the Main Menu for an hour first). Appearance > Menus to move
+  or rename it.
 - Check after installing: the home page source has `dgl-finder-trigger`
   in the top bar and no `ct-search-box`; `dgl probe page / ct-search-box`
   should find nothing.

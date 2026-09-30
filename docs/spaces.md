@@ -94,7 +94,11 @@ from £X an hour or Price on request, step-free), the description, one
 card per space with capacities, tags, rate and its own Enquire button,
 the "About the venue" list, the enquiry form, a "Where and who" card with
 the address, contact name, phone, website and ward, and the map with one
-pin. On a phone a bar at the foot of the screen keeps the rate and Enquire
+pin and a "Bigger map" button that opens it in a dialog about 60% of the
+screen wide, draggable and zoomable. The summary sits at the top of the
+main column so the enquiry card starts level with it, and the card stays
+in place as the rooms scroll past, scrolling inside itself when it is
+taller than the window. On a phone a bar at the foot of the screen keeps the rate and Enquire
 in view while the cards scroll.
 
 **The organisation's page** in the directory has a "Spaces to hire at N

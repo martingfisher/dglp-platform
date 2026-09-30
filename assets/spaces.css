@@ -198,6 +198,131 @@
 
 .dgl-venue__main .dgl-pub__body { margin-bottom: var(--dgl-gap-lg); }
 
+/* The summary sits at the top of the main column, so the enquiry card starts level with it. */
+.dgl-venue__main .dgl-venue__standfirst { max-width: 60ch; margin-top: 0; }
+
+/*
+ * The enquiry card keeps its place as the rooms scroll by. Taller than the
+ * window, it scrolls inside itself rather than losing its foot.
+ */
+.dgl-venue__aside {
+	position: sticky;
+	top: var(--dgl-gap-lg);
+	align-self: start;
+	max-height: calc(100vh - 2 * var(--dgl-gap-lg));
+	overflow-y: auto;
+	overscroll-behavior: contain;
+}
+
+/* ---- A bigger map in a dialog ---------------------------------------- */
+
+.dgl-venue__mapwrap { position: relative; margin-top: var(--dgl-gap); }
+
+.dgl-venue__mapwrap .dgl-venue__map { margin-top: 0; }
+
+.dgl-pub .dgl-venue__mapbig {
+	position: absolute;
+	right: 10px;
+	bottom: 10px;
+	z-index: 500;
+	min-height: 36px;
+	padding: 0 14px;
+	font: var(--dgl-weight-button) 14px / 1 var(--dgl-font);
+	color: var(--dgl-navy);
+	background: var(--dgl-white);
+	border: 1px solid var(--dgl-field-outline);
+	border-radius: var(--dgl-radius-button);
+	box-shadow: var(--dgl-shadow-rest);
+	cursor: pointer;
+}
+
+.dgl-pub .dgl-venue__mapbig[hidden] { display: none; }
+
+.dgl-pub .dgl-venue__mapbig:hover { background: var(--dgl-surface); }
+
+.dgl-pub .dgl-venue__mapbig:focus-visible { outline: 2px solid var(--dgl-focus); outline-offset: 2px; }
+
+.dgl-mapdialog {
+	position: fixed;
+	inset: 0;
+	z-index: 100000;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 24px 16px;
+	font-family: var(--dgl-font);
+	color: var(--dgl-text);
+}
+
+.dgl-mapdialog[hidden] { display: none; }
+
+.dgl-mapdialog__scrim {
+	position: absolute;
+	inset: 0;
+	background: color-mix(in srgb, var(--dgl-navy) 72%, #000000);
+	opacity: 0.78;
+}
+
+.dgl-mapdialog__card {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	width: 60vw;
+	min-width: min(100%, 320px);
+	max-width: 1200px;
+	height: min(76vh, 820px);
+	background: var(--dgl-white);
+	border-radius: var(--dgl-radius-card);
+	box-shadow: var(--dgl-shadow-raise);
+	overflow: hidden;
+}
+
+.dgl-mapdialog__head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+	padding: 16px 20px;
+	border-bottom: 1px solid var(--dgl-border);
+}
+
+.dgl-mapdialog__title {
+	margin: 0;
+	font-size: 1.05rem;
+	font-weight: var(--dgl-weight-heading);
+	color: var(--dgl-navy);
+}
+
+.dgl-mapdialog__where { display: block; font-size: 0.9rem; font-weight: 400; color: var(--dgl-text-muted); }
+
+.dgl-mapdialog__close {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: none;
+	width: 44px;
+	height: 44px;
+	margin-right: -8px;
+	color: var(--dgl-text);
+	background: none;
+	border: 0;
+	border-radius: 50%;
+	cursor: pointer;
+}
+
+.dgl-mapdialog__close:hover { background: var(--dgl-surface); }
+
+.dgl-mapdialog__close:focus-visible { outline: 2px solid var(--dgl-focus); outline-offset: 2px; }
+
+.dgl-mapdialog__map { flex: 1 1 auto; min-height: 0; background: var(--dgl-surface); }
+
+body.dgl-mapdialog-open { overflow: hidden; }
+
+@media ( max-width: 900px ) {
+	.dgl-mapdialog__card { width: 100%; height: min(80vh, 700px); }
+	.dgl-venue__aside { position: static; max-height: none; overflow: visible; }
+}
+
 .dgl-venue__spaces { margin: 0 0 var(--dgl-gap-lg); }
 
 .dgl-venue__cards { display: grid; gap: var(--dgl-gap); margin-top: 12px; }

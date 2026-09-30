@@ -156,12 +156,11 @@ $phone   = $value( 'contact_phone' );
 			</ul>
 		<?php endif; ?>
 
-		<?php if ( '' !== trim( $summary ) ) : ?>
-			<p class="dgl-pub__standfirst"><?php echo esc_html( $summary ); ?></p>
-		<?php endif; ?>
-
 		<div class="dgl-pub__layout dgl-venue__layout">
 			<div class="dgl-venue__main">
+				<?php if ( '' !== trim( $summary ) ) : ?>
+					<p class="dgl-pub__standfirst dgl-venue__standfirst"><?php echo esc_html( $summary ); ?></p>
+				<?php endif; ?>
 				<?php if ( $has_body ) : ?>
 					<div class="dgl-pub__body"><?php echo wp_kses_post( wpautop( $body ) ); ?></div>
 				<?php endif; ?>
@@ -231,11 +230,27 @@ $phone   = $value( 'contact_phone' );
 						<?php endif; ?>
 					</dl>
 					<?php if ( ! empty( $data['map'] ) ) : ?>
-						<div class="dgl-venue__map" id="dgl-venue-map" data-dgl-map="<?php echo esc_attr( (string) wp_json_encode( $data['map'] ) ); ?>"></div>
+						<div class="dgl-venue__mapwrap">
+							<div class="dgl-venue__map" id="dgl-venue-map" data-dgl-map="<?php echo esc_attr( (string) wp_json_encode( $data['map'] ) ); ?>"></div>
+							<button type="button" class="dgl-venue__mapbig" data-dgl-map-open aria-haspopup="dialog" aria-controls="dgl-venue-map-dialog" hidden><?php esc_html_e( 'Bigger map', 'dgl-platform' ); ?></button>
+						</div>
 					<?php endif; ?>
 				</div>
 			</aside>
 		</div>
+
+		<?php if ( ! empty( $data['map'] ) ) : ?>
+			<div class="dgl-mapdialog" id="dgl-venue-map-dialog" hidden data-dgl-map-dialog>
+				<div class="dgl-mapdialog__scrim" data-dgl-map-close></div>
+				<div class="dgl-mapdialog__card" role="dialog" aria-modal="true" aria-labelledby="dgl-venue-map-title">
+					<div class="dgl-mapdialog__head">
+						<h2 class="dgl-mapdialog__title" id="dgl-venue-map-title"><?php echo esc_html( get_the_title( $post ) ); ?><?php if ( '' !== $value( 'address' ) ) : ?> <span class="dgl-mapdialog__where"><?php echo esc_html( $value( 'address' ) ); ?><?php echo '' !== $value( 'postcode' ) ? ', ' . esc_html( $value( 'postcode' ) ) : ''; ?></span><?php endif; ?></h2>
+						<button type="button" class="dgl-mapdialog__close" data-dgl-map-close aria-label="<?php esc_attr_e( 'Close map', 'dgl-platform' ); ?>"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+					</div>
+					<div class="dgl-mapdialog__map" id="dgl-venue-map-large"></div>
+				</div>
+			</div>
+		<?php endif; ?>
 
 		<?php if ( '' !== $archive ) : ?>
 			<p class="dgl-pub__back"><a href="<?php echo esc_url( $archive ); ?>"><?php esc_html_e( 'All spaces to hire', 'dgl-platform' ); ?></a></p>

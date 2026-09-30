@@ -389,7 +389,12 @@ Leaflet with OpenStreetMap tiles, drawn only when asked for: on Find a
 space a List / Map toggle (aria-pressed pair, the pressed one filled
 navy) swaps the list for a 480px map with one default marker per placed
 venue and a popup that is the venue's name as a link; on a venue page a
-240px map with one marker, no dragging or zoom controls. Attribution is
+200px map with one marker, no dragging or zoom controls, and a small
+white "Bigger map" button in its corner that opens the same map in a
+dialog 60vw wide (max 1200px, 76vh tall) with dragging, zoom and a popup
+naming the venue; under 900px the dialog fills the width. The enquiry
+card is sticky at the gap-lg offset and scrolls inside itself when taller
+than the window. Attribution is
 the OpenStreetMap line their policy asks for.
 
 ### Status stamp

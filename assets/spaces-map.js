@@ -103,6 +103,105 @@
 			tiles( venueMap );
 			venueMap.setView( [ pin.lat, pin.lng ], 15 );
 			L.marker( [ pin.lat, pin.lng ], { title: pin.title } ).addTo( venueMap );
+
+			bigger( pin );
 		}
+	}
+
+	/* ---- The bigger map, in a dialog ---------------------------------- */
+
+	function bigger( pin ) {
+		var dialog = document.querySelector( '[data-dgl-map-dialog]' );
+		var opener = document.querySelector( '[data-dgl-map-open]' );
+		var box = document.getElementById( 'dgl-venue-map-large' );
+
+		if ( ! dialog || ! opener || ! box ) {
+			return;
+		}
+
+		var large = null;
+		var lastFocus = null;
+
+		opener.hidden = false;
+
+		function focusable() {
+			return Array.prototype.filter.call( dialog.querySelectorAll( 'a[href], button, [tabindex]:not([tabindex="-1"])' ), function ( el ) {
+				return ! el.disabled && el.offsetParent !== null;
+			} );
+		}
+
+		function open() {
+			lastFocus = document.activeElement;
+			dialog.hidden = false;
+			document.body.classList.add( 'dgl-mapdialog-open' );
+			opener.setAttribute( 'aria-expanded', 'true' );
+
+			if ( ! large ) {
+				large = L.map( box, { scrollWheelZoom: true } );
+				tiles( large );
+				L.marker( [ pin.lat, pin.lng ], { title: pin.title } ).addTo( large ).bindPopup( pin.title ).openPopup();
+			}
+
+			large.setView( [ pin.lat, pin.lng ], 16 );
+
+			// The box had no size while hidden; Leaflet has to measure it now.
+			window.setTimeout( function () {
+				large.invalidateSize();
+				large.setView( [ pin.lat, pin.lng ], 16 );
+			}, 30 );
+
+			dialog.querySelector( '[data-dgl-map-close]:not(.dgl-mapdialog__scrim)' ).focus();
+		}
+
+		function close() {
+			dialog.hidden = true;
+			document.body.classList.remove( 'dgl-mapdialog-open' );
+			opener.setAttribute( 'aria-expanded', 'false' );
+
+			if ( lastFocus && typeof lastFocus.focus === 'function' ) {
+				lastFocus.focus();
+			}
+		}
+
+		opener.setAttribute( 'aria-expanded', 'false' );
+		opener.addEventListener( 'click', open );
+
+		Array.prototype.forEach.call( dialog.querySelectorAll( '[data-dgl-map-close]' ), function ( el ) {
+			el.addEventListener( 'click', close );
+		} );
+
+		document.addEventListener( 'keydown', function ( event ) {
+			if ( dialog.hidden ) {
+				return;
+			}
+
+			if ( 'Escape' === event.key ) {
+				event.preventDefault();
+				close();
+				return;
+			}
+
+			if ( 'Tab' === event.key ) {
+				var items = focusable();
+
+				if ( ! items.length ) {
+					return;
+				}
+
+				var first = items[ 0 ];
+				var last = items[ items.length - 1 ];
+
+				if ( event.shiftKey && document.activeElement === first ) {
+					event.preventDefault();
+					last.focus();
+				} else if ( ! event.shiftKey && document.activeElement === last ) {
+					event.preventDefault();
+					first.focus();
+				} else if ( ! dialog.contains( document.activeElement ) ) {
+					event.preventDefault();
+					first.focus();
+				}
+			}
+		} );
 	}
 } )();

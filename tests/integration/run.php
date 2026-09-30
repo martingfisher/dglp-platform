@@ -4909,6 +4909,16 @@ $fx_page = \DGL\Dashboard\View::render( 'public/search', \DGL\Frontend\Search::v
 $ok( str_contains( $fx_page, 'value="events" checked' ) && 6 === substr_count( $fx_page, 'type="radio" name="type"' ), 'the results page carries the same kinds with the current one chosen' );
 $ok( str_contains( $fx_page, '>Spaces to hire</a>' ), 'and offers the spaces list when nothing matches' );
 
+$group( 'Venue page: summary in the main column, a bigger map on offer' );
+
+$vp_page = \DGL\Dashboard\View::render( 'public/venue', \DGL\Spaces\Pages::venue_data( get_post( $sq_armley ) ) );
+$ok( strpos( $vp_page, 'dgl-venue__main' ) < strpos( $vp_page, 'dgl-venue__standfirst' ), 'the summary sits inside the main column, not above the layout' );
+$ok( str_contains( $vp_page, 'data-dgl-map-open' ) && str_contains( $vp_page, 'id="dgl-venue-map-dialog"' ) && str_contains( $vp_page, 'id="dgl-venue-map-large"' ) && str_contains( $vp_page, 'role="dialog"' ), 'a placed venue offers the bigger map in a dialog' );
+delete_post_meta( $sq_bramley, Meta::VENUE_LAT );
+delete_post_meta( $sq_bramley, Meta::VENUE_LNG );
+$vp_none = \DGL\Dashboard\View::render( 'public/venue', \DGL\Spaces\Pages::venue_data( get_post( $sq_bramley ) ) );
+$ok( ! str_contains( $vp_none, 'data-dgl-map-open' ) && ! str_contains( $vp_none, 'dgl-venue-map-dialog' ), 'one without a pin offers neither' );
+
 /* ----------------------------------------------------------------- report */
 
 echo "\n" . str_repeat( '-', 60 ) . "\n";

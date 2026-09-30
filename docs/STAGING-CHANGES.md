@@ -1074,3 +1074,11 @@ clean. They are the only DGLP content on staging.
   Show-on-the-site toggle would be better; decided against, because off is
   instant and on is a request, which a toggle cannot show. The review
   team's own "Restore and review again" is unchanged.
+- **0.43.0 deployed** (30 September, production): on a venue page the
+  summary moves into the main column so the enquiry card starts level with
+  it, the card stays in place as the page scrolls (scrolling inside itself
+  when taller than the window), and a "Bigger map" button on the small map
+  opens it in a dialog about 60% of the screen wide with dragging, zoom
+  and a popup. "Spaces to hire" moved from the Main Menu to the Top Bar
+  after Jobs (`wp menu item add-custom top-bar`, main-menu item 9497
+  deleted).
