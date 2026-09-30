@@ -4844,7 +4844,7 @@ $ds_stub  = static function ( $pre, array $parsed, string $url ) use ( &$ds_call
 	];
 };
 add_filter( 'pre_http_request', $ds_stub, 10, 3 );
-foreach ( [ 'LS12 3QP', 'LS12 1SR', 'LS6 1JD', 'LS15 7SJ', 'LS8 2HH' ] as $ds_pc ) {
+foreach ( [ 'LS12 3QP', 'LS12 1SF', 'LS6 1JD', 'LS15 7SJ', 'LS8 2HH' ] as $ds_pc ) {
 	delete_transient( 'dgl_geo_' . md5( str_replace( ' ', '', $ds_pc ) ) );
 }
 $ds_made = \DGL\Demo\Command::seed_spaces( $ds_org, $mod, \DGL\Demo\Command::plan_spaces( [] ) );

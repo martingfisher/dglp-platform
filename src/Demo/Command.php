@@ -743,7 +743,7 @@ final class Command {
 					'image_alt'     => $alt( 4, "The hall at St Bartholomew's" ),
 					'venue_type'    => 'church_hall',
 					'address'       => 'Wesley Road, Armley, Leeds',
-					'postcode'      => 'LS12 1SR',
+					'postcode'      => 'LS12 1SF',
 					'ward'          => 'armley',
 					'access'        => [ 'step_free', 'accessible_toilet' ],
 					'facilities'    => [ 'kitchen', 'tables_chairs', 'parking' ],

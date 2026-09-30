@@ -1002,3 +1002,39 @@ clean. They are the only DGLP content on staging.
   reference. The public stylesheet loads only on a page that uses one, and
   the grids use container queries so they adapt to the theme's column.
   `src/Frontend/HomeBlocks.php`, docs, integration tests.
+- **0.41.0 deployed** (30 September, production): spaces to hire. Two
+  post types, `dgl_venue` (a building at one address, public page at
+  `/spaces/<slug>/`) and `dgl_space` (a hall, room, kitchen, garden or the
+  whole building, fixed to its venue at creation, no page of its own),
+  both ordinary submittable items with the wizard, revisions, review,
+  trust, audit and checks unchanged; a space has three wizard steps and
+  no topics. `parent_id` on the index (schema 11). A venue's archive,
+  take-down, reject and restore carry its spaces with it as one action
+  with one email; moving a venue moves its spaces. Find a space at
+  `/spaces/` with search, people, ward, kind, price band and access
+  filters, priced venues first, and a List / Map toggle (Leaflet
+  vendored, OpenStreetMap tiles, drawn only when asked). A venue page
+  with a gallery, quick facts, one card per space, an enquiry form that
+  emails the venue's contact (honeypot, signed stamp, origin check, rate
+  limits, no nonce because the page is cached), a "Where and who" card,
+  a map with one pin and a sticky Enquire bar on phones. "Spaces to hire
+  at N venues" on the organisation's directory page; a search group;
+  `EventVenue` schema. Postcodes placed on postcodes.io when a venue goes
+  live or an edit lands, cached per postcode; `wp dgl spaces geocode` and
+  `pins`. `wp dgl demo spaces`. Two fixes found on the way: a space with
+  no rate read back as the registered 0.0 default and said "Free" rather
+  than "Price on request" (space meta is read raw now), and a phone
+  number with spaces was hidden on venue and organisation pages and in
+  schema. `docs/spaces.md`, team guide, help pages, DESIGN.md,
+  PRODUCT.md, the proposal from PR #3 under `docs/wireframes/`. Unit
+  2219, integration 1341.
+- **0.41.1 deployed** (30 September, production): the demo seeder makes
+  five venues and fourteen spaces (a scout hut and a sports pavilion
+  added) so the client can see a fuller list. Seeded on production under
+  the demo organisation 8438 with `wp dgl demo spaces --org=8438
+  --images`; `wp dgl demo spaces --remove` takes them away.
+- **0.41.2 deployed** (30 September, production): the demo church hall's
+  postcode was one postcodes.io does not know (LS12 1SR), so it had no pin
+  until corrected by hand to LS12 1SF and re-placed with `wp dgl spaces
+  geocode`; the seeder carries the real one now. The spaces commands
+  print raw titles, not `&#8217;`.

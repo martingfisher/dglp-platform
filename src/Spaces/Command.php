@@ -56,7 +56,7 @@ final class Command {
 
 		if ( isset( $assoc['dry-run'] ) ) {
 			foreach ( $ids as $id ) {
-				WP_CLI::log( sprintf( '  #%d %s (%s)', $id, get_the_title( $id ), (string) get_post_meta( $id, 'dgl_postcode', true ) ) );
+				WP_CLI::log( sprintf( '  #%d %s (%s)', $id, (string) get_post( $id )?->post_title, (string) get_post_meta( $id, 'dgl_postcode', true ) ) );
 			}
 			return;
 		}
@@ -69,12 +69,12 @@ final class Command {
 
 			if ( null === $found ) {
 				++$failed;
-				WP_CLI::warning( sprintf( '#%d %s: no result for "%s".', $id, get_the_title( $id ), (string) get_post_meta( $id, 'dgl_postcode', true ) ) );
+				WP_CLI::warning( sprintf( '#%d %s: no result for "%s".', $id, (string) get_post( $id )?->post_title, (string) get_post_meta( $id, 'dgl_postcode', true ) ) );
 				continue;
 			}
 
 			++$placed;
-			WP_CLI::log( sprintf( '  #%d %s: %s, %s', $id, get_the_title( $id ), $found['lat'], $found['lng'] ) );
+			WP_CLI::log( sprintf( '  #%d %s: %s, %s', $id, (string) get_post( $id )?->post_title, $found['lat'], $found['lng'] ) );
 		}
 
 		WP_CLI::success( sprintf( '%d placed, %d without a result.', $placed, $failed ) );
@@ -89,7 +89,7 @@ final class Command {
 	public function pins( array $args, array $assoc ): void {
 		foreach ( Geocode::unplaced( true ) as $id ) {
 			$coords = Geocode::coords( $id );
-			WP_CLI::log( sprintf( '#%d %s [%s]: %s', $id, get_the_title( $id ), get_post_status( $id ), null === $coords ? 'no pin' : $coords['lat'] . ', ' . $coords['lng'] ) );
+			WP_CLI::log( sprintf( '#%d %s [%s]: %s', $id, (string) get_post( $id )?->post_title, get_post_status( $id ), null === $coords ? 'no pin' : $coords['lat'] . ', ' . $coords['lng'] ) );
 		}
 	}
 }
