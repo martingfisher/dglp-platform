@@ -1145,3 +1145,9 @@ clean. They are the only DGLP content on staging.
   SMTP2GO plugin's own key (never printed), what became of mail to an
   address: processed, delivered, bounced, deferred. For "did it arrive?"
   when nobody has sight of the inbox.
+- **0.45.2 deployed** (10 October 2026, production): the trace reads the
+  SMTP2GO plugin's own key the way the plugin stores it (AES-256-CTR under
+  AUTH_KEY, from the plugin's open source), so nothing has to be pasted
+  anywhere; a read-only reporting key can still be saved under Email
+  settings and is preferred when present. 0.45.1 sent the stored
+  ciphertext and SMTP2GO refused it.

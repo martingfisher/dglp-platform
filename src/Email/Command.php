@@ -288,7 +288,7 @@ final class Command {
 		}
 
 		if ( ! Smtp2go::configured() ) {
-			WP_CLI::error( 'The SMTP2GO plugin has no API key saved, so there is nothing to ask.' );
+			WP_CLI::error( 'No usable SMTP2GO key: the SMTP2GO plugin has none saved, or its key could not be read. Save a read-only reporting key (api-...) under Email settings on the System health page, or: wp option update ' . Smtp2go::OPTION_REPORT_KEY . ' api-...' );
 		}
 
 		$events = Smtp2go::activity( $address, (int) ( $assoc['limit'] ?? 10 ), (int) ( $assoc['hours'] ?? 48 ) );

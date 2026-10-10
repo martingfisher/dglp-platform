@@ -72,6 +72,12 @@ final class Settings {
 				'help'   => __( 'Staging only. With an address here every email goes there and nowhere else. Blank on a live site.', 'dgl-platform' ),
 				'kind'   => 'email',
 			],
+			'smtp2go_report_key' => [
+				'option' => Smtp2go::OPTION_REPORT_KEY,
+				'label'  => __( 'SMTP2GO reporting key', 'dgl-platform' ),
+				'help'   => __( 'A read-only SMTP2GO API key (reports permission only) so "did it arrive?" can be answered from the site: wp dgl mail trace <address>. Leave blank to keep the saved key; type "clear" to remove it. Never shown once saved.', 'dgl-platform' ),
+				'kind'   => 'secret',
+			],
 		];
 	}
 
@@ -86,7 +92,11 @@ final class Settings {
 		foreach ( self::fields() as $key => $field ) {
 			$raw = get_option( $field['option'], '' );
 
-			$out[ $key ] = 'bool' === $field['kind'] ? (bool) $raw : trim( (string) $raw );
+			$out[ $key ] = match ( $field['kind'] ) {
+				'bool'   => (bool) $raw,
+				'secret' => '' !== trim( (string) $raw ) ? 'set' : '',
+				default  => trim( (string) $raw ),
+			};
 		}
 
 		$out['effective'] = [
@@ -133,6 +143,25 @@ final class Settings {
 
 			$value = trim( sanitize_text_field( (string) ( is_scalar( $value ) ? $value : '' ) ) );
 
+			if ( 'secret' === $field['kind'] ) {
+				if ( '' === $value ) {
+					continue; // Blank keeps what is saved.
+				}
+
+				if ( 'clear' === strtolower( $value ) ) {
+					$writes[ $field['option'] ] = '';
+					continue;
+				}
+
+				if ( 1 !== preg_match( '/^api-[A-Za-z0-9]{32}$/', $value ) ) {
+					/* translators: %s: the setting. */
+					return new WP_Error( 'dgl_bad_key', sprintf( __( '%s: an SMTP2GO key reads api- followed by 32 letters and digits.', 'dgl-platform' ), $field['label'] ) );
+				}
+
+				$writes[ $field['option'] ] = $value;
+				continue;
+			}
+
 			if ( 'email' === $field['kind'] && '' !== $value && ! is_email( $value ) ) {
 				/* translators: 1: the setting, 2: what was typed. */
 				return new WP_Error( 'dgl_bad_address', sprintf( __( '%1$s: "%2$s" is not an email address.', 'dgl-platform' ), $field['label'], $value ) );
@@ -175,6 +204,7 @@ final class Settings {
 				'from_name' => [ 'type' => 'string', 'description' => 'The From name. Empty string falls back to the site name.' ],
 				'team'      => [ 'type' => 'string', 'description' => 'The inbox the review team\'s notifications go to. Empty string sends them to each moderator.' ],
 				'redirect'  => [ 'type' => 'string', 'description' => 'Divert every email to this address (staging). Empty string switches the redirect off.' ],
+				'smtp2go_report_key' => [ 'type' => 'string', 'description' => 'A read-only SMTP2GO API key (api-...) for delivery lookups. "clear" removes it. Read back only as "set" or "".' ],
 			],
 			'additionalProperties' => false,
 		];

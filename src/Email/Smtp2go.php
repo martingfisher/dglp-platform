@@ -22,15 +22,66 @@ defined( 'ABSPATH' ) || exit;
  */
 final class Smtp2go {
 
+	/** The SMTP2GO plugin's own key option (stored encrypted by recent plugin versions). */
 	public const OPTION_KEY    = 'smtp2go_api_key';
 	public const OPTION_REGION = 'smtp2go_api_region';
+
+	/** Our own option: a read-only SMTP2GO key with reports permission, for asking about delivery. */
+	public const OPTION_REPORT_KEY = 'dgl_smtp2go_report_key';
 
 	/** Seconds to wait for SMTP2GO. */
 	public const TIMEOUT = 15;
 
-	/** Whether the SMTP2GO plugin has a key for us to use. */
+	/**
+	 * The key to ask with: our own read-only reporting key first, else the
+	 * SMTP2GO plugin's own key. The plugin (1.17) stores its key as
+	 * base64( iv . AES-256-CTR( key, AUTH_KEY ) ), decrypted the same way
+	 * here; an older plugin stored it in the clear. A key SMTP2GO accepts
+	 * reads api-<32 characters>, and nothing else is ever used.
+	 */
+	public static function key(): string {
+		$own = trim( (string) get_option( self::OPTION_REPORT_KEY, '' ) );
+
+		if ( self::looks_like_key( $own ) ) {
+			return $own;
+		}
+
+		$plugin = self::unwrap( trim( (string) get_option( self::OPTION_KEY, '' ) ), defined( 'AUTH_KEY' ) ? (string) constant( 'AUTH_KEY' ) : '' );
+
+		return self::looks_like_key( $plugin ) ? $plugin : '';
+	}
+
+	public static function looks_like_key( string $candidate ): bool {
+		return 1 === preg_match( '/^api-[A-Za-z0-9]{32}$/', $candidate );
+	}
+
+	/**
+	 * The SMTP2GO plugin's stored key in the clear. Pure given the secret.
+	 */
+	public static function unwrap( string $stored, string $secret ): string {
+		if ( '' === $stored || str_starts_with( $stored, 'api-' ) ) {
+			return $stored;
+		}
+
+		if ( '' === $secret || ! function_exists( 'openssl_decrypt' ) ) {
+			return '';
+		}
+
+		$raw = base64_decode( $stored, true );
+		$len = (int) openssl_cipher_iv_length( 'AES-256-CTR' );
+
+		if ( false === $raw || strlen( $raw ) <= $len ) {
+			return '';
+		}
+
+		$plain = openssl_decrypt( substr( $raw, $len ), 'AES-256-CTR', $secret, 0, substr( $raw, 0, $len ) );
+
+		return is_string( $plain ) ? $plain : '';
+	}
+
+	/** Whether there is a usable key. */
 	public static function configured(): bool {
-		return '' !== trim( (string) get_option( self::OPTION_KEY, '' ) );
+		return '' !== self::key();
 	}
 
 	/** The API base for the account's region. */
@@ -46,10 +97,10 @@ final class Smtp2go {
 	 * @return array<int, array<string, mixed>>|WP_Error Each event: time, event, subject, recipient, sender, detail.
 	 */
 	public static function activity( string $recipient, int $limit = 10, int $hours = 48 ): array|WP_Error {
-		$key = trim( (string) get_option( self::OPTION_KEY, '' ) );
+		$key = self::key();
 
 		if ( '' === $key ) {
-			return new WP_Error( 'dgl_no_smtp2go', __( 'The SMTP2GO plugin has no API key saved, so there is nothing to ask.', 'dgl-platform' ) );
+			return new WP_Error( 'dgl_no_smtp2go', __( 'No usable SMTP2GO key: the SMTP2GO plugin has none saved, or its key could not be read. Save a read-only reporting key under Email settings.', 'dgl-platform' ) );
 		}
 
 		$since = gmdate( 'Y-m-d\TH:i:s\Z', time() - $hours * HOUR_IN_SECONDS );

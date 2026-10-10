@@ -288,6 +288,11 @@ final class Health {
 				$input[ $key ] = 'enabled' === $key
 					? isset( $_POST['dgl_mail']['enabled'] )
 					: sanitize_text_field( wp_unslash( (string) ( $_POST['dgl_mail'][ $key ] ?? '' ) ) );
+
+				// A blank secret means "keep", so it is not sent as a change.
+				if ( 'smtp2go_report_key' === $key && '' === $input[ $key ] ) {
+					unset( $input[ $key ] );
+				}
 			}
 
 			$result = \DGL\Email\Settings::update( $input );
@@ -374,6 +379,8 @@ final class Health {
 							<td>
 								<?php if ( 'bool' === $field['kind'] ) : ?>
 									<label><input type="checkbox" id="dgl-mail-<?php echo esc_attr( $key ); ?>" name="dgl_mail[enabled]" value="1" <?php checked( (bool) $settings[ $key ] ); ?>> <?php esc_html_e( 'Send email', 'dgl-platform' ); ?></label>
+								<?php elseif ( 'secret' === $field['kind'] ) : ?>
+									<input type="password" class="regular-text" id="dgl-mail-<?php echo esc_attr( $key ); ?>" name="dgl_mail[<?php echo esc_attr( $key ); ?>]" value="" autocomplete="off" placeholder="<?php echo 'set' === $settings[ $key ] ? esc_attr__( 'Saved. Leave blank to keep it.', 'dgl-platform' ) : 'api-'; ?>">
 								<?php else : ?>
 									<input type="<?php echo 'email' === $field['kind'] ? 'email' : 'text'; ?>" class="regular-text" id="dgl-mail-<?php echo esc_attr( $key ); ?>" name="dgl_mail[<?php echo esc_attr( $key ); ?>]" value="<?php echo esc_attr( (string) $settings[ $key ] ); ?>">
 								<?php endif; ?>
