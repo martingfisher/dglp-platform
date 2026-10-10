@@ -257,6 +257,55 @@ final class Command {
 	 * @param string[]              $args
 	 * @param array<string, string> $assoc
 	 */
+	/**
+	 * What SMTP2GO recorded for an address: processed, delivered, bounced,
+	 * deferred. Asked from the server with the SMTP2GO plugin's own key,
+	 * which is never printed.
+	 *
+	 * ## OPTIONS
+	 *
+	 * <address>
+	 * : The recipient to look up.
+	 *
+	 * [--limit=<n>]
+	 * : How many events, newest first. Default 10.
+	 *
+	 * [--hours=<n>]
+	 * : How far back to look. Default 48.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp dgl mail trace hello@example.org
+	 *
+	 * @param string[]              $args
+	 * @param array<string, string> $assoc
+	 */
+	public function trace( array $args, array $assoc ): void {
+		$address = trim( (string) ( $args[0] ?? '' ) );
+
+		if ( ! is_email( $address ) ) {
+			WP_CLI::error( 'Give an email address to look up.' );
+		}
+
+		if ( ! Smtp2go::configured() ) {
+			WP_CLI::error( 'The SMTP2GO plugin has no API key saved, so there is nothing to ask.' );
+		}
+
+		$events = Smtp2go::activity( $address, (int) ( $assoc['limit'] ?? 10 ), (int) ( $assoc['hours'] ?? 48 ) );
+
+		if ( is_wp_error( $events ) ) {
+			WP_CLI::error( $events->get_error_message() );
+		}
+
+		if ( [] === $events ) {
+			WP_CLI::warning( sprintf( 'SMTP2GO has nothing for %s in that window. Either nothing was handed to it, or the plugin is not the route the mail took.', $address ) );
+			return;
+		}
+
+		\WP_CLI\Utils\format_items( 'table', $events, [ 'time', 'event', 'subject', 'recipient', 'sender', 'detail' ] );
+		WP_CLI::success( sprintf( '%d event(s) from SMTP2GO (%s).', count( $events ), Smtp2go::base() ) );
+	}
+
 	public function send( array $args, array $assoc ): void {
 		$address = (string) ( $args[0] ?? '' );
 

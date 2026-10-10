@@ -198,3 +198,25 @@ final class Harness {
 		exit( $failed > 0 ? 1 : 0 );
 	}
 }
+
+if ( ! class_exists( 'WP_Error' ) ) {
+	/** Enough of WordPress's error object for pure code to return one. */
+	class WP_Error {
+		/** @param array<string, mixed> $data */
+		public function __construct( public string $code = '', public string $message = '', public mixed $data = null ) {}
+
+		public function get_error_code(): string {
+			return $this->code;
+		}
+
+		public function get_error_message(): string {
+			return $this->message;
+		}
+	}
+}
+
+if ( ! function_exists( 'is_wp_error' ) ) {
+	function is_wp_error( mixed $thing ): bool {
+		return $thing instanceof WP_Error;
+	}
+}

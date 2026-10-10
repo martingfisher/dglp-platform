@@ -1140,3 +1140,8 @@ clean. They are the only DGLP content on staging.
   `dgl_mail_from` and `dgl_mail_team` set to hello@doinggoodleeds.org.uk.
   Venue enquiries still go to the venue's contact and members to their
   own addresses. Unit 2235, integration 1375.
+- **0.45.1 deployed** (10 October 2026, production): `wp dgl mail trace
+  <address>` asks SMTP2GO's activity log, from the server with the
+  SMTP2GO plugin's own key (never printed), what became of mail to an
+  address: processed, delivered, bounced, deferred. For "did it arrive?"
+  when nobody has sight of the inbox.
