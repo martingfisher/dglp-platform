@@ -137,7 +137,7 @@ final class Health {
 			'group'  => __( 'Email', 'dgl-platform' ),
 			'what'   => __( 'Sending', 'dgl-platform' ),
 			'value'  => Routing::is_enabled() ? __( 'On.', 'dgl-platform' ) : __( 'Off. No email of any kind is sent: not approvals, not reminders, not invitations.', 'dgl-platform' ),
-			'todo'   => Routing::is_enabled() ? '' : __( 'Set DGL_MAIL_ENABLED in wp-config.php, or run: wp option update dgl_mail_enabled 1', 'dgl-platform' ),
+			'todo'   => Routing::is_enabled() ? '' : __( 'Switch it on in Email settings below, or set DGL_MAIL_ENABLED in wp-config.php.', 'dgl-platform' ),
 		];
 		$rows[] = [
 			'status' => '' === $redirect ? self::GOOD : self::WARN,
@@ -147,7 +147,7 @@ final class Health {
 				? __( 'None. Email goes to the real recipients.', 'dgl-platform' )
 				/* translators: %s: an email address. */
 				: sprintf( __( 'Every email goes to %s and nowhere else. Right for staging, wrong for a live site.', 'dgl-platform' ), $redirect ),
-			'todo'   => '' === $redirect ? '' : __( 'Remove DGL_MAIL_REDIRECT from wp-config.php before launch.', 'dgl-platform' ),
+			'todo'   => '' === $redirect ? '' : ( defined( 'DGL_MAIL_REDIRECT' ) ? __( 'Remove DGL_MAIL_REDIRECT from wp-config.php before launch.', 'dgl-platform' ) : __( 'Clear the redirect in Email settings below before launch.', 'dgl-platform' ) ),
 		];
 		$from   = Routing::from_address();
 		$rows[] = [
@@ -155,7 +155,18 @@ final class Health {
 			'group'  => __( 'Email', 'dgl-platform' ),
 			'what'   => __( 'From address', 'dgl-platform' ),
 			'value'  => '' !== $from ? $from : __( 'The WordPress default (wordpress@ this domain), which some inboxes distrust.', 'dgl-platform' ),
-			'todo'   => '' !== $from ? '' : __( 'Set it with: wp option update dgl_mail_from partnership@doinggoodleeds.org.uk', 'dgl-platform' ),
+			'todo'   => '' !== $from ? '' : __( 'Set it in Email settings below, on the domain the mail service has verified.', 'dgl-platform' ),
+		];
+		$team   = Routing::team_address();
+		$rows[] = [
+			'status' => '' !== $team ? self::GOOD : self::WARN,
+			'group'  => __( 'Email', 'dgl-platform' ),
+			'what'   => __( 'Team inbox', 'dgl-platform' ),
+			'value'  => '' !== $team
+				/* translators: %s: an email address. */
+				? sprintf( __( 'The review team\'s notifications go to %s.', 'dgl-platform' ), $team )
+				: __( 'None. Each moderator is mailed at their own address.', 'dgl-platform' ),
+			'todo'   => '' !== $team ? '' : __( 'Set one in Email settings below if the team share an inbox.', 'dgl-platform' ),
 		];
 
 		// ---- Index.
@@ -265,7 +276,31 @@ final class Health {
 			wp_die( esc_html__( 'You do not have permission to see this.', 'dgl-platform' ) );
 		}
 
-		$rows   = self::rows();
+		$saved = '';
+		$error = '';
+
+		if ( 'POST' === ( $_SERVER['REQUEST_METHOD'] ?? 'GET' ) && isset( $_POST['dgl_mail_settings'] ) ) {
+			check_admin_referer( \DGL\Email\Settings::NONCE );
+
+			$input = [];
+
+			foreach ( array_keys( \DGL\Email\Settings::fields() ) as $key ) {
+				$input[ $key ] = 'enabled' === $key
+					? isset( $_POST['dgl_mail']['enabled'] )
+					: sanitize_text_field( wp_unslash( (string) ( $_POST['dgl_mail'][ $key ] ?? '' ) ) );
+			}
+
+			$result = \DGL\Email\Settings::update( $input );
+
+			if ( is_wp_error( $result ) ) {
+				$error = $result->get_error_message();
+			} else {
+				$saved = __( 'Email settings saved.', 'dgl-platform' );
+			}
+		}
+
+		$settings = \DGL\Email\Settings::read();
+		$rows     = self::rows();
 		$counts = array_count_values( array_column( $rows, 'status' ) );
 		$labels = [
 			self::GOOD => __( 'Fine', 'dgl-platform' ),
@@ -320,6 +355,41 @@ final class Health {
 				</tbody>
 			</table>
 			<p class="description"><?php esc_html_e( 'The same checks from the command line: wp dgl mail status, wp dgl digest status, wp dgl index status, wp dgl series status <id>.', 'dgl-platform' ); ?></p>
+
+			<h2 id="dgl-mail-settings"><?php esc_html_e( 'Email settings', 'dgl-platform' ); ?></h2>
+			<p class="description"><?php esc_html_e( 'Where the platform\'s email comes from and goes to. Saving takes effect at once.', 'dgl-platform' ); ?></p>
+			<?php if ( '' !== $saved ) : ?>
+				<div class="notice notice-success inline"><p><?php echo esc_html( $saved ); ?></p></div>
+			<?php elseif ( '' !== $error ) : ?>
+				<div class="notice notice-error inline"><p><?php echo esc_html( $error ); ?></p></div>
+			<?php endif; ?>
+			<form method="post" action="">
+				<?php wp_nonce_field( \DGL\Email\Settings::NONCE ); ?>
+				<input type="hidden" name="dgl_mail_settings" value="1">
+				<table class="form-table" role="presentation">
+					<?php foreach ( \DGL\Email\Settings::fields() as $key => $field ) : ?>
+						<?php $override = $settings['overridden'][ $key ] ?? ''; ?>
+						<tr>
+							<th scope="row"><label for="dgl-mail-<?php echo esc_attr( $key ); ?>"><?php echo esc_html( $field['label'] ); ?></label></th>
+							<td>
+								<?php if ( 'bool' === $field['kind'] ) : ?>
+									<label><input type="checkbox" id="dgl-mail-<?php echo esc_attr( $key ); ?>" name="dgl_mail[enabled]" value="1" <?php checked( (bool) $settings[ $key ] ); ?>> <?php esc_html_e( 'Send email', 'dgl-platform' ); ?></label>
+								<?php else : ?>
+									<input type="<?php echo 'email' === $field['kind'] ? 'email' : 'text'; ?>" class="regular-text" id="dgl-mail-<?php echo esc_attr( $key ); ?>" name="dgl_mail[<?php echo esc_attr( $key ); ?>]" value="<?php echo esc_attr( (string) $settings[ $key ] ); ?>">
+								<?php endif; ?>
+								<p class="description"><?php echo esc_html( $field['help'] ); ?></p>
+								<?php if ( '' !== $override ) : ?>
+									<p class="description"><strong><?php
+										/* translators: %s: a constant name. */
+										echo esc_html( sprintf( __( 'Overridden by %s in wp-config.php: the value here is not the one in force.', 'dgl-platform' ), $override ) );
+									?></strong></p>
+								<?php endif; ?>
+							</td>
+						</tr>
+					<?php endforeach; ?>
+				</table>
+				<?php submit_button( __( 'Save email settings', 'dgl-platform' ) ); ?>
+			</form>
 		</div>
 		<?php
 	}

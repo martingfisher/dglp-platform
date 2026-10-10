@@ -1130,3 +1130,13 @@ clean. They are the only DGLP content on staging.
   button, because the change reloads the page and the wait made people
   press the switch again. On submit the Save reads "Saving…" and the form
   locks until the page returns; choosing what is already chosen says so.
+- **0.45.0 deployed** (10 October 2026, production): the mail settings
+  (sending, From address and name, team inbox, redirect) on the System
+  health page in wp-admin with a Save button, and as WordPress abilities
+  `dgl/get-mail-settings` and `dgl/update-mail-settings`, so the team
+  never need the console. New `dgl_mail_team` option: with an inbox set,
+  the review team's notifications go there and not to each moderator.
+  Martin's instruction, done the same day: `dgl_mail_redirect` deleted,
+  `dgl_mail_from` and `dgl_mail_team` set to hello@doinggoodleeds.org.uk.
+  Venue enquiries still go to the venue's contact and members to their
+  own addresses. Unit 2235, integration 1375.

@@ -97,6 +97,7 @@ final class Plugin {
 		Guard::init();
 		Revisions::init();
 		Mailer::init();
+		\DGL\Email\Settings::init();
 		\DGL\Spaces\Cascade::init();
 		\DGL\Spaces\Enquiry::init();
 		\DGL\Spaces\Geocode::init();

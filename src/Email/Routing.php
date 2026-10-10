@@ -38,6 +38,9 @@ final class Routing {
 	/** Site option holding the From name. */
 	public const OPTION_FROM_NAME = 'dgl_mail_from_name';
 
+	/** Site option holding the inbox the review team's notifications go to. */
+	public const OPTION_TEAM = 'dgl_mail_team';
+
 	/**
 	 * Whether the plugin sends at all.
 	 *
@@ -173,6 +176,16 @@ final class Routing {
 		$from = trim( (string) get_option( self::OPTION_FROM, '' ) );
 
 		return '' !== $from && is_email( $from ) ? $from : '';
+	}
+
+	/**
+	 * The inbox the review team's notifications go to, or '' to mail each
+	 * moderator at their own address.
+	 */
+	public static function team_address(): string {
+		$team = trim( (string) get_option( self::OPTION_TEAM, '' ) );
+
+		return '' !== $team && is_email( $team ) ? $team : '';
 	}
 
 	/**

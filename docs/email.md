@@ -30,6 +30,21 @@ and closed accounts are never written to.
 | Divert all mail | `DGL_MAIL_REDIRECT` | `dgl_mail_redirect` | none |
 | From address | — | `dgl_mail_from` | WordPress default |
 | From name | — | `dgl_mail_from_name` | Site name |
+| Team inbox | — | `dgl_mail_team` | none: each moderator's own address |
+
+Since 0.45.0 (10 October 2026) all five can also be set on the System
+health page in wp-admin (DGLP Platform > System health > Email settings),
+so the team never need the console, and are offered as WordPress
+abilities, `dgl/get-mail-settings` and `dgl/update-mail-settings`, for an
+agent with a connection to the site. `wp option update` still works. A
+constant in wp-config.php wins over the option, and the form says so when
+one does.
+
+**Team inbox.** With an address set, everything addressed to the review
+team (new submissions, edits, joining requests, organisation changes) goes
+to that one inbox and not to each moderator's own address. Production
+uses hello@doinggoodleeds.org.uk. Blank sends to every moderator, minus
+whoever just acted.
 
 Sending is off until somebody turns it on. Mail that goes out before anyone has
 decided what it sends from is mail that trains a spam filter against the domain.

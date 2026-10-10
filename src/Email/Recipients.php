@@ -48,6 +48,12 @@ final class Recipients {
 	 * @return string[]
 	 */
 	public static function for_audience( string $audience, int $post_id, int $actor_id ): array {
+		// One shared inbox for the team, when the site has one, rather than
+		// a copy to every moderator's own address.
+		if ( Plan::NOTIFY_MODERATORS === $audience && '' !== Routing::team_address() ) {
+			return [ Routing::team_address() ];
+		}
+
 		$ids = match ( $audience ) {
 			Plan::NOTIFY_MEMBER     => self::member_ids( $post_id ),
 			Plan::NOTIFY_MODERATORS => self::moderator_ids( $actor_id ),

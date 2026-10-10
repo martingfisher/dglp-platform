@@ -65,6 +65,10 @@ final class Command {
 				'value'   => Routing::from_name(),
 			],
 			[
+				'setting' => 'Team inbox',
+				'value'   => Routing::team_address() ?: '(none: each moderator is mailed at their own address)',
+			],
+			[
 				'setting' => 'Email logo',
 				'value'   => Logo::email_url() ?? 'none, the header falls back to text',
 			],

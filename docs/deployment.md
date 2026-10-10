@@ -241,6 +241,20 @@ The topic list ships in the plugin and seeds itself:
   in the top bar and no `ct-search-box`; `dgl probe page / ct-search-box`
   should find nothing.
 
+## After 0.45.0: mail settings without the console
+
+- The mail settings (sending, From address and name, team inbox,
+  redirect) are on the System health page in wp-admin under Email
+  settings, and as the abilities `dgl/get-mail-settings` and
+  `dgl/update-mail-settings`. `wp option update` still works too. If the
+  Wordify connector ever stops listing `run_wp_cli` after a reconnect,
+  load it by its exact name: it was still there on 10 October 2026 when
+  a catalogue search could not find it.
+- Production mail from 10 October 2026: redirect off; From address and
+  team inbox hello@doinggoodleeds.org.uk. A venue's enquiries still go
+  to the venue's own contact address, and members are mailed at their
+  own.
+
 ## Demo content
 
 `wp dgl demo events --org=<id> --images` makes seven varied live events

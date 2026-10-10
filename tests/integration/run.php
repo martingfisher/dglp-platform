@@ -4944,6 +4944,40 @@ $ok( true === \DGL\Spaces\Visibility::show( $sq_armley, $vs_owner_ctx ) && ! \DG
 $ok( true === \DGL\Spaces\Visibility::hide( $sq_hall, $vs_owner_ctx ) && ! in_array( $sq_hall, array_map( static fn( array $s ): int => (int) $s['post']->ID, \DGL\Spaces\SpacesQuery::spaces( $sq_armley ) ), true ) && ! isset( \DGL\Spaces\Enquiry::options( $sq_armley )[ (string) $sq_hall ] ), 'a hidden space leaves the venue page and the enquiry form' );
 \DGL\Spaces\Visibility::show( $sq_hall, $vs_owner_ctx );
 
+$group( 'Mail settings: read and changed from the form and the abilities; the team inbox' );
+
+$ms_before = [ get_option( \DGL\Email\Routing::OPTION_REDIRECT, '' ), get_option( \DGL\Email\Routing::OPTION_FROM, '' ) ];
+delete_option( \DGL\Email\Routing::OPTION_TEAM );
+$ms_bad = \DGL\Email\Settings::update( [ 'from' => 'not-an-address' ] );
+$ok( is_wp_error( $ms_bad ) && str_contains( $ms_bad->get_error_message(), 'not an email address' ), 'a bad address is refused with the setting named' );
+$ms_now = \DGL\Email\Settings::update( [ 'redirect' => 'martin@example.org', 'from' => 'hello@example.org', 'team' => 'hello@example.org' ] );
+$ok( ! is_wp_error( $ms_now ) && 'martin@example.org' === $ms_now['redirect'] && 'hello@example.org' === $ms_now['from'] && 'hello@example.org' === $ms_now['effective']['team'], 'three addresses set in one call and read back' );
+$ms_now = \DGL\Email\Settings::update( [ 'redirect' => '' ] );
+$ok( '' === $ms_now['redirect'] && '' === \DGL\Email\Routing::configured_redirect() && 'hello@example.org' === \DGL\Email\Routing::from_address(), 'an empty string clears the redirect and leaves the others alone' );
+$ms_team = \DGL\Email\Recipients::for_audience( \DGL\Workflow\Plan::NOTIFY_MODERATORS, 0, 0 );
+$ok( [ 'hello@example.org' ] === $ms_team, 'with a team inbox set, the review team\'s mail goes there and only there' );
+\DGL\Email\Settings::update( [ 'team' => '' ] );
+$ms_each = \DGL\Email\Recipients::for_audience( \DGL\Workflow\Plan::NOTIFY_MODERATORS, 0, 0 );
+$ok( ! in_array( 'hello@example.org', $ms_each, true ) && count( $ms_each ) >= 1, 'without one, each moderator is mailed' );
+$ms_rows = array_values( array_filter( \DGL\Admin\Health::rows(), static fn( array $r ): bool => 'Team inbox' === $r['what'] ) );
+$ok( 1 === count( $ms_rows ) && str_contains( $ms_rows[0]['value'], 'Each moderator' ), 'the health page reports the team inbox' );
+if ( function_exists( 'wp_get_ability' ) ) {
+	$ms_get = wp_get_ability( 'dgl/get-mail-settings' );
+	$ms_set = wp_get_ability( 'dgl/update-mail-settings' );
+	$ok( null !== $ms_get && null !== $ms_set && true === ( $ms_get->get_meta()['public'] ?? false ), 'both abilities are registered and public' );
+	wp_set_current_user( 1 );
+	$ms_via = $ms_set->execute( [ 'team' => 'team@example.org' ] );
+	$ms_read = $ms_get->execute();
+$ok( ! is_wp_error( $ms_via ) && 'team@example.org' === \DGL\Email\Routing::team_address() && ! is_wp_error( $ms_read ) && 'team@example.org' === ( $ms_read['team'] ?? '' ), 'the update ability changes a setting and the get ability reads it back' . ( is_wp_error( $ms_via ) ? ' (update: ' . $ms_via->get_error_message() . ')' : '' ) . ( is_wp_error( $ms_read ) ? ' (read: ' . $ms_read->get_error_message() . ')' : '' ) );
+	wp_set_current_user( 0 );
+} else {
+	$ok( true, 'abilities API absent on this WordPress; registration skipped' );
+}
+update_option( \DGL\Email\Routing::OPTION_REDIRECT, $ms_before[0] );
+update_option( \DGL\Email\Routing::OPTION_FROM, $ms_before[1] );
+// The team inbox is never left set: an earlier test's expectations assume each moderator is mailed.
+delete_option( \DGL\Email\Routing::OPTION_TEAM );
+
 /* ----------------------------------------------------------------- report */
 
 echo "\n" . str_repeat( '-', 60 ) . "\n";
