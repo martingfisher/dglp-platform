@@ -1186,6 +1186,7 @@ final class Controller {
 				'orgs'          => Access::can( $user->user_id, Policy::REASSIGN_ITEM, $is_edit ? (int) $parent->ID : $post_id ) ? \DGL\Org\Org::approved() : [],
 				'moved'         => isset( $_GET['moved'] ), // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 				'pinned_until'  => \DGL\Workflow\Pins::is_pinned( $post_id ) ? (string) wp_date( (string) get_option( 'date_format', 'j F Y' ), \DGL\Workflow\Pins::until( $post_id )->getTimestamp() ) : '',
+				'pin_replaces'  => \DGL\Workflow\Pins::is_pinned( $post_id ) ? null : \DGL\Workflow\Pins::would_replace( $post_id ),
 				'featured'      => isset( $_GET['featured'] ) ? (string) $_GET['featured'] : null, // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 				'can_restore'   => ! $is_edit && Access::can( $user->user_id, Policy::RESTORE_ITEM, $post_id ),
 				// The team's own notes, with who wrote each.

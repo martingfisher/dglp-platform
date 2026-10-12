@@ -248,7 +248,7 @@ final class Content {
 					'blocks'  => [
 						[ 'p', sprintf(
 							/* translators: 1: days, 2: days. */
-							__( 'Open any live event or news story. The "Feature it" card holds it at the top of its public list for %1$d or %2$d days with a Featured stamp. It drops back on its own when the time is up and the organisation is told either way. "Stop featuring it" ends it early. Nothing longer than a fortnight, so nothing is featured by neglect.', 'dgl-platform' ),
+							__( 'Open any live event or news story. The "Feature it" card holds it at the top of its public list for %1$d or %2$d days with a Featured stamp. It drops back on its own when the time is up and the organisation is told either way. "Stop featuring it" ends it early. Nothing longer than a fortnight, so nothing is featured by neglect. One item per list at a time: featuring another event takes the stamp off the one before, and the card names it before you press.', 'dgl-platform' ),
 							Pins::choices()[0],
 							Pins::choices()[1]
 						) ],

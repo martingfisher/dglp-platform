@@ -286,11 +286,36 @@ $check_word = static fn( string $status ): string => match ( $status ) {
 					</form>
 				<?php else : ?>
 					<p class="dgl-help"><?php esc_html_e( 'Holds it at the top of its public list for a week or a fortnight, with a Featured stamp, then it drops back on its own. The organisation is told.', 'dgl-platform' ); ?></p>
+					<?php
+					$pin_other   = $data['pin_replaces'] ?? null;
+					$pin_confirm = '';
+					if ( ! empty( $pin_other ) ) :
+						$pin_confirm = sprintf(
+							/* translators: 1: a kind of item, 2: a title. */
+							__( 'This replaces the featured %1$s, "%2$s". It stops being featured straight away. Go ahead?', 'dgl-platform' ),
+							$pin_other['noun'],
+							$pin_other['title']
+						);
+						?>
+						<div class="dgl-alert dgl-alert--warn">
+							<p>
+								<?php
+								printf(
+									/* translators: 1: a kind of item, 2: a linked title, 3: a date. */
+									esc_html__( 'This replaces the featured %1$s. Only one %1$s is featured at a time, so %2$s stops being featured straight away (it was due to run until %3$s).', 'dgl-platform' ),
+									esc_html( $pin_other['noun'] ),
+									'<a href="' . esc_url( Router::url( 'review', (string) $pin_other['id'] ) ) . '">' . esc_html( $pin_other['title'] ) . '</a>',
+									esc_html( $pin_other['until'] )
+								);
+								?>
+							</p>
+						</div>
+					<?php endif; ?>
 					<form method="post" class="dgl-form dgl-form--bare">
 						<?php wp_nonce_field( Wizard::NONCE ); ?>
 						<div class="dgl-decision__actions">
-							<button class="dgl-button dgl-button--secondary" type="submit" name="dgl_intent" value="pin" onclick="this.form.dgl_pin_days.value=7"><?php esc_html_e( 'Feature for 7 days', 'dgl-platform' ); ?></button>
-							<button class="dgl-button dgl-button--secondary" type="submit" name="dgl_intent" value="pin" onclick="this.form.dgl_pin_days.value=14"><?php esc_html_e( 'Feature for 14 days', 'dgl-platform' ); ?></button>
+							<button class="dgl-button dgl-button--secondary" type="submit" name="dgl_intent" value="pin" onclick="this.form.dgl_pin_days.value=7"<?php echo '' !== $pin_confirm ? ' data-dgl-confirm="' . esc_attr( $pin_confirm ) . '"' : ''; ?>><?php esc_html_e( 'Feature for 7 days', 'dgl-platform' ); ?></button>
+							<button class="dgl-button dgl-button--secondary" type="submit" name="dgl_intent" value="pin" onclick="this.form.dgl_pin_days.value=14"<?php echo '' !== $pin_confirm ? ' data-dgl-confirm="' . esc_attr( $pin_confirm ) . '"' : ''; ?>><?php esc_html_e( 'Feature for 14 days', 'dgl-platform' ); ?></button>
 							<input type="hidden" name="dgl_pin_days" value="7">
 						</div>
 					</form>

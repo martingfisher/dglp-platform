@@ -80,9 +80,15 @@ final class MetaBoxes {
 				'default'
 			);
 
+			// Listings have a lead slot to feature into; venues and spaces are
+			// found, not featured, the same as on the review screen.
+			if ( PostTypes::KIND_LISTING !== PostTypes::kind_of( $post_type ) ) {
+				continue;
+			}
+
 			add_meta_box(
 				'dgl-featured-' . $post_type,
-				__( 'Featured', 'dgl-platform' ),
+				__( 'Featured item', 'dgl-platform' ),
 				[ self::class, 'render_featured' ],
 				$post_type,
 				'side',
@@ -109,7 +115,7 @@ final class MetaBoxes {
 				(string) wp_date( (string) get_option( 'date_format', 'j F Y' ), $until->getTimestamp() )
 			) ) . '</p>';
 		} else {
-			echo '<p>' . esc_html__( 'Not featured. A featured item takes the large slot at the top of its list and drops back on its own.', 'dgl-platform' ) . '</p>';
+			echo '<p>' . esc_html__( 'Not featured. A featured item takes the large slot at the top of its list and drops back on its own. One at a time.', 'dgl-platform' ) . '</p>';
 		}
 
 		if ( ! $live ) {
@@ -123,6 +129,22 @@ final class MetaBoxes {
 		}
 
 		wp_nonce_field( self::PIN_NONCE, self::PIN_NONCE );
+
+		$other = Pins::is_pinned( $post_id ) ? null : Pins::would_replace( $post_id );
+
+		if ( null !== $other ) {
+			echo '<div class="notice notice-warning inline"><p><strong>' . esc_html( sprintf(
+				/* translators: %s: a kind of item. */
+				__( 'This replaces the featured %s.', 'dgl-platform' ),
+				$other['noun']
+			) ) . '</strong> ' . esc_html( sprintf(
+				/* translators: 1: a kind of item, 2: a title, 3: a date. */
+				__( 'Only one %1$s is featured at a time, so "%2$s" stops being featured when you press Update (it was due to run until %3$s).', 'dgl-platform' ),
+				$other['noun'],
+				$other['title'],
+				$other['until']
+			) ) . '</p></div>';
+		}
 
 		echo '<p><label class="screen-reader-text" for="dgl-feature">' . esc_html__( 'Feature this item', 'dgl-platform' ) . '</label>';
 		echo '<select id="dgl-feature" name="dgl_feature" style="width:100%">';
@@ -138,6 +160,7 @@ final class MetaBoxes {
 		}
 
 		echo '</select></p>';
+
 		echo '<p class="description">' . esc_html__( 'Applied when you press Update.', 'dgl-platform' ) . '</p>';
 	}
 

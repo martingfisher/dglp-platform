@@ -143,8 +143,16 @@ with a Featured stamp. It drops back on its own when the time is up, hourly
 by cron, and the organisation is told either way. "Stop featuring it" ends
 it early. Nothing longer than a fortnight.
 
+One featured item per list at a time, because each list has one large lead
+slot. Featuring a second event takes the stamp off the first, and the first
+organisation is told it is no longer featured. Before you press the button,
+the card names the item it would replace and when that one was due to end.
+News, events and training are separate lists, so a featured story and a
+featured event sit side by side. Venues and spaces are not featured: they
+have no lead slot, so neither the review screen nor wp-admin offers it.
+
 You can also do it from wp-admin: open the item under News or Events, find
-the **Featured** box on the right, pick "Feature for 7 days" or "14 days"
+the **Featured item** box on the right, pick "Feature for 7 days" or "14 days"
 (or "Stop featuring it") and press Update. Same seven or fourteen days, same
 audit row, same people: moderators and administrators, on live items only.
 

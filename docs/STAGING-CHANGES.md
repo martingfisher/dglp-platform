@@ -1151,3 +1151,13 @@ clean. They are the only DGLP content on staging.
   anywhere; a read-only reporting key can still be saved under Email
   settings and is preferred when present. 0.45.1 sent the stored
   ciphertext and SMTP2GO refused it.
+- **0.46.0 deployed** (12 October 2026, production): one featured item per
+  list at a time (news, events, training, grants, volunteering each have
+  their own). Featuring an item takes the pin off any other of the same
+  type, with an audit row and the "No longer featured" notice to that
+  organisation. The review card shows a warning box naming the item that
+  would be replaced and its end date, and the Feature buttons ask to
+  confirm; the wp-admin box shows the same warning and is retitled
+  "Featured item". The box is no longer on venues and spaces, matching the
+  review screen, and the rule refuses them by any route. Unit 2248,
+  integration 1388.

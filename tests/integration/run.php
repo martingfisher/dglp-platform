@@ -3416,6 +3416,23 @@ $pin_ids = array_map( 'intval', (array) $pin_query->query( [ 'post_type' => Post
 $ok( array_search( $pin_soon, $pin_ids, true ) < array_search( $pin_late, $pin_ids, true ), 'and the list goes back to date order' );
 $ok( true === \DGL\Workflow\Pins::pin( $pin_late, 7, $mod ) && true === \DGL\Workflow\Pins::unpin( $pin_late, $mod ) && ! \DGL\Workflow\Pins::is_pinned( $pin_late ), 'a moderator can take a pin off by hand' );
 
+// One at a time per list: the lead slot holds one item.
+$ok( true === \DGL\Workflow\Pins::pin( $pin_late, 14, $mod ) && null === \DGL\Workflow\Pins::would_replace( $pin_late ), 'with one event featured, there is nothing for it to replace' );
+$pin_warn = \DGL\Workflow\Pins::would_replace( $pin_soon );
+$ok( null !== $pin_warn && 'event' === $pin_warn['noun'] && $pin_late === $pin_warn['id'] && get_the_title( $pin_late ) === $pin_warn['title'] && '' !== $pin_warn['until'], 'a second event can say which one it would replace, and until when' );
+$ok( true === \DGL\Workflow\Pins::pin( $pin_soon, 7, $mod ) && \DGL\Workflow\Pins::is_pinned( $pin_soon ) && ! \DGL\Workflow\Pins::is_pinned( $pin_late ), 'featuring the second takes the first off' );
+$ok( [ $pin_soon ] === \DGL\Workflow\Pins::featured( PostTypes::EVENT ), 'so exactly one event is featured' );
+$pin_said = array_values( array_filter( \DGL\Dashboard\Notifications::for_org( $org_a, 5 ), static fn( array $n ): bool => 'No longer featured' === $n['title'] ) )[0] ?? null;
+$ok( null !== $pin_said, 'the organisation of the first is told it is no longer featured' );
+$pin_story = wp_insert_post( [ 'post_type' => PostTypes::NEWS, 'post_title' => 'Pin story', 'post_status' => Statuses::LIVE, 'post_author' => $alice ] );
+update_post_meta( $pin_story, DGL_FIXTURE_FLAG, '1' );
+update_post_meta( $pin_story, Meta::ITEM_ORG, $org_a );
+$ok( null === \DGL\Workflow\Pins::would_replace( $pin_story ) && true === \DGL\Workflow\Pins::pin( $pin_story, 7, $mod ), 'a news story is featured on its own list' );
+$ok( \DGL\Workflow\Pins::is_pinned( $pin_soon ) && \DGL\Workflow\Pins::is_pinned( $pin_story ), 'and the featured event is untouched' );
+\DGL\Workflow\Pins::unpin( $pin_soon, $mod );
+\DGL\Workflow\Pins::unpin( $pin_story, $mod );
+$ok( [] === \DGL\Workflow\Pins::featured( PostTypes::EVENT ) && [] === \DGL\Workflow\Pins::featured( PostTypes::NEWS ), 'and both lists are clear again' );
+
 $group( 'Add to calendar: one event as an .ics file, and a feed of everything live' );
 
 $ics_tz    = wp_timezone();
@@ -4017,6 +4034,14 @@ wp_set_current_user( $mod );
 $_POST = [ 'dgl_admin_feature' => wp_create_nonce( 'dgl_admin_feature' ), 'dgl_feature' => '14' ];
 \DGL\Admin\MetaBoxes::save( $box_item, get_post( $box_item ) );
 $ok( \DGL\Workflow\Pins::is_pinned( $box_item ), 'a moderator features an item from the edit screen' );
+$box_other = $make_item( $org_a, $alice, Statuses::LIVE );
+ob_start();
+\DGL\Admin\MetaBoxes::render_featured( get_post( $box_other ) );
+$box_html = (string) ob_get_clean();
+$ok( str_contains( $box_html, 'This replaces the featured event.' ) && str_contains( $box_html, esc_html( get_the_title( $box_item ) ) ), 'the box on another event names the one it would replace' );
+ob_start();
+\DGL\Admin\MetaBoxes::render_featured( get_post( $box_item ) );
+$ok( ! str_contains( (string) ob_get_clean(), 'This replaces the featured' ), 'the featured one carries no warning about itself' );
 $_POST = [ 'dgl_admin_feature' => wp_create_nonce( 'dgl_admin_feature' ), 'dgl_feature' => 'stop' ];
 \DGL\Admin\MetaBoxes::save( $box_item, get_post( $box_item ) );
 $ok( ! \DGL\Workflow\Pins::is_pinned( $box_item ), 'and stops featuring it the same way' );
@@ -4028,6 +4053,17 @@ wp_set_current_user( $mod );
 $_POST = [ 'dgl_feature' => '7' ];
 \DGL\Admin\MetaBoxes::save( $box_item, get_post( $box_item ) );
 $ok( ! \DGL\Workflow\Pins::is_pinned( $box_item ), 'no nonce, no change' );
+
+// Venues and spaces are found, not featured: no box, and the rule refuses.
+require_once ABSPATH . 'wp-admin/includes/template.php';
+\DGL\Admin\MetaBoxes::register();
+$box_ids = static fn( string $type ): array => array_keys( $GLOBALS['wp_meta_boxes'][ $type ]['side']['default'] ?? [] );
+$ok( in_array( 'dgl-featured-' . PostTypes::EVENT, $box_ids( PostTypes::EVENT ), true ) && in_array( 'dgl-featured-' . PostTypes::NEWS, $box_ids( PostTypes::NEWS ), true ), 'events and news carry the Featured item box' );
+$ok( ! in_array( 'dgl-featured-' . PostTypes::VENUE, $box_ids( PostTypes::VENUE ), true ) && ! in_array( 'dgl-featured-' . PostTypes::SPACE, $box_ids( PostTypes::SPACE ), true ), 'venues and spaces do not' );
+$box_space = wp_insert_post( [ 'post_type' => PostTypes::SPACE, 'post_title' => 'Box space', 'post_status' => Statuses::LIVE, 'post_author' => $alice ] );
+update_post_meta( $box_space, DGL_FIXTURE_FLAG, '1' );
+$box_refused = \DGL\Workflow\Pins::pin( (int) $box_space, 7, $mod );
+$ok( is_wp_error( $box_refused ) && 'dgl_not_featurable' === $box_refused->get_error_code() && ! \DGL\Workflow\Pins::is_pinned( (int) $box_space ), 'and a space cannot be featured by any route' );
 $_POST = [];
 wp_set_current_user( 0 );
 

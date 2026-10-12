@@ -6,6 +6,9 @@
  * "Featured" stamp; the hourly hook takes the pin off when the time is up.
  * Never longer than fourteen days, so nothing is featured by neglect.
  *
+ * One at a time per list: each list has one large lead slot, so featuring
+ * an item takes the pin off whatever else of its type was featured.
+ *
  * @package DGL
  */
 
@@ -54,6 +57,55 @@ final class Pins {
 	}
 
 	/**
+	 * The live items of a type featured right now, newest pin first.
+	 *
+	 * @return int[]
+	 */
+	public static function featured( string $post_type, int $except = 0 ): array {
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$ids = $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT p.ID FROM {$wpdb->posts} p INNER JOIN {$wpdb->postmeta} m ON ( m.post_id = p.ID AND m.meta_key = %s )
+				WHERE p.post_type = %s AND p.post_status = %s AND m.meta_value > %s AND p.ID <> %d
+				ORDER BY m.meta_value DESC",
+				self::META_UNTIL,
+				$post_type,
+				Statuses::LIVE,
+				Series::now()->format( 'Y-m-d H:i:s' ),
+				$except
+			)
+		);
+
+		return array_map( 'intval', (array) $ids );
+	}
+
+	/**
+	 * The item a new pin would replace, for the warning before the button.
+	 *
+	 * @return array{id: int, title: string, until: string, noun: string}|null
+	 */
+	public static function would_replace( int $post_id ): ?array {
+		$other = self::featured( (string) get_post_type( $post_id ), $post_id )[0] ?? 0;
+		$until = $other ? self::until( $other ) : null;
+
+		if ( ! $other || null === $until ) {
+			return null;
+		}
+
+		$type = get_post_type_object( (string) get_post_type( $other ) );
+
+		return [
+			'id'    => $other,
+			'title' => (string) get_the_title( $other ),
+			'until' => (string) wp_date( (string) get_option( 'date_format', 'j F Y' ), $until->getTimestamp() ),
+			// "event", "news story": what the list holds, for "the featured event".
+			'noun'  => $type ? strtolower( (string) $type->labels->singular_name ) : __( 'item', 'dgl-platform' ),
+		];
+	}
+
+	/**
 	 * @return true|\WP_Error
 	 */
 	public static function pin( int $post_id, int $days, int $actor_id ) {
@@ -61,11 +113,27 @@ final class Pins {
 			return new \WP_Error( 'dgl_bad_days', __( 'Seven or fourteen days.', 'dgl-platform' ) );
 		}
 
+		if ( \DGL\PostTypes::KIND_LISTING !== \DGL\PostTypes::kind_of( (string) get_post_type( $post_id ) ) ) {
+			return new \WP_Error( 'dgl_not_featurable', __( 'Venues and spaces are not featured.', 'dgl-platform' ) );
+		}
+
 		if ( Statuses::LIVE !== get_post_status( $post_id ) ) {
 			return new \WP_Error( 'dgl_not_live', __( 'Only something on the site can be featured.', 'dgl-platform' ) );
 		}
 
 		$until = Series::now()->modify( '+' . $days . ' days' );
+
+		foreach ( self::featured( (string) get_post_type( $post_id ), $post_id ) as $other ) {
+			self::unpin(
+				$other,
+				$actor_id,
+				sprintf(
+					/* translators: %s: the title of the item featured instead. */
+					__( 'No longer featured: "%s" took the featured slot.', 'dgl-platform' ),
+					(string) get_the_title( $post_id )
+				)
+			);
+		}
 
 		update_post_meta( $post_id, self::META_UNTIL, $until->format( 'Y-m-d H:i:s' ) );
 
