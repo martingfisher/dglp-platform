@@ -259,6 +259,39 @@ final class Health {
 			'todo'   => '',
 		];
 
+		// ---- Jobs from VAL.
+		$val_fetched = \DGL\Jobs\ValJobs::fetched();
+		$val_last    = \DGL\Jobs\ValJobs::last();
+		$val_next    = wp_next_scheduled( \DGL\Jobs\ValJobs::HOOK );
+		$val_status  = $val_next ? \DGL\Jobs\ValJobs::verdict( $val_last, $val_fetched, $now ) : self::BAD;
+
+		if ( ! $val_next ) {
+			$val_todo = __( 'Not scheduled. Reactivate the plugin.', 'dgl-platform' );
+		} elseif ( self::GOOD === $val_status ) {
+			$val_todo = '';
+		} elseif ( null === $val_last ) {
+			$val_todo = __( 'The first fetch is due within minutes of the plugin being updated. Run wp dgl jobs refresh to fetch now.', 'dgl-platform' );
+		} elseif ( self::BAD === $val_status ) {
+			$val_todo = __( 'The list is over a week old and is no longer shown. Run wp dgl jobs refresh and read the error; if VAL has changed their site, the import needs updating.', 'dgl-platform' );
+		} else {
+			$val_todo = __( 'The last fetch failed, so the previous list is still showing. If it fails again tomorrow, run wp dgl jobs refresh and read the error.', 'dgl-platform' );
+		}
+
+		$rows[] = [
+			'status' => $val_status,
+			'group'  => __( 'Listings', 'dgl-platform' ),
+			'what'   => __( 'Jobs from VAL', 'dgl-platform' ),
+			'value'  => sprintf(
+				/* translators: 1: when the list was fetched, 2: how many jobs, 3: how the last attempt went, 4: next run. */
+				__( 'Fetched nightly from val.org.uk. Current list fetched %1$s, %2$d shown. Last attempt: %3$s. Next due %4$s.', 'dgl-platform' ),
+				$val_fetched > 0 ? self::ago( $val_fetched ) : __( 'never', 'dgl-platform' ),
+				count( \DGL\Jobs\ValJobs::jobs( $now ) ),
+				null === $val_last ? __( 'none yet', 'dgl-platform' ) : ( $val_last['ok'] ? __( 'worked', 'dgl-platform' ) : $val_last['error'] ),
+				$val_next ? self::in( (int) $val_next ) : __( 'never', 'dgl-platform' )
+			),
+			'todo'   => $val_todo,
+		];
+
 		// ---- Page cache: cannot be read from here, so it is a reminder.
 		$rows[] = [
 			'status' => self::WARN,

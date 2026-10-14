@@ -28,10 +28,16 @@ defined( 'ABSPATH' ) || exit;
  *   [dgl_home_funding]
  *   [dgl_home_directory areas="6"]
  *   [dgl_home_roundup heading="Get the weekly round-up" text="…"]
+ *   [dgl_val_jobs layout="carousel" count="12"]
+ *   [dgl_val_jobs layout="feed" count="6"]
  *
  * `heading=""` drops the heading so the page can supply its own;
  * `link="no"` drops the "All events" link. The stylesheet loads only on a
  * page that uses one of these.
+ *
+ * The jobs block is the one that is not ours: it lists the vacancies
+ * Voluntary Action Leeds advertises, fetched overnight by ValJobs, and
+ * every job links to its advert on VAL's site.
  */
 final class HomeBlocks {
 
@@ -43,6 +49,7 @@ final class HomeBlocks {
 		'funding'   => 'dgl_home_funding',
 		'directory' => 'dgl_home_directory',
 		'roundup'   => 'dgl_home_roundup',
+		'jobs'      => 'dgl_val_jobs',
 	];
 
 	/** The most rows one list will show, whatever `count` says. */
@@ -136,9 +143,51 @@ final class HomeBlocks {
 						'id'         => $id,
 					]
 				);
+
+			case 'jobs':
+				return self::jobs( $atts, $id );
 		}
 
 		return '';
+	}
+
+	/** The jobs block's two layouts. */
+	public const JOB_LAYOUTS = [ 'carousel', 'feed' ];
+
+	/**
+	 * VAL's jobs, as a carousel or a feed.
+	 *
+	 * @param array<string, mixed> $atts
+	 */
+	private static function jobs( array $atts, string $id ): string {
+		$asked  = strtolower( trim( (string) ( array_change_key_case( $atts, CASE_LOWER )['layout'] ?? '' ) ) );
+		$layout = in_array( $asked, self::JOB_LAYOUTS, true ) ? $asked : 'carousel';
+		$a      = self::atts(
+			$atts,
+			[
+				'count'   => 'feed' === $layout ? 6 : 12,
+				'heading' => __( 'Jobs in the sector', 'dgl-platform' ),
+				'link'    => 'yes',
+			]
+		);
+		$count  = $a['count'];
+
+		if ( 'carousel' === $layout ) {
+			Assets::script( 'assets/jobs-carousel.js', 'dgl-jobs-carousel' );
+		}
+
+		return View::render(
+			'public/home/jobs',
+			[
+				'jobs'      => array_slice( \DGL\Jobs\ValJobs::jobs(), 0, $count ),
+				'layout'    => $layout,
+				'heading'   => $a['heading'],
+				'all_url'   => $a['link'] ? \DGL\Jobs\ValJobs::JOBS_URL : '',
+				'all_label' => __( 'All jobs on the VAL website', 'dgl-platform' ),
+				'fetched'   => \DGL\Jobs\ValJobs::fetched(),
+				'id'        => $id . '-' . $layout,
+			]
+		);
 	}
 
 	/**

@@ -1950,3 +1950,164 @@ h2.dgl-listing__heading:only-child,
 	.dgl-home__actions .dgl-home__button { flex: 1 1 100%; }
 	.dgl-home__sechead { flex-direction: column; align-items: flex-start; gap: 6px; }
 }
+
+/*
+ * Jobs from Voluntary Action Leeds: [dgl_val_jobs]. One card for both
+ * layouts: the logo (or the employer's initial), the title, the employer,
+ * one line of where, hours and pay. The title's link covers the card, so
+ * the whole card is the way in to the advert on VAL's site.
+ */
+.dgl-jobs { margin: 0; padding: 0; list-style: none; }
+
+.dgl-jobs--feed { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: var(--dgl-gap); }
+
+.dgl-jobs__item { display: flex; margin: 0; }
+
+.dgl-jobs__card {
+	position: relative;
+	display: grid;
+	grid-template-columns: 64px minmax(0, 1fr);
+	gap: 14px;
+	align-content: start;
+	width: 100%;
+	padding: 16px;
+	border: 1px solid var(--dgl-border);
+	border-radius: 16px;
+	background: var(--dgl-white);
+	box-shadow: var(--dgl-shadow-rest);
+	transition: box-shadow var(--dgl-motion);
+}
+
+.dgl-jobs__card:hover,
+.dgl-jobs__card:focus-within { box-shadow: var(--dgl-shadow-raise); }
+
+.dgl-jobs__card:has(a:focus-visible) { outline: 3px solid var(--dgl-focus); outline-offset: 2px; }
+
+.dgl-jobs__logo {
+	display: grid;
+	place-items: center;
+	width: 64px;
+	height: 64px;
+	overflow: hidden;
+	border: 1px solid var(--dgl-border);
+	border-radius: 10px;
+	background: var(--dgl-white);
+}
+
+.dgl-jobs__logo img { display: block; width: 100%; height: 100%; object-fit: contain; }
+
+.dgl-jobs__initial { display: grid; place-items: center; width: 100%; height: 100%; background: var(--dgl-navy); color: var(--dgl-white); font-size: 1.4em; font-weight: var(--dgl-weight-heading); }
+
+.dgl-jobs__body { min-width: 0; }
+
+.dgl-jobs__title { margin: 0 0 4px; font-size: 1em; font-weight: var(--dgl-weight-heading); line-height: 1.3; }
+
+.dgl-jobs__title a { color: var(--dgl-navy); text-decoration: none; }
+
+.dgl-jobs__title a:focus { outline: none; }
+
+.dgl-jobs__title a::after { content: ""; position: absolute; inset: 0; border-radius: inherit; }
+
+.dgl-jobs__card:hover .dgl-jobs__title a,
+.dgl-jobs__title a:focus-visible { text-decoration: underline; }
+
+.dgl-jobs__company { margin: 0 0 2px; font-size: 0.88em; font-weight: 600; line-height: 1.4; color: var(--dgl-text); }
+
+.dgl-jobs__meta {
+	display: -webkit-box;
+	margin: 0;
+	overflow: hidden;
+	font-size: 0.82em;
+	line-height: 1.4;
+	color: var(--dgl-text-muted);
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 3;
+}
+
+.dgl-jobs__posted { margin: 6px 0 0; font-size: 0.78em; color: var(--dgl-text-muted); }
+
+/* The carousel: a row that scrolls sideways, three cards across. */
+.dgl-jobs--carousel {
+	display: flex;
+	gap: var(--dgl-gap);
+	margin: -4px;
+	padding: 4px 4px 14px;
+	overflow-x: auto;
+	overscroll-behavior-x: contain;
+	scroll-snap-type: x mandatory;
+	scroll-padding-inline: 4px;
+	scroll-behavior: smooth;
+	scrollbar-width: thin;
+}
+
+.dgl-jobs--carousel:focus-visible { outline: 3px solid var(--dgl-focus); outline-offset: 2px; border-radius: 16px; }
+
+.dgl-jobs--carousel > .dgl-jobs__item { flex: 0 0 calc((100% - 2 * var(--dgl-gap)) / 3); scroll-snap-align: start; }
+
+.dgl-jobs--carousel .dgl-jobs__card { display: flex; flex-direction: column; }
+
+.dgl-jobs--carousel .dgl-jobs__body { display: flex; flex: 1 1 auto; flex-direction: column; }
+
+/* The longest job sets the height of the row, so long text is capped here: the advert on VAL has all of it. */
+.dgl-jobs--carousel .dgl-jobs__title { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
+
+.dgl-jobs--carousel .dgl-jobs__company { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.dgl-jobs--carousel .dgl-jobs__meta { -webkit-line-clamp: 2; }
+
+/* Cards in a row are one height; the posted date sits on the bottom edge of each, so the spare room reads as intended. */
+.dgl-jobs--carousel .dgl-jobs__posted { margin-top: auto; padding-top: 10px; }
+
+.dgl-jobs__controls { display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; }
+
+.dgl-jobs__controls[hidden] { display: none; }
+
+.dgl-pub .dgl-jobs__nav,
+.dgl-home-block .dgl-jobs__nav {
+	display: grid;
+	place-items: center;
+	width: 44px;
+	height: 44px;
+	min-height: 0;
+	padding: 0;
+	border: 1px solid var(--dgl-border-strong);
+	border-radius: 999px;
+	background: var(--dgl-white);
+	color: var(--dgl-navy);
+	cursor: pointer;
+}
+
+.dgl-pub .dgl-jobs__nav:hover,
+.dgl-home-block .dgl-jobs__nav:hover { background: var(--dgl-surface); }
+
+.dgl-pub .dgl-jobs__nav:focus-visible,
+.dgl-home-block .dgl-jobs__nav:focus-visible { outline: 3px solid var(--dgl-focus); outline-offset: 2px; }
+
+.dgl-pub .dgl-jobs__nav[aria-disabled="true"],
+.dgl-home-block .dgl-jobs__nav[aria-disabled="true"] { opacity: 0.4; cursor: default; background: var(--dgl-white); }
+
+.dgl-jobs__source { margin: 12px 0 0; font-size: 0.82em; line-height: 1.5; color: var(--dgl-text-muted); }
+
+.dgl-jobs__source a { color: var(--dgl-link); }
+
+@media ( prefers-reduced-motion: reduce ) {
+	.dgl-jobs--carousel { scroll-behavior: auto; }
+	.dgl-jobs__card { transition: none; }
+}
+
+/* Two and a bit across, then one and a peek, so there is always a card half in view to say "more this way". */
+@media ( max-width: 900px ) {
+	.dgl-jobs--carousel > .dgl-jobs__item { flex-basis: calc((100% - 2 * var(--dgl-gap)) / 2.25); }
+}
+
+@media ( max-width: 560px ) {
+	.dgl-jobs--carousel > .dgl-jobs__item { flex-basis: 82%; }
+}
+
+@container ( max-width: 900px ) {
+	.dgl-jobs--carousel > .dgl-jobs__item { flex-basis: calc((100% - 2 * var(--dgl-gap)) / 2.25); }
+}
+
+@container ( max-width: 560px ) {
+	.dgl-jobs--carousel > .dgl-jobs__item { flex-basis: 82%; }
+}
