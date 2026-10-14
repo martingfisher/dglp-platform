@@ -3,7 +3,9 @@
  * Jobs from Voluntary Action Leeds, as a carousel or a feed. Each job is
  * the employer's logo (or its initial), the title, the employer and one
  * line of where, hours and pay. The whole card is the way in, and it
- * goes to the advert on VAL's site. The logo is this site's copy.
+ * opens the advert on VAL's site in a new tab, so the visitor still has
+ * this site open behind it. Every link out says so to a screen reader.
+ * The logo is this site's copy.
  *
  * The carousel is a row that scrolls sideways on its own: swipe, trackpad
  * or the keyboard once it has focus. The previous and next buttons are
@@ -32,6 +34,7 @@ $all_label = (string) ( $data['all_label'] ?? '' );
 $fetched   = (int) ( $data['fetched'] ?? 0 );
 $id        = (string) ( $data['id'] ?? 'dgl-jobs-' . wp_unique_id() );
 $carousel  = 'carousel' === $layout && [] !== $jobs;
+$new_tab   = '<span class="dgl-home__srlabel"> ' . esc_html__( '(opens in a new tab)', 'dgl-platform' ) . '</span>';
 $labelled  = '' !== $heading ? ' aria-labelledby="' . esc_attr( $id ) . '-h"' : ' aria-label="' . esc_attr__( 'Jobs from Voluntary Action Leeds', 'dgl-platform' ) . '"';
 ?>
 <section class="dgl-home__section dgl-jobs-block dgl-jobs-block--<?php echo esc_attr( $layout ); ?>" id="<?php echo esc_attr( $id ); ?>"<?php echo $labelled; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped above. ?><?php echo $carousel ? ' aria-roledescription="' . esc_attr__( 'carousel', 'dgl-platform' ) . '"' : ''; ?>>
@@ -41,7 +44,7 @@ $labelled  = '' !== $heading ? ' aria-labelledby="' . esc_attr( $id ) . '-h"' : 
 				<h2 class="dgl-home__h2" id="<?php echo esc_attr( $id ); ?>-h"><?php echo esc_html( $heading ); ?></h2>
 			<?php endif; ?>
 			<?php if ( '' !== $all_url && '' !== $all_label ) : ?>
-				<a class="dgl-home__all" href="<?php echo esc_url( $all_url ); ?>"><?php echo esc_html( $all_label ); ?></a>
+				<a class="dgl-home__all" href="<?php echo esc_url( $all_url ); ?>" target="_blank" rel="noopener"><?php echo esc_html( $all_label ); ?><?php echo $new_tab; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped above. ?></a>
 			<?php endif; ?>
 		</div>
 	<?php endif; ?>
@@ -69,7 +72,7 @@ $labelled  = '' !== $heading ? ' aria-labelledby="' . esc_attr( $id ) . '-h"' : 
 								<?php endif; ?>
 							</span>
 							<div class="dgl-jobs__body">
-								<h3 class="dgl-jobs__title"><a href="<?php echo esc_url( (string) ( $job['url'] ?? '' ) ); ?>"><?php echo esc_html( $title ); ?></a></h3>
+								<h3 class="dgl-jobs__title"><a href="<?php echo esc_url( (string) ( $job['url'] ?? '' ) ); ?>" target="_blank" rel="noopener"><?php echo esc_html( $title ); ?><?php echo $new_tab; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped above. ?></a></h3>
 								<?php if ( '' !== $company ) : ?>
 									<p class="dgl-jobs__company"><?php echo esc_html( $company ); ?></p>
 								<?php endif; ?>
@@ -104,10 +107,13 @@ $labelled  = '' !== $heading ? ' aria-labelledby="' . esc_attr( $id ) . '-h"' : 
 		echo wp_kses(
 			sprintf(
 				/* translators: %s: "Voluntary Action Leeds", linked to their jobs page. */
-				__( 'Jobs listed by %s. Each one opens the full advert on their website.', 'dgl-platform' ),
-				'<a href="' . esc_url( ValJobs::JOBS_URL ) . '">' . esc_html__( 'Voluntary Action Leeds', 'dgl-platform' ) . '</a>'
+				__( 'Jobs listed by %s. Each one opens the full advert on their website in a new tab.', 'dgl-platform' ),
+				'<a href="' . esc_url( ValJobs::JOBS_URL ) . '" target="_blank" rel="noopener">' . esc_html__( 'Voluntary Action Leeds', 'dgl-platform' ) . $new_tab . '</a>'
 			),
-			[ 'a' => [ 'href' => true ] ]
+			[
+				'a'    => [ 'href' => true, 'target' => true, 'rel' => true ],
+				'span' => [ 'class' => true ],
+			]
 		);
 		?>
 		<?php if ( $fetched > 0 ) : ?>

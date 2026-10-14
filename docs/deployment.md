@@ -322,7 +322,8 @@ defaults to 12 for the carousel and 6 for the feed, and unlike the blocks
 above can go past 24 (up to 100), so the jobs page can list every vacancy
 with `count="100"`; `heading` and `link` work as on the blocks above, and
 the All link goes to VAL's jobs page.
-Each card opens the full advert on VAL's site.
+Each card opens the full advert on VAL's site in a new tab, so the
+visitor keeps this site open; screen readers are told it opens a new tab.
 
 The list is fetched once a night at about 2am by cron
 (`dgl_val_jobs_refresh`), never on a page view. VAL runs WP Job Manager,
