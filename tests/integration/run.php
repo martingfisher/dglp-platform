@@ -4538,7 +4538,7 @@ $ok( str_contains( $home_html, 'Forum Central' ) && str_contains( $home_html, 'V
 
 $group( 'Home page shortcodes: the live sections for a page built in the theme' );
 
-$ok( 6 === count( array_filter( \DGL\Frontend\HomeBlocks::TAGS, 'shortcode_exists' ) ), 'six shortcodes are registered' );
+$ok( 7 === count( array_filter( \DGL\Frontend\HomeBlocks::TAGS, 'shortcode_exists' ) ), 'seven shortcodes are registered' );
 $sc_events = do_shortcode( '[dgl_home_events count="2"]' );
 $ok( str_starts_with( $sc_events, '<div class="dgl-home-block dgl-home-block--events">' ) && 2 === substr_count( $sc_events, 'class="dgl-home__row"' ) && str_contains( $sc_events, '>What&#039;s on</h2>' ) && str_contains( $sc_events, '>All events</a>' ), 'events: wrapped, two rows, the default heading and the All link' );
 $ok( $home_evt['later'] === (int) ( preg_match( '#<h3 class="dgl-home__rowtitle"><a href="[^"]*/(?:events|\?[^"]*)[^"]*">Home event later</a>#', $sc_events ) ? $home_evt['later'] : 0 ), 'and the featured event comes first' );
@@ -5013,6 +5013,127 @@ update_option( \DGL\Email\Routing::OPTION_REDIRECT, $ms_before[0] );
 update_option( \DGL\Email\Routing::OPTION_FROM, $ms_before[1] );
 // The team inbox is never left set: an earlier test's expectations assume each moderator is mailed.
 delete_option( \DGL\Email\Routing::OPTION_TEAM );
+
+/* ------------------------------------------------- jobs from VAL */
+
+$group( 'Jobs from VAL: the nightly fetch, kept and shown' );
+
+$vj_before = [ get_option( \DGL\Jobs\ValJobs::OPTION, false ), get_option( \DGL\Jobs\ValJobs::OPTION_LAST, false ) ];
+delete_option( \DGL\Jobs\ValJobs::OPTION );
+delete_option( \DGL\Jobs\ValJobs::OPTION_LAST );
+\DGL\Jobs\ValJobs::unschedule();
+\DGL\Install::maybe_schedule();
+
+$vj_next = (int) wp_next_scheduled( \DGL\Jobs\ValJobs::HOOK );
+$ok( $vj_next > time() && 'daily' === wp_get_schedule( \DGL\Jobs\ValJobs::HOOK ), 'the nightly fetch is scheduled daily' );
+$ok( \DGL\Jobs\ValJobs::HOUR === (int) wp_date( 'G', $vj_next ) && 0 === (int) wp_date( 'i', $vj_next ), 'at 2am site time' );
+$ok( false !== wp_next_scheduled( \DGL\Jobs\ValJobs::HOOK_SOON ), 'a site that has never fetched fetches within minutes, not tonight' );
+$ok( str_contains( do_shortcode( '[dgl_val_jobs]' ), 'will appear here after the overnight update' ), 'before the first fetch the block says what is coming' );
+
+$vj_feed = '<?xml version="1.0" encoding="UTF-8"?><rss version="2.0" xmlns:job_listing="https://val.org.uk"><channel><title>VAL</title>';
+for ( $vj_i = 1; $vj_i <= 14; $vj_i++ ) {
+	$vj_feed .= '<item><title>Support Worker ' . $vj_i . ( 1 === $vj_i ? ' &lt;script&gt;alert(1)&lt;/script&gt;' : '' ) . '</title><link>https://val.org.uk/job/support-worker-' . $vj_i . '/</link><pubDate>Mon, 12 Oct 2026 09:39:21 +0000</pubDate>'
+		. '<job_listing:company><![CDATA[' . ( 2 === $vj_i ? 'The Northpoint Trust' : 'Age UK Leeds' ) . ']]></job_listing:company><job_listing:location><![CDATA[Leeds]]></job_listing:location><job_listing:job_type><![CDATA[Part Time]]></job_listing:job_type><job_listing:salary><![CDATA[23953]]></job_listing:salary></item>';
+}
+$vj_feed .= '</channel></rss>';
+$vj_list  = wp_json_encode(
+	[
+		'html' => '<li class="post-1 job_listing"><a href="https://val.org.uk/job/support-worker-1/"><img class="company_logo" src="https://val.org.uk/wp-content/uploads/logo-1.png" alt=""></a></li>'
+			. '<li class="post-3 job_listing"><a href="https://val.org.uk/job/support-worker-3/"><img class="company_logo" src="https://val.org.uk/wp-content/uploads/not-really.png" alt=""></a></li>'
+			. '<li class="post-4 job_listing"><a href="https://val.org.uk/job/support-worker-4/"><img class="company_logo" src="https://val.org.uk/wp-content/uploads/logo-1.png" alt=""></a></li>',
+	]
+);
+// A real 300 x 200 PNG, so the copy can be checked for being shrunk.
+$vj_img   = imagecreatetruecolor( 300, 200 );
+ob_start();
+imagepng( $vj_img );
+$vj_png   = (string) ob_get_clean();
+$vj_mode  = 'ok';
+$vj_urls  = [];
+$vj_stub  = static function ( $pre, $args, $url ) use ( &$vj_mode, &$vj_urls, $vj_feed, $vj_list, $vj_png ) {
+	if ( ! str_starts_with( $url, 'https://val.org.uk/' ) ) {
+		return $pre;
+	}
+	$vj_urls[] = $url;
+	if ( 'down' === $vj_mode ) {
+		return new WP_Error( 'http_request_failed', 'cURL error 28: timed out' );
+	}
+	if ( 'firewall' === $vj_mode ) {
+		return [ 'headers' => [], 'response' => [ 'code' => 200, 'message' => 'OK' ], 'body' => '<!DOCTYPE html><html><body><h1>Checking your browser</h1></body></html>', 'cookies' => [] ];
+	}
+	if ( 'forbidden' === $vj_mode ) {
+		return [ 'headers' => [], 'response' => [ 'code' => 403, 'message' => 'Forbidden' ], 'body' => '<h1>Forbidden</h1>', 'cookies' => [] ];
+	}
+	$vj_body = match ( true ) {
+		str_starts_with( $url, \DGL\Jobs\ValJobs::FEED_URL ) => $vj_feed,
+		str_starts_with( $url, \DGL\Jobs\ValJobs::LISTINGS_URL ) => $vj_list,
+		str_ends_with( $url, '/logo-1.png' ) => $vj_png,
+		default => '<html>not an image</html>',
+	};
+	return [ 'headers' => [], 'response' => [ 'code' => 200, 'message' => 'OK' ], 'body' => $vj_body, 'cookies' => [] ];
+};
+$vj_dir   = wp_upload_dir( null, false )['basedir'] . '/' . \DGL\Jobs\ValJobs::LOGO_DIR;
+$vj_stale = $vj_dir . '/' . str_repeat( 'a', 32 ) . '.png';
+wp_mkdir_p( $vj_dir );
+file_put_contents( $vj_stale, $vj_png );
+add_filter( 'pre_http_request', $vj_stub, 10, 3 );
+
+do_action( \DGL\Jobs\ValJobs::HOOK );
+$vj_jobs = \DGL\Jobs\ValJobs::jobs();
+$ok( 14 === count( $vj_jobs ) && [ \DGL\Jobs\ValJobs::FEED_URL, \DGL\Jobs\ValJobs::LISTINGS_URL ] === array_slice( $vj_urls, 0, 2 ), 'the cron hook reads the feed and the listings, and keeps fourteen jobs' );
+$ok( 1 === count( array_keys( $vj_urls, 'https://val.org.uk/wp-content/uploads/logo-1.png', true ) ), 'a logo two jobs share is fetched once' );
+$vj_logo = \DGL\Jobs\ValJobs::logo_url( $vj_jobs[0] );
+$ok( '' !== $vj_logo && str_starts_with( $vj_logo, wp_upload_dir( null, false )['baseurl'] . '/dgl-val-logos/' ) && $vj_logo === \DGL\Jobs\ValJobs::logo_url( $vj_jobs[3] ), 'the logo is copied into this site\'s uploads and shared by both jobs' );
+$vj_size = getimagesize( $vj_dir . '/' . $vj_jobs[0]['logo_file'] );
+$ok( is_array( $vj_size ) && max( $vj_size[0], $vj_size[1] ) <= \DGL\Jobs\ValJobs::LOGO_SIZE, 'and shrunk to fit the box (' . ( is_array( $vj_size ) ? $vj_size[0] . 'x' . $vj_size[1] : 'unreadable' ) . ')' );
+$ok( '' === \DGL\Jobs\ValJobs::logo_url( $vj_jobs[1] ) && '' === \DGL\Jobs\ValJobs::logo_url( $vj_jobs[2] ) && [] === glob( $vj_dir . '/' . md5( 'https://val.org.uk/wp-content/uploads/not-really.png' ) . '.*' ), 'no logo stays none, and a "logo" that is not an image is never written' );
+$ok( ! file_exists( $vj_stale ), 'a copied logo no job uses any more is deleted' );
+$vj_urls = [];
+\DGL\Jobs\ValJobs::refresh();
+$ok( ! in_array( 'https://val.org.uk/wp-content/uploads/logo-1.png', $vj_urls, true ), 'the next night, a logo already copied is not fetched again' );
+$ok( true === ( \DGL\Jobs\ValJobs::last()['ok'] ?? null ) && \DGL\Jobs\ValJobs::fetched() >= time() - 5, 'the attempt and the fetch time are recorded' );
+$ok( ! array_key_exists( \DGL\Jobs\ValJobs::OPTION, wp_load_alloptions() ), 'the list is not autoloaded on every page' );
+
+$vj_car = do_shortcode( '[dgl_val_jobs]' );
+$ok( str_starts_with( $vj_car, '<div class="dgl-home-block dgl-home-block--jobs">' ) && str_contains( $vj_car, 'dgl-jobs--carousel' ) && 12 === substr_count( $vj_car, 'class="dgl-jobs__item"' ), 'the default is a carousel of twelve' );
+$ok( str_contains( $vj_car, 'aria-roledescription="carousel"' ) && str_contains( $vj_car, 'data-dgl-carousel-controls hidden' ) && 2 === substr_count( $vj_car, 'class="dgl-jobs__nav"' ), 'with its two buttons hidden until the script shows them' );
+$ok( wp_script_is( 'dgl-jobs-carousel', 'enqueued' ) && wp_style_is( 'dgl-public', 'enqueued' ), 'the carousel script and the stylesheet load' );
+$ok( str_contains( $vj_car, '<a href="https://val.org.uk/job/support-worker-2/">Support Worker 2</a>' ) && str_contains( $vj_car, 'Leeds · Part Time · £23,953' ), 'each card links to the advert on VAL and says where, hours and pay' );
+$ok( str_contains( $vj_car, 'src="' . esc_url( $vj_logo ) . '"' ) && ! str_contains( $vj_car, 'src="https://val.org.uk' ) && str_contains( $vj_car, '<span class="dgl-jobs__initial">N</span>' ), 'a logo from this site where there is one, never hotlinked from VAL, and the employer\'s initial where there is not' );
+$ok( ! str_contains( $vj_car, '<script>' ) && ! str_contains( $vj_car, '&lt;script&gt;' ) && str_contains( $vj_car, 'Support Worker 1 alert(1)' ), 'markup in a title is stripped, never run' );
+$ok( str_contains( $vj_car, '>Jobs in the sector</h2>' ) && str_contains( $vj_car, 'href="https://val.org.uk/jobs/">All jobs on the VAL website</a>' ) && str_contains( $vj_car, 'Jobs listed by <a href="https://val.org.uk/jobs/">Voluntary Action Leeds</a>' ), 'the heading, the All link and the credit to VAL' );
+
+$vj_feed_html = do_shortcode( '[dgl_val_jobs layout="FEED" heading="Vacancies" link="no"]' );
+$ok( str_contains( $vj_feed_html, 'dgl-jobs--feed' ) && 6 === substr_count( $vj_feed_html, 'class="dgl-jobs__item"' ) && ! str_contains( $vj_feed_html, 'data-dgl-carousel' ), 'layout="feed" is a list of six with no carousel parts' );
+$ok( str_contains( $vj_feed_html, '>Vacancies</h2>' ) && ! str_contains( $vj_feed_html, 'dgl-home__all' ), 'heading and link work as on the other blocks' );
+$ok( 3 === substr_count( do_shortcode( '[dgl_val_jobs layout="feed" count="3"]' ), 'class="dgl-jobs__item"' ) && 14 === substr_count( do_shortcode( '[dgl_val_jobs count="99"]' ), 'class="dgl-jobs__item"' ), 'count sets how many, up to all there are' );
+$ok( str_contains( do_shortcode( '[dgl_val_jobs layout="sideways"]' ), 'dgl-jobs--carousel' ), 'an unknown layout falls back to the carousel' );
+
+$vj_rows = array_values( array_filter( \DGL\Admin\Health::rows(), static fn( array $r ): bool => 'Jobs from VAL' === $r['what'] ) );
+$ok( 1 === count( $vj_rows ) && 'good' === $vj_rows[0]['status'] && str_contains( $vj_rows[0]['value'], '14 shown' ), 'the health page shows the import green with its count' );
+
+foreach ( [ 'down', 'firewall', 'forbidden' ] as $vj_mode ) {
+	$vj_last = \DGL\Jobs\ValJobs::refresh();
+	$ok( false === $vj_last['ok'] && '' !== $vj_last['error'] && 14 === count( \DGL\Jobs\ValJobs::jobs() ), 'VAL ' . $vj_mode . ': the attempt fails and yesterday\'s fourteen jobs stay up (' . $vj_last['error'] . ')' );
+}
+$vj_rows = array_values( array_filter( \DGL\Admin\Health::rows(), static fn( array $r ): bool => 'Jobs from VAL' === $r['what'] ) );
+$ok( 'warn' === $vj_rows[0]['status'] && str_contains( $vj_rows[0]['value'], 'HTTP 403' ) && '' !== $vj_rows[0]['todo'], 'and the health page turns amber and names the error' );
+
+update_option( \DGL\Jobs\ValJobs::OPTION, [ 'jobs' => $vj_jobs, 'fetched' => time() - 8 * DAY_IN_SECONDS ], false );
+$ok( [] === \DGL\Jobs\ValJobs::jobs() && str_contains( do_shortcode( '[dgl_val_jobs]' ), 'will appear here after the overnight update' ), 'a list over a week old is withdrawn rather than left advertising closed jobs' );
+$vj_rows = array_values( array_filter( \DGL\Admin\Health::rows(), static fn( array $r ): bool => 'Jobs from VAL' === $r['what'] ) );
+$ok( 'bad' === $vj_rows[0]['status'], 'and the health page turns red' );
+
+remove_filter( 'pre_http_request', $vj_stub, 10 );
+
+\DGL\Install::deactivate();
+$ok( false === wp_next_scheduled( \DGL\Jobs\ValJobs::HOOK ) && false === wp_next_scheduled( \DGL\Jobs\ValJobs::HOOK_SOON ), 'deactivating clears both jobs schedules' );
+\DGL\Install::maybe_schedule();
+
+array_map( 'wp_delete_file', (array) glob( $vj_dir . '/*' ) );
+foreach ( [ \DGL\Jobs\ValJobs::OPTION, \DGL\Jobs\ValJobs::OPTION_LAST ] as $vj_i => $vj_option ) {
+	false === $vj_before[ $vj_i ] ? delete_option( $vj_option ) : update_option( $vj_option, $vj_before[ $vj_i ], false );
+}
 
 /* ----------------------------------------------------------------- report */
 

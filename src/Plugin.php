@@ -104,6 +104,7 @@ final class Plugin {
 		\DGL\Spaces\Visibility::init();
 		Invites::init();
 		Privacy::init();
+		\DGL\Jobs\ValJobs::init();
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			MailCommand::register();
@@ -122,6 +123,7 @@ final class Plugin {
 			\DGL\News\Command::register();
 			\DGL\Demo\Command::register();
 			\DGL\Spaces\Command::register();
+			\DGL\Jobs\Command::register();
 		}
 
 		\DGL\Admin\Health::watch();

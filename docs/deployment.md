@@ -307,6 +307,43 @@ ID; `dgl_home_testimonials`, JSON rows of quote, name, role).
 Funding lists from the Grants type once that is switched on; until then
 the block says so.
 
+### Jobs from Voluntary Action Leeds
+
+```
+[dgl_val_jobs layout="carousel" count="12"]
+[dgl_val_jobs layout="feed" count="6" heading="Jobs in the sector"]
+```
+
+Lists the vacancies VAL advertises at val.org.uk/jobs, with VAL's
+permission. `layout` is `carousel` (the default, a row that scrolls
+sideways with previous and next buttons, never moving by itself) or
+`feed` (cards in a grid that wraps to one column on a phone). `count`
+defaults to 12 for the carousel and 6 for the feed; `heading` and `link`
+work as on the blocks above, and the All link goes to VAL's jobs page.
+Each card opens the full advert on VAL's site.
+
+The list is fetched once a night at about 2am by cron
+(`dgl_val_jobs_refresh`), never on a page view. VAL runs WP Job Manager,
+so the plugin reads its RSS feed
+(`https://val.org.uk/?feed=job_feed&posts_per_page=100`) rather than the
+page, and its listing endpoint for logos. Logos are copied into
+`wp-content/uploads/dgl-val-logos/`, shrunk to 128px, so visitors' browsers
+never call VAL's server; VAL's firewall refused some browser requests for
+them in testing. A night that fails keeps the previous list; a list over
+a week old is withdrawn. On a fresh install the first fetch runs within a
+minute of the update.
+
+```
+wp dgl jobs refresh   # fetch now, exactly as the nightly run does
+wp dgl jobs status    # last good list, last attempt, next run
+```
+
+System health has a "Jobs from VAL" row: green after a good night, amber
+after a failed one, red once the list is a week old. If VAL stop using
+WP Job Manager or put the feed behind their firewall, the row goes amber
+and names the error, and the last list stays up for a week while the
+import is updated.
+
 ## Staging to production
 
 Do **not** use Wordify's `push_staging` to move the plugin. That pushes the whole

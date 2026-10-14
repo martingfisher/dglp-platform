@@ -66,6 +66,7 @@ final class Install {
 	public static function deactivate(): void {
 		wp_clear_scheduled_hook( Plugin::EXPIRY_HOOK );
 		wp_clear_scheduled_hook( Plugin::DIGEST_HOOK );
+		\DGL\Jobs\ValJobs::unschedule();
 		flush_rewrite_rules();
 	}
 
@@ -144,11 +145,12 @@ final class Install {
 	 * upgrade, so digests would silently not send on the one site that had been
 	 * running longest.
 	 *
-	 * Both checks read the cron option, which WordPress has already loaded.
+	 * Every check reads the cron option, which WordPress has already loaded.
 	 */
 	public static function maybe_schedule(): void {
 		self::schedule_expiry();
 		self::schedule_digests();
+		\DGL\Jobs\ValJobs::schedule();
 	}
 
 	/**
