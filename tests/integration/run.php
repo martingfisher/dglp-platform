@@ -5146,6 +5146,27 @@ foreach ( [ \DGL\Jobs\ValJobs::OPTION, \DGL\Jobs\ValJobs::OPTION_LAST ] as $vj_i
 	false === $vj_before[ $vj_i ] ? delete_option( $vj_option ) : update_option( $vj_option, $vj_before[ $vj_i ], false );
 }
 
+/* ------------------------------------------- renamed pages redirect */
+
+$group( 'Renamed pages: the old address finds the page' );
+
+$pr_id = wp_insert_post( [ 'post_type' => 'page', 'post_status' => 'publish', 'post_title' => 'Search Jobs', 'post_name' => 'pr-search-jobs' ] );
+wp_update_post( [ 'ID' => $pr_id, 'post_name' => 'pr-jobs' ] );
+$ok( [ 'pr-search-jobs' ] === get_post_meta( $pr_id, \DGL\Frontend\PageRedirects::META ), 'renaming a published page keeps its old slug, as WordPress does for posts' );
+$ok( get_permalink( $pr_id ) === \DGL\Frontend\PageRedirects::target( 'pr-search-jobs' ) && str_contains( (string) get_permalink( $pr_id ), 'pr-jobs' ), 'and the old slug leads to the page at its new address' );
+wp_update_post( [ 'ID' => $pr_id, 'post_name' => 'pr-search-jobs' ] );
+$ok( [ 'pr-jobs' ] === array_values( get_post_meta( $pr_id, \DGL\Frontend\PageRedirects::META ) ), 'renaming it back never keeps its current slug as an old one' );
+$ok( 'pr-search-jobs' === \DGL\Frontend\PageRedirects::slug_from_path( '/parent/pr-search-jobs/' ) && 'x' === \DGL\Frontend\PageRedirects::slug_from_path( '/X' ) && '' === \DGL\Frontend\PageRedirects::slug_from_path( '/' ), 'the slug is the last part of the path, cleaned' );
+$pr_two = wp_insert_post( [ 'post_type' => 'page', 'post_status' => 'publish', 'post_title' => 'Other', 'post_name' => 'pr-other' ] );
+add_post_meta( $pr_two, \DGL\Frontend\PageRedirects::META, 'pr-jobs' );
+$ok( '' === \DGL\Frontend\PageRedirects::target( 'pr-jobs' ) && '' === \DGL\Frontend\PageRedirects::target( 'pr-nothing' ), 'an old slug two pages claim, or none does, goes nowhere' );
+$pr_draft = wp_insert_post( [ 'post_type' => 'page', 'post_status' => 'draft', 'post_title' => 'Draft', 'post_name' => 'pr-draft-a' ] );
+wp_update_post( [ 'ID' => $pr_draft, 'post_name' => 'pr-draft-b' ] );
+$ok( [] === get_post_meta( $pr_draft, \DGL\Frontend\PageRedirects::META ), 'a draft has no public address to keep' );
+foreach ( [ $pr_id, $pr_two, $pr_draft ] as $pr_del ) {
+	wp_delete_post( $pr_del, true );
+}
+
 /* ----------------------------------------------------------------- report */
 
 echo "\n" . str_repeat( '-', 60 ) . "\n";
