@@ -1161,3 +1161,37 @@ clean. They are the only DGLP content on staging.
   "Featured item". The box is no longer on venues and spaces, matching the
   review screen, and the rule refuses them by any route. Unit 2248,
   integration 1388.
+- **0.47.0 deployed and run** (14 October 2026, production): jobs from
+  Voluntary Action Leeds. `[dgl_val_jobs]` (carousel) and
+  `[dgl_val_jobs layout="feed"]` list VAL's vacancies, read nightly at
+  about 2am from WP Job Manager's feed on val.org.uk, with logos copied to
+  `uploads/dgl-val-logos/`. `wp dgl` needs the console's safe mode off, so
+  the first fetch was run through the plugin's own cron event instead:
+  `cron event run` skips plugins on this console and did nothing, then a
+  page load rescheduled it and a request to `wp-cron.php` ran it. Live: 24
+  jobs, 21 logos as 17 files, all served. Server cron is on at 15 minutes,
+  so the nightly run lands between 02:00 and 02:15. Unit 2325,
+  integration 1420.
+- **0.47.1 and 0.47.2 deployed** (14 October 2026, production): the icon
+  lists in the header's mega menus read wrapped lines as separate items
+  (line height and gap both about 2); now 1.3 and 12px apart, measured
+  live in Volunteering, Support and Resources, lists with their own
+  spacing unchanged. The rule Greenshift writes per block to make an item's
+  link cover the item now ships sitewide in `finder.css`, with a focus
+  ring. `[dgl_val_jobs]` takes a count up to 100. Every link out of the
+  jobs block opens VAL in a new tab and says so to screen readers.
+  Unit 2325, integration 1423.
+- **Jobs page restored** (14 October 2026, production): "Search Jobs"
+  (page 1738, trashed 3 October) republished at `/search-jobs/` with
+  `[dgl_val_jobs layout="feed" count="100" heading=""]` under its hero,
+  added by Wordify `replace_in_post` (one revision). Its Top Bar item
+  (1741) shows again. SmartCache cleared after. Checked live: 24 jobs.
+- **Not done, needs the editor**: the "Megamenu | Volunteering" content
+  block (1367) has no links on any item. Wordify's console caps a WP-CLI
+  command at 1,000 characters and its content tools refuse
+  `ct_content_block`, so the links are to be added in the Greenshift
+  editor (list in PR #5). "Trustee Recruitment" and "Corporate
+  Volunteering and Social Value" have no matching page yet.
+- **Not done, blocked**: clearing SmartCache after each nightly jobs
+  update. The Hosting Tools plugin's "Clear Smart Cache" button is the
+  route; what it calls is not readable from outside wp-admin.
