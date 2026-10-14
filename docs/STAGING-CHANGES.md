@@ -1202,3 +1202,23 @@ clean. They are the only DGLP content on staging.
   renamed "Jobs" (title and the hero's saved heading, two revisions by
   Wordify); its address stays `/search-jobs/`, which the Top Bar item
   follows by page ID.
+- **0.47.4 deployed; jobs page moved to `/jobs/`** (14 October 2026,
+  production): renamed pages now redirect from their old address (301),
+  as WordPress already does for posts; old slugs are kept in
+  `_wp_old_slug`. `/jobs/` was the old-site "Jobs" category (52, empty,
+  on the plugin's retired list), so its slug became `jobs-retired`
+  (`wp term update`), then page 1738 took `jobs` and `search-jobs` was
+  added as its old slug by hand (the console skips plugins, so the hook
+  that records it did not run). The deploy rebuilt the rewrite rules with
+  every plugin loaded (version stamp 0.47.4, triggered through
+  `wp-cron.php`); `wp rewrite flush` from the console was deliberately not
+  used, as it would drop every plugin's rules. Checked live: `/jobs/` is
+  the page (24 jobs), `/search-jobs/` 301s to it, the Top Bar links to it,
+  `/news/`, `/events/`, `/dashboard/`, `/directory/`, `/spaces/` all 200.
+- **Found, not caused by this, not fixed**: every page under
+  `/volunteering/` except the parent redirects to the home page
+  (`x-redirect-by: WordPress`). The disabled Volunteering type is still
+  registered with the slug `volunteering` (since at least 30 September),
+  and its rules outrank the pages', so `/volunteering/find-a-volunteer-role/`
+  and its siblings resolve to a missing listing. Needs a decision on how to
+  free the address.
