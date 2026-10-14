@@ -318,8 +318,10 @@ Lists the vacancies VAL advertises at val.org.uk/jobs, with VAL's
 permission. `layout` is `carousel` (the default, a row that scrolls
 sideways with previous and next buttons, never moving by itself) or
 `feed` (cards in a grid that wraps to one column on a phone). `count`
-defaults to 12 for the carousel and 6 for the feed; `heading` and `link`
-work as on the blocks above, and the All link goes to VAL's jobs page.
+defaults to 12 for the carousel and 6 for the feed, and unlike the blocks
+above can go past 24 (up to 100), so the jobs page can list every vacancy
+with `count="100"`; `heading` and `link` work as on the blocks above, and
+the All link goes to VAL's jobs page.
 Each card opens the full advert on VAL's site.
 
 The list is fetched once a night at about 2am by cron

@@ -30,6 +30,7 @@ defined( 'ABSPATH' ) || exit;
  *   [dgl_home_roundup heading="Get the weekly round-up" text="…"]
  *   [dgl_val_jobs layout="carousel" count="12"]
  *   [dgl_val_jobs layout="feed" count="6"]
+ *   [dgl_val_jobs layout="feed" count="100"]   (the jobs page: every vacancy)
  *
  * `heading=""` drops the heading so the page can supply its own;
  * `link="no"` drops the "All events" link. The stylesheet loads only on a
@@ -170,7 +171,10 @@ final class HomeBlocks {
 				'link'    => 'yes',
 			]
 		);
-		$count  = $a['count'];
+		// The jobs page lists every vacancy, so this block is not held to
+		// the home page's cap: as many as VAL lists, up to what is kept.
+		$asked_count = array_change_key_case( $atts, CASE_LOWER )['count'] ?? null;
+		$count       = null === $asked_count ? $a['count'] : max( 1, min( \DGL\Jobs\ValJobs::MAX_JOBS, (int) $asked_count ) );
 
 		if ( 'carousel' === $layout ) {
 			Assets::script( 'assets/jobs-carousel.js', 'dgl-jobs-carousel' );

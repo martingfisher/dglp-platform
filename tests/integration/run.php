@@ -5109,6 +5109,16 @@ $ok( str_contains( $vj_feed_html, '>Vacancies</h2>' ) && ! str_contains( $vj_fee
 $ok( 3 === substr_count( do_shortcode( '[dgl_val_jobs layout="feed" count="3"]' ), 'class="dgl-jobs__item"' ) && 14 === substr_count( do_shortcode( '[dgl_val_jobs count="99"]' ), 'class="dgl-jobs__item"' ), 'count sets how many, up to all there are' );
 $ok( str_contains( do_shortcode( '[dgl_val_jobs layout="sideways"]' ), 'dgl-jobs--carousel' ), 'an unknown layout falls back to the carousel' );
 
+$vj_kept = get_option( \DGL\Jobs\ValJobs::OPTION );
+$vj_many = [];
+for ( $vj_i = 1; $vj_i <= 30; $vj_i++ ) {
+	$vj_many[] = [ 'title' => 'Many ' . $vj_i, 'url' => 'https://val.org.uk/job/many-' . $vj_i . '/', 'company' => 'Age UK Leeds', 'location' => '', 'type' => '', 'salary' => '', 'posted' => '', 'logo' => '', 'logo_file' => '' ];
+}
+update_option( \DGL\Jobs\ValJobs::OPTION, [ 'jobs' => $vj_many, 'fetched' => time() ], false );
+$ok( 30 === substr_count( do_shortcode( '[dgl_val_jobs layout="feed" count="100"]' ), 'class="dgl-jobs__item"' ) && 6 === substr_count( do_shortcode( '[dgl_val_jobs layout="feed"]' ), 'class="dgl-jobs__item"' ), 'the jobs page can list all thirty, past the home page cap of 24, and the default is still six' );
+$ok( \DGL\Frontend\HomeBlocks::MAX_COUNT >= substr_count( do_shortcode( '[dgl_home_events count="999"]' ), 'class="dgl-home__row"' ), 'the other home blocks keep their cap' );
+update_option( \DGL\Jobs\ValJobs::OPTION, $vj_kept, false );
+
 $vj_rows = array_values( array_filter( \DGL\Admin\Health::rows(), static fn( array $r ): bool => 'Jobs from VAL' === $r['what'] ) );
 $ok( 1 === count( $vj_rows ) && 'good' === $vj_rows[0]['status'] && str_contains( $vj_rows[0]['value'], '14 shown' ), 'the health page shows the import green with its count' );
 
