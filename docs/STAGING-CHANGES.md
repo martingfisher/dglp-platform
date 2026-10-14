@@ -1195,3 +1195,10 @@ clean. They are the only DGLP content on staging.
 - **Not done, blocked**: clearing SmartCache after each nightly jobs
   update. The Hosting Tools plugin's "Clear Smart Cache" button is the
   route; what it calls is not readable from outside wp-admin.
+- **0.47.3 deployed** (14 October 2026, production): the jobs block has
+  24px above and 32px below, so on the jobs page the All link no longer
+  sits hard under the hero nor the credit on the footer (0px each before,
+  24px and 32px after, measured live at 1440px and 390px). The page is
+  renamed "Jobs" (title and the hero's saved heading, two revisions by
+  Wordify); its address stays `/search-jobs/`, which the Top Bar item
+  follows by page ID.

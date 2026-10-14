@@ -1957,6 +1957,9 @@ h2.dgl-listing__heading:only-child,
  * one line of where, hours and pay. The title's link covers the card, so
  * the whole card is the way in to the advert on VAL's site.
  */
+/* Room above the All link and below the credit, so the block never sits hard against a hero or a footer. */
+.dgl-home-block--jobs { padding-block: 24px 32px; }
+
 .dgl-jobs { margin: 0; padding: 0; list-style: none; }
 
 .dgl-jobs--feed { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: var(--dgl-gap); }
