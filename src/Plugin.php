@@ -87,6 +87,7 @@ final class Plugin {
 		Frontend::init();
 		\DGL\Frontend\Finder::init();
 		\DGL\News\LegacyRedirect::init();
+		\DGL\Frontend\PageRedirects::init();
 
 		/*
 		 * Not inside Admin::init(). A status can be changed from WP-CLI, from a
