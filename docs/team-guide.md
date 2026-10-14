@@ -307,7 +307,8 @@ testimonials, is yours to edit as you would any page. Featuring an item
 Jobs from Voluntary Action Leeds can go on any page the same way:
 `[dgl_val_jobs]` for a carousel that people scroll sideways, or
 `[dgl_val_jobs layout="feed"]` for a list. The jobs update by themselves
-every night, and each one opens the full advert on VAL's website. If the
+every night, and each one opens the full advert on VAL's website in a
+new tab. If the
 update stops working, System health says so under "Jobs from VAL".
 
 ## The directory

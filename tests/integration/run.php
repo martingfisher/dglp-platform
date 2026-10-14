@@ -5098,16 +5098,27 @@ $vj_car = do_shortcode( '[dgl_val_jobs]' );
 $ok( str_starts_with( $vj_car, '<div class="dgl-home-block dgl-home-block--jobs">' ) && str_contains( $vj_car, 'dgl-jobs--carousel' ) && 12 === substr_count( $vj_car, 'class="dgl-jobs__item"' ), 'the default is a carousel of twelve' );
 $ok( str_contains( $vj_car, 'aria-roledescription="carousel"' ) && str_contains( $vj_car, 'data-dgl-carousel-controls hidden' ) && 2 === substr_count( $vj_car, 'class="dgl-jobs__nav"' ), 'with its two buttons hidden until the script shows them' );
 $ok( wp_script_is( 'dgl-jobs-carousel', 'enqueued' ) && wp_style_is( 'dgl-public', 'enqueued' ), 'the carousel script and the stylesheet load' );
-$ok( str_contains( $vj_car, '<a href="https://val.org.uk/job/support-worker-2/">Support Worker 2</a>' ) && str_contains( $vj_car, 'Leeds · Part Time · £23,953' ), 'each card links to the advert on VAL and says where, hours and pay' );
+$ok( str_contains( $vj_car, '<a href="https://val.org.uk/job/support-worker-2/" target="_blank" rel="noopener">Support Worker 2<span class="dgl-home__srlabel"> (opens in a new tab)</span></a>' ) && str_contains( $vj_car, 'Leeds · Part Time · £23,953' ), 'each card opens the advert on VAL in a new tab, says so to a screen reader, and says where, hours and pay' );
+$ok( 14 === substr_count( $vj_car, '<a ' ) && 14 === substr_count( $vj_car, 'target="_blank" rel="noopener"' ) && 1 === substr_count( $vj_car, 'href="https://val.org.uk/jobs/" target="_blank" rel="noopener">All jobs on the VAL website' ), 'every link out opens in a new tab: twelve cards, the All link and the credit' );
 $ok( str_contains( $vj_car, 'src="' . esc_url( $vj_logo ) . '"' ) && ! str_contains( $vj_car, 'src="https://val.org.uk' ) && str_contains( $vj_car, '<span class="dgl-jobs__initial">N</span>' ), 'a logo from this site where there is one, never hotlinked from VAL, and the employer\'s initial where there is not' );
 $ok( ! str_contains( $vj_car, '<script>' ) && ! str_contains( $vj_car, '&lt;script&gt;' ) && str_contains( $vj_car, 'Support Worker 1 alert(1)' ), 'markup in a title is stripped, never run' );
-$ok( str_contains( $vj_car, '>Jobs in the sector</h2>' ) && str_contains( $vj_car, 'href="https://val.org.uk/jobs/">All jobs on the VAL website</a>' ) && str_contains( $vj_car, 'Jobs listed by <a href="https://val.org.uk/jobs/">Voluntary Action Leeds</a>' ), 'the heading, the All link and the credit to VAL' );
+$ok( str_contains( $vj_car, '>Jobs in the sector</h2>' ) && str_contains( $vj_car, 'href="https://val.org.uk/jobs/" target="_blank" rel="noopener">All jobs on the VAL website<span class="dgl-home__srlabel"> (opens in a new tab)</span></a>' ) && str_contains( $vj_car, 'Jobs listed by <a href="https://val.org.uk/jobs/" target="_blank" rel="noopener">Voluntary Action Leeds<span class="dgl-home__srlabel"> (opens in a new tab)</span></a>' ), 'the heading, the All link and the credit to VAL' );
 
 $vj_feed_html = do_shortcode( '[dgl_val_jobs layout="FEED" heading="Vacancies" link="no"]' );
 $ok( str_contains( $vj_feed_html, 'dgl-jobs--feed' ) && 6 === substr_count( $vj_feed_html, 'class="dgl-jobs__item"' ) && ! str_contains( $vj_feed_html, 'data-dgl-carousel' ), 'layout="feed" is a list of six with no carousel parts' );
 $ok( str_contains( $vj_feed_html, '>Vacancies</h2>' ) && ! str_contains( $vj_feed_html, 'dgl-home__all' ), 'heading and link work as on the other blocks' );
 $ok( 3 === substr_count( do_shortcode( '[dgl_val_jobs layout="feed" count="3"]' ), 'class="dgl-jobs__item"' ) && 14 === substr_count( do_shortcode( '[dgl_val_jobs count="99"]' ), 'class="dgl-jobs__item"' ), 'count sets how many, up to all there are' );
 $ok( str_contains( do_shortcode( '[dgl_val_jobs layout="sideways"]' ), 'dgl-jobs--carousel' ), 'an unknown layout falls back to the carousel' );
+
+$vj_kept = get_option( \DGL\Jobs\ValJobs::OPTION );
+$vj_many = [];
+for ( $vj_i = 1; $vj_i <= 30; $vj_i++ ) {
+	$vj_many[] = [ 'title' => 'Many ' . $vj_i, 'url' => 'https://val.org.uk/job/many-' . $vj_i . '/', 'company' => 'Age UK Leeds', 'location' => '', 'type' => '', 'salary' => '', 'posted' => '', 'logo' => '', 'logo_file' => '' ];
+}
+update_option( \DGL\Jobs\ValJobs::OPTION, [ 'jobs' => $vj_many, 'fetched' => time() ], false );
+$ok( 30 === substr_count( do_shortcode( '[dgl_val_jobs layout="feed" count="100"]' ), 'class="dgl-jobs__item"' ) && 6 === substr_count( do_shortcode( '[dgl_val_jobs layout="feed"]' ), 'class="dgl-jobs__item"' ), 'the jobs page can list all thirty, past the home page cap of 24, and the default is still six' );
+$ok( \DGL\Frontend\HomeBlocks::MAX_COUNT >= substr_count( do_shortcode( '[dgl_home_events count="999"]' ), 'class="dgl-home__row"' ), 'the other home blocks keep their cap' );
+update_option( \DGL\Jobs\ValJobs::OPTION, $vj_kept, false );
 
 $vj_rows = array_values( array_filter( \DGL\Admin\Health::rows(), static fn( array $r ): bool => 'Jobs from VAL' === $r['what'] ) );
 $ok( 1 === count( $vj_rows ) && 'good' === $vj_rows[0]['status'] && str_contains( $vj_rows[0]['value'], '14 shown' ), 'the health page shows the import green with its count' );

@@ -267,3 +267,33 @@ body.dgl-finder-open { overflow: hidden; }
 	.dgl-finder__row { flex-direction: column; }
 	.dgl-finder__go { width: 100%; }
 }
+
+/* ---- The theme's mega menus --------------------------------------------- */
+
+/*
+ * The icon lists in the header's mega menus (Greenshift blocks inside
+ * Blocksy content blocks) inherit a line height of about two, the same as
+ * the gap between items, so "Find Volunteer roles" wrapped onto two lines
+ * read as two items. Lines of one item sit close; items sit apart. A list
+ * that sets its own spacing keeps it: those rules carry an id and win.
+ */
+.menu-item .gspb_iconsList .gspb_iconsList__item { position: relative; line-height: 1.3; margin-bottom: 12px; }
+
+.menu-item .gspb_iconsList .gspb_iconsList__item:last-child { margin-bottom: 0; }
+
+/*
+ * Greenshift writes the rule that stretches an item's link over the whole
+ * item only when the block is saved in its editor, per block. These are
+ * the same rule for every menu block, so a link added any other way still
+ * covers its item and can be clicked.
+ */
+.menu-item .gspb_container:has(> .gspb-containerlink) { position: relative; }
+
+.menu-item .gspb_iconsList__link,
+.menu-item .gspb-containerlink { position: absolute; inset: 0; z-index: 1; border-radius: 6px; }
+
+.menu-item .gspb_iconsList__link:focus-visible,
+.menu-item .gspb-containerlink:focus-visible { outline: 3px solid var(--dgl-focus); outline-offset: 2px; }
+
+.menu-item .gspb_iconsList__item:has(> .gspb_iconsList__link):hover .gspb_iconsList__item__text,
+.menu-item .gspb_container:has(> .gspb-containerlink):hover .gspb_heading { text-decoration: underline; }
