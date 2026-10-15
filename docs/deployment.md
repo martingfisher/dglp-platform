@@ -341,6 +341,14 @@ wp dgl jobs refresh   # fetch now, exactly as the nightly run does
 wp dgl jobs status    # last good list, last attempt, next run
 ```
 
+SmartCache keeps pages for a day, so a Cloudflare Worker clears it after
+the import: `dglp-smartcache-clear` on the RYCM Cloudflare account, cron
+`30 2 * * *` (UTC, so after the 02:00-02:15 UK import in summer and
+winter), calling Wordify's `POST /api/v1/sites/{id}/cache/clear` with the
+Secrets Store key "Wordify". That call clears every layer (SmartCache,
+object cache, CDN); it has no layer option. The Worker has no web route;
+its runs and any failure are in its Cloudflare logs.
+
 System health has a "Jobs from VAL" row: green after a good night, amber
 after a failed one, red once the list is a week old. If VAL stop using
 WP Job Manager or put the feed behind their firewall, the row goes amber
