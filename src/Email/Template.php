@@ -60,6 +60,7 @@ final class Template {
 			'surface' => $palette[ $roles['surface'] ],
 			'rule'    => $palette[ $roles['decorative'] ],
 			'muted'   => '#5a6a6a',
+			'hairline' => '#dfe3ec',
 			'white'   => '#ffffff',
 		];
 	}
@@ -351,45 +352,20 @@ final class Template {
 			return '';
 		}
 
-		$out = '<tr><td style="padding:24px 32px;background-color:' . $c['surface'] . ';">';
+		/*
+		 * Small print, not a panel: on white under a hairline, so the shaded
+		 * boxes above (the facts, the note) stay the only shaded things and
+		 * the footer cannot be read as more of the message.
+		 */
+		$out = '<tr><td style="padding:0 32px 28px;background-color:' . $c['white'] . ';">'
+			. '<div style="border-top:1px solid ' . $c['hairline'] . ';padding-top:20px;">';
 
 		foreach ( $message->footnotes as $footnote ) {
-			$out .= '<p style="margin:0 0 8px;font-family:' . self::FONT . ';font-size:13px;line-height:1.5;color:' . $c['muted'] . ';">'
-				. self::linkify( $footnote, $c ) . '</p>';
+			$out .= '<p style="margin:0 0 10px;font-family:' . self::FONT . ';font-size:13px;line-height:1.55;color:' . $c['muted'] . ';">'
+				. Footer::html( $footnote, $c['link'] ) . '</p>';
 		}
 
-		return $out . '</td></tr>';
+		return $out . '</div></td></tr>';
 	}
 
-	/**
-	 * Make bare URLs in the small print clickable.
-	 *
-	 * The footer is where the unsubscribe link lives, and it was going out as
-	 * escaped text. Some clients auto-link a bare URL and some do not, so for
-	 * some readers the only way to stop the emails was to select the address,
-	 * copy it and paste it into a browser. Almost nobody does that. They press
-	 * the spam button instead, and a spam complaint costs the sending domain
-	 * far more than an unsubscribe does.
-	 *
-	 * Escaping happens first, on the whole string, and the pattern then matches
-	 * only what is left. Nothing user-supplied can reach the href unescaped.
-	 *
-	 * @param array<string, string> $c
-	 */
-	private static function linkify( string $text, array $c ): string {
-		$escaped = esc_html( $text );
-
-		return (string) preg_replace_callback(
-			'#https?://[^\s<>"\']+#i',
-			static function ( array $m ) use ( $c ): string {
-				// A trailing full stop belongs to the sentence, not the URL.
-				$url  = rtrim( $m[0], '.,;:' );
-				$tail = substr( $m[0], strlen( $url ) );
-
-				return '<a href="' . esc_url( html_entity_decode( $url, ENT_QUOTES, 'UTF-8' ) ) . '"'
-					. ' style="color:' . $c['primary'] . ';text-decoration:underline;">' . $url . '</a>' . $tail;
-			},
-			$escaped
-		);
-	}
 }

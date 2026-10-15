@@ -38,6 +38,8 @@ final readonly class Context {
 		public bool $is_edit = false,
 		public string $lifetime = '',
 		public string $trusted_for = '',
+		// The member's email settings, linked from the footer.
+		public string $settings_url = '',
 	) {}
 
 	/**

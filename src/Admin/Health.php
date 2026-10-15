@@ -415,7 +415,7 @@ final class Health {
 								<?php elseif ( 'secret' === $field['kind'] ) : ?>
 									<input type="password" class="regular-text" id="dgl-mail-<?php echo esc_attr( $key ); ?>" name="dgl_mail[<?php echo esc_attr( $key ); ?>]" value="" autocomplete="off" placeholder="<?php echo 'set' === $settings[ $key ] ? esc_attr__( 'Saved. Leave blank to keep it.', 'dgl-platform' ) : 'api-'; ?>">
 								<?php else : ?>
-									<input type="<?php echo 'email' === $field['kind'] ? 'email' : 'text'; ?>" class="regular-text" id="dgl-mail-<?php echo esc_attr( $key ); ?>" name="dgl_mail[<?php echo esc_attr( $key ); ?>]" value="<?php echo esc_attr( (string) $settings[ $key ] ); ?>">
+									<input type="<?php echo in_array( $field['kind'], [ 'email', 'url' ], true ) ? esc_attr( $field['kind'] ) : 'text'; ?>" class="regular-text" id="dgl-mail-<?php echo esc_attr( $key ); ?>" name="dgl_mail[<?php echo esc_attr( $key ); ?>]" value="<?php echo esc_attr( (string) $settings[ $key ] ); ?>">
 								<?php endif; ?>
 								<p class="description"><?php echo esc_html( $field['help'] ); ?></p>
 								<?php if ( '' !== $override ) : ?>

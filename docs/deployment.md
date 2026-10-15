@@ -255,6 +255,22 @@ The topic list ships in the plugin and seeds itself:
   to the venue's own contact address, and members are mailed at their
   own.
 
+## After 0.47.6: the email footer
+
+- Every email ends with the same small print under a thin line: who sent
+  it and why, a link to email settings (members), "Questions? Reply to
+  this email..." where a reply reaches the team, and a link to the
+  privacy notice. Venue enquiries and email to the review team leave out
+  the "Questions?" line.
+- Every email is sent with `Reply-To:` the team inbox, except a venue
+  enquiry, which replies to the person enquiring.
+- The privacy link is "Privacy notice link" under Email settings on the
+  System health page (option `dgl_mail_privacy_url`). Empty means the
+  WordPress privacy page, if one is published; with neither, the line is
+  left out. Production from 15 October 2026: the interim privacy notice
+  PDF in `uploads/2026/10/`.
+- Dates in emails read "10 October 2026".
+
 ## Demo content
 
 `wp dgl demo events --org=<id> --images` makes seven varied live events

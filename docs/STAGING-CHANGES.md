@@ -1240,3 +1240,18 @@ clean. They are the only DGLP content on staging.
   `/`, `/jobs/`, `/news/`, `/events/`, `/dashboard/`, `/directory/`,
   `/spaces/` 200, `/search-jobs/` 301, `/grants/` 404 as before (switched
   off, no archive). Integration 1432 (the new test failed before the fix).
+- **0.47.6 deployed** (15 October 2026, production): one footer for
+  every email. Small print under a thin line instead of a grey panel:
+  "Sent by the Doing Good Leeds Partnership team because ...", for members
+  a linked "email settings", "Questions? Reply to this email and the review
+  team will get back to you." where a reply reaches the team (not in email
+  to the review team or in venue enquiries), and "How we use your
+  information: privacy notice." linked to the interim privacy notice PDF
+  (new option `dgl_mail_privacy_url`, set on production). Every email goes
+  out with Reply-To the team inbox, except a venue enquiry, which replies
+  to the person enquiring. Dates in emails read "15 October 2026".
+  Checked: plugin and stamp 0.47.6, the option holds the PDF address, the
+  PDF, `/`, `/jobs/` and `/dashboard/` 200, SmartCache cleared. Approval,
+  review-team and digest emails rendered locally from the same code and
+  checked in HTML and plain text. Not yet checked: a real email from
+  production. Unit 2344, integration 1432.

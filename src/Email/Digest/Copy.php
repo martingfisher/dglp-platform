@@ -87,13 +87,21 @@ final class Copy {
 			cta_label: '' !== $browse_url ? __( 'See everything', 'dgl-platform' ) : '',
 			cta_url: $browse_url,
 			footnotes: [
-				$cadence,
-				sprintf(
-					/* translators: 1: preferences URL, 2: unsubscribe URL. */
-					__( 'Change what you get: %1$s - Stop these emails: %2$s', 'dgl-platform' ),
-					$preferences_url,
-					$unsubscribe_url
+				\DGL\Email\Footer::sent_because(
+					sprintf(
+						/* translators: %s: site name. */
+						__( 'you have an account on %s.', 'dgl-platform' ),
+						$site
+					)
 				),
+				sprintf(
+					/* translators: 1: how often, e.g. "You get this on Tuesday mornings.", 2: "Change what you get", linked, 3: "stop these emails", linked. */
+					__( '%1$s %2$s or %3$s.', 'dgl-platform' ),
+					$cadence,
+					\DGL\Email\Footer::link( __( 'Change what you get', 'dgl-platform' ), $preferences_url ),
+					\DGL\Email\Footer::link( __( 'stop these emails', 'dgl-platform' ), $unsubscribe_url )
+				),
+				\DGL\Email\Footer::questions(),
 			],
 			items: $items
 		);

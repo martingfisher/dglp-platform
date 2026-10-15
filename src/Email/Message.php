@@ -81,6 +81,13 @@ final readonly class Message {
 	}
 
 	/**
+	 * The same message with a line added to the end of its small print.
+	 */
+	public function with_footnote( string $footnote ): self {
+		return $this->with( [ 'footnotes' => array_values( array_merge( $this->footnotes, [ $footnote ] ) ) ] );
+	}
+
+	/**
 	 * The same message with a different subject, for the staging redirect.
 	 */
 	public function with_subject( string $subject ): self {
@@ -191,7 +198,7 @@ final readonly class Message {
 		}
 
 		foreach ( $this->footnotes as $footnote ) {
-			$lines[] = wordwrap( $footnote, 72 );
+			$lines[] = wordwrap( Footer::plain( $footnote ), 72 );
 		}
 
 		return rtrim( implode( "\n", $lines ) ) . "\n";

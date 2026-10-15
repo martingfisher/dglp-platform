@@ -79,11 +79,15 @@ final class SpacesCopy {
 			cta_label: __( 'See your venue in the user area', 'dgl-platform' ),
 			cta_url: $item_url,
 			footnotes: [
-				sprintf(
-					/* translators: %s: the venue's public address. */
-					__( 'You are getting this because you are the contact for a venue listed at %s. The person enquiring typed their own details; we have not checked them.', 'dgl-platform' ),
-					$public_url
+				Footer::sent_because(
+					sprintf(
+						/* translators: %s: "a venue listed on the site", linked to the venue's page. */
+						__( 'you are the contact for %s.', 'dgl-platform' ),
+						Footer::link( __( 'a venue listed on the site', 'dgl-platform' ), $public_url )
+					)
 				),
+				// No "reply to this email": a reply goes to the person enquiring.
+				__( 'The person enquiring typed their own details; we have not checked them.', 'dgl-platform' ),
 			]
 		);
 	}

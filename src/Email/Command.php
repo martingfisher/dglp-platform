@@ -211,6 +211,8 @@ final class Command {
 					continue;
 				}
 
+				$message = Footer::finish( $message, Routing::privacy_url(), Routing::team_address() );
+
 				$html = Template::render( $message, Logo::email_url() );
 				$path = $dir . '/' . $key . '-' . $each . '.html';
 				$text = $dir . '/' . $key . '-' . $each . '.txt';
@@ -351,8 +353,9 @@ final class Command {
 			review_url: home_url( '/dashboard/review/0' ),
 			public_url: home_url( '/' ),
 			queue_url: home_url( '/dashboard/review' ),
-			expires_on: wp_date( (string) get_option( 'date_format', 'j F Y' ) ) ?: '',
+			expires_on: wp_date( 'j F Y' ) ?: '',
 			note: "This is sample text standing in for a reviewer's message.\n\nThe second paragraph is here to prove line breaks survive.",
+			settings_url: \DGL\Dashboard\Router::url( 'profile', 'email' ),
 		);
 	}
 }
