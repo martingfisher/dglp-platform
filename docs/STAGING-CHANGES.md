@@ -1214,7 +1214,7 @@ clean. They are the only DGLP content on staging.
   used, as it would drop every plugin's rules. Checked live: `/jobs/` is
   the page (24 jobs), `/search-jobs/` 301s to it, the Top Bar links to it,
   `/news/`, `/events/`, `/dashboard/`, `/directory/`, `/spaces/` all 200.
-- **Found, not caused by this, not fixed**: every page under
+- **Found, not caused by this, fixed in 0.47.5 below**: every page under
   `/volunteering/` except the parent redirects to the home page
   (`x-redirect-by: WordPress`). The disabled Volunteering type is still
   registered with the slug `volunteering` (since at least 30 September),
@@ -1229,3 +1229,14 @@ clean. They are the only DGLP content on staging.
   the call returned `smartcache: ok` (it clears object cache and CDN too;
   a layers parameter is ignored). No web route, workers.dev off, logs on.
   First scheduled run 16 October 02:30 UTC, to be checked in its logs.
+- **0.47.5 deployed** (15 October 2026, production): a switched-off type
+  (Volunteering, Grants) registers no rewrite. Its rules had served
+  nothing but outranked the site's pages, so every page under
+  `/volunteering/` except the parent was sent to the home page. Rules
+  rebuilt on deploy with all plugins loaded (stamp 0.47.5), SmartCache
+  cleared. Checked live: all 11 pages under `/volunteering/` return 200
+  with their own titles; the three addresses that were under
+  `help-to-recruit-volunteers/` yesterday 301 to where they now live;
+  `/`, `/jobs/`, `/news/`, `/events/`, `/dashboard/`, `/directory/`,
+  `/spaces/` 200, `/search-jobs/` 301, `/grants/` 404 as before (switched
+  off, no archive). Integration 1432 (the new test failed before the fix).

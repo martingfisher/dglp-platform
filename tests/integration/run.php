@@ -5167,6 +5167,23 @@ foreach ( [ $pr_id, $pr_two, $pr_draft ] as $pr_del ) {
 	wp_delete_post( $pr_del, true );
 }
 
+/* ------------------------------------- switched-off types claim no address */
+
+$group( 'Switched-off types: pages under their old address still work' );
+
+$sw_rules  = get_option( 'permalink_structure' );
+$sw_parent = wp_insert_post( [ 'post_type' => 'page', 'post_status' => 'publish', 'post_title' => 'Volunteering', 'post_name' => 'volunteering' ] );
+$sw_child  = wp_insert_post( [ 'post_type' => 'page', 'post_status' => 'publish', 'post_title' => 'Find a role', 'post_name' => 'sw-find-a-role', 'post_parent' => $sw_parent ] );
+update_option( 'permalink_structure', '/%postname%/' );
+flush_rewrite_rules( false );
+$ok( ! PostTypes::is_enabled( PostTypes::VOLUNTEERING ) && false === get_post_type_object( PostTypes::VOLUNTEERING )->rewrite, 'the switched-off Volunteering type claims no address' );
+$ok( $sw_child === url_to_postid( home_url( '/volunteering/sw-find-a-role/' ) ), 'so a page under /volunteering/ is that page, not a missing listing' );
+$ok( is_array( get_post_type_object( PostTypes::EVENT )->rewrite ) && 'events' === get_post_type_object( PostTypes::EVENT )->rewrite['slug'], 'a switched-on type keeps its address' );
+wp_delete_post( $sw_child, true );
+wp_delete_post( $sw_parent, true );
+update_option( 'permalink_structure', $sw_rules );
+flush_rewrite_rules( false );
+
 /* ----------------------------------------------------------------- report */
 
 echo "\n" . str_repeat( '-', 60 ) . "\n";
