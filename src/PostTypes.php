@@ -304,7 +304,14 @@ final class PostTypes {
 			'show_in_menu'    => $enabled,
 			'show_in_rest'    => $enabled,
 			'has_archive'     => $enabled && $has_page ? $def['slug'] : false,
-			'rewrite'         => $has_page ? [
+			/*
+			 * Switched off, it claims no address either. Its rules served
+			 * nothing (it is not publicly queryable) but still outranked the
+			 * site's own pages, so every page under /volunteering/ resolved to
+			 * a missing listing and was sent to the home page. Switching the
+			 * type back on means giving it a base that no page uses.
+			 */
+			'rewrite'         => $enabled && $has_page ? [
 				'slug'       => $def['slug'],
 				'with_front' => false,
 			] : false,
