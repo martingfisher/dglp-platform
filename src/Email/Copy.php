@@ -609,33 +609,43 @@ final class Copy {
 	}
 
 	/**
-	 * Why this email arrived.
+	 * Why this email arrived, what the reader can change and where to ask.
 	 *
-	 * These are not marketing, so there is no unsubscribe link and it would be
-	 * misleading to imply one. Saying plainly what the email is and that it
-	 * cannot be switched off is better than a link that does nothing.
+	 * Notifications about a member's own submission cannot be switched off,
+	 * so there is no unsubscribe link here. The digest is separate and is
+	 * chosen in email settings, which the member footer links to. The privacy
+	 * line is added on the way out, by {@see Footer::finish()}.
 	 *
 	 * @return string[]
 	 */
 	private static function footnotes( string $audience, Context $c ): array {
 		if ( Plan::NOTIFY_MODERATORS === $audience ) {
 			return [
-				sprintf(
-					/* translators: %s: site name. */
-					__( 'You are getting this because you review content for %s.', 'dgl-platform' ),
-					$c->site()
+				Footer::sent_because(
+					sprintf(
+						/* translators: %s: site name. */
+						__( 'you review content for %s.', 'dgl-platform' ),
+						$c->site()
+					)
 				),
 			];
 		}
 
 		return [
-			sprintf(
-				/* translators: 1: organisation, 2: site name. */
-				__( 'You are getting this because %1$s has an account on %2$s.', 'dgl-platform' ),
-				$c->org(),
-				$c->site()
+			Footer::sent_because(
+				sprintf(
+					/* translators: 1: organisation, 2: site name. */
+					__( '%1$s has an account on %2$s.', 'dgl-platform' ),
+					$c->org(),
+					$c->site()
+				)
 			),
-			__( 'It is about your own submission, so it is not a newsletter and there is nothing to unsubscribe from. Your digest preferences are separate and you can change those in your dashboard.', 'dgl-platform' ),
+			sprintf(
+				/* translators: %s: "email settings", linked. */
+				__( 'You’ll always get emails about your own submissions. To choose which updates you get, go to your %s.', 'dgl-platform' ),
+				Footer::link( __( 'email settings', 'dgl-platform' ), $c->settings_url )
+			),
+			Footer::questions(),
 		];
 	}
 }

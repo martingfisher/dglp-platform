@@ -41,6 +41,9 @@ final class Routing {
 	/** Site option holding the inbox the review team's notifications go to. */
 	public const OPTION_TEAM = 'dgl_mail_team';
 
+	/** Site option holding the privacy notice every email links to. */
+	public const OPTION_PRIVACY = 'dgl_mail_privacy_url';
+
 	/**
 	 * Whether the plugin sends at all.
 	 *
@@ -195,5 +198,22 @@ final class Routing {
 		$name = trim( (string) get_option( self::OPTION_FROM_NAME, '' ) );
 
 		return '' !== $name ? $name : (string) get_bloginfo( 'name' );
+	}
+
+	/**
+	 * The privacy notice every email links to: the address saved in Email
+	 * settings (DGLP's notice is a PDF whose name changes with each
+	 * version), else WordPress's own privacy page once it is published,
+	 * else nothing, and the email leaves the line out rather than linking
+	 * to a page that is not there.
+	 */
+	public static function privacy_url(): string {
+		$saved = trim( (string) get_option( self::OPTION_PRIVACY, '' ) );
+
+		if ( '' !== $saved && 1 === preg_match( '#^https?://#i', $saved ) ) {
+			return $saved;
+		}
+
+		return function_exists( 'get_privacy_policy_url' ) ? (string) get_privacy_policy_url() : '';
 	}
 }

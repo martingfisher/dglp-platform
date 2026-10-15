@@ -9,6 +9,7 @@ declare( strict_types=1 );
 
 use DGL\Email\Context;
 use DGL\Email\Copy;
+use DGL\Email\Footer;
 use DGL\Email\Message;
 use DGL\Email\Routing;
 use DGL\Statuses;
@@ -358,7 +359,7 @@ $footed = new DGL\Email\Message(
 	audience: 'subscriber',
 	subject: 'S',
 	footnotes: [
-		'Change what you get: https://example.test/dashboard/profile/email/ - Stop these emails: https://example.test/dashboard/unsubscribe/abc123/',
+		'[Change what you get](https://example.test/dashboard/profile/email/) or [stop these emails](https://example.test/dashboard/unsubscribe/abc123/).',
 		'A line with a sentence-ending URL https://example.test/x.',
 		'A line with <script>alert(1)</script> and no link at all.',
 	]
@@ -372,6 +373,40 @@ Harness::assert_true( str_contains( $html, 'href="https://example.test/x"' ), 'a
 Harness::assert_true( str_contains( $html, 'x</a>.' ), 'and stays in the sentence where it belongs' );
 Harness::assert_false( str_contains( $html, '<script>' ), 'markup in a footnote is still escaped' );
 Harness::assert_true( str_contains( $html, '&lt;script&gt;' ), 'and shown as text' );
+
+Harness::group( 'The footer: one voice, linked words, a privacy line and a reply address' );
+
+Harness::assert_same( 'Sent by the Doing Good Leeds Partnership team because you are on the review team.', Footer::sent_because( 'you are on the review team.' ), 'every footer starts with who sent it and why' );
+Harness::assert_same( '[email settings](https://example.test/s/)', Footer::link( 'email settings', 'https://example.test/s/' ), 'a link is written as words and an address' );
+Harness::assert_same( 'email settings', Footer::link( 'email settings', '  ' ), 'with no address the words stand alone' );
+Harness::assert_same( 'Go to your email settings (https://example.test/s/).', Footer::plain( 'Go to your [email settings](https://example.test/s/).' ), 'plain text keeps the address, in brackets' );
+
+$linked = Footer::html( 'Go to your [email settings](https://example.test/s/?a=1&b=2). Or https://example.test/x.', '#123456' );
+Harness::assert_true( str_contains( $linked, '>email settings</a>' ), 'the HTML shows the words as the link' );
+Harness::assert_true( 1 === preg_match( '#href="https://example\.test/s/\?a=1&(amp;|\#038;)?b=2"#', $linked ), 'with the address intact in the href' );
+Harness::assert_false( str_contains( $linked, '>https://example.test/s/' ), 'and the address is not linked a second time as text' );
+Harness::assert_true( str_contains( $linked, 'x</a>.' ), 'a bare address is still linked, its full stop left outside' );
+Harness::assert_false( str_contains( Footer::html( '[<b>x</b>](https://example.test/)', '#000' ), '<b>' ), 'markup in linked words is escaped' );
+
+Harness::assert_same( '', Footer::privacy_line( '' ), 'no privacy notice, no privacy line' );
+
+$bare     = new DGL\Email\Message( key: 'k', audience: 'member', subject: 'S', footnotes: [ 'One' ] );
+$finished = Footer::finish( $bare, 'https://example.test/privacy.pdf', 'team@example.test' );
+Harness::assert_same( 'How we use your information: [privacy notice](https://example.test/privacy.pdf).', $finished->footnotes[ count( $finished->footnotes ) - 1 ], 'the privacy line goes last' );
+Harness::assert_true( in_array( 'Reply-To: team@example.test', $finished->headers, true ), 'replies go to the team inbox' );
+Harness::assert_same( $finished->footnotes, Footer::finish( $finished, 'https://example.test/privacy.pdf', 'team@example.test' )->footnotes, 'finishing twice adds nothing twice' );
+
+$enquiry = new DGL\Email\Message( key: 'k', audience: 'venue', subject: 'S', headers: [ 'Reply-To: asker@example.test' ] );
+Harness::assert_same( [ 'Reply-To: asker@example.test' ], Footer::finish( $enquiry, '', 'team@example.test' )->headers, 'an email with its own reply address keeps it' );
+Harness::assert_same( [], Footer::finish( $enquiry, '', 'team@example.test' )->footnotes, 'and no notice means no privacy line' );
+
+$member = DGL\Email\Copy::compose( 'approved', Plan::NOTIFY_MEMBER, new DGL\Email\Context( org_name: 'Sample Organisation', site_name: 'DGL.org.uk', settings_url: 'https://example.test/dashboard/profile/email/' ) );
+Harness::assert_true( null !== $member, 'the approval email composes' );
+if ( null !== $member ) {
+	Harness::assert_same( 'Sent by the Doing Good Leeds Partnership team because Sample Organisation has an account on DGL.org.uk.', $member->footnotes[0], 'a member footer says who and why, in the agreed words' );
+	Harness::assert_true( str_contains( $member->footnotes[1], '[email settings](https://example.test/dashboard/profile/email/)' ), 'and links to email settings' );
+	Harness::assert_same( Footer::questions(), $member->footnotes[ count( $member->footnotes ) - 1 ], 'and says to reply with questions' );
+}
 
 Harness::group( 'Series: the "still running?" reminder' );
 

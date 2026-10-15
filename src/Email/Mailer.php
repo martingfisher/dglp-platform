@@ -163,6 +163,7 @@ final class Mailer {
 			// "3 months" for a listing that stays up for a spell, '' for a dated one.
 			lifetime: null !== \DGL\Workflow\Lifetime::days_for( (string) $subject->post_type ) ? \DGL\Workflow\Lifetime::spell_for( (string) $subject->post_type ) : '',
 			trusted_for: $trusted_for,
+			settings_url: Router::url( 'profile', 'email' ),
 		);
 	}
 
@@ -217,7 +218,8 @@ final class Mailer {
 			return '';
 		}
 
-		return (string) wp_date( (string) get_option( 'date_format', 'j F Y' ), $at->getTimestamp() );
+		// Always "10 October 2026" in email, whatever the site's own date setting.
+		return (string) wp_date( 'j F Y', $at->getTimestamp() );
 	}
 
 	/**
@@ -233,6 +235,7 @@ final class Mailer {
 	 *              arrived, which no sending code can know.
 	 */
 	public static function send( Message $message ): bool {
+		$message  = Footer::finish( $message, Routing::privacy_url(), Routing::team_address() );
 		$redirect = Routing::configured_redirect();
 		$intended = $message->to;
 		$to       = Routing::deliver_to( $intended, $redirect );

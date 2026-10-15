@@ -72,6 +72,12 @@ final class Settings {
 				'help'   => __( 'Staging only. With an address here every email goes there and nowhere else. Blank on a live site.', 'dgl-platform' ),
 				'kind'   => 'email',
 			],
+			'privacy'   => [
+				'option' => Routing::OPTION_PRIVACY,
+				'label'  => __( 'Privacy notice link', 'dgl-platform' ),
+				'help'   => __( 'The footer of every email links here. Paste the address of the current privacy notice (a page or the PDF). Blank uses the site\'s privacy page once it is published, and leaves the line out until then.', 'dgl-platform' ),
+				'kind'   => 'url',
+			],
 			'smtp2go_report_key' => [
 				'option' => Smtp2go::OPTION_REPORT_KEY,
 				'label'  => __( 'SMTP2GO reporting key', 'dgl-platform' ),
@@ -162,6 +168,15 @@ final class Settings {
 				continue;
 			}
 
+			if ( 'url' === $field['kind'] && '' !== $value ) {
+				$value = esc_url_raw( $value, [ 'https', 'http' ] );
+
+				if ( '' === $value ) {
+					/* translators: %s: the setting. */
+					return new WP_Error( 'dgl_bad_url', sprintf( __( '%s: give a full web address starting https://.', 'dgl-platform' ), $field['label'] ) );
+				}
+			}
+
 			if ( 'email' === $field['kind'] && '' !== $value && ! is_email( $value ) ) {
 				/* translators: 1: the setting, 2: what was typed. */
 				return new WP_Error( 'dgl_bad_address', sprintf( __( '%1$s: "%2$s" is not an email address.', 'dgl-platform' ), $field['label'], $value ) );
@@ -204,6 +219,7 @@ final class Settings {
 				'from_name' => [ 'type' => 'string', 'description' => 'The From name. Empty string falls back to the site name.' ],
 				'team'      => [ 'type' => 'string', 'description' => 'The inbox the review team\'s notifications go to. Empty string sends them to each moderator.' ],
 				'redirect'  => [ 'type' => 'string', 'description' => 'Divert every email to this address (staging). Empty string switches the redirect off.' ],
+				'privacy'   => [ 'type' => 'string', 'description' => 'The privacy notice every email footer links to (a page or PDF address). Empty string falls back to the WordPress privacy page.' ],
 				'smtp2go_report_key' => [ 'type' => 'string', 'description' => 'A read-only SMTP2GO API key (api-...) for delivery lookups. "clear" removes it. Read back only as "set" or "".' ],
 			],
 			'additionalProperties' => false,

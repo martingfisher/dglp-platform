@@ -28,6 +28,7 @@ final class JoinCopy {
 			cta_url: $link,
 			footnotes: [
 				__( 'The link works once, and for two days. After that, start again from the join page and a new one will be sent.', 'dgl-platform' ),
+				Footer::questions(),
 			]
 		);
 	}
@@ -73,7 +74,8 @@ final class JoinCopy {
 			cta_label: __( 'See who has access', 'dgl-platform' ),
 			cta_url: $members_url,
 			footnotes: [
-				__( 'You are getting this because you are an owner of the organisation.', 'dgl-platform' ),
+				Footer::sent_because( __( 'you are an owner of the organisation.', 'dgl-platform' ) ),
+				Footer::questions(),
 			]
 		);
 	}
@@ -102,7 +104,7 @@ final class JoinCopy {
 			cta_label: __( 'Check it and decide', 'dgl-platform' ),
 			cta_url: $review_url,
 			footnotes: [
-				__( 'You are getting this because you are on the review team.', 'dgl-platform' ),
+				Footer::sent_because( __( 'you are on the review team.', 'dgl-platform' ) ),
 			]
 		);
 	}
@@ -157,7 +159,7 @@ final class JoinCopy {
 			cta_label: __( 'Check it and decide', 'dgl-platform' ),
 			cta_url: $review_url,
 			footnotes: [
-				__( 'You are getting this because you are on the review team.', 'dgl-platform' ),
+				Footer::sent_because( __( 'you are on the review team.', 'dgl-platform' ) ),
 			]
 		);
 	}

@@ -49,7 +49,7 @@ final class OrgCopy {
 			cta_label: __( 'See the change and decide', 'dgl-platform' ),
 			cta_url: $review_url,
 			footnotes: [
-				__( 'You are getting this because you are on the review team.', 'dgl-platform' ),
+				Footer::sent_because( __( 'you are on the review team.', 'dgl-platform' ) ),
 			]
 		);
 	}
@@ -83,7 +83,8 @@ final class OrgCopy {
 			cta_label: __( 'See your organisation profile', 'dgl-platform' ),
 			cta_url: $profile_url,
 			footnotes: [
-				__( 'You are getting this because you are an owner of the organisation in the DGLP member area.', 'dgl-platform' ),
+				Footer::sent_because( __( 'you are an owner of the organisation in the DGLP member area.', 'dgl-platform' ) ),
+				Footer::questions(),
 			]
 		);
 	}
@@ -119,7 +120,8 @@ final class OrgCopy {
 			cta_label: __( 'Go to your organisation profile', 'dgl-platform' ),
 			cta_url: $profile_url,
 			footnotes: [
-				__( 'You are getting this because you are an owner of the organisation in the DGLP member area.', 'dgl-platform' ),
+				Footer::sent_because( __( 'you are an owner of the organisation in the DGLP member area.', 'dgl-platform' ) ),
+				Footer::questions(),
 			]
 		);
 	}
@@ -153,7 +155,8 @@ final class OrgCopy {
 			cta_label: __( 'Go to your member area', 'dgl-platform' ),
 			cta_url: $profile_url,
 			footnotes: [
-				__( 'You are getting this because you are an owner of the organisation in the DGLP member area.', 'dgl-platform' ),
+				Footer::sent_because( __( 'you are an owner of the organisation in the DGLP member area.', 'dgl-platform' ) ),
+				Footer::questions(),
 			]
 		);
 	}

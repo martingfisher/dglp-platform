@@ -114,11 +114,14 @@ final class InviteCopy {
 			cta_label: __( 'Accept the invitation', 'dgl-platform' ),
 			cta_url: $accept_url,
 			footnotes: [
-				sprintf(
-					/* translators: %s: organisation. */
-					__( 'You are getting this because somebody at %s entered your email address. If that was not expected, ignore it and the invitation expires on its own. Nothing has been created in your name.', 'dgl-platform' ),
-					$org
+				Footer::sent_because(
+					sprintf(
+						/* translators: %s: organisation. */
+						__( 'somebody at %s entered your email address. If that was not expected, ignore it and the invitation expires on its own. Nothing has been created in your name.', 'dgl-platform' ),
+						$org
+					)
 				),
+				Footer::questions(),
 			]
 		);
 	}
@@ -155,7 +158,8 @@ final class InviteCopy {
 			cta_label: __( 'See who has access', 'dgl-platform' ),
 			cta_url: $members_url,
 			footnotes: [
-				__( 'You are getting this because you sent the invitation.', 'dgl-platform' ),
+				Footer::sent_because( __( 'you sent the invitation.', 'dgl-platform' ) ),
+				Footer::questions(),
 			]
 		);
 	}

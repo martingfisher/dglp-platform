@@ -69,11 +69,19 @@ final class SeriesCopy {
 			cta_label: __( 'Yes, still current: keep it listed', 'dgl-platform' ),
 			cta_url: $extend_url,
 			footnotes: [
-				sprintf(
-					/* translators: %s: a URL. */
-					__( 'The link works once. To change the words instead, open it in your dashboard: %s', 'dgl-platform' ),
-					$item_url
+				Footer::sent_because(
+					sprintf(
+						/* translators: %s: site name. */
+						__( 'you look after this listing on %s.', 'dgl-platform' ),
+						$site
+					)
 				),
+				sprintf(
+					/* translators: %s: "open it in your dashboard", linked to the dashboard. */
+					__( 'The link works once. To change the words instead, %s.', 'dgl-platform' ),
+					Footer::link( __( 'open it in your dashboard', 'dgl-platform' ), $item_url )
+				),
+				Footer::questions(),
 			],
 		);
 	}
@@ -107,11 +115,19 @@ final class SeriesCopy {
 			cta_label: __( 'Yes, still running: keep it listed', 'dgl-platform' ),
 			cta_url: $extend_url,
 			footnotes: [
-				sprintf(
-					/* translators: %s: a URL. */
-					__( 'The link works once. To change the days or times instead, open the event in your dashboard: %s', 'dgl-platform' ),
-					$item_url
+				Footer::sent_because(
+					sprintf(
+						/* translators: %s: site name. */
+						__( 'you look after this listing on %s.', 'dgl-platform' ),
+						$site
+					)
 				),
+				sprintf(
+					/* translators: %s: "open the event in your dashboard", linked to the dashboard. */
+					__( 'The link works once. To change the days or times instead, %s.', 'dgl-platform' ),
+					Footer::link( __( 'open the event in your dashboard', 'dgl-platform' ), $item_url )
+				),
+				Footer::questions(),
 			],
 		);
 	}
