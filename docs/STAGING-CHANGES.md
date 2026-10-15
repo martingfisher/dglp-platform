@@ -1192,9 +1192,8 @@ clean. They are the only DGLP content on staging.
   `ct_content_block`, so the links are to be added in the Greenshift
   editor (list in PR #5). "Trustee Recruitment" and "Corporate
   Volunteering and Social Value" have no matching page yet.
-- **Not done, blocked**: clearing SmartCache after each nightly jobs
-  update. The Hosting Tools plugin's "Clear Smart Cache" button is the
-  route; what it calls is not readable from outside wp-admin.
+- **Not done, blocked** (resolved 15 October, below): clearing SmartCache
+  after each nightly jobs update.
 - **0.47.3 deployed** (14 October 2026, production): the jobs block has
   24px above and 32px below, so on the jobs page the All link no longer
   sits hard under the hero nor the credit on the footer (0px each before,
@@ -1222,3 +1221,11 @@ clean. They are the only DGLP content on staging.
   and its rules outrank the pages', so `/volunteering/find-a-volunteer-role/`
   and its siblings resolve to a missing listing. Needs a decision on how to
   free the address.
+- **SmartCache cleared nightly** (15 October 2026): Cloudflare Worker
+  `dglp-smartcache-clear` (RYCM account) runs at 02:30 UTC and calls
+  Wordify `POST /api/v1/sites/01KVZAKGKNP7XYZ6Z8E50WVJ0N/cache/clear`
+  with the Secrets Store key "Wordify" (bound, never returned). Found and
+  tested through a temporary keyed test route, which was then removed:
+  the call returned `smartcache: ok` (it clears object cache and CDN too;
+  a layers parameter is ignored). No web route, workers.dev off, logs on.
+  First scheduled run 16 October 02:30 UTC, to be checked in its logs.
