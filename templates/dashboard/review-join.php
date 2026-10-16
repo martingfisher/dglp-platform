@@ -173,7 +173,7 @@ $closeness = match ( (string) ( $data['closeness'] ?? 'none' ) ) {
 					<?php foreach ( $likely as $match ) : ?>
 						<li class="dgl-match dgl-match--<?php echo esc_attr( $match['trashed'] ? 'trashed' : $match['strength'] ); ?>">
 							<div class="dgl-match__who">
-								<strong><a href="<?php echo esc_url( $match['edit_url'] ); ?>"><?php echo esc_html( $match['name'] ); ?></a></strong>
+								<strong><?php if ( current_user_can( 'manage_options' ) ) : ?><a href="<?php echo esc_url( $match['edit_url'] ); ?>"><?php echo esc_html( $match['name'] ); ?></a><?php else : ?><?php echo esc_html( $match['name'] ); ?><?php endif; ?></strong>
 								<span class="dgl-match__status"><?php echo $match['trashed'] ? esc_html__( 'previously refused, in the bin', 'dgl-platform' ) : esc_html( $status_label( $match['status'] ) ); ?></span>
 								<span class="dgl-match__why"><?php echo esc_html( $match['why'] ); ?></span>
 							</div>

@@ -218,10 +218,11 @@ final class Access {
 		 * post) write straight to the post, past review: a live listing
 		 * edited through /wp-json/wp/v2/ changes on the site at once. The
 		 * member area never asks WordPress for these capabilities; it checks
-		 * the policy and makes a pending edit. So through WordPress only the
-		 * review team may edit or delete an item. Reading is unchanged.
+		 * the policy and makes a pending edit. So through WordPress only an
+		 * administrator, the one role with wp-admin, may edit or delete an
+		 * item. Reading is unchanged.
 		 */
-		if ( Policy::VIEW_ITEM !== $action && ! self::user_context( $user_id )->is_moderator() ) {
+		if ( Policy::VIEW_ITEM !== $action && ! self::user_context( $user_id )->is_admin() ) {
 			return [ 'do_not_allow' ];
 		}
 
@@ -233,7 +234,7 @@ final class Access {
 	}
 
 	/**
-	 * Our items' REST routes are for the review team only.
+	 * Our items' REST routes are for administrators only, the one role with wp-admin.
 	 *
 	 * Nothing public reads them: listings, the finder and the map render on
 	 * the server. Open, they served what the site deliberately does not show
@@ -257,7 +258,7 @@ final class Access {
 			$base = strtolower( $base );
 
 			if ( $route === '/wp/v2/' . $base || str_starts_with( $route, '/wp/v2/' . $base . '/' ) ) {
-				if ( self::user_context( get_current_user_id() )->is_moderator() ) {
+				if ( self::user_context( get_current_user_id() )->is_admin() ) {
 					return $result;
 				}
 
@@ -269,14 +270,14 @@ final class Access {
 	}
 
 	/**
-	 * The REST search, for anybody but the team, leaves our items out: it
+	 * The REST search, for anybody but an administrator, leaves our items out: it
 	 * listed what the item routes no longer do, hidden venues included.
 	 *
 	 * @param array<string, mixed> $args
 	 * @return array<string, mixed>
 	 */
 	public static function rest_search_without_items( array $args ): array {
-		if ( self::user_context( get_current_user_id() )->is_moderator() ) {
+		if ( self::user_context( get_current_user_id() )->is_admin() ) {
 			return $args;
 		}
 
@@ -290,14 +291,14 @@ final class Access {
 	}
 
 	/**
-	 * The REST user list, for anybody but the team, does not count our items
+	 * The REST user list, for anybody but an administrator, does not count our items
 	 * as published posts, so it never names who wrote a listing.
 	 *
 	 * @param array<string, mixed> $args
 	 * @return array<string, mixed>
 	 */
 	public static function rest_users_without_items( array $args ): array {
-		if ( empty( $args['has_published_posts'] ) || self::user_context( get_current_user_id() )->is_moderator() ) {
+		if ( empty( $args['has_published_posts'] ) || self::user_context( get_current_user_id() )->is_admin() ) {
 			return $args;
 		}
 
@@ -340,7 +341,7 @@ final class Access {
 	 * @return \stdClass|\WP_Error
 	 */
 	public static function refuse_rest_insert( $prepared ) {
-		if ( is_wp_error( $prepared ) || self::user_context( get_current_user_id() )->is_moderator() ) {
+		if ( is_wp_error( $prepared ) || self::user_context( get_current_user_id() )->is_admin() ) {
 			return $prepared;
 		}
 

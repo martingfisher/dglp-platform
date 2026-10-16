@@ -1300,3 +1300,22 @@ clean. They are the only DGLP content on staging.
   draft, edit live (opens a pending edit), uploads on a draft and a
   pending edit (accepted) and on a live item (refused), core media
   upload (403).
+- **0.47.9 deployed** (16 October 2026, production): only administrators
+  use wp-admin, DGLP's call. Every account without `manage_options`
+  (members, the moderator role, the one editor account, user 5) is sent
+  from any wp-admin screen to the member area and does not see the admin
+  bar; WordPress's own item routes follow the same line (admins only).
+  The review screens show their wp-admin links to administrators only.
+  Production has no moderator-role accounts: the review team are the
+  administrators, and one administrator (user 9) is also in an
+  organisation, so administrators work both sides. Checked on the local
+  copy over HTTP: an administrator gets wp-admin's index, profile,
+  post-new and upload screens (200) and the admin bar; an editor is sent
+  to /dashboard/ from each (302) with no admin bar. Live: plugin 0.47.9,
+  public pages 200, listing REST 404. wp-login.php and wp-admin answer
+  automated requests with Cloudflare's challenge (`cf-mitigated:
+  challenge`), before WordPress; a real browser passes it.
+- **AltText.ai** (16 October 2026): on, with a key, generating on upload.
+  1,324 images, 956 with no alt text (55 of them SVG, which the AltText.ai
+  account has switched off). `wp alttext generate --dry-run` counts 953
+  to process. Not run: it spends one credit per image.

@@ -29,7 +29,9 @@ defined( 'ABSPATH' ) || exit;
  * and that is tested separately. This stops them being shown a door they were
  * never meant to see.
  *
- * Moderators keep wp-admin. Administrators are untouched.
+ * Only administrators use wp-admin (October 2026, DGLP's call). Everybody
+ * else, members, the review team's moderator role and any other WordPress
+ * role, works in the member area, which has the review screens.
  */
 final class AdminLockout {
 
@@ -68,7 +70,7 @@ final class AdminLockout {
 	 * @param \WP_User|\WP_Error $user    The user, or a failure.
 	 */
 	public static function after_login( $to, $requested, $user ) {
-		if ( ! $user instanceof \WP_User || ! self::is_member_only( (int) $user->ID ) ) {
+		if ( ! $user instanceof \WP_User || ! self::is_locked_out( (int) $user->ID ) ) {
 			return $to;
 		}
 
@@ -108,17 +110,32 @@ final class AdminLockout {
 	}
 
 	/**
+	 * Whether this signed-in account is kept out of wp-admin: everybody but an
+	 * administrator. Asked by capability, so an administrator who also holds
+	 * the member role keeps their admin.
+	 */
+	public static function is_locked_out( ?int $user_id = null ): bool {
+		$user = null === $user_id ? wp_get_current_user() : get_userdata( $user_id );
+
+		if ( ! $user || 0 === (int) $user->ID ) {
+			return false;
+		}
+
+		return ! user_can( $user, 'manage_options' );
+	}
+
+	/**
 	 * @param bool $show Whether WordPress intends to show the bar.
 	 */
 	public static function hide_admin_bar( $show ) {
-		return self::is_member_only() ? false : $show;
+		return self::is_locked_out() ? false : $show;
 	}
 
 	/**
 	 * Send a member who lands in wp-admin back to their own dashboard.
 	 */
 	public static function redirect_members(): void {
-		if ( ! self::is_member_only() || self::is_allowed_request() ) {
+		if ( ! self::is_locked_out() || self::is_allowed_request() ) {
 			return;
 		}
 
