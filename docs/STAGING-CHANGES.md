@@ -1269,3 +1269,34 @@ clean. They are the only DGLP content on staging.
   `docs/`, `tests/` and `README.md` 404; JSON-LD on an event, the
   directory and events parses; SmartCache and CDN cleared. The new tests
   failed on 0.47.6 and pass now. Unit 2344, integration 1454.
+- **0.47.8 deployed** (16 October 2026, production): the rest of the
+  security review and two re-check rounds. Members hold only `read`
+  (no upload_files and no WordPress item capabilities: XML-RPC and the
+  media route are closed to them; schema 13). Listing REST routes, in
+  any letter case, answer only the team; REST search and users leave
+  listings out. A member's restore is checked like a submission and
+  cannot resurrect a refusal; venue restores leave incomplete spaces
+  archived. Image fields take only the organisation's own pictures, and
+  others' alt text is never rewritten; pictures over 40 megapixels are
+  refused. The venue map popups set the title as text (it ran script
+  before). Moving an item discards the old organisation's unsent edit,
+  and an edit's trust is its item's current organisation's. Leavers are
+  not emailed; cancellation notes are one line of 200 characters;
+  hidden venues are out of feeds and sitemaps. Invitations: an existing
+  account accepts signed in; a lapsed inviter's invitation is refused;
+  a waiting claim closes when its person accepts one. Rate limits use a
+  fixed window, the visitor's address behind Cloudflare (IPv6 by /64)
+  and a per-venue cap; the audit log hashes the real address. Calendar
+  CRs and more CSV formula forms are neutralised. Checked live: plugin
+  0.47.8, schema 13, `dgl_member` caps `read` only; `/`, `/jobs/`,
+  `/dashboard/`, `/directory/`, `/events/`, `/news/`, `/spaces/`,
+  `/dashboard/join/` 200; `/wp-json/wp/v2/dgl_event`, `DGL_EVENT` and
+  `dgl_venue` 404 (200 before), `/wp/v2/pages` 200, `/wp/v2/users` 401;
+  REST search returns pages only; JSON-LD parses on two venues, two
+  events and the directory; the venue "Bigger map" and the Find a space
+  map open in Chromium with their popups as text and a link, no script
+  errors. Unit 2374, integration 1498 (twice in a row). Member flows
+  checked over HTTP on the local copy: dashboard, new listing, edit
+  draft, edit live (opens a pending edit), uploads on a draft and a
+  pending edit (accepted) and on a live item (refused), core media
+  upload (403).
