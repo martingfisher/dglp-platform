@@ -1710,6 +1710,12 @@ final class Controller {
 				}
 			}
 
+			// Restoring sends it to the team, so a member's restore is checked like a submission.
+			if ( StateMachine::RESTORE === $action && ! $user->is_moderator() && ! empty( Wizard::validate_all( $post_id, (string) $post->post_type ) ) ) {
+				$action_error = __( 'This is missing something it needs before the team can review it. Make a copy, fill in what is missing and send that.', 'dgl-platform' );
+				$action       = '';
+			}
+
 			if ( '' !== $action ) {
 				$result = Transition::apply( $post_id, $action, $user->user_id );
 
@@ -2278,6 +2284,15 @@ final class Controller {
 			// account its owner is locked out of on their second visit.
 			$problem = $needs_pw ? InviteRules::password_problem( $password, $confirm ) : '';
 
+			/*
+			 * An account that already exists is accepted by its owner, signed
+			 * in. The link alone used to sign whoever held it into that
+			 * account with no password, staff accounts included.
+			 */
+			if ( ! $needs_pw && get_current_user_id() !== (int) $existing->ID ) {
+				$problem = __( 'You already have an account with this address. Sign in to it first, then open this link again to accept.', 'dgl-platform' );
+			}
+
 			if ( '' !== $problem ) {
 				$error = $problem;
 			} else {
@@ -2290,7 +2305,7 @@ final class Controller {
 					 * just proved who they are by holding a link sent to their
 					 * own address.
 					 */
-					if ( ! is_user_logged_in() && $result['user_id'] > 0 ) {
+					if ( $needs_pw && ! is_user_logged_in() && $result['user_id'] > 0 ) {
 						wp_set_current_user( $result['user_id'] );
 						wp_set_auth_cookie( $result['user_id'], false, is_ssl() );
 					}
@@ -2304,6 +2319,8 @@ final class Controller {
 			}
 		}
 
+		$holder = get_user_by( 'email', $invite->email );
+
 		self::screen(
 			'invite',
 			[
@@ -2312,7 +2329,7 @@ final class Controller {
 				'org_name'  => (string) get_the_title( $invite->org_id ),
 				'inviter'   => Invites::person( $invite->invited_by ),
 				'role_name' => Invites::role_name( $invite->org_role ),
-				'has_account' => get_user_by( 'email', $invite->email ) instanceof \WP_User,
+				'has_account' => $holder instanceof \WP_User,
 				'expires_on'  => Invites::readable_date( $invite->expires_at ),
 				'error'     => $error,
 				'done'      => $done,
@@ -2321,7 +2338,9 @@ final class Controller {
 				// button posted, was refused, and drew the same page again:
 				// a loop with nothing to say about how to get out of it.
 				'open'      => InviteRules::OPEN === $state,
-				'signin_url' => wp_login_url( Router::url() ),
+				// Back here after signing in, so an existing account can accept.
+				'signin_url' => wp_login_url( home_url( '/' . trim( (string) wp_parse_url( (string) ( $_SERVER['REQUEST_URI'] ?? '' ), PHP_URL_PATH ), '/' ) . '/' ) ), // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- reduced to a path, then a same-site URL.
+				'must_sign_in' => $holder instanceof \WP_User && get_current_user_id() !== (int) $holder->ID,
 			],
 			$title
 		);

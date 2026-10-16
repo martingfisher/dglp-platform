@@ -93,7 +93,17 @@ $signin_url  = (string) ( $data['signin_url'] ?? wp_login_url() );
 			<div class="dgl-alert"><p><?php echo esc_html( $error ); ?></p></div>
 		<?php endif; ?>
 
-		<?php if ( ! $open ) : ?>
+		<?php if ( $open && ! empty( $data['must_sign_in'] ) ) : ?>
+
+			<?php /* The address has an account already: its owner accepts, signed in. */ ?>
+			<p><?php esc_html_e( 'You already have an account with this address. Sign in to it, and this page comes back so you can accept.', 'dgl-platform' ); ?></p>
+			<p>
+				<a class="dgl-button dgl-button--primary" href="<?php echo esc_url( $signin_url ); ?>">
+					<?php esc_html_e( 'Sign in', 'dgl-platform' ); ?>
+				</a>
+			</p>
+
+		<?php elseif ( ! $open ) : ?>
 
 			<?php /* Used, withdrawn or expired: nothing to fill in. The way out is a link, not a button that reloads. */ ?>
 			<p>

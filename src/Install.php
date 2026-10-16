@@ -184,6 +184,7 @@ final class Install {
 		\DGL\Roles::install();
 		// Schema 12: a claim waiting on the team no longer links the account.
 		\DGL\Joining\Joining::unlink_waiting_claims();
+		// Schema 13: members lose upload_files (Roles::install above rewrites the role).
 
 		update_option( self::DB_VERSION_OPTION, DB_VERSION, false );
 	}

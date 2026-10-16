@@ -136,16 +136,112 @@ final class Guard {
 
 	/** The caller's network address, or '' when unknown. */
 	public static function ip(): string {
-		return isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( (string) $_SERVER['REMOTE_ADDR'] ) ) : '';
+		return self::client_ip( $_SERVER ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- validated as an IP below.
 	}
 
+	/**
+	 * The visitor's own address from a request's server values.
+	 *
+	 * Behind Cloudflare every request arrives from one of its addresses, and
+	 * counting those would put every visitor in one bucket: one script could
+	 * lock the forms for everybody. Cloudflare's header is believed only when
+	 * the request really came from Cloudflare, so nobody can set it to dodge
+	 * the limit. Anything that is not an IP address counts as unknown. Pure.
+	 *
+	 * @param array<string, mixed> $server
+	 */
+	public static function client_ip( array $server ): string {
+		$remote = self::valid_ip( (string) ( $server['REMOTE_ADDR'] ?? '' ) );
+
+		if ( '' !== $remote && self::is_cloudflare( $remote ) ) {
+			$visitor = self::valid_ip( (string) ( $server['HTTP_CF_CONNECTING_IP'] ?? '' ) );
+
+			if ( '' !== $visitor ) {
+				return $visitor;
+			}
+		}
+
+		return $remote;
+	}
+
+	/** Cloudflare's published ranges, from https://www.cloudflare.com/ips/ (October 2026). */
+	private const CLOUDFLARE = [
+		'173.245.48.0/20', '103.21.244.0/22', '103.22.200.0/22', '103.31.4.0/22', '141.101.64.0/18',
+		'108.162.192.0/18', '190.93.240.0/20', '188.114.96.0/20', '197.234.240.0/22', '198.41.128.0/17',
+		'162.158.0.0/15', '104.16.0.0/13', '104.24.0.0/14', '172.64.0.0/13', '131.0.72.0/22',
+		'2400:cb00::/32', '2606:4700::/32', '2803:f800::/32', '2405:b500::/32', '2405:8100::/32',
+		'2a06:98c0::/29', '2c0f:f248::/32',
+	];
+
+	public static function is_cloudflare( string $ip ): bool {
+		foreach ( self::CLOUDFLARE as $range ) {
+			if ( self::in_range( $ip, $range ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	private static function valid_ip( string $ip ): string {
+		$ip = trim( $ip );
+
+		return false !== filter_var( $ip, FILTER_VALIDATE_IP ) ? $ip : '';
+	}
+
+	private static function in_range( string $ip, string $cidr ): bool {
+		[ $net, $bits ] = explode( '/', $cidr );
+		$ip_bin         = @inet_pton( $ip ); // phpcs:ignore WordPress.PHP.NoSilencedErrors -- false is the answer we want.
+		$net_bin        = @inet_pton( $net ); // phpcs:ignore WordPress.PHP.NoSilencedErrors
+
+		if ( false === $ip_bin || false === $net_bin || strlen( $ip_bin ) !== strlen( $net_bin ) ) {
+			return false;
+		}
+
+		$bits  = (int) $bits;
+		$bytes = intdiv( $bits, 8 );
+
+		if ( substr( $ip_bin, 0, $bytes ) !== substr( $net_bin, 0, $bytes ) ) {
+			return false;
+		}
+
+		$rest = $bits % 8;
+
+		if ( 0 === $rest ) {
+			return true;
+		}
+
+		$mask = ( 0xFF << ( 8 - $rest ) ) & 0xFF;
+
+		return ( ord( $ip_bin[ $bytes ] ) & $mask ) === ( ord( $net_bin[ $bytes ] ) & $mask );
+	}
+
+	/**
+	 * Whether a named thing (a venue, say) is over its own limit. Counts the attempt.
+	 */
+	public static function over( string $what, string $context, int $max ): bool {
+		return self::bump( sanitize_key( $what ), $context ) > $max;
+	}
+
+	/**
+	 * Count one attempt in a fixed window from the first one. The window does
+	 * not restart on every attempt: if it did, a steady trickle of requests
+	 * would keep somebody locked out for good.
+	 */
 	private static function bump( string $what, string $context = 'join' ): int {
-		$key   = self::key( $what, $context );
-		$count = (int) get_transient( $key ) + 1;
+		$key  = self::key( $what, $context );
+		$now  = time();
+		$seen = get_transient( $key );
 
-		set_transient( $key, $count, self::WINDOW );
+		if ( ! is_array( $seen ) || (int) ( $seen['until'] ?? 0 ) <= $now ) {
+			$seen = [ 'count' => 0, 'until' => $now + self::WINDOW ];
+		}
 
-		return $count;
+		$seen['count'] = (int) $seen['count'] + 1;
+
+		set_transient( $key, $seen, max( 1, (int) $seen['until'] - $now ) );
+
+		return $seen['count'];
 	}
 
 	/**

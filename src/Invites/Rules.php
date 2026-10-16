@@ -136,7 +136,9 @@ final class Rules {
 		 * DGLP has said this is a real partner, an invitation from it is an
 		 * email from DGLP's domain vouching for somebody nobody has checked.
 		 */
-		if ( ! $actor->org_approved ) {
+		// Nor can an owner whose own account the team have not approved: the same
+		// two gates as Policy::INVITE_MEMBER.
+		if ( ! $actor->org_approved || ! $actor->is_fully_approved() ) {
 			return [];
 		}
 

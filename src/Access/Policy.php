@@ -315,7 +315,12 @@ final class Policy {
 			return false;
 		}
 
-		return $user->is_moderator() || self::owns( $user, $item );
+		if ( $user->is_moderator() ) {
+			return true;
+		}
+
+		// Restoring puts it in front of a moderator, so it needs what submitting needs.
+		return self::owns( $user, $item ) && $user->is_fully_approved();
 	}
 
 	/**

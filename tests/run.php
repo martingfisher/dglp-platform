@@ -38,6 +38,7 @@ require __DIR__ . '/test-duplicates.php';
 require __DIR__ . '/test-deadlinks.php';
 require __DIR__ . '/test-topics.php';
 require __DIR__ . '/test-spaces.php';
+require __DIR__ . '/test-security.php';
 require __DIR__ . '/test-jobs.php';
 
 Harness::finish();

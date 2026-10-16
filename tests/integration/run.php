@@ -310,14 +310,14 @@ wp_set_current_user( $alice );
 $rest_req = new WP_REST_Request( 'POST', $rest_route( $a_live ) );
 $rest_req->set_param( 'title', 'Changed through REST' );
 $rest_res = rest_do_request( $rest_req );
-$ok( in_array( $rest_res->get_status(), [ 401, 403 ], true ) && $title_before === get_post_field( 'post_title', $a_live ), 'a REST edit to her live item is refused and the title is unchanged (HTTP ' . $rest_res->get_status() . ')' );
+$ok( in_array( $rest_res->get_status(), [ 401, 403, 404 ], true ) && $title_before === get_post_field( 'post_title', $a_live ), 'a REST edit to her live item is refused and the title is unchanged (HTTP ' . $rest_res->get_status() . ')' );
 $rest_req = new WP_REST_Request( 'POST', $rest_route( 0 ) );
 $rest_req->set_param( 'title', 'Made through REST' );
 $rest_res = rest_do_request( $rest_req );
-$ok( in_array( $rest_res->get_status(), [ 401, 403 ], true ), 'and so is creating one through REST (HTTP ' . $rest_res->get_status() . ')' );
+$ok( in_array( $rest_res->get_status(), [ 401, 403, 404 ], true ), 'and so is creating one through REST (HTTP ' . $rest_res->get_status() . ')' );
 $rest_req = new WP_REST_Request( 'DELETE', $rest_route( $a_draft ) );
 $rest_res = rest_do_request( $rest_req );
-$ok( in_array( $rest_res->get_status(), [ 401, 403 ], true ) && null !== get_post( $a_draft ), 'and deleting one (HTTP ' . $rest_res->get_status() . ')' );
+$ok( in_array( $rest_res->get_status(), [ 401, 403, 404 ], true ) && null !== get_post( $a_draft ), 'and deleting one (HTTP ' . $rest_res->get_status() . ')' );
 wp_set_current_user( 0 );
 
 $live_upload = \DGL\Dashboard\UploadEndpoint::may_upload( $alice, $a_live, 'image' );
@@ -5246,6 +5246,121 @@ wp_delete_post( $sw_child, true );
 wp_delete_post( $sw_parent, true );
 update_option( 'permalink_structure', $sw_rules );
 flush_rewrite_rules( false );
+
+/* ---------------------------------------- security review, second round */
+
+$group( 'Security review: restoring is checked like submitting' );
+
+Access::flush_cache();
+$sr_rejected = $make_item( $org_a, $alice, Statuses::REJECTED );
+$ok( ! is_wp_error( \DGL\Workflow\Transition::apply( $sr_rejected, \DGL\Workflow\StateMachine::ARCHIVE, $alice ) ) && Statuses::ARCHIVED === get_post_status( $sr_rejected ), 'a member can archive something the team turned down' );
+$ok( Statuses::REJECTED === \DGL\Workflow\Transition::archived_from( $sr_rejected, PostTypes::EVENT ), 'and its history says what it was' );
+$sr_back = \DGL\Workflow\Transition::apply( $sr_rejected, \DGL\Workflow\StateMachine::RESTORE, $alice );
+$ok( is_wp_error( $sr_back ) && 'dgl_was_rejected' === $sr_back->get_error_code() && Statuses::ARCHIVED === get_post_status( $sr_rejected ), 'but restoring it unchanged is refused, so it does not go back to the queue' );
+$ok( ! is_wp_error( \DGL\Workflow\Transition::apply( $sr_rejected, \DGL\Workflow\StateMachine::RESTORE, $mod ) ) && Statuses::PENDING === get_post_status( $sr_rejected ), 'the team still can' );
+
+$sr_pending = $make_member( 'dgl_sr_pending', $org_a, 'contributor', 'pending' );
+$sr_draft   = $make_item( $org_a, $sr_pending, Statuses::DRAFT );
+Transition::apply( $sr_draft, \DGL\Workflow\StateMachine::ARCHIVE, $sr_pending );
+Access::flush_cache();
+$ok( Statuses::ARCHIVED === get_post_status( $sr_draft ) && ! Access::can( $sr_pending, Policy::RESTORE_ITEM, $sr_draft ), 'a pending account can archive its draft but not restore it into the queue' );
+$ok( Access::can( $alice, Policy::RESTORE_ITEM, $sr_draft ), 'an approved colleague can' );
+
+$group( 'Security review: a picture field takes only the organisation\'s own pictures' );
+
+$sr_attach = static function ( int $org, int $parent = 0 ) use ( &$sr_attachments ): int {
+	$id = wp_insert_attachment( [ 'post_title' => 'pic', 'post_mime_type' => 'image/png', 'post_status' => 'inherit' ], false, $parent );
+	if ( $org > 0 ) {
+		update_post_meta( $id, Meta::ITEM_ORG, $org );
+	}
+	update_post_meta( $id, '_wp_attachment_image_alt', 'Original words' );
+	$sr_attachments[] = $id;
+	return (int) $id;
+};
+$sr_attachments = [];
+$sr_item  = $make_item( $org_a, $alice, Statuses::DRAFT );
+$sr_mine  = $sr_attach( $org_a );
+$sr_other = $sr_attach( $org_b );
+$sr_child = $sr_attach( 0, $sr_item );
+$ok( \DGL\Uploads::belongs( $sr_mine, $sr_item ) && \DGL\Uploads::belongs( $sr_child, $sr_item ), 'a picture the organisation uploaded, or one attached to the item, belongs' );
+$ok( ! \DGL\Uploads::belongs( $sr_other, $sr_item ) && ! \DGL\Uploads::belongs( 0, $sr_item ) && ! \DGL\Uploads::belongs( $sr_item, $sr_item ), 'another organisation\'s picture, nothing, or a post that is not a picture, does not' );
+
+$sr_fields = \DGL\Schema\FieldRegistry::for_type( PostTypes::EVENT );
+$sr_image  = \DGL\Schema\FieldRegistry::find( PostTypes::EVENT, 'image' );
+$sr_values = [ 'image' => $sr_other ];
+\DGL\Uploads::handle( $sr_item, $sr_fields, [], [], $sr_values );
+$ok( ! array_key_exists( 'image', $sr_values ), 'an attachment id for another organisation\'s picture is dropped before it is saved' );
+$sr_values = [ 'image' => $sr_mine ];
+\DGL\Uploads::handle( $sr_item, $sr_fields, [], [], $sr_values );
+$ok( $sr_mine === ( $sr_values['image'] ?? 0 ), 'its own picture is kept' );
+
+$sr_alt = null;
+foreach ( $sr_fields as $sr_f ) {
+	if ( 'image' === $sr_f->suggested_from ) {
+		$sr_alt = $sr_f;
+	}
+}
+update_post_meta( $sr_item, $sr_image->meta_key(), $sr_other );
+update_post_meta( $sr_item, $sr_alt->meta_key(), 'Rewritten by Org A' );
+wp_set_current_user( $alice );
+\DGL\Schema\Store::describe_image( $sr_item, PostTypes::EVENT );
+$ok( 'Original words' === get_post_meta( $sr_other, '_wp_attachment_image_alt', true ), 'a member cannot rewrite the description on another organisation\'s picture' );
+update_post_meta( $sr_item, $sr_image->meta_key(), $sr_mine );
+\DGL\Schema\Store::describe_image( $sr_item, PostTypes::EVENT );
+$ok( 'Rewritten by Org A' === get_post_meta( $sr_mine, '_wp_attachment_image_alt', true ), 'but still describes its own' );
+wp_set_current_user( 0 );
+
+$group( 'Security review: members upload through the member area only' );
+
+\DGL\Roles::install();
+Access::flush_cache();
+clean_user_cache( $alice );
+$ok( ! user_can( $alice, 'upload_files' ), 'a member does not hold WordPress\'s upload capability' );
+$ok( user_can( $mod, 'upload_files' ), 'the team does' );
+wp_set_current_user( $alice );
+$sr_req = new WP_REST_Request( 'POST', '/wp/v2/media' );
+$sr_req->set_header( 'Content-Disposition', 'attachment; filename=x.svg' );
+$sr_req->set_header( 'Content-Type', 'image/svg+xml' );
+$sr_req->set_body( '<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>' );
+$sr_res = rest_do_request( $sr_req );
+$ok( in_array( $sr_res->get_status(), [ 401, 403 ], true ), 'so WordPress\'s own media route refuses them (HTTP ' . $sr_res->get_status() . ')' );
+wp_set_current_user( 0 );
+
+// A picture that declares a huge canvas is refused before anything decodes it.
+$sr_ihdr = pack( 'NNCCCCC', 20000, 20000, 8, 2, 0, 0, 0 );
+$sr_png  = "\x89PNG\r\n\x1a\n" . pack( 'N', 13 ) . 'IHDR' . $sr_ihdr . pack( 'N', crc32( 'IHDR' . $sr_ihdr ) ) . pack( 'N', 0 ) . 'IEND' . pack( 'N', crc32( 'IEND' ) );
+$sr_tmp  = wp_tempnam( 'dgl-huge.png' );
+file_put_contents( $sr_tmp, $sr_png );
+$_FILES['dgl_sr_huge'] = [ 'name' => 'huge.png', 'type' => 'image/png', 'tmp_name' => $sr_tmp, 'error' => 0, 'size' => strlen( $sr_png ) ];
+$sr_up = \DGL\Uploads::store( $sr_item, 'dgl_sr_huge' );
+$ok( is_wp_error( $sr_up ) && 'dgl_too_many_pixels' === $sr_up->get_error_code(), 'a 20,000 by 20,000 picture is refused before it is decoded (' . ( is_wp_error( $sr_up ) ? $sr_up->get_error_code() : 'stored' ) . ')' );
+unset( $_FILES['dgl_sr_huge'] );
+@unlink( $sr_tmp );
+
+$group( 'Security review: listing REST routes are the team\'s' );
+
+$sr_route = '/wp/v2/' . ( get_post_type_object( PostTypes::EVENT )->rest_base ?: PostTypes::EVENT );
+wp_set_current_user( 0 );
+$ok( 404 === rest_do_request( new WP_REST_Request( 'GET', $sr_route ) )->get_status(), 'a visitor gets no listing route' );
+wp_set_current_user( $alice );
+$ok( 404 === rest_do_request( new WP_REST_Request( 'GET', $sr_route . '/' . $a_live ) )->get_status(), 'nor does a member' );
+wp_set_current_user( $mod );
+$ok( 200 === rest_do_request( new WP_REST_Request( 'GET', $sr_route ) )->get_status(), 'the team still do' );
+wp_set_current_user( 0 );
+$ok( 200 === rest_do_request( new WP_REST_Request( 'GET', '/wp/v2/pages' ) )->get_status(), 'and pages are untouched' );
+
+$group( 'Security review: limits' );
+
+$sr_key = 'sr_' . wp_generate_password( 6, false );
+$ok( ! \DGL\Joining\Guard::over( $sr_key, 'srtest', 2 ) && ! \DGL\Joining\Guard::over( $sr_key, 'srtest', 2 ) && \DGL\Joining\Guard::over( $sr_key, 'srtest', 2 ), 'a named limit lets two through and stops the third' );
+$sr_seen = get_transient( 'dgl_srtest_' . $sr_key );
+$ok( is_array( $sr_seen ) && 3 === (int) $sr_seen['count'] && (int) $sr_seen['until'] <= time() + \DGL\Joining\Guard::WINDOW, 'and the window is fixed from the first attempt, not restarted by each one' );
+delete_transient( 'dgl_srtest_' . $sr_key );
+
+
+foreach ( $sr_attachments as $sr_a ) {
+	wp_delete_attachment( $sr_a, true );
+}
 
 /* ----------------------------------------------------------------- report */
 

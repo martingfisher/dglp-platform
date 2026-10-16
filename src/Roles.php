@@ -45,7 +45,14 @@ final class Roles {
 	public static function member_caps(): array {
 		return [
 			'read'                     => true,
-			'upload_files'             => true,
+			/*
+			 * Not WordPress's upload capability: with it, /wp-json/wp/v2/media
+			 * and async-upload.php took any file type the site allows, past
+			 * Uploads::store's checks (raster only, size, location data
+			 * stripped). The member area uploads through Uploads::store,
+			 * which does not need it.
+			 */
+			'upload_files'             => false,
 			'create_dgl_items'         => true,
 			'edit_dgl_items'           => true,
 			'edit_published_dgl_items' => true,

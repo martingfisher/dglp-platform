@@ -55,6 +55,9 @@ final class Uploads {
 	 */
 	public const MAX_EDGE = 1600;
 
+	/** The most pixels a picture may have before it is decoded: 40 megapixels. */
+	public const MAX_PIXELS = 40000000;
+
 	/**
 	 * Image types a member may submit.
 	 *
@@ -104,7 +107,20 @@ final class Uploads {
 			$file     = $files[ $file_key ] ?? null;
 
 			if ( ! is_array( $file ) || empty( $file['name'] ) || UPLOAD_ERR_NO_FILE === ( $file['error'] ?? UPLOAD_ERR_NO_FILE ) ) {
-				continue; // Nothing uploaded, keep whatever is already there.
+				/*
+				 * Nothing uploaded: the hidden attachment id stands, but only
+				 * if it is the picture already there or one this organisation
+				 * uploaded. Any other id (another organisation's picture, the
+				 * site logo) is ignored, so it can be neither shown nor have
+				 * its description rewritten.
+				 */
+				$chosen = (int) ( $values[ $field->key ] ?? 0 );
+
+				if ( $chosen > 0 && $chosen !== (int) get_post_meta( $post_id, $field->meta_key(), true ) && ! self::belongs( $chosen, $post_id ) ) {
+					unset( $values[ $field->key ] );
+				}
+
+				continue;
 			}
 
 			$attachment_id = self::store( $post_id, $file_key );
@@ -120,6 +136,25 @@ final class Uploads {
 		self::adopt_alt( $fields, $values );
 
 		return $errors;
+	}
+
+	/**
+	 * Whether an attachment is this item's or its organisation's to use: it
+	 * was uploaded for the organisation (stamped below) or attached to this
+	 * very post. The review team are not limited to it.
+	 */
+	public static function belongs( int $attachment_id, int $post_id ): bool {
+		if ( $attachment_id <= 0 || 'attachment' !== get_post_type( $attachment_id ) ) {
+			return false;
+		}
+
+		if ( (int) wp_get_post_parent_id( $attachment_id ) === $post_id ) {
+			return true;
+		}
+
+		$org_id = PostTypes::ORG === get_post_type( $post_id ) ? $post_id : Org::for_item( $post_id );
+
+		return $org_id > 0 && (int) get_post_meta( $attachment_id, Meta::ITEM_ORG, true ) === $org_id;
 	}
 
 	/**
@@ -210,6 +245,20 @@ final class Uploads {
 			return new WP_Error(
 				'dgl_bad_type',
 				__( 'That file type is not allowed. Use a JPEG, PNG or WebP image.', 'dgl-platform' )
+			);
+		}
+
+		/*
+		 * Width times height, read from the header without decoding the
+		 * picture. A small file can declare a huge canvas, and decoding it to
+		 * shrink it would take the request's memory with it.
+		 */
+		$dimensions = @getimagesize( (string) ( $file['tmp_name'] ?? '' ) ); // phpcs:ignore WordPress.PHP.NoSilencedErrors -- false is handled.
+
+		if ( ! is_array( $dimensions ) || (int) $dimensions[0] * (int) $dimensions[1] > self::MAX_PIXELS ) {
+			return new WP_Error(
+				'dgl_too_many_pixels',
+				__( 'That image is too large to process. Save it smaller, under about 40 megapixels (for example 8000 by 5000), and try again.', 'dgl-platform' )
 			);
 		}
 
