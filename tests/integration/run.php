@@ -2609,7 +2609,7 @@ $wpdb->delete( SignupStore::name(), [ 'id' => $legacy_id ] );
 
 /* ---- Claims: picking an organisation from the list without a domain match. */
 
-foreach ( [ 'claimer@gmail.com', 'firstclaim@gmail.com', 'badclaim@gmail.com', 'byclaim@orga.test', 'someone@other.test', 'again@nowhere2.test', 'busy@busy.test' ] as $addr ) {
+foreach ( [ 'claimer@gmail.com', 'firstclaim@gmail.com', 'badclaim@gmail.com', 'byclaim@orga.test', 'someone@other.test', 'again@nowhere2.test', 'busy@busy.test', 'rc-claimer@gmail.com', 'rc-lapsed@example.test' ] as $addr ) {
 	$u = get_user_by( 'email', $addr ); if ( $u ) { wp_delete_user( $u->ID ); }
 }
 
