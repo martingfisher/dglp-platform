@@ -1255,3 +1255,17 @@ clean. They are the only DGLP content on staging.
   review-team and digest emails rendered locally from the same code and
   checked in HTML and plain text. Not yet checked: a real email from
   production. Unit 2344, integration 1432.
+- **0.47.7 deployed** (16 October 2026, production): four fixes from the
+  security review, plus the build. JSON-LD is hex-encoded so member text
+  cannot end its script element, and values are made safe before Rank
+  Math prints them. A claim on a listed organisation no longer links the
+  account until the team approve it (schema 12 unlinks claims still
+  waiting). Through WordPress's own routes (REST, XML-RPC) only the team
+  may edit or delete an item, and members cannot create one over REST.
+  The picture upload refuses live listings, so a new picture goes
+  through Edit and review. Docs, tests, bin and repo files are left out
+  of the zip. Checked: plugin 0.47.7, schema 12, `/`, `/jobs/`,
+  `/dashboard/`, `/directory/`, `/events/`, `/news/` 200; the plugin's
+  `docs/`, `tests/` and `README.md` 404; JSON-LD on an event, the
+  directory and events parses; SmartCache and CDN cleared. The new tests
+  failed on 0.47.6 and pass now. Unit 2344, integration 1454.
