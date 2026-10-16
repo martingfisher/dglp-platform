@@ -97,7 +97,8 @@ final class Transition {
 			}
 		}
 
-		$org_id = Org::for_item( $post_id );
+		// An edit is decided by the organisation that owns the item now, not the copy it was opened with.
+		$org_id = Org::for_item( $is_edit ? Revisions::target( $post_id ) : $post_id );
 		$staff  = ! $system && Access::user_context( $actor_id )->is_moderator();
 
 		// Trust is per content type and per kind of change. An edit is decided

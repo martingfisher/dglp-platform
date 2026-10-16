@@ -1045,6 +1045,9 @@
 
 	if ( 'loading' === document.readyState ) {
 		document.addEventListener( 'DOMContentLoaded', init );
+	} else {
+		init();
+	}
 
 	/*
 	 * WordPress's link dialog puts "http://" in front of a bare domain. Every
@@ -1137,9 +1140,6 @@
 	} else {
 		preferHttps();
 		watchEditors();
-	}
-	} else {
-		init();
 	}
 }() );
 	/**

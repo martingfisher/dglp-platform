@@ -5362,6 +5362,55 @@ foreach ( $sr_attachments as $sr_a ) {
 	wp_delete_attachment( $sr_a, true );
 }
 
+$group( 'Security re-check: moving an item, leavers, cancellations, hidden venues, map titles' );
+
+// A moved item's unsent edit belonged to the old organisation: it goes. One with the team moves with it.
+$rc_item = $make_item( $org_a, $alice, Statuses::LIVE );
+$rc_edit = \DGL\Workflow\Revisions::open( $rc_item, $alice );
+$ok( is_int( $rc_edit ) && $org_a === \DGL\Org\Org::for_item( $rc_edit ), 'an edit opened by Org A carries Org A' );
+$ok( true === \DGL\Org\Org::reassign( $rc_item, $org_b, $mod ) && null === get_post( $rc_edit ), 'moving the item to Org B discards Org A\'s unsent edit' );
+$rc_item2 = $make_item( $org_a, $alice, Statuses::LIVE );
+$rc_edit2 = \DGL\Workflow\Revisions::open( $rc_item2, $alice );
+wp_update_post( [ 'ID' => $rc_edit2, 'post_status' => Statuses::PENDING ] );
+\DGL\Org\Org::reassign( $rc_item2, $org_b, $mod );
+$ok( $org_b === \DGL\Org\Org::for_item( $rc_edit2 ), 'an edit already with the team moves with the item' );
+
+// Somebody who has left is not emailed about the organisation's work.
+$rc_leaver = $make_member( 'dgl_rc_leaver', $org_a, 'contributor' );
+$rc_theirs = $make_item( $org_a, $rc_leaver, Statuses::PENDING );
+$rc_before = \DGL\Email\Recipients::for_audience( \DGL\Workflow\Plan::NOTIFY_MEMBER, $rc_theirs, $mod );
+delete_user_meta( $rc_leaver, Meta::USER_ORG );
+Access::flush_cache();
+$rc_after = \DGL\Email\Recipients::for_audience( \DGL\Workflow\Plan::NOTIFY_MEMBER, $rc_theirs, $mod );
+$ok( in_array( 'dgl_rc_leaver@example.test', $rc_before, true ) && ! in_array( 'dgl_rc_leaver@example.test', $rc_after, true ), 'the author is told while in the organisation, and not after leaving' );
+$ok( in_array( 'dgl_alice@example.test', $rc_after, true ), 'the organisation\'s owners still are' );
+
+// A cancellation note is one short line.
+$rc_event = $make_item( $org_a, $alice, Statuses::LIVE );
+\DGL\Events\Cancel::cancel( $rc_event, "Rained off.\nSee our site for the new date " . str_repeat( 'x', 400 ), $alice );
+$rc_note = \DGL\Events\Cancel::note( $rc_event );
+$ok( ! str_contains( $rc_note, "\n" ) && mb_strlen( $rc_note ) <= \DGL\Events\Cancel::NOTE_MAX, 'a cancellation note is one line of at most ' . \DGL\Events\Cancel::NOTE_MAX . ' characters (' . mb_strlen( $rc_note ) . ')' );
+
+// A hidden venue is in no feed or sitemap.
+$rc_venue = wp_insert_post( [ 'post_type' => PostTypes::VENUE, 'post_status' => Statuses::LIVE, 'post_title' => 'Rc Hidden Hall' ] );
+update_post_meta( $rc_venue, DGL_FIXTURE_FLAG, '1' );
+update_post_meta( $rc_venue, Meta::ITEM_ORG, $org_a );
+update_post_meta( $rc_venue, Meta::ITEM_HIDDEN, '1' );
+$rc_shown = wp_insert_post( [ 'post_type' => PostTypes::VENUE, 'post_status' => Statuses::LIVE, 'post_title' => 'Rc Shown Hall' ] );
+update_post_meta( $rc_shown, DGL_FIXTURE_FLAG, '1' );
+update_post_meta( $rc_shown, Meta::ITEM_ORG, $org_a );
+$rc_feed = new WP_Query( [ 'post_type' => PostTypes::VENUE, 'feed' => 'rss2', 's' => 'Rc', 'fields' => 'ids', 'posts_per_page' => 20 ] );
+$ok( $rc_feed->is_feed() && in_array( $rc_shown, $rc_feed->posts, true ) && ! in_array( $rc_venue, $rc_feed->posts, true ), 'a feed lists the shown venue and not the hidden one' );
+$rc_args = \DGL\Spaces\Visibility::keep_out_of_sitemap_query( [ 'post_type' => PostTypes::VENUE ] );
+$rc_map  = get_posts( array_merge( $rc_args, [ 'fields' => 'ids', 'numberposts' => 50, 's' => 'Rc' ] ) );
+$ok( in_array( $rc_shown, $rc_map, true ) && ! in_array( $rc_venue, $rc_map, true ), 'and so does the sitemap query' );
+$ok( false === \DGL\Spaces\Visibility::keep_out_of_rank_math( [ 'loc' => 'x' ], 'post', get_post( $rc_venue ) ) && [ 'loc' => 'x' ] === \DGL\Spaces\Visibility::keep_out_of_rank_math( [ 'loc' => 'x' ], 'post', get_post( $rc_shown ) ), 'and Rank Math\'s sitemap' );
+
+// A map pin's title is plain text, entities decoded, so a script sets it as text.
+$rc_pin = wp_insert_post( [ 'post_type' => PostTypes::VENUE, 'post_status' => 'draft', 'post_title' => 'Tea & Cake &lt;img src=x onerror=alert(1)&gt;' ] );
+update_post_meta( $rc_pin, DGL_FIXTURE_FLAG, '1' );
+$ok( 'Tea & Cake <img src=x onerror=alert(1)>' === \DGL\Spaces\Pages::plain_title( $rc_pin ), 'the pin title is the plain text, for textContent (' . esc_html( \DGL\Spaces\Pages::plain_title( $rc_pin ) ) . ')' );
+
 /* ----------------------------------------------------------------- report */
 
 echo "\n" . str_repeat( '-', 60 ) . "\n";

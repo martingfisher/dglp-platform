@@ -49,8 +49,18 @@ final class Pages {
 			'post'    => $post,
 			'enquiry' => Enquiry::state( $post ),
 			'map'     => MapAssets::available() && '' !== $lat && '' !== $lng
-				? [ 'lat' => (float) $lat, 'lng' => (float) $lng, 'title' => (string) get_the_title( $post ) ]
+				? [ 'lat' => (float) $lat, 'lng' => (float) $lng, 'title' => self::plain_title( $post ) ]
 				: null,
 		];
+	}
+
+	/**
+	 * The title as plain text for a script to set with textContent, never as
+	 * HTML: get_the_title() returns entities (&#038;), and a title typed as
+	 * "&lt;img ...&gt;" would otherwise come back to life as markup in the
+	 * map's popup.
+	 */
+	public static function plain_title( \WP_Post|int $post ): string {
+		return html_entity_decode( (string) get_the_title( $post ), ENT_QUOTES | ENT_HTML5, 'UTF-8' );
 	}
 }

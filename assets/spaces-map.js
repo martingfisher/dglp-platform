@@ -72,7 +72,7 @@
 			link.textContent = pin.title;
 
 			L.marker( [ pin.lat, pin.lng ], { title: pin.title } )
-				.bindPopup( link.outerHTML )
+				.bindPopup( link )
 				.addTo( group );
 		} );
 
@@ -159,7 +159,10 @@
 			if ( ! large ) {
 				large = L.map( box, { scrollWheelZoom: true } );
 				tiles( large );
-				marker = L.marker( [ pin.lat, pin.lng ], { title: pin.title } ).addTo( large ).bindPopup( pin.title );
+				// An element, not a string: Leaflet writes a string popup as HTML.
+				var label = document.createElement( 'span' );
+				label.textContent = pin.title;
+				marker = L.marker( [ pin.lat, pin.lng ], { title: pin.title } ).addTo( large ).bindPopup( label );
 				large.dglMarker = marker;
 			}
 
