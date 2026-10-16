@@ -281,14 +281,49 @@ $group( 'The organisation owns the content, not the author' );
  * edit_others capability. The organisation posts as a body, so a colleague has
  * to be able to pick up a teammate's submission.
  */
-$ok( user_can( $aaron, 'edit_post', $a_draft ), 'Aaron can edit his colleague Alice s draft' );
-$ok( ! user_can( $aaron, 'edit_post', $b_draft ), 'but still cannot touch Org B' );
+$ok( Access::can( $aaron, Policy::EDIT_ITEM, $a_draft ), 'Aaron can edit his colleague Alice s draft' );
+$ok( ! Access::can( $aaron, Policy::EDIT_ITEM, $b_draft ), 'but still cannot touch Org B' );
 
 $group( 'Content is frozen while a moderator holds it' );
 
 $ok( ! user_can( $alice, 'edit_post', $a_pending ), 'Alice cannot edit her own item while it is pending' );
-$ok( user_can( $alice, 'edit_post', $a_live ), 'Alice can edit her own live item, which will make a revision' );
-$ok( user_can( $alice, 'edit_post', $a_draft ), 'Alice can edit her own draft' );
+$ok( Access::can( $alice, Policy::EDIT_ITEM, $a_live ), 'Alice can edit her own live item, which will make a revision' );
+$ok( Access::can( $alice, Policy::EDIT_ITEM, $a_draft ), 'Alice can edit her own draft' );
+
+$group( 'Members change items in the member area, never through WordPress' );
+
+/*
+ * Found in the October 2026 security review: edit_post resolved to allowed
+ * for a member's own live item, so POST /wp-json/wp/v2/<type>/<id> changed
+ * the published wording with no review. The member area checks the policy
+ * and opens a pending edit; WordPress's own routes are for the team.
+ */
+$ok( ! user_can( $alice, 'edit_post', $a_live ), 'WordPress will not let Alice edit her own live item directly' );
+$ok( ! user_can( $alice, 'edit_post', $a_draft ), 'nor her draft' );
+$ok( ! user_can( $alice, 'delete_post', $a_draft ), 'nor delete it, though the member area may' );
+$ok( Access::can( $alice, Policy::DELETE_ITEM, $a_draft ), 'the member area still lets her delete her own draft' );
+$ok( user_can( $alice, 'read_post', $a_draft ), 'reading is unchanged' );
+
+$rest_route = static fn( int $id ): string => '/wp/v2/' . ( get_post_type_object( PostTypes::EVENT )->rest_base ?: PostTypes::EVENT ) . ( $id > 0 ? '/' . $id : '' );
+$title_before = get_post_field( 'post_title', $a_live );
+wp_set_current_user( $alice );
+$rest_req = new WP_REST_Request( 'POST', $rest_route( $a_live ) );
+$rest_req->set_param( 'title', 'Changed through REST' );
+$rest_res = rest_do_request( $rest_req );
+$ok( in_array( $rest_res->get_status(), [ 401, 403 ], true ) && $title_before === get_post_field( 'post_title', $a_live ), 'a REST edit to her live item is refused and the title is unchanged (HTTP ' . $rest_res->get_status() . ')' );
+$rest_req = new WP_REST_Request( 'POST', $rest_route( 0 ) );
+$rest_req->set_param( 'title', 'Made through REST' );
+$rest_res = rest_do_request( $rest_req );
+$ok( in_array( $rest_res->get_status(), [ 401, 403 ], true ), 'and so is creating one through REST (HTTP ' . $rest_res->get_status() . ')' );
+$rest_req = new WP_REST_Request( 'DELETE', $rest_route( $a_draft ) );
+$rest_res = rest_do_request( $rest_req );
+$ok( in_array( $rest_res->get_status(), [ 401, 403 ], true ) && null !== get_post( $a_draft ), 'and deleting one (HTTP ' . $rest_res->get_status() . ')' );
+wp_set_current_user( 0 );
+
+$live_upload = \DGL\Dashboard\UploadEndpoint::may_upload( $alice, $a_live, 'image' );
+$ok( is_wp_error( $live_upload ) && 'dgl_edit_first' === $live_upload->get_error_code(), 'a picture cannot be uploaded straight onto her live item: it is sent to Edit, so it goes through review' );
+$draft_upload = \DGL\Dashboard\UploadEndpoint::may_upload( $alice, $a_draft, 'image' );
+$ok( ! is_wp_error( $draft_upload ) || 'dgl_edit_first' !== $draft_upload->get_error_code(), 'her draft is not refused for that reason' );
 
 $group( 'Moderators' );
 
@@ -2599,18 +2634,23 @@ $ok( is_wp_error( Joining::claim( $v['signup'], $suspended_org, '', 'Claimer', '
 $ok( is_wp_error( Joining::claim( $v['signup'], 999999999, '', 'Claimer', 'claim-password-1' ) ), 'nor one that does not exist' );
 $sent_to = []; $sent_links = []; $sent_bodies = [];
 $uid5 = Joining::claim( $v['signup'], $org_a, 'Volunteer coordinator', 'Claimer', 'claim-password-1' );
-$ok( ! is_wp_error( $uid5 ) && (int) \DGL\Org\Org::for_user( $uid5 ) === $org_a, 'claiming a listed organisation creates an account linked to it' );
+$ok( ! is_wp_error( $uid5 ) && null === \DGL\Org\Org::for_user( $uid5 ), 'claiming a listed organisation creates an account, not yet linked to it' );
+// Found in the October 2026 security review: a linked claimant could read, edit and take down everything the organisation had.
+$ok( ! in_array( $uid5, \DGL\Org\Org::members( $org_a ), true ), 'the claimant is not one of its members while it waits' );
+$ok( ! Access::can( $uid5, Policy::VIEW_ITEM, $a_draft ) && ! Access::can( $uid5, Policy::VIEW_ITEM, $a_live ), 'and cannot see its drafts or its live items in the member area' );
+$ok( ! Access::can( $uid5, Policy::EDIT_ITEM, $a_draft ) && ! Access::can( $uid5, Policy::ARCHIVE_ITEM, $a_live ) && ! Access::can( $uid5, Policy::DELETE_ITEM, $a_draft ), 'nor edit, archive or delete them' );
 $ok( \DGL\Access\UserContext::ORG_CONTRIBUTOR === \DGL\Org\Org::role_for_user( $uid5 ) && \DGL\Access\UserContext::ACCOUNT_PENDING === get_user_meta( $uid5, Meta::USER_ACCOUNT_STATUS, true ), 'as a pending contributor' );
 $claim = array_values( array_filter( SignupStore::awaiting(), static fn( $s ) => $s->user_id === $uid5 ) );
 $ok( 1 === count( $claim ) && $claim[0]->is_claim() && $claim[0]->org_id === $org_a && '' === $claim[0]->new_org_name, 'and a claim waits in the queue' );
 $ok( 'Volunteer coordinator' === ( $claim[0]->new_org_details['note'] ?? '' ), 'with what they said' );
 $ok( str_contains( implode( ',', $sent_to ), 'mod@example.test' ) && str_contains( end( $sent_links ), '/review/join/' ) && str_contains( implode( ' ', $sent_bodies ), 'says they are part of' ), 'the team are emailed with a link to decide' );
-$ok( ! Access::can( $uid5, Policy::SUBMIT_ITEM, $make_item( $org_a, $uid5, Statuses::DRAFT ) ), 'the pending claimant can draft but not submit' );
+$ok( ! Access::can( $uid5, Policy::CREATE_ITEM ), 'nor start a listing for it until the team approve' );
 $ok( [] === Joining::likely_matches( $claim[0] ), 'a claim has no likely matches to list' );
 
 $ok( is_wp_error( Joining::approve( $claim[0]->id, $alice ) ), 'a member cannot approve a claim' );
 $sent_to = []; $sent_bodies = [];
 $ok( true === Joining::approve( $claim[0]->id, $mod ), 'the team can' );
+$ok( $org_a === \DGL\Org\Org::for_user( $uid5 ) && in_array( $uid5, \DGL\Org\Org::members( $org_a ), true ), 'and approval links the account to the organisation' );
 $ok( \DGL\Access\UserContext::ACCOUNT_APPROVED === get_user_meta( $uid5, Meta::USER_ACCOUNT_STATUS, true ) && \DGL\Access\UserContext::ORG_CONTRIBUTOR === \DGL\Org\Org::role_for_user( $uid5 ), 'approved, still a contributor because Org A has people' );
 $ok( Meta::ORG_APPROVED === \DGL\Org\Org::status( $org_a ) && Signup::APPROVED === SignupStore::find( $claim[0]->id )->state, 'the organisation is untouched and the claim is decided' );
 $ok( str_contains( implode( ',', $sent_to ), 'claimer@gmail.com' ) && str_contains( implode( ',', $sent_to ), 'dgl_alice@example.test' ), 'the person and the owner are both told (' . implode( ' | ', $sent_to ) . ')' );
@@ -2623,6 +2663,13 @@ $v = Joining::verify( $token );
 $uid6 = Joining::claim( $v['signup'], $nobody_org, '', 'First Claimer', 'claim-password-2' );
 $claim = array_values( array_filter( SignupStore::awaiting(), static fn( $s ) => $s->user_id === $uid6 ) )[0];
 $ok( \DGL\Access\UserContext::ORG_CONTRIBUTOR === \DGL\Org\Org::role_for_user( $uid6 ), 'a claim on an empty organisation is still only a contributor while it waits' );
+
+// A claim made before 0.47.7 linked the account at once; the upgrade takes the link off, and only that.
+update_user_meta( $uid6, Meta::USER_ORG, $nobody_org );
+Access::flush_cache();
+$ok( 1 === Joining::unlink_waiting_claims() && null === \DGL\Org\Org::for_user( $uid6 ), 'the upgrade unlinks a claim still waiting' );
+$ok( 0 === Joining::unlink_waiting_claims(), 'and running it again changes nothing' );
+$ok( $org_a === \DGL\Org\Org::for_user( $uid5 ), 'an approved claim keeps its link' );
 Joining::approve( $claim->id, $mod );
 $ok( \DGL\Access\UserContext::ORG_OWNER === \DGL\Org\Org::role_for_user( $uid6 ), 'approved, they become its owner: nobody else is in it' );
 
@@ -5166,6 +5213,22 @@ $ok( [] === get_post_meta( $pr_draft, \DGL\Frontend\PageRedirects::META ), 'a dr
 foreach ( [ $pr_id, $pr_two, $pr_draft ] as $pr_del ) {
 	wp_delete_post( $pr_del, true );
 }
+
+/* ------------------------------------------- JSON-LD cannot end its script */
+
+$group( 'Member text cannot break out of the page\'s JSON-LD' );
+
+// Found in the October 2026 security review: JSON_UNESCAPED_SLASHES let "</script>" through, after plain() had decoded it from "&lt;/script&gt;".
+$evil = [ 'item' => [ '@type' => 'Event', 'name' => '</script><svg onload=alert(1)>', 'location' => [ 'name' => 'A <b>hall</b> & more' ] ] ];
+$tag  = \DGL\Frontend\Seo::schema_tag( $evil );
+$body = substr( $tag, strlen( '<script type="application/ld+json">' ), - strlen( '</script>' ) );
+$ok( ! str_contains( $body, '<' ) && ! str_contains( $body, '>' ), 'no < or > reaches the script element from a value' );
+$ok( str_starts_with( $tag, '<script type="application/ld+json">' ) && 1 === substr_count( $tag, '</script>' ), 'and the element is closed once, by us' );
+$decoded = json_decode( $body, true );
+$ok( is_array( $decoded ) && str_contains( (string) ( $decoded['@graph'][0]['name'] ?? '' ), 'svg onload' ) && str_contains( (string) ( $decoded['@graph'][0]['location']['name'] ?? '' ), '& more' ), 'the data still parses and still says what was typed' );
+$safe = \DGL\Frontend\Seo::script_safe( $evil );
+$ok( ! str_contains( (string) wp_json_encode( $safe, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ), '</script' ), 'values handed to Rank Math are safe whatever encoding it prints with' );
+$ok( 'item' === array_key_first( $safe ) && 'Event' === $safe['item']['@type'], 'keys and plain values are untouched' );
 
 /* ------------------------------------- switched-off types claim no address */
 

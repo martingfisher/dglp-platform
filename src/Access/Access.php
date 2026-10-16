@@ -54,6 +54,10 @@ final class Access {
 	 */
 	public static function init(): void {
 		add_filter( 'map_meta_cap', [ self::class, 'map_meta_cap' ], 10, 4 );
+
+		foreach ( \DGL\PostTypes::reviewable() as $post_type ) {
+			add_filter( 'rest_pre_insert_' . $post_type, [ self::class, 'refuse_rest_insert' ] );
+		}
 	}
 
 	/**
@@ -199,11 +203,42 @@ final class Access {
 			return $caps;
 		}
 
+		/*
+		 * WordPress's own routes (the REST API, XML-RPC, async-upload with a
+		 * post) write straight to the post, past review: a live listing
+		 * edited through /wp-json/wp/v2/ changes on the site at once. The
+		 * member area never asks WordPress for these capabilities; it checks
+		 * the policy and makes a pending edit. So through WordPress only the
+		 * review team may edit or delete an item. Reading is unchanged.
+		 */
+		if ( Policy::VIEW_ITEM !== $action && ! self::user_context( $user_id )->is_moderator() ) {
+			return [ 'do_not_allow' ];
+		}
+
 		if ( ! self::can( $user_id, $action, (int) $args[0] ) ) {
 			return [ 'do_not_allow' ];
 		}
 
 		return Policy::VIEW_ITEM === $action ? [ 'read' ] : [ 'edit_dgl_items' ];
+	}
+
+	/**
+	 * Refuse a member creating or changing an item through the REST API.
+	 *
+	 * Updates are already refused by {@see self::map_meta_cap()}; this
+	 * covers creating one, which WordPress checks against the type's create
+	 * capability rather than a post. An item made that way would have no
+	 * organisation and skip every check the member area makes.
+	 *
+	 * @param \stdClass|\WP_Error $prepared The post about to be saved.
+	 * @return \stdClass|\WP_Error
+	 */
+	public static function refuse_rest_insert( $prepared ) {
+		if ( is_wp_error( $prepared ) || self::user_context( get_current_user_id() )->is_moderator() ) {
+			return $prepared;
+		}
+
+		return new \WP_Error( 'dgl_use_the_member_area', __( 'Listings are added and changed in the member area.', 'dgl-platform' ), [ 'status' => 403 ] );
 	}
 
 	/**

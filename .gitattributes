@@ -4,3 +4,12 @@ docs/wireframes/ export-ignore
 .impeccable/ export-ignore
 PRODUCT.md export-ignore
 DESIGN.md export-ignore
+# Not part of the running plugin, and anything in the zip is public on the
+# site: the docs name internal addresses and tests/run.php runs the suite.
+docs/ export-ignore
+tests/ export-ignore
+bin/ export-ignore
+README.md export-ignore
+composer.json export-ignore
+.gitignore export-ignore
+.gitattributes export-ignore
