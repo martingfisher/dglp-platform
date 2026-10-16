@@ -53,3 +53,13 @@ $inviter = static fn( string $status ): UserContext => new UserContext(
 
 Harness::assert_true( [] !== InviteRules::grantable_roles( $inviter( UserContext::ACCOUNT_APPROVED ), 5 ), 'an approved owner can invite' );
 Harness::assert_same( [], InviteRules::grantable_roles( $inviter( UserContext::ACCOUNT_PENDING ), 5 ), 'an owner whose account is still pending cannot' );
+
+Harness::group( 'IPv6 visitors are counted by their network' );
+
+Harness::assert_same( Guard::network( '2001:db8:1:2:aaaa::5' ), Guard::network( '2001:db8:1:2:ffff:1:2:3' ), 'two addresses in one /64 count as one' );
+Harness::assert_false( Guard::network( '2001:db8:1:2::5' ) === Guard::network( '2001:db8:1:3::5' ), 'the next /64 is a different network' );
+Harness::assert_same( '203.0.113.9', Guard::network( '203.0.113.9' ), 'an IPv4 address is counted as itself' );
+
+Harness::group( 'A cell the formula check cannot read is prefixed' );
+
+Harness::assert_same( "'\xff=1", Csv::safe( "\xff=1" ), 'not UTF-8: prefixed, failing closed' );

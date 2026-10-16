@@ -56,6 +56,8 @@ final class Access {
 		add_filter( 'map_meta_cap', [ self::class, 'map_meta_cap' ], 10, 4 );
 
 		add_filter( 'rest_pre_dispatch', [ self::class, 'refuse_rest_route' ], 10, 3 );
+		add_filter( 'rest_post_search_query', [ self::class, 'rest_search_without_items' ] );
+		add_filter( 'rest_user_query', [ self::class, 'rest_users_without_items' ] );
 
 		// Per type, once the types exist; reading them any earlier loads translations too soon.
 		add_action(
@@ -248,9 +250,12 @@ final class Access {
 			return $result;
 		}
 
-		$route = '/' . ltrim( (string) $request->get_route(), '/' );
+		// WordPress matches routes ignoring case, so this must too.
+		$route = strtolower( '/' . ltrim( (string) $request->get_route(), '/' ) );
 
 		foreach ( self::rest_bases() as $base ) {
+			$base = strtolower( $base );
+
 			if ( $route === '/wp/v2/' . $base || str_starts_with( $route, '/wp/v2/' . $base . '/' ) ) {
 				if ( self::user_context( get_current_user_id() )->is_moderator() ) {
 					return $result;
@@ -261,6 +266,47 @@ final class Access {
 		}
 
 		return $result;
+	}
+
+	/**
+	 * The REST search, for anybody but the team, leaves our items out: it
+	 * listed what the item routes no longer do, hidden venues included.
+	 *
+	 * @param array<string, mixed> $args
+	 * @return array<string, mixed>
+	 */
+	public static function rest_search_without_items( array $args ): array {
+		if ( self::user_context( get_current_user_id() )->is_moderator() ) {
+			return $args;
+		}
+
+		$types = (array) ( $args['post_type'] ?? [] );
+		$kept  = array_values( array_diff( $types, \DGL\PostTypes::reviewable() ) );
+
+		// Nothing left to search is no results, not every type.
+		$args['post_type'] = [] === $kept ? [ 'dgl_none' ] : $kept;
+
+		return $args;
+	}
+
+	/**
+	 * The REST user list, for anybody but the team, does not count our items
+	 * as published posts, so it never names who wrote a listing.
+	 *
+	 * @param array<string, mixed> $args
+	 * @return array<string, mixed>
+	 */
+	public static function rest_users_without_items( array $args ): array {
+		if ( empty( $args['has_published_posts'] ) || self::user_context( get_current_user_id() )->is_moderator() ) {
+			return $args;
+		}
+
+		$types = true === $args['has_published_posts'] ? get_post_types( [ 'show_in_rest' => true ] ) : (array) $args['has_published_posts'];
+		$kept  = array_values( array_diff( array_values( $types ), \DGL\PostTypes::reviewable() ) );
+
+		$args['has_published_posts'] = [] === $kept ? [ 'dgl_none' ] : $kept;
+
+		return $args;
 	}
 
 	/**

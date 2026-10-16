@@ -174,7 +174,7 @@ final class JoinCopy {
 			),
 			$owner
 				? __( 'You are its first person here, so you run its page: you can change its details and invite colleagues from the Members page.', 'dgl-platform' )
-				: __( 'You can post for it now, and anything you drafted while you waited can be sent for review.', 'dgl-platform' ),
+				: __( 'You can add and post listings for it now.', 'dgl-platform' ),
 		];
 
 		if ( $org_pending ) {

@@ -5411,6 +5411,64 @@ $rc_pin = wp_insert_post( [ 'post_type' => PostTypes::VENUE, 'post_status' => 'd
 update_post_meta( $rc_pin, DGL_FIXTURE_FLAG, '1' );
 $ok( 'Tea & Cake <img src=x onerror=alert(1)>' === \DGL\Spaces\Pages::plain_title( $rc_pin ), 'the pin title is the plain text, for textContent (' . esc_html( \DGL\Spaces\Pages::plain_title( $rc_pin ) ) . ')' );
 
+$group( 'Security re-check, second report: XML-RPC, REST spelling, search, claims and invitations' );
+
+// XML-RPC: members hold none of WordPress's item capabilities, so wp.newPost cannot make a fake edit.
+\DGL\Roles::install();
+clean_user_cache( $alice );
+Access::flush_cache();
+$ok( ! user_can( $alice, 'create_dgl_items' ) && ! user_can( $alice, 'edit_dgl_items' ) && ! user_can( $alice, 'delete_dgl_items' ), 'a member holds no WordPress item capabilities' );
+wp_set_password( 'rc-xmlrpc-pass-1', $alice );
+require_once ABSPATH . WPINC . '/class-IXR.php';
+require_once ABSPATH . WPINC . '/class-wp-xmlrpc-server.php';
+add_filter( 'xmlrpc_enabled', '__return_true' );
+$rc_x   = new wp_xmlrpc_server();
+$rc_new = $rc_x->wp_newPost( [ 1, 'dgl_alice', 'rc-xmlrpc-pass-1', [ 'post_type' => PostTypes::REVISION, 'post_status' => Statuses::PENDING, 'post_title' => 'Fake edit', 'post_parent' => $b_draft ] ] );
+$ok( $rc_new instanceof IXR_Error, 'XML-RPC wp.newPost refuses a member (' . ( $rc_new instanceof IXR_Error ? $rc_new->code . ' ' . $rc_new->message : 'created ' . $rc_new ) . ')' );
+$rc_edit_x = $rc_x->wp_editPost( [ 1, 'dgl_alice', 'rc-xmlrpc-pass-1', $a_live, [ 'post_title' => 'Changed over XML-RPC' ] ] );
+$ok( $rc_edit_x instanceof IXR_Error && 'Changed over XML-RPC' !== get_post_field( 'post_title', $a_live ), 'and wp.editPost on her live item' );
+remove_filter( 'xmlrpc_enabled', '__return_true' );
+
+// REST routes match whatever the spelling, and the search leaves items out.
+wp_set_current_user( 0 );
+$ok( 404 === rest_do_request( new WP_REST_Request( 'GET', '/wp/v2/' . strtoupper( get_post_type_object( PostTypes::EVENT )->rest_base ?: PostTypes::EVENT ) ) )->get_status(), 'an upper-case route is refused too' );
+$rc_search = new WP_REST_Request( 'GET', '/wp/v2/search' );
+$rc_search->set_param( 'search', 'Rc' );
+$rc_found = wp_list_pluck( (array) rest_do_request( $rc_search )->get_data(), 'id' );
+$ok( ! in_array( $rc_venue, $rc_found, true ) && ! in_array( $rc_shown, $rc_found, true ), 'the REST search lists no venues or listings for a visitor' );
+$ok( [ 'dgl_none' ] !== \DGL\Access\Access::rest_users_without_items( [ 'has_published_posts' => [ 'post', PostTypes::EVENT ] ] )['has_published_posts'] && ! in_array( PostTypes::EVENT, \DGL\Access\Access::rest_users_without_items( [ 'has_published_posts' => [ 'post', PostTypes::EVENT ] ] )['has_published_posts'], true ), 'and the REST user list does not count listings as published posts' );
+
+// A claim is settled by an invitation; the team then has nothing to decide.
+$sent_links = [];
+$r = Joining::start( 'rc-claimer@gmail.com' ); $token = trim( (string) substr( end( $sent_links ), strrpos( rtrim( end( $sent_links ), '/' ), '/' ) + 1 ), '/' );
+$v = Joining::verify( $token );
+$rc_claimer = Joining::claim( $v['signup'], $org_a, '', 'Rc Claimer', 'rc-claim-pass-1' );
+$rc_claim   = array_values( array_filter( SignupStore::awaiting(), static fn( $s ) => $s->user_id === $rc_claimer ) )[0];
+$ok( $org_a === Joining::waiting_claim_org( $rc_claimer ), 'the dashboard can name the organisation a claim is waiting on' );
+Access::flush_cache();
+$rc_inv = Invites::send( Access::user_context( $bella ), $org_b, 'rc-claimer@gmail.com', 'contributor' );
+$rc_tok = trim( (string) substr( end( $sent_links ), strrpos( rtrim( end( $sent_links ), '/' ), '/' ) + 1 ), '/' );
+$rc_acc = Invites::accept( $rc_tok );
+$ok( $rc_inv['ok'] && $rc_acc['ok'] && $org_b === \DGL\Org\Org::for_user( $rc_claimer ), 'the waiting claimant accepts an invitation to Org B' );
+$ok( Signup::SUPERSEDED === SignupStore::find( $rc_claim->id )->state, 'and the claim on Org A is closed' );
+update_user_meta( $rc_claimer, Meta::USER_ACCOUNT_STATUS, 'pending' );
+SignupStore::update( $rc_claim->id, [ 'state' => Signup::AWAITING ] );
+$rc_dec = Joining::approve( $rc_claim->id, $mod );
+$ok( is_wp_error( $rc_dec ) && 'dgl_claim_overtaken' === $rc_dec->get_error_code() && $org_b === \DGL\Org\Org::for_user( $rc_claimer ), 'a stale claim cannot move them back to Org A' );
+SignupStore::update( $rc_claim->id, [ 'state' => Signup::AWAITING ] );
+$rc_ref = Joining::refuse( $rc_claim->id, $mod, 'Not them.' );
+$ok( is_wp_error( $rc_ref ) && \DGL\Access\UserContext::ACCOUNT_CLOSED !== get_user_meta( $rc_claimer, Meta::USER_ACCOUNT_STATUS, true ), 'nor can refusing it close their account' );
+
+// An invitation lapses when its inviter can no longer give the role.
+$rc_inv2 = Invites::send( Access::user_context( $bella ), $org_b, 'rc-lapsed@example.test', 'contributor' );
+$rc_tok2 = trim( (string) substr( end( $sent_links ), strrpos( rtrim( end( $sent_links ), '/' ), '/' ) + 1 ), '/' );
+update_user_meta( $bella, Meta::USER_ACCOUNT_STATUS, 'pending' );
+Access::flush_cache();
+$rc_acc2 = Invites::accept( $rc_tok2, 'Rc Lapsed', 'rc-lapsed-pass-1' );
+$ok( $rc_inv2['ok'] && ! $rc_acc2['ok'] && 'inviter_lapsed' === $rc_acc2['outcome'] && false === get_user_by( 'email', 'rc-lapsed@example.test' ), 'an invitation from an owner no longer approved is refused, and no account is made' );
+update_user_meta( $bella, Meta::USER_ACCOUNT_STATUS, 'approved' );
+Access::flush_cache();
+
 /* ----------------------------------------------------------------- report */
 
 echo "\n" . str_repeat( '-', 60 ) . "\n";

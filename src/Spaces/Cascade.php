@@ -74,7 +74,14 @@ final class Cascade {
 		$moved        = 0;
 
 		try {
+			$member = ! \DGL\Access\Access::user_context( $actor_id )->is_moderator();
+
 			foreach ( $children as $child_id ) {
+				// A member's restore sends each space to the team, so each is checked as a submission would be; an incomplete one stays archived.
+				if ( StateMachine::RESTORE === $action && $member && ! empty( \DGL\Dashboard\Wizard::validate_all( (int) $child_id, PostTypes::SPACE ) ) ) {
+					continue;
+				}
+
 				$result = Transition::apply( $child_id, $action, $actor_id, $note );
 
 				if ( true === $result ) {

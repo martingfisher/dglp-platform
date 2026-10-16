@@ -219,7 +219,8 @@ final class Csv {
 
 	public static function safe( string $cell ): string {
 		// Leading whitespace is skipped by some spreadsheets before they look for a formula, and full-width signs are read as the ASCII ones.
-		return 1 === preg_match( '/^[\s\x{3000}]*[=+\-@\x{FF1D}\x{FF0B}\x{FF0D}\x{FF20}]|^[\t\r\n]/u', $cell ) ? "'" . $cell : $cell;
+		// A cell the pattern cannot read (not UTF-8) is prefixed too: fail closed.
+		return 0 !== preg_match( '/^[\s\x{3000}]*[=+\-@\x{FF1D}\x{FF0B}\x{FF0D}\x{FF20}]|^[\t\r\n]/u', $cell ) ? "'" . $cell : $cell;
 	}
 
 	/** The file name for a type's export, or for the month's decisions. */

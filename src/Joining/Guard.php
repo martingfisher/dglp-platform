@@ -104,7 +104,7 @@ final class Guard {
 				: __( 'Enough has been sent from that address for now. Try again in an hour.', 'dgl-platform' );
 		}
 
-		if ( '' !== $ip && self::bump( 'ip_' . md5( $ip ), $context ) > $per_ip ) {
+		if ( '' !== $ip && self::bump( 'ip_' . md5( self::network( $ip ) ), $context ) > $per_ip ) {
 			return __( 'Too many attempts from your connection. Try again in an hour.', 'dgl-platform' );
 		}
 
@@ -130,7 +130,7 @@ final class Guard {
 			delete_transient( self::key( 'email_' . md5( strtolower( trim( $email ) ) ), $context ) );
 		}
 		if ( '' !== $ip ) {
-			delete_transient( self::key( 'ip_' . md5( $ip ), $context ) );
+			delete_transient( self::key( 'ip_' . md5( self::network( $ip ) ), $context ) );
 		}
 	}
 
@@ -162,6 +162,21 @@ final class Guard {
 		}
 
 		return $remote;
+	}
+
+	/**
+	 * What a rate limit counts: an IPv4 address as it is, an IPv6 address by
+	 * its /64. One home or office gets a whole /64, so counting single IPv6
+	 * addresses let one machine walk through billions of them. Pure.
+	 */
+	public static function network( string $ip ): string {
+		if ( false === filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6 ) ) {
+			return $ip;
+		}
+
+		$bin = (string) inet_pton( $ip );
+
+		return (string) inet_ntop( substr( $bin, 0, 8 ) . str_repeat( "\0", 8 ) ) . '/64';
 	}
 
 	/** Cloudflare's published ranges, from https://www.cloudflare.com/ips/ (October 2026). */

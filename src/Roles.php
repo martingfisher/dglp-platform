@@ -53,10 +53,16 @@ final class Roles {
 			 * which does not need it.
 			 */
 			'upload_files'             => false,
-			'create_dgl_items'         => true,
-			'edit_dgl_items'           => true,
-			'edit_published_dgl_items' => true,
-			'delete_dgl_items'         => true,
+			/*
+			 * Nor WordPress's own create, edit and delete for items. The member
+			 * area checks the policy, never these; held, they let XML-RPC's
+			 * wp.newPost make a pending "edit" of another organisation's live
+			 * listing, which approval would copy over it.
+			 */
+			'create_dgl_items'         => false,
+			'edit_dgl_items'           => false,
+			'edit_published_dgl_items' => false,
+			'delete_dgl_items'         => false,
 			'publish_dgl_items'        => false,
 			'edit_others_dgl_items'    => false,
 			'delete_others_dgl_items'  => false,

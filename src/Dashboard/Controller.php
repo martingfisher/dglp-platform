@@ -193,6 +193,8 @@ final class Controller {
 				// the first screen, until an owner saves the Organisation tab.
 				'org_check'=> $org_id > 0 && Org::needs_check( $org_id ),
 				'is_owner' => $user->is_org_owner(),
+				// The organisation a waiting claim is for, so the screen can say so.
+				'claiming' => $org_id > 0 ? 0 : \DGL\Joining\Joining::waiting_claim_org( $user->user_id ),
 			],
 			__( 'Your dashboard', 'dgl-platform' ),
 			$user
@@ -2338,8 +2340,8 @@ final class Controller {
 				// button posted, was refused, and drew the same page again:
 				// a loop with nothing to say about how to get out of it.
 				'open'      => InviteRules::OPEN === $state,
-				// Back here after signing in, so an existing account can accept.
-				'signin_url' => wp_login_url( home_url( '/' . trim( (string) wp_parse_url( (string) ( $_SERVER['REQUEST_URI'] ?? '' ), PHP_URL_PATH ), '/' ) . '/' ) ), // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- reduced to a path, then a same-site URL.
+				// Back to this invitation after signing in while it is open, so an existing account can accept; otherwise the dashboard.
+				'signin_url' => wp_login_url( InviteRules::OPEN === $state ? Invites::accept_url( $token ) : Router::url() ),
 				'must_sign_in' => $holder instanceof \WP_User && get_current_user_id() !== (int) $holder->ID,
 			],
 			$title
