@@ -1373,12 +1373,15 @@ $ok( isset( \DGL\Org\Profile::save_person( $owner, [ 'person_name' => '' ] )['pe
 
 /* --------------------------------------------------- members and wp-admin */
 
-$group( 'A member account is for the member area, not for WordPress' );
+$group( 'Only administrators use wp-admin' );
 
-$ok( \DGL\Dashboard\AdminLockout::is_member_only( $alice ), 'a member is recognised as member-only' );
-$ok( ! \DGL\Dashboard\AdminLockout::is_member_only( $mod ), 'a moderator is not' );
-$ok( ! \DGL\Dashboard\AdminLockout::is_member_only( 1 ), 'and neither is an administrator' );
-$ok( ! \DGL\Dashboard\AdminLockout::is_member_only( 0 ), 'a signed-out visitor is not either' );
+$ok( \DGL\Dashboard\AdminLockout::is_locked_out( $alice ), 'a member is kept out of wp-admin' );
+$ok( \DGL\Dashboard\AdminLockout::is_locked_out( $mod ), 'so is the review team\'s moderator role, which works in the member area' );
+$sr_editor = wp_insert_user( [ 'user_login' => 'dgl_rc_editor', 'user_pass' => wp_generate_password(), 'user_email' => 'dgl_rc_editor@example.test', 'role' => 'editor' ] );
+update_user_meta( $sr_editor, DGL_FIXTURE_FLAG, '1' );
+$ok( \DGL\Dashboard\AdminLockout::is_locked_out( $sr_editor ), 'and any other WordPress role, such as an editor' );
+$ok( ! \DGL\Dashboard\AdminLockout::is_locked_out( 1 ), 'an administrator is not' );
+$ok( ! \DGL\Dashboard\AdminLockout::is_locked_out( 0 ), 'nor is a signed-out visitor, who has no wp-admin to be kept from' );
 
 /*
  * An administrator who has also been given the member role for testing keeps
@@ -1388,17 +1391,20 @@ $ok( ! \DGL\Dashboard\AdminLockout::is_member_only( 0 ), 'a signed-out visitor i
 $admin_user = get_userdata( 1 );
 $admin_user->add_role( Roles::MEMBER );
 Access::flush_cache();
-$ok( ! \DGL\Dashboard\AdminLockout::is_member_only( 1 ), 'an administrator who also holds the member role keeps wp-admin' );
+$ok( ! \DGL\Dashboard\AdminLockout::is_locked_out( 1 ), 'an administrator who also holds the member role keeps wp-admin' );
 $admin_user->remove_role( Roles::MEMBER );
 Access::flush_cache();
 
-$group( 'The admin bar is hidden from members only' );
+$group( 'The admin bar is for administrators only' );
 
 wp_set_current_user( $alice );
 $ok( false === \DGL\Dashboard\AdminLockout::hide_admin_bar( true ), 'a member never sees the WordPress bar' );
 
 wp_set_current_user( $mod );
-$ok( true === \DGL\Dashboard\AdminLockout::hide_admin_bar( true ), 'a moderator still does' );
+$ok( false === \DGL\Dashboard\AdminLockout::hide_admin_bar( true ), 'nor does a moderator' );
+
+wp_set_current_user( 1 );
+$ok( true === \DGL\Dashboard\AdminLockout::hide_admin_bar( true ), 'an administrator does' );
 
 wp_set_current_user( 0 );
 
@@ -1781,8 +1787,8 @@ $member_user = get_userdata( $alice );
 $mod_user    = get_userdata( $mod );
 $dash        = \DGL\Dashboard\Router::url();
 
-$ok( \DGL\Dashboard\AdminLockout::is_member_only( $alice ), 'a member with no staff capability is member-only' );
-$ok( ! \DGL\Dashboard\AdminLockout::is_member_only( $mod ), 'a moderator is not, and keeps wp-admin' );
+$ok( \DGL\Dashboard\AdminLockout::is_locked_out( $alice ), 'a member is sent to the member area' );
+$ok( \DGL\Dashboard\AdminLockout::is_locked_out( $mod ) && $dash === \DGL\Dashboard\AdminLockout::after_login( admin_url( 'profile.php' ), '', $mod_user ), 'and so is a moderator, after signing in' );
 
 $ok(
 	$dash === \DGL\Dashboard\AdminLockout::after_login( admin_url( 'profile.php' ), '', $member_user ),
@@ -1803,8 +1809,8 @@ $ok(
 	'a member who asked for a particular page still gets it'
 );
 $ok(
-	admin_url( 'profile.php' ) === \DGL\Dashboard\AdminLockout::after_login( admin_url( 'profile.php' ), '', $mod_user ),
-	'a moderator is left exactly where WordPress was sending them'
+	admin_url( 'profile.php' ) === \DGL\Dashboard\AdminLockout::after_login( admin_url( 'profile.php' ), '', get_userdata( 1 ) ),
+	'an administrator is left exactly where WordPress was sending them'
 );
 
 /*
@@ -5345,7 +5351,9 @@ $ok( 404 === rest_do_request( new WP_REST_Request( 'GET', $sr_route ) )->get_sta
 wp_set_current_user( $alice );
 $ok( 404 === rest_do_request( new WP_REST_Request( 'GET', $sr_route . '/' . $a_live ) )->get_status(), 'nor does a member' );
 wp_set_current_user( $mod );
-$ok( 200 === rest_do_request( new WP_REST_Request( 'GET', $sr_route ) )->get_status(), 'the team still do' );
+$ok( 404 === rest_do_request( new WP_REST_Request( 'GET', $sr_route ) )->get_status(), 'nor a moderator, who works in the member area' );
+wp_set_current_user( 1 );
+$ok( 200 === rest_do_request( new WP_REST_Request( 'GET', $sr_route ) )->get_status(), 'an administrator does' );
 wp_set_current_user( 0 );
 $ok( 200 === rest_do_request( new WP_REST_Request( 'GET', '/wp/v2/pages' ) )->get_status(), 'and pages are untouched' );
 

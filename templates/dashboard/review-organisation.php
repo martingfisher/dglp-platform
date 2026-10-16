@@ -246,7 +246,11 @@ $pending  = (array) ( $data['pending'] ?? [] );
 				<dt><?php esc_html_e( 'Previously refused', 'dgl-platform' ); ?></dt>
 				<dd><?php echo esc_html( (string) (int) $data['rejected'] ); ?></dd>
 			</dl>
-			<p class="dgl-help"><a href="<?php echo esc_url( (string) $data['admin_url'] ); ?>"><?php esc_html_e( 'Verification and email domains in wp-admin', 'dgl-platform' ); ?></a></p>
+			<?php if ( current_user_can( 'manage_options' ) ) : ?>
+				<p class="dgl-help"><a href="<?php echo esc_url( (string) $data['admin_url'] ); ?>"><?php esc_html_e( 'Verification and email domains in wp-admin', 'dgl-platform' ); ?></a></p>
+			<?php else : ?>
+				<p class="dgl-help"><?php esc_html_e( 'Only an administrator can change verification and email domains. Ask one of the DGLP administrators.', 'dgl-platform' ); ?></p>
+			<?php endif; ?>
 		</section>
 
 		<section class="dgl-card">
