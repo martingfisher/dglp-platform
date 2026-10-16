@@ -196,7 +196,7 @@ $reasons_of = static function ( array $match ): string {
 					<input type="radio" name="dgl_intent" value="claim" <?php checked( 'claim', $intent ); ?>>
 					<span>
 						<strong><?php echo 'match' === $stage ? esc_html__( 'A different organisation on the list', 'dgl-platform' ) : esc_html__( 'An organisation on the list', 'dgl-platform' ); ?></strong>
-						<span class="dgl-help"><?php esc_html_e( 'Find it below. The DGLP team check you are part of it before you can post; you can draft in the meantime.', 'dgl-platform' ); ?></span>
+						<span class="dgl-help"><?php esc_html_e( 'Find it below. The DGLP team check you are part of it first, usually within a working day; then you can add and post listings for it.', 'dgl-platform' ); ?></span>
 					</span>
 				</label>
 				<label class="dgl-check">

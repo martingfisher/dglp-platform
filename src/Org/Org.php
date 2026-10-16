@@ -13,6 +13,7 @@ use DGL\Audit\Log;
 use DGL\Index\Sync;
 use DGL\Meta;
 use DGL\PostTypes;
+use DGL\Statuses;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -507,6 +508,23 @@ final class Org {
 
 		update_post_meta( $post_id, Meta::ITEM_ORG, $org_id );
 		Sync::sync( $post_id );
+
+		/*
+		 * An open edit carries its own copy of the organisation. Left as it
+		 * was, the new organisation would pick up the old one's unsent words
+		 * and submit them on the old one's trust. An edit not yet sent is the
+		 * old organisation's work and goes; one with the team moves with the
+		 * item, since the team decide it either way.
+		 */
+		$edit = \DGL\Workflow\Revisions::open_for( $post_id );
+
+		if ( $edit instanceof \WP_Post ) {
+			if ( Statuses::PENDING === $edit->post_status ) {
+				update_post_meta( (int) $edit->ID, Meta::ITEM_ORG, $org_id );
+			} else {
+				\DGL\Workflow\Revisions::discard( (int) $edit->ID );
+			}
+		}
 
 		if ( PostTypes::VENUE === (string) $post->post_type ) {
 			\DGL\Spaces\Cascade::reassign_children( $post_id, $org_id, $actor_id );

@@ -114,10 +114,27 @@ final class Store {
 			$attachment_id = (int) get_post_meta( $post_id, $image->meta_key(), true );
 			$text          = trim( (string) get_post_meta( $post_id, $alt->meta_key(), true ) );
 
-			if ( $attachment_id > 0 && '' !== $text && 'attachment' === get_post_type( $attachment_id ) ) {
+			if ( $attachment_id > 0 && '' !== $text && 'attachment' === get_post_type( $attachment_id ) && self::may_describe( $attachment_id, $post_id ) ) {
 				update_post_meta( $attachment_id, '_wp_attachment_image_alt', $text );
 			}
 		}
+	}
+
+	/**
+	 * Whether this save may rewrite the picture's own alt text. A member's
+	 * words go only on a picture their organisation uploaded; the alt text
+	 * of anyone else's shows on that organisation's pages. The team, and the
+	 * command line when nobody is signed in (imports, demo content), may
+	 * describe any picture.
+	 */
+	private static function may_describe( int $attachment_id, int $post_id ): bool {
+		$user_id = get_current_user_id();
+
+		if ( ( 0 === $user_id && defined( 'WP_CLI' ) && WP_CLI ) || \DGL\Access\Access::user_context( $user_id )->is_moderator() ) {
+			return true;
+		}
+
+		return \DGL\Uploads::belongs( $attachment_id, $post_id );
 	}
 
 	/**

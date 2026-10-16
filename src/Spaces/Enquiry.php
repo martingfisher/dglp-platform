@@ -44,6 +44,9 @@ final class Enquiry {
 	public const PER_EMAIL = 10;
 	public const PER_IP    = 30;
 
+	/** Enquiries one venue's inbox takes in the window, from everybody together. */
+	public const PER_VENUE = 15;
+
 	public const MESSAGE_MIN = 10;
 	public const MESSAGE_MAX = 2000;
 
@@ -290,9 +293,14 @@ final class Enquiry {
 		}
 
 		$values = $checked['values'];
-		$ip     = (string) ( $server['REMOTE_ADDR'] ?? '' );
+		$ip     = Guard::client_ip( $server );
 
 		if ( '' !== Guard::limited( $values['email'], $ip, self::CONTEXT, self::PER_EMAIL, self::PER_IP ) ) {
+			return [ 'status' => 'limited' ];
+		}
+
+		// The address limits are the sender's to dodge; this one is the venue's inbox.
+		if ( Guard::over( 'venue_' . $venue_id, self::CONTEXT, self::PER_VENUE ) ) {
 			return [ 'status' => 'limited' ];
 		}
 

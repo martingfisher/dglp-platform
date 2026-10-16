@@ -45,11 +45,24 @@ final class Roles {
 	public static function member_caps(): array {
 		return [
 			'read'                     => true,
-			'upload_files'             => true,
-			'create_dgl_items'         => true,
-			'edit_dgl_items'           => true,
-			'edit_published_dgl_items' => true,
-			'delete_dgl_items'         => true,
+			/*
+			 * Not WordPress's upload capability: with it, /wp-json/wp/v2/media
+			 * and async-upload.php took any file type the site allows, past
+			 * Uploads::store's checks (raster only, size, location data
+			 * stripped). The member area uploads through Uploads::store,
+			 * which does not need it.
+			 */
+			'upload_files'             => false,
+			/*
+			 * Nor WordPress's own create, edit and delete for items. The member
+			 * area checks the policy, never these; held, they let XML-RPC's
+			 * wp.newPost make a pending "edit" of another organisation's live
+			 * listing, which approval would copy over it.
+			 */
+			'create_dgl_items'         => false,
+			'edit_dgl_items'           => false,
+			'edit_published_dgl_items' => false,
+			'delete_dgl_items'         => false,
 			'publish_dgl_items'        => false,
 			'edit_others_dgl_items'    => false,
 			'delete_others_dgl_items'  => false,

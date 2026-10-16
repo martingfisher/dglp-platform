@@ -218,7 +218,7 @@ final class SpacesQuery {
 
 			$out[] = [
 				'id'    => $id,
-				'title' => (string) get_the_title( $id ),
+				'title' => Pages::plain_title( $id ),
 				'url'   => (string) get_permalink( $id ),
 				'lat'   => (float) $lat,
 				'lng'   => (float) $lng,

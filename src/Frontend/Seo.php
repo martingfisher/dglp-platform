@@ -251,11 +251,12 @@ final class Seo {
 			}
 		}
 
-		foreach ( self::script_safe( $page['schema'] ) as $key => $entity ) {
+		foreach ( $page['schema'] as $key => $entity ) {
 			$data[ 'dgl_' . $key ] = $entity;
 		}
 
-		return $data;
+		// All of it, Rank Math's own nodes too (an author's name is in them): we cannot see how it encodes.
+		return self::script_safe( $data );
 	}
 
 	/* ---- What the page is ---------------------------------------------- */

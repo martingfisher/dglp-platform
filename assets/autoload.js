@@ -101,6 +101,15 @@
 				return;
 			}
 
+			// Only ever this site's own pages are fetched and added to this one.
+			try {
+				if ( new URL( nextUrl, window.location.href ).origin !== window.location.origin ) {
+					return;
+				}
+			} catch ( e ) {
+				return;
+			}
+
 			busy = true;
 			button.disabled = true;
 			button.textContent = text( 'loading', 'Loading…' );

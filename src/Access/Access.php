@@ -55,9 +55,19 @@ final class Access {
 	public static function init(): void {
 		add_filter( 'map_meta_cap', [ self::class, 'map_meta_cap' ], 10, 4 );
 
-		foreach ( \DGL\PostTypes::reviewable() as $post_type ) {
-			add_filter( 'rest_pre_insert_' . $post_type, [ self::class, 'refuse_rest_insert' ] );
-		}
+		add_filter( 'rest_pre_dispatch', [ self::class, 'refuse_rest_route' ], 10, 3 );
+		add_filter( 'rest_post_search_query', [ self::class, 'rest_search_without_items' ] );
+		add_filter( 'rest_user_query', [ self::class, 'rest_users_without_items' ] );
+
+		// Per type, once the types exist; reading them any earlier loads translations too soon.
+		add_action(
+			'rest_api_init',
+			static function (): void {
+				foreach ( \DGL\PostTypes::reviewable() as $post_type ) {
+					add_filter( 'rest_pre_insert_' . $post_type, [ self::class, 'refuse_rest_insert' ] );
+				}
+			}
+		);
 	}
 
 	/**
@@ -220,6 +230,102 @@ final class Access {
 		}
 
 		return Policy::VIEW_ITEM === $action ? [ 'read' ] : [ 'edit_dgl_items' ];
+	}
+
+	/**
+	 * Our items' REST routes are for the review team only.
+	 *
+	 * Nothing public reads them: listings, the finder and the map render on
+	 * the server. Open, they served what the site deliberately does not show
+	 * (a hidden venue, which its own page 404s) and named who wrote what.
+	 * Anybody else is told the route does not exist.
+	 *
+	 * @param mixed            $result  A response already decided, or null.
+	 * @param \WP_REST_Server  $server  The server.
+	 * @param \WP_REST_Request $request The request.
+	 * @return mixed
+	 */
+	public static function refuse_rest_route( $result, $server, $request ) {
+		if ( null !== $result || ! $request instanceof \WP_REST_Request ) {
+			return $result;
+		}
+
+		// WordPress matches routes ignoring case, so this must too.
+		$route = strtolower( '/' . ltrim( (string) $request->get_route(), '/' ) );
+
+		foreach ( self::rest_bases() as $base ) {
+			$base = strtolower( $base );
+
+			if ( $route === '/wp/v2/' . $base || str_starts_with( $route, '/wp/v2/' . $base . '/' ) ) {
+				if ( self::user_context( get_current_user_id() )->is_moderator() ) {
+					return $result;
+				}
+
+				return new \WP_Error( 'rest_no_route', __( 'No route was found matching the URL and request method.', 'dgl-platform' ), [ 'status' => 404 ] );
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * The REST search, for anybody but the team, leaves our items out: it
+	 * listed what the item routes no longer do, hidden venues included.
+	 *
+	 * @param array<string, mixed> $args
+	 * @return array<string, mixed>
+	 */
+	public static function rest_search_without_items( array $args ): array {
+		if ( self::user_context( get_current_user_id() )->is_moderator() ) {
+			return $args;
+		}
+
+		$types = (array) ( $args['post_type'] ?? [] );
+		$kept  = array_values( array_diff( $types, \DGL\PostTypes::reviewable() ) );
+
+		// Nothing left to search is no results, not every type.
+		$args['post_type'] = [] === $kept ? [ 'dgl_none' ] : $kept;
+
+		return $args;
+	}
+
+	/**
+	 * The REST user list, for anybody but the team, does not count our items
+	 * as published posts, so it never names who wrote a listing.
+	 *
+	 * @param array<string, mixed> $args
+	 * @return array<string, mixed>
+	 */
+	public static function rest_users_without_items( array $args ): array {
+		if ( empty( $args['has_published_posts'] ) || self::user_context( get_current_user_id() )->is_moderator() ) {
+			return $args;
+		}
+
+		$types = true === $args['has_published_posts'] ? get_post_types( [ 'show_in_rest' => true ] ) : (array) $args['has_published_posts'];
+		$kept  = array_values( array_diff( array_values( $types ), \DGL\PostTypes::reviewable() ) );
+
+		$args['has_published_posts'] = [] === $kept ? [ 'dgl_none' ] : $kept;
+
+		return $args;
+	}
+
+	/**
+	 * The REST base of every type in the workflow.
+	 *
+	 * @return string[]
+	 */
+	private static function rest_bases(): array {
+		$bases = [];
+
+		foreach ( \DGL\PostTypes::reviewable() as $post_type ) {
+			$object = get_post_type_object( $post_type );
+
+			if ( $object instanceof \WP_Post_Type && $object->show_in_rest ) {
+				$bases[] = (string) ( $object->rest_base ?: $post_type );
+			}
+		}
+
+		return $bases;
 	}
 
 	/**

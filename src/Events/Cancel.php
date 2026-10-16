@@ -25,6 +25,9 @@ defined( 'ABSPATH' ) || exit;
 
 final class Cancel {
 
+	/** The most a cancellation note may say, in characters. */
+	public const NOTE_MAX = 200;
+
 	/** When the whole event was cancelled, wall Y-m-d H:i:s. */
 	public const META_AT = 'dgl_cancelled_at';
 
@@ -76,7 +79,14 @@ final class Cancel {
 			return new \WP_Error( 'dgl_already', __( 'It is already marked cancelled.', 'dgl-platform' ) );
 		}
 
-		$note = sanitize_textarea_field( $note );
+		/*
+		 * The note goes on the public page with no review, as the
+		 * cancellation itself does, so it is held to a short reason: one
+		 * line, plain text, NOTE_MAX characters. Anything longer is words,
+		 * and words go through Edit.
+		 */
+		$note = sanitize_text_field( $note );
+		$note = mb_strlen( $note ) > self::NOTE_MAX ? rtrim( mb_substr( $note, 0, self::NOTE_MAX - 1 ) ) . '…' : $note;
 
 		update_post_meta( $post_id, self::META_AT, Series::now()->format( 'Y-m-d H:i:s' ) );
 

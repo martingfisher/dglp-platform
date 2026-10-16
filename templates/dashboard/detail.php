@@ -443,7 +443,7 @@ if ( $revision instanceof WP_Post ) {
 					<label class="dgl-label" for="dgl-cancel-note">
 						<?php echo esc_html( [] !== (array) ( $data['cancel_choices'] ?? [] ) ? __( 'Or cancel the whole series', 'dgl-platform' ) : __( 'Cancel the event', 'dgl-platform' ) ); ?>
 					</label>
-					<textarea class="dgl-field dgl-field--area" id="dgl-cancel-note" name="dgl_note" rows="2" placeholder="<?php esc_attr_e( 'A line for visitors, if you want one: why, or what happens instead.', 'dgl-platform' ); ?>"></textarea>
+					<textarea class="dgl-field dgl-field--area" id="dgl-cancel-note" name="dgl_note" rows="2" maxlength="<?php echo esc_attr( (string) \DGL\Events\Cancel::NOTE_MAX ); ?>" placeholder="<?php esc_attr_e( 'A line for visitors, if you want one: why, or what happens instead.', 'dgl-platform' ); ?>"></textarea>
 					<p class="dgl-help"><?php esc_html_e( 'It stays on the site for a week with a Cancelled stamp so people who saw it know, then comes off on its own. You can undo it.', 'dgl-platform' ); ?></p>
 				</div>
 				<div class="dgl-form__actions dgl-form__actions--alone">

@@ -339,7 +339,8 @@ final class Ics {
 
 	/** Backslash, semicolon, comma and newlines, as the RFC escapes text. */
 	public static function escape( string $text ): string {
-		$text = str_replace( "\r\n", "\n", $text );
+		// A lone CR is a line break to some calendars, so it would start a new property.
+		$text = str_replace( [ "\r\n", "\r" ], "\n", $text );
 
 		return str_replace( [ '\\', ';', ',', "\n" ], [ '\\\\', '\;', '\,', '\n' ], $text );
 	}

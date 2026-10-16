@@ -35,6 +35,57 @@ final class Visibility {
 
 	public static function init(): void {
 		add_action( 'template_redirect', [ self::class, 'not_found_when_hidden' ], 9 );
+		// Its own page 404s; the feeds and sitemaps must not list it either.
+		add_action( 'pre_get_posts', [ self::class, 'keep_out_of_feeds' ] );
+		add_filter( 'wp_sitemaps_posts_query_args', [ self::class, 'keep_out_of_sitemap_query' ] );
+		add_filter( 'rank_math/sitemap/entry', [ self::class, 'keep_out_of_rank_math' ], 10, 3 );
+	}
+
+	/** The meta query that leaves hidden things out. */
+	public static function shown_clause(): array {
+		return [
+			'relation' => 'OR',
+			[ 'key' => Meta::ITEM_HIDDEN, 'compare' => 'NOT EXISTS' ],
+			[ 'key' => Meta::ITEM_HIDDEN, 'value' => '1', 'compare' => '!=' ],
+		];
+	}
+
+	private static function with_shown( mixed $meta_query ): array {
+		$meta_query = is_array( $meta_query ) ? $meta_query : [];
+
+		return [] === $meta_query ? [ self::shown_clause() ] : [ 'relation' => 'AND', $meta_query, self::shown_clause() ];
+	}
+
+	public static function keep_out_of_feeds( \WP_Query $query ): void {
+		if ( is_admin() || ! $query->is_feed() ) {
+			return;
+		}
+
+		$query->set( 'meta_query', self::with_shown( $query->get( 'meta_query' ) ) );
+	}
+
+	/**
+	 * @param array<string, mixed> $args
+	 * @return array<string, mixed>
+	 */
+	public static function keep_out_of_sitemap_query( array $args ): array {
+		$args['meta_query'] = self::with_shown( $args['meta_query'] ?? [] ); // phpcs:ignore WordPress.DB.SlowDBQuery -- sitemap generation only.
+
+		return $args;
+	}
+
+	/**
+	 * @param mixed  $entry  The sitemap entry, or false.
+	 * @param string $type   'post', 'term' or 'user'.
+	 * @param mixed  $object The object it describes.
+	 * @return mixed
+	 */
+	public static function keep_out_of_rank_math( mixed $entry, string $type = '', mixed $object = null ): mixed {
+		if ( 'post' === $type && $object instanceof WP_Post && self::is_hidden( (int) $object->ID ) ) {
+			return false;
+		}
+
+		return $entry;
 	}
 
 	public static function is_hidden( int $post_id ): bool {

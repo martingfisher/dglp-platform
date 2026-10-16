@@ -72,12 +72,12 @@ final class Recipients {
 		$ids = [];
 
 		$author = (int) get_post_field( 'post_author', $post_id );
+		$org_id = Org::for_item( $post_id );
 
-		if ( $author > 0 ) {
+		// Only while they are still in the organisation: somebody who has left is not told about its work.
+		if ( $author > 0 && $org_id > 0 && Org::for_user( $author ) === $org_id ) {
 			$ids[] = $author;
 		}
-
-		$org_id = Org::for_item( $post_id );
 
 		if ( $org_id > 0 ) {
 			foreach ( Org::members( $org_id ) as $user_id ) {

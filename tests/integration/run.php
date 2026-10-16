@@ -310,14 +310,14 @@ wp_set_current_user( $alice );
 $rest_req = new WP_REST_Request( 'POST', $rest_route( $a_live ) );
 $rest_req->set_param( 'title', 'Changed through REST' );
 $rest_res = rest_do_request( $rest_req );
-$ok( in_array( $rest_res->get_status(), [ 401, 403 ], true ) && $title_before === get_post_field( 'post_title', $a_live ), 'a REST edit to her live item is refused and the title is unchanged (HTTP ' . $rest_res->get_status() . ')' );
+$ok( in_array( $rest_res->get_status(), [ 401, 403, 404 ], true ) && $title_before === get_post_field( 'post_title', $a_live ), 'a REST edit to her live item is refused and the title is unchanged (HTTP ' . $rest_res->get_status() . ')' );
 $rest_req = new WP_REST_Request( 'POST', $rest_route( 0 ) );
 $rest_req->set_param( 'title', 'Made through REST' );
 $rest_res = rest_do_request( $rest_req );
-$ok( in_array( $rest_res->get_status(), [ 401, 403 ], true ), 'and so is creating one through REST (HTTP ' . $rest_res->get_status() . ')' );
+$ok( in_array( $rest_res->get_status(), [ 401, 403, 404 ], true ), 'and so is creating one through REST (HTTP ' . $rest_res->get_status() . ')' );
 $rest_req = new WP_REST_Request( 'DELETE', $rest_route( $a_draft ) );
 $rest_res = rest_do_request( $rest_req );
-$ok( in_array( $rest_res->get_status(), [ 401, 403 ], true ) && null !== get_post( $a_draft ), 'and deleting one (HTTP ' . $rest_res->get_status() . ')' );
+$ok( in_array( $rest_res->get_status(), [ 401, 403, 404 ], true ) && null !== get_post( $a_draft ), 'and deleting one (HTTP ' . $rest_res->get_status() . ')' );
 wp_set_current_user( 0 );
 
 $live_upload = \DGL\Dashboard\UploadEndpoint::may_upload( $alice, $a_live, 'image' );
@@ -2609,7 +2609,7 @@ $wpdb->delete( SignupStore::name(), [ 'id' => $legacy_id ] );
 
 /* ---- Claims: picking an organisation from the list without a domain match. */
 
-foreach ( [ 'claimer@gmail.com', 'firstclaim@gmail.com', 'badclaim@gmail.com', 'byclaim@orga.test', 'someone@other.test', 'again@nowhere2.test', 'busy@busy.test' ] as $addr ) {
+foreach ( [ 'claimer@gmail.com', 'firstclaim@gmail.com', 'badclaim@gmail.com', 'byclaim@orga.test', 'someone@other.test', 'again@nowhere2.test', 'busy@busy.test', 'rc-claimer@gmail.com', 'rc-lapsed@example.test' ] as $addr ) {
 	$u = get_user_by( 'email', $addr ); if ( $u ) { wp_delete_user( $u->ID ); }
 }
 
@@ -5246,6 +5246,228 @@ wp_delete_post( $sw_child, true );
 wp_delete_post( $sw_parent, true );
 update_option( 'permalink_structure', $sw_rules );
 flush_rewrite_rules( false );
+
+/* ---------------------------------------- security review, second round */
+
+$group( 'Security review: restoring is checked like submitting' );
+
+Access::flush_cache();
+$sr_rejected = $make_item( $org_a, $alice, Statuses::REJECTED );
+$ok( ! is_wp_error( \DGL\Workflow\Transition::apply( $sr_rejected, \DGL\Workflow\StateMachine::ARCHIVE, $alice ) ) && Statuses::ARCHIVED === get_post_status( $sr_rejected ), 'a member can archive something the team turned down' );
+$ok( Statuses::REJECTED === \DGL\Workflow\Transition::archived_from( $sr_rejected, PostTypes::EVENT ), 'and its history says what it was' );
+$sr_back = \DGL\Workflow\Transition::apply( $sr_rejected, \DGL\Workflow\StateMachine::RESTORE, $alice );
+$ok( is_wp_error( $sr_back ) && 'dgl_was_rejected' === $sr_back->get_error_code() && Statuses::ARCHIVED === get_post_status( $sr_rejected ), 'but restoring it unchanged is refused, so it does not go back to the queue' );
+$ok( ! is_wp_error( \DGL\Workflow\Transition::apply( $sr_rejected, \DGL\Workflow\StateMachine::RESTORE, $mod ) ) && Statuses::PENDING === get_post_status( $sr_rejected ), 'the team still can' );
+
+$sr_pending = $make_member( 'dgl_sr_pending', $org_a, 'contributor', 'pending' );
+$sr_draft   = $make_item( $org_a, $sr_pending, Statuses::DRAFT );
+Transition::apply( $sr_draft, \DGL\Workflow\StateMachine::ARCHIVE, $sr_pending );
+Access::flush_cache();
+$ok( Statuses::ARCHIVED === get_post_status( $sr_draft ) && ! Access::can( $sr_pending, Policy::RESTORE_ITEM, $sr_draft ), 'a pending account can archive its draft but not restore it into the queue' );
+$ok( Access::can( $alice, Policy::RESTORE_ITEM, $sr_draft ), 'an approved colleague can' );
+
+$group( 'Security review: a picture field takes only the organisation\'s own pictures' );
+
+$sr_attach = static function ( int $org, int $parent = 0 ) use ( &$sr_attachments ): int {
+	$id = wp_insert_attachment( [ 'post_title' => 'pic', 'post_mime_type' => 'image/png', 'post_status' => 'inherit' ], false, $parent );
+	if ( $org > 0 ) {
+		update_post_meta( $id, Meta::ITEM_ORG, $org );
+	}
+	update_post_meta( $id, '_wp_attachment_image_alt', 'Original words' );
+	$sr_attachments[] = $id;
+	return (int) $id;
+};
+$sr_attachments = [];
+$sr_item  = $make_item( $org_a, $alice, Statuses::DRAFT );
+$sr_mine  = $sr_attach( $org_a );
+$sr_other = $sr_attach( $org_b );
+$sr_child = $sr_attach( 0, $sr_item );
+$ok( \DGL\Uploads::belongs( $sr_mine, $sr_item ) && \DGL\Uploads::belongs( $sr_child, $sr_item ), 'a picture the organisation uploaded, or one attached to the item, belongs' );
+$ok( ! \DGL\Uploads::belongs( $sr_other, $sr_item ) && ! \DGL\Uploads::belongs( 0, $sr_item ) && ! \DGL\Uploads::belongs( $sr_item, $sr_item ), 'another organisation\'s picture, nothing, or a post that is not a picture, does not' );
+
+$sr_fields = \DGL\Schema\FieldRegistry::for_type( PostTypes::EVENT );
+$sr_image  = \DGL\Schema\FieldRegistry::find( PostTypes::EVENT, 'image' );
+$sr_values = [ 'image' => $sr_other ];
+\DGL\Uploads::handle( $sr_item, $sr_fields, [], [], $sr_values );
+$ok( ! array_key_exists( 'image', $sr_values ), 'an attachment id for another organisation\'s picture is dropped before it is saved' );
+$sr_values = [ 'image' => $sr_mine ];
+\DGL\Uploads::handle( $sr_item, $sr_fields, [], [], $sr_values );
+$ok( $sr_mine === ( $sr_values['image'] ?? 0 ), 'its own picture is kept' );
+
+$sr_alt = null;
+foreach ( $sr_fields as $sr_f ) {
+	if ( 'image' === $sr_f->suggested_from ) {
+		$sr_alt = $sr_f;
+	}
+}
+update_post_meta( $sr_item, $sr_image->meta_key(), $sr_other );
+update_post_meta( $sr_item, $sr_alt->meta_key(), 'Rewritten by Org A' );
+wp_set_current_user( $alice );
+\DGL\Schema\Store::describe_image( $sr_item, PostTypes::EVENT );
+$ok( 'Original words' === get_post_meta( $sr_other, '_wp_attachment_image_alt', true ), 'a member cannot rewrite the description on another organisation\'s picture' );
+update_post_meta( $sr_item, $sr_image->meta_key(), $sr_mine );
+\DGL\Schema\Store::describe_image( $sr_item, PostTypes::EVENT );
+$ok( 'Rewritten by Org A' === get_post_meta( $sr_mine, '_wp_attachment_image_alt', true ), 'but still describes its own' );
+wp_set_current_user( 0 );
+
+$group( 'Security review: members upload through the member area only' );
+
+\DGL\Roles::install();
+Access::flush_cache();
+clean_user_cache( $alice );
+$ok( ! user_can( $alice, 'upload_files' ), 'a member does not hold WordPress\'s upload capability' );
+$ok( user_can( $mod, 'upload_files' ), 'the team does' );
+wp_set_current_user( $alice );
+$sr_req = new WP_REST_Request( 'POST', '/wp/v2/media' );
+$sr_req->set_header( 'Content-Disposition', 'attachment; filename=x.svg' );
+$sr_req->set_header( 'Content-Type', 'image/svg+xml' );
+$sr_req->set_body( '<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>' );
+$sr_res = rest_do_request( $sr_req );
+$ok( in_array( $sr_res->get_status(), [ 401, 403 ], true ), 'so WordPress\'s own media route refuses them (HTTP ' . $sr_res->get_status() . ')' );
+wp_set_current_user( 0 );
+
+// A picture that declares a huge canvas is refused before anything decodes it.
+$sr_ihdr = pack( 'NNCCCCC', 20000, 20000, 8, 2, 0, 0, 0 );
+$sr_png  = "\x89PNG\r\n\x1a\n" . pack( 'N', 13 ) . 'IHDR' . $sr_ihdr . pack( 'N', crc32( 'IHDR' . $sr_ihdr ) ) . pack( 'N', 0 ) . 'IEND' . pack( 'N', crc32( 'IEND' ) );
+$sr_tmp  = wp_tempnam( 'dgl-huge.png' );
+file_put_contents( $sr_tmp, $sr_png );
+$_FILES['dgl_sr_huge'] = [ 'name' => 'huge.png', 'type' => 'image/png', 'tmp_name' => $sr_tmp, 'error' => 0, 'size' => strlen( $sr_png ) ];
+$sr_up = \DGL\Uploads::store( $sr_item, 'dgl_sr_huge' );
+$ok( is_wp_error( $sr_up ) && 'dgl_too_many_pixels' === $sr_up->get_error_code(), 'a 20,000 by 20,000 picture is refused before it is decoded (' . ( is_wp_error( $sr_up ) ? $sr_up->get_error_code() : 'stored' ) . ')' );
+unset( $_FILES['dgl_sr_huge'] );
+@unlink( $sr_tmp );
+
+$group( 'Security review: listing REST routes are the team\'s' );
+
+$sr_route = '/wp/v2/' . ( get_post_type_object( PostTypes::EVENT )->rest_base ?: PostTypes::EVENT );
+wp_set_current_user( 0 );
+$ok( 404 === rest_do_request( new WP_REST_Request( 'GET', $sr_route ) )->get_status(), 'a visitor gets no listing route' );
+wp_set_current_user( $alice );
+$ok( 404 === rest_do_request( new WP_REST_Request( 'GET', $sr_route . '/' . $a_live ) )->get_status(), 'nor does a member' );
+wp_set_current_user( $mod );
+$ok( 200 === rest_do_request( new WP_REST_Request( 'GET', $sr_route ) )->get_status(), 'the team still do' );
+wp_set_current_user( 0 );
+$ok( 200 === rest_do_request( new WP_REST_Request( 'GET', '/wp/v2/pages' ) )->get_status(), 'and pages are untouched' );
+
+$group( 'Security review: limits' );
+
+$sr_key = 'sr_' . wp_generate_password( 6, false );
+$ok( ! \DGL\Joining\Guard::over( $sr_key, 'srtest', 2 ) && ! \DGL\Joining\Guard::over( $sr_key, 'srtest', 2 ) && \DGL\Joining\Guard::over( $sr_key, 'srtest', 2 ), 'a named limit lets two through and stops the third' );
+$sr_seen = get_transient( 'dgl_srtest_' . $sr_key );
+$ok( is_array( $sr_seen ) && 3 === (int) $sr_seen['count'] && (int) $sr_seen['until'] <= time() + \DGL\Joining\Guard::WINDOW, 'and the window is fixed from the first attempt, not restarted by each one' );
+delete_transient( 'dgl_srtest_' . $sr_key );
+
+
+foreach ( $sr_attachments as $sr_a ) {
+	wp_delete_attachment( $sr_a, true );
+}
+
+$group( 'Security re-check: moving an item, leavers, cancellations, hidden venues, map titles' );
+
+// A moved item's unsent edit belonged to the old organisation: it goes. One with the team moves with it.
+$rc_item = $make_item( $org_a, $alice, Statuses::LIVE );
+$rc_edit = \DGL\Workflow\Revisions::open( $rc_item, $alice );
+$ok( is_int( $rc_edit ) && $org_a === \DGL\Org\Org::for_item( $rc_edit ), 'an edit opened by Org A carries Org A' );
+$ok( true === \DGL\Org\Org::reassign( $rc_item, $org_b, $mod ) && null === get_post( $rc_edit ), 'moving the item to Org B discards Org A\'s unsent edit' );
+$rc_item2 = $make_item( $org_a, $alice, Statuses::LIVE );
+$rc_edit2 = \DGL\Workflow\Revisions::open( $rc_item2, $alice );
+wp_update_post( [ 'ID' => $rc_edit2, 'post_status' => Statuses::PENDING ] );
+\DGL\Org\Org::reassign( $rc_item2, $org_b, $mod );
+$ok( $org_b === \DGL\Org\Org::for_item( $rc_edit2 ), 'an edit already with the team moves with the item' );
+
+// Somebody who has left is not emailed about the organisation's work.
+$rc_leaver = $make_member( 'dgl_rc_leaver', $org_a, 'contributor' );
+$rc_theirs = $make_item( $org_a, $rc_leaver, Statuses::PENDING );
+$rc_before = \DGL\Email\Recipients::for_audience( \DGL\Workflow\Plan::NOTIFY_MEMBER, $rc_theirs, $mod );
+delete_user_meta( $rc_leaver, Meta::USER_ORG );
+Access::flush_cache();
+$rc_after = \DGL\Email\Recipients::for_audience( \DGL\Workflow\Plan::NOTIFY_MEMBER, $rc_theirs, $mod );
+$ok( in_array( 'dgl_rc_leaver@example.test', $rc_before, true ) && ! in_array( 'dgl_rc_leaver@example.test', $rc_after, true ), 'the author is told while in the organisation, and not after leaving' );
+$ok( in_array( 'dgl_alice@example.test', $rc_after, true ), 'the organisation\'s owners still are' );
+
+// A cancellation note is one short line.
+$rc_event = $make_item( $org_a, $alice, Statuses::LIVE );
+\DGL\Events\Cancel::cancel( $rc_event, "Rained off.\nSee our site for the new date " . str_repeat( 'x', 400 ), $alice );
+$rc_note = \DGL\Events\Cancel::note( $rc_event );
+$ok( ! str_contains( $rc_note, "\n" ) && mb_strlen( $rc_note ) <= \DGL\Events\Cancel::NOTE_MAX, 'a cancellation note is one line of at most ' . \DGL\Events\Cancel::NOTE_MAX . ' characters (' . mb_strlen( $rc_note ) . ')' );
+
+// A hidden venue is in no feed or sitemap.
+$rc_venue = wp_insert_post( [ 'post_type' => PostTypes::VENUE, 'post_status' => Statuses::LIVE, 'post_title' => 'Rc Hidden Hall' ] );
+update_post_meta( $rc_venue, DGL_FIXTURE_FLAG, '1' );
+update_post_meta( $rc_venue, Meta::ITEM_ORG, $org_a );
+update_post_meta( $rc_venue, Meta::ITEM_HIDDEN, '1' );
+$rc_shown = wp_insert_post( [ 'post_type' => PostTypes::VENUE, 'post_status' => Statuses::LIVE, 'post_title' => 'Rc Shown Hall' ] );
+update_post_meta( $rc_shown, DGL_FIXTURE_FLAG, '1' );
+update_post_meta( $rc_shown, Meta::ITEM_ORG, $org_a );
+$rc_feed = new WP_Query( [ 'post_type' => PostTypes::VENUE, 'feed' => 'rss2', 's' => 'Rc', 'fields' => 'ids', 'posts_per_page' => 20 ] );
+$ok( $rc_feed->is_feed() && in_array( $rc_shown, $rc_feed->posts, true ) && ! in_array( $rc_venue, $rc_feed->posts, true ), 'a feed lists the shown venue and not the hidden one' );
+$rc_args = \DGL\Spaces\Visibility::keep_out_of_sitemap_query( [ 'post_type' => PostTypes::VENUE ] );
+$rc_map  = get_posts( array_merge( $rc_args, [ 'fields' => 'ids', 'numberposts' => 50, 's' => 'Rc' ] ) );
+$ok( in_array( $rc_shown, $rc_map, true ) && ! in_array( $rc_venue, $rc_map, true ), 'and so does the sitemap query' );
+$ok( false === \DGL\Spaces\Visibility::keep_out_of_rank_math( [ 'loc' => 'x' ], 'post', get_post( $rc_venue ) ) && [ 'loc' => 'x' ] === \DGL\Spaces\Visibility::keep_out_of_rank_math( [ 'loc' => 'x' ], 'post', get_post( $rc_shown ) ), 'and Rank Math\'s sitemap' );
+
+// A map pin's title is plain text, entities decoded, so a script sets it as text.
+$rc_pin = wp_insert_post( [ 'post_type' => PostTypes::VENUE, 'post_status' => 'draft', 'post_title' => 'Tea & Cake &lt;img src=x onerror=alert(1)&gt;' ] );
+update_post_meta( $rc_pin, DGL_FIXTURE_FLAG, '1' );
+$ok( 'Tea & Cake <img src=x onerror=alert(1)>' === \DGL\Spaces\Pages::plain_title( $rc_pin ), 'the pin title is the plain text, for textContent (' . esc_html( \DGL\Spaces\Pages::plain_title( $rc_pin ) ) . ')' );
+
+$group( 'Security re-check, second report: XML-RPC, REST spelling, search, claims and invitations' );
+
+// XML-RPC: members hold none of WordPress's item capabilities, so wp.newPost cannot make a fake edit.
+\DGL\Roles::install();
+clean_user_cache( $alice );
+Access::flush_cache();
+$ok( ! user_can( $alice, 'create_dgl_items' ) && ! user_can( $alice, 'edit_dgl_items' ) && ! user_can( $alice, 'delete_dgl_items' ), 'a member holds no WordPress item capabilities' );
+wp_set_password( 'rc-xmlrpc-pass-1', $alice );
+require_once ABSPATH . WPINC . '/class-IXR.php';
+require_once ABSPATH . WPINC . '/class-wp-xmlrpc-server.php';
+add_filter( 'xmlrpc_enabled', '__return_true' );
+$rc_x   = new wp_xmlrpc_server();
+$rc_new = $rc_x->wp_newPost( [ 1, 'dgl_alice', 'rc-xmlrpc-pass-1', [ 'post_type' => PostTypes::REVISION, 'post_status' => Statuses::PENDING, 'post_title' => 'Fake edit', 'post_parent' => $b_draft ] ] );
+$ok( $rc_new instanceof IXR_Error, 'XML-RPC wp.newPost refuses a member (' . ( $rc_new instanceof IXR_Error ? $rc_new->code . ' ' . $rc_new->message : 'created ' . $rc_new ) . ')' );
+$rc_edit_x = $rc_x->wp_editPost( [ 1, 'dgl_alice', 'rc-xmlrpc-pass-1', $a_live, [ 'post_title' => 'Changed over XML-RPC' ] ] );
+$ok( $rc_edit_x instanceof IXR_Error && 'Changed over XML-RPC' !== get_post_field( 'post_title', $a_live ), 'and wp.editPost on her live item' );
+remove_filter( 'xmlrpc_enabled', '__return_true' );
+
+// REST routes match whatever the spelling, and the search leaves items out.
+wp_set_current_user( 0 );
+$ok( 404 === rest_do_request( new WP_REST_Request( 'GET', '/wp/v2/' . strtoupper( get_post_type_object( PostTypes::EVENT )->rest_base ?: PostTypes::EVENT ) ) )->get_status(), 'an upper-case route is refused too' );
+$rc_search = new WP_REST_Request( 'GET', '/wp/v2/search' );
+$rc_search->set_param( 'search', 'Rc' );
+$rc_found = wp_list_pluck( (array) rest_do_request( $rc_search )->get_data(), 'id' );
+$ok( ! in_array( $rc_venue, $rc_found, true ) && ! in_array( $rc_shown, $rc_found, true ), 'the REST search lists no venues or listings for a visitor' );
+$ok( [ 'dgl_none' ] !== \DGL\Access\Access::rest_users_without_items( [ 'has_published_posts' => [ 'post', PostTypes::EVENT ] ] )['has_published_posts'] && ! in_array( PostTypes::EVENT, \DGL\Access\Access::rest_users_without_items( [ 'has_published_posts' => [ 'post', PostTypes::EVENT ] ] )['has_published_posts'], true ), 'and the REST user list does not count listings as published posts' );
+
+// A claim is settled by an invitation; the team then has nothing to decide.
+$sent_links = [];
+$r = Joining::start( 'rc-claimer@gmail.com' ); $token = trim( (string) substr( end( $sent_links ), strrpos( rtrim( end( $sent_links ), '/' ), '/' ) + 1 ), '/' );
+$v = Joining::verify( $token );
+$rc_claimer = Joining::claim( $v['signup'], $org_a, '', 'Rc Claimer', 'rc-claim-pass-1' );
+$rc_claim   = array_values( array_filter( SignupStore::awaiting(), static fn( $s ) => $s->user_id === $rc_claimer ) )[0];
+$ok( $org_a === Joining::waiting_claim_org( $rc_claimer ), 'the dashboard can name the organisation a claim is waiting on' );
+Access::flush_cache();
+$rc_inv = Invites::send( Access::user_context( $bella ), $org_b, 'rc-claimer@gmail.com', 'contributor' );
+$rc_tok = trim( (string) substr( end( $sent_links ), strrpos( rtrim( end( $sent_links ), '/' ), '/' ) + 1 ), '/' );
+$rc_acc = Invites::accept( $rc_tok );
+$ok( $rc_inv['ok'] && $rc_acc['ok'] && $org_b === \DGL\Org\Org::for_user( $rc_claimer ), 'the waiting claimant accepts an invitation to Org B' );
+$ok( Signup::SUPERSEDED === SignupStore::find( $rc_claim->id )->state, 'and the claim on Org A is closed' );
+update_user_meta( $rc_claimer, Meta::USER_ACCOUNT_STATUS, 'pending' );
+SignupStore::update( $rc_claim->id, [ 'state' => Signup::AWAITING ] );
+$rc_dec = Joining::approve( $rc_claim->id, $mod );
+$ok( is_wp_error( $rc_dec ) && 'dgl_claim_overtaken' === $rc_dec->get_error_code() && $org_b === \DGL\Org\Org::for_user( $rc_claimer ), 'a stale claim cannot move them back to Org A' );
+SignupStore::update( $rc_claim->id, [ 'state' => Signup::AWAITING ] );
+$rc_ref = Joining::refuse( $rc_claim->id, $mod, 'Not them.' );
+$ok( is_wp_error( $rc_ref ) && \DGL\Access\UserContext::ACCOUNT_CLOSED !== get_user_meta( $rc_claimer, Meta::USER_ACCOUNT_STATUS, true ), 'nor can refusing it close their account' );
+
+// An invitation lapses when its inviter can no longer give the role.
+$rc_inv2 = Invites::send( Access::user_context( $bella ), $org_b, 'rc-lapsed@example.test', 'contributor' );
+$rc_tok2 = trim( (string) substr( end( $sent_links ), strrpos( rtrim( end( $sent_links ), '/' ), '/' ) + 1 ), '/' );
+update_user_meta( $bella, Meta::USER_ACCOUNT_STATUS, 'pending' );
+Access::flush_cache();
+$rc_acc2 = Invites::accept( $rc_tok2, 'Rc Lapsed', 'rc-lapsed-pass-1' );
+$ok( $rc_inv2['ok'] && ! $rc_acc2['ok'] && 'inviter_lapsed' === $rc_acc2['outcome'] && false === get_user_by( 'email', 'rc-lapsed@example.test' ), 'an invitation from an owner no longer approved is refused, and no account is made' );
+update_user_meta( $bella, Meta::USER_ACCOUNT_STATUS, 'approved' );
+Access::flush_cache();
 
 /* ----------------------------------------------------------------- report */
 

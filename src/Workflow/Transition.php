@@ -97,13 +97,23 @@ final class Transition {
 			}
 		}
 
-		$org_id = Org::for_item( $post_id );
+		// An edit is decided by the organisation that owns the item now, not the copy it was opened with.
+		$org_id = Org::for_item( $is_edit ? Revisions::target( $post_id ) : $post_id );
 		$staff  = ! $system && Access::user_context( $actor_id )->is_moderator();
 
 		// Trust is per content type and per kind of change. An edit is decided
 		// by the type of the item it would replace.
 		$type = $is_edit ? Revisions::type_of( $post_id ) : (string) $post->post_type;
 		$auto = '' !== $type && Trust::settings( $org_id > 0 ? $org_id : null )->skips_review( $type, $is_edit );
+
+		/*
+		 * A member restoring something the team turned down would send the
+		 * same thing back unchanged: archive and restore became a way round
+		 * the refusal, and round "reopen", which only the team have.
+		 */
+		if ( StateMachine::RESTORE === $action && ! $system && ! $staff && Statuses::REJECTED === self::archived_from( $post_id, (string) $post->post_type ) ) {
+			return new WP_Error( 'dgl_was_rejected', __( 'The review team turned this down, so it cannot go back as it was. Make a copy, change what they asked and send that instead.', 'dgl-platform' ) );
+		}
 
 		$plan = Planner::plan( $action, (string) $post->post_status, $auto, $staff, $is_edit );
 
@@ -258,5 +268,25 @@ final class Transition {
 		}
 
 		return $done;
+	}
+
+	/**
+	 * The status an archived item had when it was archived, from its history,
+	 * or '' when the history does not say.
+	 */
+	public static function archived_from( int $post_id, string $post_type ): string {
+		$rows = Log::for_object( PostTypes::REVISION === $post_type ? 'revision' : 'item', $post_id );
+
+		foreach ( array_reverse( $rows ) as $row ) {
+			if ( StateMachine::ARCHIVE !== (string) ( $row['action'] ?? '' ) ) {
+				continue;
+			}
+
+			$changes = json_decode( (string) ( $row['changes'] ?? '' ), true );
+
+			return is_array( $changes ) ? (string) ( $changes['status'][0] ?? '' ) : '';
+		}
+
+		return '';
 	}
 }

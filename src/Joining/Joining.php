@@ -381,6 +381,10 @@ final class Joining {
 		}
 
 		if ( $signup->is_claim() ) {
+			if ( self::claim_overtaken( $signup ) ) {
+				return self::overtaken( $signup );
+			}
+
 			return self::approve_claim( $signup, $actor_id );
 		}
 
@@ -416,6 +420,11 @@ final class Joining {
 
 		if ( ! Access::user_context( $actor_id )->is_moderator() ) {
 			return new WP_Error( 'dgl_not_allowed', __( 'Only the review team can decide this.', 'dgl-platform' ) );
+		}
+
+		// Refusing would close an account that has since joined an organisation properly.
+		if ( $signup->is_claim() && self::claim_overtaken( $signup ) ) {
+			return self::overtaken( $signup );
 		}
 
 		$reason = trim( $reason );
@@ -596,6 +605,50 @@ final class Joining {
 	}
 
 	/* ------------------------------------------------------------------ */
+
+	/**
+	 * Whether a waiting claim's account has moved on: joined an organisation
+	 * another way (an invitation) or been decided some other way.
+	 */
+	private static function claim_overtaken( Signup $signup ): bool {
+		if ( $signup->user_id <= 0 ) {
+			return false;
+		}
+
+		return null !== Org::for_user( $signup->user_id )
+			|| UserContext::ACCOUNT_PENDING !== (string) get_user_meta( $signup->user_id, Meta::USER_ACCOUNT_STATUS, true );
+	}
+
+	/** @return WP_Error */
+	private static function overtaken( Signup $signup ): WP_Error {
+		Store::update( $signup->id, [ 'state' => Signup::SUPERSEDED, 'decided_at' => Store::now() ] );
+
+		return new WP_Error( 'dgl_claim_overtaken', __( 'This person has since joined an organisation another way, so there is nothing to decide. The request has been closed.', 'dgl-platform' ) );
+	}
+
+	/** The organisation a person's waiting claim is for, or 0. */
+	public static function waiting_claim_org( int $user_id ): int {
+		foreach ( Store::awaiting() as $signup ) {
+			if ( $signup->is_claim() && $signup->user_id === $user_id ) {
+				return $signup->org_id;
+			}
+		}
+
+		return 0;
+	}
+
+	/**
+	 * Close every claim a person has waiting, once they have joined an
+	 * organisation another way. Their account is left as it is.
+	 */
+	public static function close_waiting_claims( int $user_id ): void {
+		foreach ( Store::awaiting() as $signup ) {
+			if ( $signup->is_claim() && $signup->user_id === $user_id ) {
+				Store::update( $signup->id, [ 'state' => Signup::SUPERSEDED, 'decided_at' => Store::now() ] );
+				Log::record( 'join_claim_closed', 'signup', $signup->id, $signup->org_id, __( 'Closed: they joined an organisation by invitation.', 'dgl-platform' ), [], $user_id );
+			}
+		}
+	}
 
 	/**
 	 * Take the organisation off accounts whose claim is still waiting.

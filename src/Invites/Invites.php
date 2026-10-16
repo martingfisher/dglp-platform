@@ -265,6 +265,12 @@ final class Invites {
 			);
 		}
 
+		// The inviter must still be able to give this role: an owner who has left, or whose
+		// organisation or account is no longer approved, no longer vouches for anybody.
+		if ( $invite->invited_by > 0 && ! in_array( $invite->org_role, Rules::grantable_roles( Access::user_context( $invite->invited_by ), $invite->org_id ), true ) ) {
+			return self::accept_failure( __( 'Whoever invited you can no longer add people to this organisation, so the invitation has lapsed. Ask the organisation, or the partnership team, for a new one.', 'dgl-platform' ), 'inviter_lapsed' );
+		}
+
 		/*
 		 * Claimed before the account is touched. Two requests with the same
 		 * token, which is what a double click on a link in an email produces,
@@ -293,6 +299,9 @@ final class Invites {
 		}
 
 		self::attach( (int) $user_id, $invite );
+
+		// A claim they had waiting is settled by this: they are in an organisation now.
+		\DGL\Joining\Joining::close_waiting_claims( (int) $user_id );
 
 		Log::record( 'invite_accepted', 'invite', $invite->id, $invite->org_id, $invite->email, [], (int) $user_id );
 

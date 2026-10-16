@@ -157,9 +157,8 @@ final class Log {
 	 * to an address, which keeps it proportionate under UK GDPR.
 	 */
 	private static function ip_hash(): ?string {
-		$ip = isset( $_SERVER['REMOTE_ADDR'] )
-			? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) )
-			: '';
+		// The visitor's own address, not Cloudflare's, so the hash tells people apart.
+		$ip = \DGL\Joining\Guard::ip();
 
 		if ( '' === $ip ) {
 			return null;
