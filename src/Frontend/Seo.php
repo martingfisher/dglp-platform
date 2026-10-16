@@ -145,12 +145,48 @@ final class Seo {
 			return;
 		}
 
+		echo self::schema_tag( $entities ) . "\n"; // phpcs:ignore WordPress.Security.EscapeOutput -- encoded for a script element, below.
+	}
+
+	/**
+	 * The JSON-LD script element for these entities.
+	 *
+	 * Member text reaches this block, and the text was entity-decoded on the
+	 * way (see {@see self::plain()}), so a title typed as `&lt;/script&gt;`
+	 * arrives here as a real `</script>`. JSON_HEX_TAG writes every < and >
+	 * as \u003C and \u003E, so nothing in a value can end the element: the
+	 * data stays the same to anything that parses it. Pure.
+	 *
+	 * @param array<string, array<string, mixed>> $entities
+	 */
+	public static function schema_tag( array $entities ): string {
 		$graph = [
 			'@context' => 'https://schema.org',
-			'@graph'   => array_values( $entities ),
+			'@graph'   => array_values( self::script_safe( $entities ) ),
 		];
 
-		echo '<script type="application/ld+json">' . wp_json_encode( $graph, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ) . "</script>\n";
+		return '<script type="application/ld+json">' . wp_json_encode( $graph, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP ) . '</script>';
+	}
+
+	/**
+	 * Schema values made safe for a script element whoever prints it.
+	 *
+	 * With Rank Math active it prints our entities itself, with its own
+	 * encoding, so the values are made safe before they leave this class
+	 * rather than trusting the printer: < and > become their full-width
+	 * forms, which read the same in a search result and cannot open or
+	 * close a tag. Pure.
+	 */
+	public static function script_safe( mixed $value ): mixed {
+		if ( is_string( $value ) ) {
+			return str_replace( [ '<', '>' ], [ "\u{FF1C}", "\u{FF1E}" ], $value );
+		}
+
+		if ( is_array( $value ) ) {
+			return array_map( [ self::class, 'script_safe' ], $value );
+		}
+
+		return $value;
 	}
 
 	/* ---- Rank Math bridge (not exercised here; Rank Math is not installed locally) ---- */
@@ -215,7 +251,7 @@ final class Seo {
 			}
 		}
 
-		foreach ( $page['schema'] as $key => $entity ) {
+		foreach ( self::script_safe( $page['schema'] ) as $key => $entity ) {
 			$data[ 'dgl_' . $key ] = $entity;
 		}
 

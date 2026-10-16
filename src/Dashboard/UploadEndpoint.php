@@ -54,6 +54,16 @@ final class UploadEndpoint {
 			return new WP_Error( 'dgl_forbidden', __( 'You cannot change this item.', 'dgl-platform' ), [ 'status' => 403 ] );
 		}
 
+		/*
+		 * A listing on the site is never changed in place: the wizard opens a
+		 * pending edit and uploads go to that. Writing the picture onto the
+		 * live post would put it on the site with no review, so the same
+		 * rule the wizard follows ({@see Controller}) holds here.
+		 */
+		if ( PostTypes::is_submittable( (string) $post->post_type ) && Revisions::needs_revision( (string) $post->post_status ) ) {
+			return new WP_Error( 'dgl_edit_first', __( 'This is on the site. Change it through Edit, and the new picture goes to the review team with the rest.', 'dgl-platform' ), [ 'status' => 409 ] );
+		}
+
 		$type  = PostTypes::REVISION === $post->post_type ? Revisions::type_of( $post_id ) : (string) $post->post_type;
 		$field = FieldRegistry::find( $type, $key );
 

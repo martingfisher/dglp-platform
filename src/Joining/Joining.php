@@ -137,10 +137,13 @@ final class Joining {
 	 * Step 3b: claim a place at an organisation on the list that the domain
 	 * did not match.
 	 *
-	 * The account is made pending, as a contributor, linked to the
-	 * organisation, and the team are asked to check. Approval decides the
-	 * role: owner if nobody else is in the organisation by then. Meanwhile
-	 * the person can draft.
+	 * The account is made pending, as a contributor, and the team are asked
+	 * to check. It is not linked to the organisation until they approve:
+	 * a claim is only somebody saying they work there, and a linked account
+	 * can read, edit and take down everything the organisation has. So
+	 * while it waits the account sees no organisation at all, and is not
+	 * counted as one of its members. Approval links it and decides the
+	 * role: owner if nobody else is in the organisation by then.
 	 *
 	 * @return int|WP_Error The new user ID.
 	 */
@@ -159,7 +162,8 @@ final class Joining {
 		}
 
 		$note    = trim( mb_substr( $note, 0, Rules::NOTE_MAX ) );
-		$user_id = self::account( $signup, $org_id, UserContext::ORG_CONTRIBUTOR, UserContext::ACCOUNT_PENDING, $name, $password );
+		// No organisation yet: the claim, kept on the signup, is what links it on approval.
+		$user_id = self::account( $signup, 0, UserContext::ORG_CONTRIBUTOR, UserContext::ACCOUNT_PENDING, $name, $password );
 
 		if ( is_wp_error( $user_id ) ) {
 			return $user_id;
@@ -594,12 +598,47 @@ final class Joining {
 	/* ------------------------------------------------------------------ */
 
 	/**
+	 * Take the organisation off accounts whose claim is still waiting.
+	 *
+	 * Before 0.47.7 a claim linked the account straight away. Approval links
+	 * it again, so nothing is lost; a refusal already unlinks. Only accounts
+	 * still pending are touched, and only when they are linked to the very
+	 * organisation they claimed. Idempotent.
+	 *
+	 * @return int How many accounts were unlinked.
+	 */
+	public static function unlink_waiting_claims(): int {
+		$done = 0;
+
+		foreach ( Store::awaiting() as $signup ) {
+			if ( ! $signup->is_claim() || $signup->user_id <= 0 ) {
+				continue;
+			}
+
+			if ( UserContext::ACCOUNT_PENDING !== (string) get_user_meta( $signup->user_id, Meta::USER_ACCOUNT_STATUS, true ) ) {
+				continue;
+			}
+
+			if ( Org::for_user( $signup->user_id ) !== $signup->org_id ) {
+				continue;
+			}
+
+			delete_user_meta( $signup->user_id, Meta::USER_ORG );
+			Access::forget( $signup->user_id );
+			++$done;
+		}
+
+		return $done;
+	}
+
+	/**
 	 * @return true
 	 */
 	private static function approve_claim( Signup $signup, int $actor_id ): bool {
 		$others = array_values( array_diff( Org::members( $signup->org_id ), [ $signup->user_id ] ) );
 		$role   = Rules::role_for( count( $others ) );
 
+		update_user_meta( $signup->user_id, Meta::USER_ORG, $signup->org_id );
 		update_user_meta( $signup->user_id, Meta::USER_ORG_ROLE, $role );
 		update_user_meta( $signup->user_id, Meta::USER_ACCOUNT_STATUS, UserContext::ACCOUNT_APPROVED );
 		Access::forget( $signup->user_id );
@@ -632,7 +671,10 @@ final class Joining {
 			return $user_id;
 		}
 
-		update_user_meta( $user_id, Meta::USER_ORG, $org_id );
+		if ( $org_id > 0 ) {
+			update_user_meta( $user_id, Meta::USER_ORG, $org_id );
+		}
+
 		update_user_meta( $user_id, Meta::USER_ORG_ROLE, $role );
 		update_user_meta( $user_id, Meta::USER_ACCOUNT_STATUS, $status );
 

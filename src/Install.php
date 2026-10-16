@@ -182,6 +182,8 @@ final class Install {
 		// the column and its key above; no spaces existed before it, so
 		// there is nothing to backfill.
 		\DGL\Roles::install();
+		// Schema 12: a claim waiting on the team no longer links the account.
+		\DGL\Joining\Joining::unlink_waiting_claims();
 
 		update_option( self::DB_VERSION_OPTION, DB_VERSION, false );
 	}
