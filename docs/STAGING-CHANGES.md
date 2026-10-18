@@ -1319,3 +1319,24 @@ clean. They are the only DGLP content on staging.
   1,324 images, 956 with no alt text (55 of them SVG, which the AltText.ai
   account has switched off). `wp alttext generate --dry-run` counts 953
   to process. Not run: it spends one credit per image.
+- **Theme colours and page fixes** (18 October 2026, production, no plugin
+  change): the top-menu buttons (Forum Central, VAL, LOPF) had stopped
+  showing. Seven Blocksy palette colours (2, 4, 5, 6, 7, 9, 12, stored in
+  `theme_mods_blocksy-child` under `colorPalette`) were saved with a
+  trailing space. Blocksy's colour check rejects such a value, so it left
+  those colours out of its generated `global.css`. The spaces were
+  removed with `wp option patch update`. Blocksy only rewrites
+  `global.css` on a Customizer save, so the saved version in
+  `blocksy_db_versions` was set one step back (2.1.59, no migrations
+  between it and 2.1.60) to make it rebuild; caches were then cleared.
+  The live CDN file carries all seven colours and the three buttons
+  render in a browser. A site-wide scan of 250 pages found six more
+  contrast problems; all were fixed with page-scoped rules in the child
+  theme's Additional CSS (`custom_css` post 11, previous content kept at
+  the top): palette colour 11 does not exist and is now mapped to
+  colour 10; headings and buttons on pages 3825, 3697, 2791, 2129 and
+  9548 use palette colours 3, 10 or 14. Block IDs are reused between
+  pages by Greenshift, so every rule is scoped with `body.page-id-N`.
+  The proper long-term fix is in the page builder; remove each rule when
+  its block is corrected. A six-page re-check shows no text below 3:1.
+  Project setting: `mcp__Wordify__*` is allowed in `.claude/settings.json`.
