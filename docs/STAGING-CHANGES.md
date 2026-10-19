@@ -1360,3 +1360,8 @@ clean. They are the only DGLP content on staging.
   where the button is 44px. The label margin is reset and the dropdowns and
   button are both 44px. Ships with 0.49.2 (stand-in pictures everywhere), which
   had been built but not deployed.
+- **0.49.4** (19 October 2026): on the Events page the three dropdowns filled
+  the row and left the Show button alone on a second line. The dropdowns are now
+  capped at 260px (a dropdown is as wide as its longest option), so Topic, When,
+  Organisation and Show sit on one row on a desktop. On a phone they stay full
+  width behind the Filters button.

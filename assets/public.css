@@ -707,6 +707,9 @@ h2.dgl-listing__heading:only-child,
 .dgl-pub .dgl-listing__select {
 	height: 44px;
 	min-height: 44px;
+	/* Capped, because a dropdown is as wide as its longest option and three of them push the Show button onto a row of its own. */
+	max-width: 260px;
+	text-overflow: ellipsis;
 	padding: 0 32px 0 12px;
 	border: var(--dgl-field-border) solid var(--dgl-field-outline);
 	border-radius: var(--dgl-radius-field);
@@ -754,7 +757,7 @@ h2.dgl-listing__heading:only-child,
 	.dgl-listing__filterrow[hidden] { display: none; }
 	.dgl-listing__filterrow .dgl-listing__heading { display: none; }
 	.dgl-listing__filter { display: grid; gap: 4px; }
-	.dgl-pub .dgl-listing__select { width: 100%; min-height: 44px; }
+	.dgl-pub .dgl-listing__select { width: 100%; max-width: none; min-height: 44px; }
 	.dgl-pub .dgl-listing__apply { min-height: 44px; }
 	.dgl-listing__filters .dgl-dir__toggle { width: 100%; }
 }
