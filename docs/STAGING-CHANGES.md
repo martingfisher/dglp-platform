@@ -1341,3 +1341,10 @@ clean. They are the only DGLP content on staging.
   volunteering) have an editable title and introduction under Settings,
   Listing pages (`ListingIntro`); the title feeds the browser title and the
   introduction the meta description.
+- **0.49.1** (19 October 2026): the filter's Show button on the listing pages
+  is a solid navy button (white on navy, 10.8:1), the same height as the
+  dropdowns, instead of a white outlined box that read as another field.
+  The same session added the three topic feed blocks to ten network pages
+  (Young Lives Leeds, Culturally Diverse Hub, Funding, Health and Care
+  Leaders, Local Care Partnerships, Mental Health, Physical Sensory
+  Impairment, Representation, Support, Volunteering); each is one revision.

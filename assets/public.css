@@ -704,7 +704,7 @@ h2.dgl-listing__heading:only-child,
 .dgl-listing__filterlabel { font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; font-size: 12px; }
 
 .dgl-pub .dgl-listing__select {
-	min-height: 40px;
+	min-height: 44px;
 	padding: 0 32px 0 12px;
 	border: var(--dgl-field-border) solid var(--dgl-field-outline);
 	border-radius: var(--dgl-radius-field);
@@ -716,17 +716,18 @@ h2.dgl-listing__heading:only-child,
 .dgl-pub .dgl-listing__select:focus-visible { outline: 3px solid var(--dgl-focus); outline-offset: 2px; }
 
 .dgl-pub .dgl-listing__apply {
-	min-height: 40px;
-	padding: 0 16px;
-	border: var(--dgl-field-border) solid var(--dgl-field-outline);
+	min-height: 44px;
+	padding: 0 22px;
+	border: 2px solid var(--dgl-primary);
 	border-radius: var(--dgl-radius-button);
-	background: var(--dgl-white);
-	color: var(--dgl-navy);
-	font: var(--dgl-weight-button) 14px / 1 var(--dgl-font);
+	background: var(--dgl-primary);
+	color: var(--dgl-primary-text);
+	font: 600 14px / 1 var(--dgl-font);
 	cursor: pointer;
 }
 
-.dgl-pub .dgl-listing__apply:hover { background: var(--dgl-surface); }
+/* A filled button: the one thing in the row that says "do it", where the dropdowns are fields. */
+.dgl-pub .dgl-listing__apply:hover { background: color-mix(in srgb, var(--dgl-primary) 82%, #000000); border-color: color-mix(in srgb, var(--dgl-primary) 82%, #000000); }
 
 .dgl-pub .dgl-listing__apply:focus-visible { outline: 3px solid var(--dgl-focus); outline-offset: 2px; }
 
