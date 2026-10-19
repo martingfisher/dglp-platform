@@ -5521,6 +5521,26 @@ $ok( null !== WP_Block_Type_Registry::get_instance()->get_registered( 'dgl/feed'
 $ok( str_contains( $tf_html, 'dgl-card__img--none' ), 'an item with no picture and no stand-in shows the plain tile' );
 update_option( 'dgl_feed_image_news', 0 );
 
+/* ------------------------------------------------- listing filter order */
+
+$group( 'Listing pages: the filter sits above the featured block and the list' );
+
+foreach ( [ 1, 2, 3 ] as $lf_i ) {
+	$lf_id = wp_insert_post( [ 'post_type' => PostTypes::TRAINING, 'post_title' => "Filter order course {$lf_i}", 'post_status' => Statuses::LIVE, 'post_author' => $alice ] );
+	wp_set_object_terms( $lf_id, 'mental-health', \DGL\Taxonomies::TOPIC );
+}
+
+$GLOBALS['wp_query'] = new WP_Query( [ 'post_type' => PostTypes::TRAINING, 'post_status' => Statuses::LIVE, 'posts_per_page' => 10 ] );
+$lf_html = \DGL\Dashboard\View::render( 'public/archive', [ 'type' => PostTypes::TRAINING ] );
+$lf_form = strpos( $lf_html, 'class="dgl-listing__filters"' );
+$lf_hero = strpos( $lf_html, 'class="dgl-hero"' );
+$lf_head = strpos( $lf_html, 'class="dgl-listing__heading"' );
+$lf_list = strpos( $lf_html, 'class="dgl-pub__list"' );
+$ok( false !== $lf_form && false !== $lf_hero && false !== $lf_head && false !== $lf_list, 'the page has its filters, a featured block, a list heading and a list' );
+$ok( $lf_form < $lf_hero && $lf_hero < $lf_head && $lf_head < $lf_list, 'in that order: filters, featured, heading, list' );
+$ok( 1 === substr_count( $lf_html, 'class="dgl-listing__heading"' ), 'and the heading is printed once' );
+$ok( ! str_contains( substr( $lf_html, (int) $lf_form, (int) $lf_hero - (int) $lf_form ), 'dgl-listing__heading' ), 'not inside the filter form any more' );
+
 /* ----------------------------------------------------------------- report */
 
 echo "\n" . str_repeat( '-', 60 ) . "\n";

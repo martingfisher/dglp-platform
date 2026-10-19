@@ -38,6 +38,15 @@ $paged     = max( 1, (int) get_query_var( 'paged' ) );
 // The featured block: page one, unfiltered, two or more items (one large, up to three beside).
 $with_hero = 1 === $paged && ! $filtering && $found >= 2;
 
+// What the list below it is: all of them, or how many match.
+$list_heading = $filtering
+	? ( 0 === $found
+		? __( 'Nothing matches', 'dgl-platform' )
+		/* translators: 1: a number, 2: lower-case plural type label. */
+		: sprintf( _n( '%1$s %2$s', '%1$s %2$s', $found, 'dgl-platform' ), number_format_i18n( $found ), strtolower( 1 === $found ? Frontend::type_label( $type ) : $label ) ) )
+	/* translators: %s: plural type label. */
+	: sprintf( __( 'All %s', 'dgl-platform' ), strtolower( $label ) );
+
 /** The slash-separated meta line. */
 $meta_line = static function ( WP_Post $item ): string {
 	$parts = Cards::meta( $item );
@@ -61,6 +70,60 @@ $meta_line = static function ( WP_Post $item ): string {
 	</header>
 
 	<?php if ( have_posts() ) : ?>
+
+		<?php if ( $show_form ) : ?>
+			<form class="dgl-listing__filters" method="get" action="<?php echo esc_url( $list_base ); ?>">
+				<button class="dgl-dir__toggle" type="button" hidden data-dgl-fold aria-expanded="<?php echo $filters_on > 0 ? 'true' : 'false'; ?>" aria-controls="dgl-list-filters">
+					<?php
+					echo $filters_on > 0
+						/* translators: %d: how many filters are set. */
+						? esc_html( sprintf( _n( 'Filters (%d set)', 'Filters (%d set)', $filters_on, 'dgl-platform' ), $filters_on ) )
+						: esc_html__( 'Filters', 'dgl-platform' );
+					?>
+				</button>
+
+				<div class="dgl-listing__filterrow" id="dgl-list-filters">
+					<?php if ( [] !== $topics ) : ?>
+						<label class="dgl-listing__filter">
+							<span class="dgl-listing__filterlabel"><?php esc_html_e( 'Topic', 'dgl-platform' ); ?></span>
+							<select class="dgl-listing__select" name="<?php echo esc_attr( \DGL\Frontend\Filters::PARAM_TOPIC ); ?>">
+								<option value=""><?php esc_html_e( 'Any topic', 'dgl-platform' ); ?></option>
+								<?php foreach ( $topics as $slug => $name ) : ?>
+									<option value="<?php echo esc_attr( $slug ); ?>"<?php selected( $filter_args['topic'], $slug ); ?>><?php echo esc_html( $name ); ?></option>
+								<?php endforeach; ?>
+							</select>
+						</label>
+					<?php endif; ?>
+					<?php if ( [] !== $whens ) : ?>
+						<label class="dgl-listing__filter">
+							<span class="dgl-listing__filterlabel"><?php esc_html_e( 'When', 'dgl-platform' ); ?></span>
+							<select class="dgl-listing__select" name="<?php echo esc_attr( \DGL\Frontend\Filters::PARAM_WHEN ); ?>">
+								<option value=""><?php esc_html_e( 'Any time', 'dgl-platform' ); ?></option>
+								<?php foreach ( $whens as $spell => $when_label ) : ?>
+									<option value="<?php echo esc_attr( $spell ); ?>"<?php selected( $filter_args['when'], $spell ); ?>><?php echo esc_html( $when_label ); ?></option>
+								<?php endforeach; ?>
+							</select>
+						</label>
+					<?php endif; ?>
+					<?php if ( [] !== $orgs ) : ?>
+						<label class="dgl-listing__filter">
+							<span class="dgl-listing__filterlabel"><?php esc_html_e( 'Organisation', 'dgl-platform' ); ?></span>
+							<select class="dgl-listing__select" name="<?php echo esc_attr( \DGL\Frontend\Filters::PARAM_ORG ); ?>">
+								<option value=""><?php esc_html_e( 'Any organisation', 'dgl-platform' ); ?></option>
+								<?php foreach ( $orgs as $org_id => $org_name ) : ?>
+									<option value="<?php echo (int) $org_id; ?>"<?php selected( (int) $filter_args['org'], (int) $org_id ); ?>><?php echo esc_html( $org_name ); ?></option>
+								<?php endforeach; ?>
+							</select>
+						</label>
+					<?php endif; ?>
+					<button class="dgl-listing__apply" type="submit"><?php esc_html_e( 'Show', 'dgl-platform' ); ?></button>
+					<?php if ( $filtering ) : ?>
+						<a class="dgl-dir__clear" href="<?php echo esc_url( $list_base ); ?>"><?php esc_html_e( 'Clear', 'dgl-platform' ); ?></a>
+					<?php endif; ?>
+				</div>
+			</form>
+			<?php \DGL\Dashboard\View::output( 'public/fold-script' ); ?>
+		<?php endif; ?>
 
 		<?php if ( $with_hero ) : ?>
 			<?php
@@ -107,73 +170,8 @@ $meta_line = static function ( WP_Post $item ): string {
 			</section>
 		<?php endif; ?>
 
-		<?php if ( $show_form ) : ?>
-			<form class="dgl-listing__filters" method="get" action="<?php echo esc_url( $list_base ); ?>">
-				<button class="dgl-dir__toggle" type="button" hidden data-dgl-fold aria-expanded="<?php echo $filters_on > 0 ? 'true' : 'false'; ?>" aria-controls="dgl-list-filters">
-					<?php
-					echo $filters_on > 0
-						/* translators: %d: how many filters are set. */
-						? esc_html( sprintf( _n( 'Filters (%d set)', 'Filters (%d set)', $filters_on, 'dgl-platform' ), $filters_on ) )
-						: esc_html__( 'Filters', 'dgl-platform' );
-					?>
-				</button>
-
-				<div class="dgl-listing__filterrow" id="dgl-list-filters">
-					<h2 class="dgl-listing__heading">
-						<?php
-						echo esc_html(
-							$filtering
-								? ( 0 === $found
-									? __( 'Nothing matches', 'dgl-platform' )
-									/* translators: 1: a number, 2: lower-case plural type label. */
-									: sprintf( _n( '%1$s %2$s', '%1$s %2$s', $found, 'dgl-platform' ), number_format_i18n( $found ), strtolower( 1 === $found ? Frontend::type_label( $type ) : $label ) ) )
-								/* translators: %s: plural type label. */
-								: sprintf( __( 'All %s', 'dgl-platform' ), strtolower( $label ) )
-						);
-						?>
-					</h2>
-					<?php if ( [] !== $topics ) : ?>
-						<label class="dgl-listing__filter">
-							<span class="dgl-listing__filterlabel"><?php esc_html_e( 'Topic', 'dgl-platform' ); ?></span>
-							<select class="dgl-listing__select" name="<?php echo esc_attr( \DGL\Frontend\Filters::PARAM_TOPIC ); ?>">
-								<option value=""><?php esc_html_e( 'Any topic', 'dgl-platform' ); ?></option>
-								<?php foreach ( $topics as $slug => $name ) : ?>
-									<option value="<?php echo esc_attr( $slug ); ?>"<?php selected( $filter_args['topic'], $slug ); ?>><?php echo esc_html( $name ); ?></option>
-								<?php endforeach; ?>
-							</select>
-						</label>
-					<?php endif; ?>
-					<?php if ( [] !== $whens ) : ?>
-						<label class="dgl-listing__filter">
-							<span class="dgl-listing__filterlabel"><?php esc_html_e( 'When', 'dgl-platform' ); ?></span>
-							<select class="dgl-listing__select" name="<?php echo esc_attr( \DGL\Frontend\Filters::PARAM_WHEN ); ?>">
-								<option value=""><?php esc_html_e( 'Any time', 'dgl-platform' ); ?></option>
-								<?php foreach ( $whens as $spell => $when_label ) : ?>
-									<option value="<?php echo esc_attr( $spell ); ?>"<?php selected( $filter_args['when'], $spell ); ?>><?php echo esc_html( $when_label ); ?></option>
-								<?php endforeach; ?>
-							</select>
-						</label>
-					<?php endif; ?>
-					<?php if ( [] !== $orgs ) : ?>
-						<label class="dgl-listing__filter">
-							<span class="dgl-listing__filterlabel"><?php esc_html_e( 'Organisation', 'dgl-platform' ); ?></span>
-							<select class="dgl-listing__select" name="<?php echo esc_attr( \DGL\Frontend\Filters::PARAM_ORG ); ?>">
-								<option value=""><?php esc_html_e( 'Any organisation', 'dgl-platform' ); ?></option>
-								<?php foreach ( $orgs as $org_id => $org_name ) : ?>
-									<option value="<?php echo (int) $org_id; ?>"<?php selected( (int) $filter_args['org'], (int) $org_id ); ?>><?php echo esc_html( $org_name ); ?></option>
-								<?php endforeach; ?>
-							</select>
-						</label>
-					<?php endif; ?>
-					<button class="dgl-listing__apply" type="submit"><?php esc_html_e( 'Show', 'dgl-platform' ); ?></button>
-					<?php if ( $filtering ) : ?>
-						<a class="dgl-dir__clear" href="<?php echo esc_url( $list_base ); ?>"><?php esc_html_e( 'Clear', 'dgl-platform' ); ?></a>
-					<?php endif; ?>
-				</div>
-			</form>
-			<?php \DGL\Dashboard\View::output( 'public/fold-script' ); ?>
-		<?php elseif ( $with_hero ) : ?>
-			<h2 class="dgl-listing__heading"><?php echo esc_html( sprintf( /* translators: %s: plural type label. */ __( 'All %s', 'dgl-platform' ), strtolower( $label ) ) ); ?></h2>
+		<?php if ( $show_form || $with_hero ) : ?>
+			<h2 class="dgl-listing__heading"><?php echo esc_html( $list_heading ); ?></h2>
 		<?php endif; ?>
 
 		<ul class="dgl-pub__list" data-dgl-autoload="li">

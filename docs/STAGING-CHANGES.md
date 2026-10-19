@@ -1330,3 +1330,7 @@ clean. They are the only DGLP content on staging.
 - **0.48.1** (19 October 2026): the search magnifier is no longer added to
   the Top Bar menu, DGLP's request. The phone drawer's Main Menu still has it
   and the theme's own search box stays dropped. Wiring: `Finder::menu_items()`.
+- **0.48.2** (19 October 2026): on every listing page (news, events, training,
+  funding, volunteering) the filters now sit directly under the page title,
+  above the featured block. The "All training" / "3 training" heading moved
+  with the list it describes. Template: `templates/public/archive.php`.
