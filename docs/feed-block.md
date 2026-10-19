@@ -27,6 +27,15 @@ the sidebar. Code: `src/Frontend/Feed.php` (what it shows),
   (`dgl-feed-1`, `dgl-feed-2`, ...) from `wp_unique_id()`, and so does its
   JSON-LD `@id`.
 
+## Dates
+
+Events and training cards carry the calendar badge on the picture's top left
+corner and the date sentence under the title ("Running now, until Thu 22 Oct
+2026"). News cards show when the story was posted. The wording is decided in
+`src/Frontend/DateSpan.php` (pure, tested in `tests/test-datespan.php`) and
+shared with the listing pages through `Cards::when_line()` and
+`Cards::date_block()`.
+
 ## For search engines
 
 Server-rendered HTML, no script needed to read it. Each item is an

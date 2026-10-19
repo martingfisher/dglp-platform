@@ -3961,7 +3961,7 @@ update_post_meta( $cd_event, 'dgl_format', 'in_person' );
 update_post_meta( $cd_event, 'dgl_venue_name', 'The Hub' );
 \DGL\Events\Series::stamp( $cd_event, PostTypes::EVENT );
 $cd_emeta = \DGL\Frontend\Cards::meta( get_post( $cd_event ) );
-$ok( 3 === count( $cd_emeta ) && 'The Hub' === $cd_emeta[0] && 'Org A' === $cd_emeta[1] && str_starts_with( $cd_emeta[2], 'Posted: ' ) && ! str_contains( implode( ' ', $cd_emeta ), '2031' ), 'a one-off event: where, organisation, when it was posted; the event date is on the leaf (' . implode( ' / ', $cd_emeta ) . ')' );
+$ok( 3 === count( $cd_emeta ) && str_contains( $cd_emeta[0], '4 Mar 2031, 18:30' ) && 'The Hub' === $cd_emeta[1] && 'Org A' === $cd_emeta[2] && ! str_contains( implode( ' ', $cd_emeta ), 'Posted' ), 'a one-off event: its date and time, where, organisation, and no posted date (' . implode( ' / ', $cd_emeta ) . ')' );
 $cd_leaf = \DGL\Frontend\Cards::date_parts( get_post( $cd_event ) );
 $ok( null !== $cd_leaf && 'Mar' === $cd_leaf['month'] && '4' === $cd_leaf['day'] && '18:30' === $cd_leaf['time'] && '2031-03-04T18:30' === $cd_leaf['iso'], 'the leaf carries the event date and time (' . implode( ' ', $cd_leaf ?? [] ) . ')' );
 $cd_series = $make_item( $org_a, $alice, Statuses::LIVE );
@@ -3970,7 +3970,7 @@ update_post_meta( $cd_series, 'dgl_start_datetime', $cd_tue->format( 'Y-m-d' ) .
 update_post_meta( $cd_series, 'dgl_repeat', [ 'freq' => 'weekly', 'weekdays' => [ (int) $cd_tue->format( 'N' ) ], 'until' => $cd_tue->modify( '+2 months' )->format( 'Y-m-d' ) ] );
 \DGL\Events\Series::stamp( $cd_series, PostTypes::EVENT );
 $cd_smeta = \DGL\Frontend\Cards::meta( get_post( $cd_series ) );
-$ok( str_starts_with( $cd_smeta[0], 'Every ' ) && str_contains( $cd_smeta[0], '13:00' ) && str_starts_with( end( $cd_smeta ), 'Posted: ' ), 'a series: its pattern, then when it was posted (' . implode( ' / ', $cd_smeta ) . ')' );
+$ok( str_starts_with( $cd_smeta[0], 'Every ' ) && str_contains( $cd_smeta[0], '13:00' ) && str_starts_with( $cd_smeta[1], 'Next ' ) && ! str_contains( implode( ' ', $cd_smeta ), 'Posted' ), 'a series: its pattern, then its next date, and no posted date (' . implode( ' / ', $cd_smeta ) . ')' );
 $ok( '13:00' === \DGL\Frontend\Cards::date_parts( get_post( $cd_series ) )['time'], 'and its leaf carries the next date\'s time' );
 \DGL\Events\Cancel::cancel( $cd_event, '', $alice );
 $ok( 'Cancelled' === \DGL\Frontend\Cards::meta( get_post( $cd_event ) )[0], 'a cancelled event says so first' );
@@ -4513,7 +4513,8 @@ $ok( 7 === count( array_filter( $demo_tr, static fn( int $id ): bool => in_array
 $ok( 2 === count( array_filter( $demo_tr, static fn( int $id ): bool => 'blended' === get_post_meta( $id, 'dgl_delivery', true ) ) ) && 2 === count( array_filter( $demo_tr, static fn( int $id ): bool => 'online' === get_post_meta( $id, 'dgl_delivery', true ) ) ), 'two blended, two online, three in person' );
 $demo_tr_leaf = \DGL\Frontend\Cards::date_parts( get_post( $demo_tr[0] ) );
 $ok( null !== $demo_tr_leaf && '' === $demo_tr_leaf['time'] && $demo_tr_leaf['iso'] === get_post_meta( $demo_tr[0], 'dgl_start_date', true ), 'a training listing\'s leaf is its start date with no time' );
-$ok( str_starts_with( end( \DGL\Frontend\Cards::meta( get_post( $demo_tr[0] ) ) ) ?: '', 'Posted: ' ), 'and its line ends with when it was posted' );
+$demo_tr_line = implode( ' / ', \DGL\Frontend\Cards::meta( get_post( $demo_tr[0] ) ) );
+$ok( str_contains( $demo_tr_line, wp_date( 'Y', strtotime( (string) get_post_meta( $demo_tr[0], 'dgl_start_date', true ) ) ) ) && ! str_contains( $demo_tr_line, 'Posted' ), 'and its line says its date, with the year, and not when it was posted' );
 $ok( 0 === count( \DGL\Demo\Command::remove() ), 'removing demo events leaves training alone' );
 $ok( 7 === count( \DGL\Demo\Command::remove( PostTypes::TRAINING ) ) && null === get_post( $demo_tr[0] ), 'removing demo training takes the seven' );
 
@@ -5540,6 +5541,58 @@ $ok( false !== $lf_form && false !== $lf_hero && false !== $lf_head && false !==
 $ok( $lf_form < $lf_hero && $lf_hero < $lf_head && $lf_head < $lf_list, 'in that order: filters, featured, heading, list' );
 $ok( 1 === substr_count( $lf_html, 'class="dgl-listing__heading"' ), 'and the heading is printed once' );
 $ok( ! str_contains( substr( $lf_html, (int) $lf_form, (int) $lf_hero - (int) $lf_form ), 'dgl-listing__heading' ), 'not inside the filter form any more' );
+
+/* ------------------------------------------------------- date spans */
+
+$group( 'Dates: a course that runs over several days says so, and says when it is running now' );
+
+$ds_today = new DateTimeImmutable( 'now', wp_timezone() );
+$ds_run   = wp_insert_post( [ 'post_type' => PostTypes::TRAINING, 'post_title' => 'Span running course', 'post_status' => Statuses::LIVE, 'post_author' => $alice ] );
+\DGL\Schema\Store::write( $ds_run, PostTypes::TRAINING, [ 'start_date' => $ds_today->modify( '-2 days' )->format( 'Y-m-d' ), 'end_date' => $ds_today->modify( '+3 days' )->format( 'Y-m-d' ) ] );
+$ds_soon = wp_insert_post( [ 'post_type' => PostTypes::TRAINING, 'post_title' => 'Span future course', 'post_status' => Statuses::LIVE, 'post_author' => $alice ] );
+\DGL\Schema\Store::write( $ds_soon, PostTypes::TRAINING, [ 'start_date' => $ds_today->modify( '+10 days' )->format( 'Y-m-d' ), 'end_date' => $ds_today->modify( '+12 days' )->format( 'Y-m-d' ) ] );
+$ds_one = wp_insert_post( [ 'post_type' => PostTypes::TRAINING, 'post_title' => 'Span one day course', 'post_status' => Statuses::LIVE, 'post_author' => $alice ] );
+\DGL\Schema\Store::write( $ds_one, PostTypes::TRAINING, [ 'start_date' => $ds_today->modify( '+5 days' )->format( 'Y-m-d' ) ] );
+
+$ds_run_line = \DGL\Frontend\Cards::when_line( get_post( $ds_run ) );
+$ok( null !== $ds_run_line && str_starts_with( $ds_run_line['text'], 'Running now, until ' ), 'a course already under way says it is running now and when it ends' );
+$ok( 'to ' . $ds_today->modify( '+3 days' )->format( 'j M' ) === \DGL\Frontend\Cards::date_parts( get_post( $ds_run ) )['to'], 'and its leaf carries the end' );
+$ok( str_contains( \DGL\Frontend\Cards::date_block( get_post( $ds_run ) ), 'dgl-date__to' ) && str_contains( \DGL\Frontend\Cards::date_block( get_post( $ds_run ) ), 'dgl-date--span' ), 'the leaf prints the extra line and widens for it' );
+$ok( str_contains( \DGL\Frontend\Cards::when_line( get_post( $ds_soon ) )['text'], ' to ' ) && ! str_contains( \DGL\Frontend\Cards::when_line( get_post( $ds_soon ) )['text'], 'Running' ), 'a course that has not started says its whole span' );
+$ok( '' === \DGL\Frontend\Cards::date_parts( get_post( $ds_one ) )['to'] && ! str_contains( \DGL\Frontend\Cards::date_block( get_post( $ds_one ) ), 'dgl-date__to' ), 'a one-day course has no extra line on its leaf' );
+
+foreach ( [ $ds_run, $ds_soon, $ds_one ] as $ds_id ) {
+	wp_set_object_terms( $ds_id, 'workforce', \DGL\Taxonomies::TOPIC );
+}
+$ds_feed = do_shortcode( '[dgl_feed type="training" topic="workforce" count="12"]' );
+$ok( str_contains( $ds_feed, 'dgl-date--span' ) && str_contains( $ds_feed, 'Running now, until ' ), 'a topic feed shows the span on the card and says it is running' );
+$ok( 1 === preg_match( '#<article class="dgl-feed__card">\s*<time class="dgl-date#', $ds_feed ), 'with the date leaf on the picture' );
+$ok( ! str_contains( do_shortcode( '[dgl_feed type="news"]' ), 'dgl-date' ), 'but news cards carry no leaf' );
+
+/* ----------------------------------------------------- listing intro */
+
+$group( 'Listing pages: the team can change the title and the intro' );
+
+$li_plain = \DGL\Dashboard\View::render( 'public/archive', [ 'type' => PostTypes::TRAINING ] );
+$ok( str_contains( $li_plain, '>Training</h1>' ) && str_contains( $li_plain, 'Posted by organisations in the Doing Good Leeds Partnership.' ), 'with nothing set, the standard title and line' );
+$ok( str_contains( \DGL\Frontend\ListingIntro::intro_html( PostTypes::TRAINING ), '<p>' ), 'the standard line is a paragraph' );
+
+update_option( \DGL\Frontend\ListingIntro::option( 'title', PostTypes::TRAINING ), 'Courses and learning' );
+update_option( \DGL\Frontend\ListingIntro::option( 'intro', PostTypes::TRAINING ), '<p>Find a <a href="/x/">course</a> near you.</p><script>alert(1)</script>' );
+$li_custom = \DGL\Dashboard\View::render( 'public/archive', [ 'type' => PostTypes::TRAINING ] );
+$ok( str_contains( $li_custom, '>Courses and learning</h1>' ), 'a custom title is the page heading' );
+$ok( str_contains( $li_custom, 'Find a <a href="/x/">course</a> near you.' ), 'a custom intro replaces the standard line, links kept' );
+$ok( ! str_contains( $li_custom, 'Posted by organisations in the Doing Good Leeds Partnership.' ) && ! str_contains( $li_custom, '<script>alert' ), 'the standard line is gone and script is stripped' );
+$ok( str_contains( $li_custom, '>All training</h2>' ) || str_contains( $li_custom, 'All training' ), 'the list heading still names the type, not the custom title' );
+$ok( 'Courses and learning' === apply_filters( 'post_type_archive_title', 'Training', PostTypes::TRAINING ), 'the browser title follows the custom title' );
+$ok( 'Training' === apply_filters( 'post_type_archive_title', 'Training', 'page' ), 'and only for our listing pages' );
+$ok( str_starts_with( \DGL\Frontend\ListingIntro::description( PostTypes::TRAINING ), 'Find a course near you.' ), 'the meta description is the intro as plain text' );
+
+update_option( \DGL\Frontend\ListingIntro::option( 'title', PostTypes::TRAINING ), '' );
+update_option( \DGL\Frontend\ListingIntro::option( 'intro', PostTypes::TRAINING ), '<p> </p>' );
+$ok( str_contains( \DGL\Dashboard\View::render( 'public/archive', [ 'type' => PostTypes::TRAINING ] ), '>Training</h1>' ) && '' === \DGL\Frontend\ListingIntro::description( PostTypes::TRAINING ), 'emptied again, an empty-looking intro falls back to the standard' );
+delete_option( \DGL\Frontend\ListingIntro::option( 'title', PostTypes::TRAINING ) );
+delete_option( \DGL\Frontend\ListingIntro::option( 'intro', PostTypes::TRAINING ) );
 
 /* ----------------------------------------------------------------- report */
 

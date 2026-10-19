@@ -311,6 +311,30 @@ every night, and each one opens the full advert on VAL's website in a
 new tab. If the
 update stops working, System health says so under "Jobs from VAL".
 
+## Listing pages: title and introduction
+
+`/news/`, `/events/`, `/training/`, `/funding/` and `/volunteering/` are
+drawn by the plugin, so they are not pages in the block editor. Their title
+and the introduction under it are set in **Settings, Listing pages**: a title
+box and a small editor for the introduction, one pair per page. Leave a box
+empty to keep the standard wording. The title is also the page's browser title
+and its name in search results; the introduction is its description in search
+results.
+
+## Dates on events and training
+
+An event or course now says when it happens, in words, and no longer shows when
+it was posted:
+
+- A one-day event: "Tue 20 Oct 2026, 10:00" (or "Today, 18:30" on the day).
+- A course over several days: "Thu 15 to Thu 22 Oct 2026". The badge shows the
+  start day with "to 22 Oct" under it.
+- A course that has started and not finished: "Running now, until Thu 22 Oct
+  2026", so it never reads as a date in the past.
+- A repeating event keeps its pattern ("Every Tuesday, 13:00") and its next date.
+
+News still shows when it was posted.
+
 ## The topic feed block
 
 A network's page can show its own news, events or training. In the block

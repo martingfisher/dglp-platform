@@ -2181,3 +2181,37 @@ h2.dgl-listing__heading:only-child,
 @container ( max-width: 560px ) {
 	.dgl-feed__list { grid-template-columns: minmax(0, 1fr); }
 }
+
+/*
+ * A date span ("OCT 15", "to 22 Oct"): the leaf grows to fit its third line
+ * rather than squeezing it, and the line stays on one row.
+ */
+.dgl-date__to {
+	margin-top: 2px;
+	font-size: 0.62rem;
+	font-weight: 600;
+	color: var(--dgl-text-muted);
+	white-space: nowrap;
+	font-variant-numeric: tabular-nums;
+}
+
+.dgl-date.dgl-date--span,
+.dgl-hero__item .dgl-date.dgl-date--span,
+.dgl-home__row .dgl-date.dgl-date--span { width: auto; min-width: 56px; padding-inline: 8px; }
+
+/* In a topic feed the leaf sits on the picture's top left corner. */
+.dgl-feed__card > .dgl-date {
+	position: absolute;
+	top: 12px;
+	left: 12px;
+	z-index: 1;
+	pointer-events: none;
+	box-shadow: var(--dgl-shadow-rest);
+}
+
+/* The listing intro can be several paragraphs now that the team can write it. */
+.dgl-pub__lede p { margin: 0 0 0.6em; }
+
+.dgl-pub__lede p:last-child { margin-bottom: 0; }
+
+.dgl-pub__lede .dgl-pub__callink { margin-left: 0; }

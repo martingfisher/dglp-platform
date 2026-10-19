@@ -260,10 +260,10 @@ final class Feed {
 	 */
 	public static function date_line( WP_Post $post ): array {
 		if ( PostTypes::NEWS !== (string) $post->post_type ) {
-			$parts = Cards::date_parts( $post );
+			$when = Cards::when_line( $post );
 
-			if ( null !== $parts ) {
-				return [ 'text' => Cards::when( $post ), 'iso' => $parts['iso'] ];
+			if ( null !== $when ) {
+				return $when;
 			}
 		}
 

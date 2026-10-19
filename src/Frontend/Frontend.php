@@ -49,6 +49,7 @@ final class Frontend {
 		Seo::init();
 		HomeBlocks::init();
 		FeedBlock::init();
+		ListingIntro::init();
 		add_action( 'template_redirect', [ \DGL\Events\Ics::class, 'serve' ], 5 );
 		add_action( 'template_redirect', [ self::class, 'directory_status' ] );
 		add_filter( 'blocksy:breadcrumbs:items-array', [ self::class, 'breadcrumbs' ] );

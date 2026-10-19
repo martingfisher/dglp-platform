@@ -58,6 +58,7 @@ $schema    = (string) ( $data['schema'] ?? '' );
 				?>
 				<li class="dgl-feed__item">
 					<article class="dgl-feed__card">
+						<?php echo 'news' === $type ? '' : Cards::date_block( $item ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside. ?>
 						<a class="dgl-feed__pic" href="<?php echo esc_url( $link ); ?>" tabindex="-1" aria-hidden="true"><?php echo Feed::picture( $item, $type ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside. ?></a>
 						<div class="dgl-feed__body">
 							<h3 class="dgl-feed__title"><a href="<?php echo esc_url( $link ); ?>"><?php echo esc_html( get_the_title( $item ) ); ?></a></h3>

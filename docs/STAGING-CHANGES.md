@@ -1334,3 +1334,10 @@ clean. They are the only DGLP content on staging.
   funding, volunteering) the filters now sit directly under the page title,
   above the featured block. The "All training" / "3 training" heading moved
   with the list it describes. Template: `templates/public/archive.php`.
+- **0.49.0** (19 October 2026): dates on events and courses say the whole span
+  and whether it is running (`DateSpan`), the badge shows "to 22 Oct" for a
+  span and sits on the picture in a topic feed, and events and courses no
+  longer show a posted date. Listing pages (news, events, training, funding,
+  volunteering) have an editable title and introduction under Settings,
+  Listing pages (`ListingIntro`); the title feeds the browser title and the
+  introduction the meta description.

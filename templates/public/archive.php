@@ -60,13 +60,13 @@ $meta_line = static function ( WP_Post $item ): string {
 ?>
 <div class="dgl-pub dgl-listing">
 	<header class="dgl-pub__head">
-		<h1 class="dgl-pub__title"><?php echo esc_html( $label ); ?></h1>
-		<p class="dgl-pub__lede">
-			<?php esc_html_e( 'Posted by organisations in the Doing Good Leeds Partnership.', 'dgl-platform' ); ?>
+		<h1 class="dgl-pub__title"><?php echo esc_html( \DGL\Frontend\ListingIntro::title( $type ) ); ?></h1>
+		<div class="dgl-pub__lede">
+			<?php echo \DGL\Frontend\ListingIntro::intro_html( $type ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped or kses'd inside. ?>
 			<?php if ( \DGL\PostTypes::EVENT === $type ) : ?>
-				<a class="dgl-pub__callink" href="<?php echo esc_url( \DGL\Events\Calendar::url() ); ?>"><?php esc_html_e( 'See them day by day on the calendar', 'dgl-platform' ); ?></a>
+				<p><a class="dgl-pub__callink" href="<?php echo esc_url( \DGL\Events\Calendar::url() ); ?>"><?php esc_html_e( 'See them day by day on the calendar', 'dgl-platform' ); ?></a></p>
 			<?php endif; ?>
-		</p>
+		</div>
 	</header>
 
 	<?php if ( have_posts() ) : ?>

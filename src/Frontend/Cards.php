@@ -80,10 +80,21 @@ final class Cards {
 			$parts[] = \DGL\Events\Wording::with_times( $rule->to_meta(), $rule->start->format( 'Y-m-d H:i:s' ), '' );
 		}
 
+		// Events and courses say when they happen, in words, and leave out when
+		// they were posted: two dates side by side read as one event with two.
+		$when = in_array( $type, [ PostTypes::EVENT, PostTypes::TRAINING ], true ) ? self::when_line( $post ) : null;
+
+		if ( null !== $when ) {
+			$parts[] = $when['text'];
+		}
+
 		$parts[] = Frontend::where( $post );
 		$parts[] = $org;
-		/* translators: %s: a date like "24 Sep 2026". */
-		$parts[] = sprintf( __( 'Posted: %s', 'dgl-platform' ), self::posted( $post ) );
+
+		if ( null === $when ) {
+			/* translators: %s: a date like "24 Sep 2026". */
+			$parts[] = sprintf( __( 'Posted: %s', 'dgl-platform' ), self::posted( $post ) );
+		}
 
 		return array_values( array_filter( $parts ) );
 	}
@@ -135,11 +146,66 @@ final class Cards {
 	}
 
 	/**
+	 * The span of a one-off event or a course: start, end, and where it
+	 * stands today. Null for a series (its next date is on the leaf, its
+	 * pattern in the meta line) and for an item with no date.
+	 *
+	 * @return array{line:string, text:string, to:string, time:string, iso:string, multi:bool, state:string}|null
+	 */
+	public static function span( WP_Post $post ): ?array {
+		if ( Series::is_series( (int) $post->ID ) ) {
+			return null;
+		}
+
+		foreach ( [ 'start_datetime' => 'end_datetime', 'start_date' => 'end_date' ] as $start_key => $end_key ) {
+			$raw = trim( (string) Frontend::value( $post, $start_key ) );
+
+			if ( '' === $raw ) {
+				continue;
+			}
+
+			try {
+				$tz    = wp_timezone();
+				$start = new \DateTimeImmutable( $raw, $tz );
+				$end_s = trim( (string) Frontend::value( $post, $end_key ) );
+				$end   = '' === $end_s ? null : new \DateTimeImmutable( $end_s, $tz );
+				$now   = new \DateTimeImmutable( 'now', $tz );
+			} catch ( \Exception ) {
+				return null;
+			}
+
+			return DateSpan::describe( $start, $end, $now, str_contains( $raw, ':' ) );
+		}
+
+		return null;
+	}
+
+	/**
+	 * The one date sentence for an event or a course, with its machine
+	 * date. A series says its next date; anything else its day or span.
+	 * Null when there is nothing to say.
+	 *
+	 * @return array{text:string, iso:string}|null
+	 */
+	public static function when_line( WP_Post $post ): ?array {
+		$span = self::span( $post );
+
+		if ( null !== $span ) {
+			return [ 'text' => $span['line'], 'iso' => $span['iso'] ];
+		}
+
+		$parts = self::date_parts( $post );
+		$text  = self::when( $post );
+
+		return null === $parts || '' === $text ? null : [ 'text' => $text, 'iso' => $parts['iso'] ];
+	}
+
+	/**
 	 * The day an event or a course happens, as a calendar leaf: the month
 	 * over the day number, and the time when there is one. A series shows
 	 * its next date. Nothing for news, which has no date worth a glance.
 	 *
-	 * @return array{month:string, day:string, weekday:string, time:string, iso:string}|null
+	 * @return array{month:string, day:string, weekday:string, time:string, to:string, iso:string}|null
 	 */
 	public static function date_parts( WP_Post $post ): ?array {
 		$id    = (int) $post->ID;
@@ -180,6 +246,7 @@ final class Cards {
 			'day'     => (string) wp_date( 'j', $ts ),
 			'weekday' => (string) wp_date( 'D', $ts ),
 			'time'    => $timed ? (string) wp_date( 'H:i', $ts ) : '',
+			'to'      => (string) ( self::span( $post )['to'] ?? '' ),
 			'iso'     => (string) wp_date( $timed ? 'Y-m-d\\TH:i' : 'Y-m-d', $ts ),
 		];
 	}
@@ -198,13 +265,19 @@ final class Cards {
 
 		$off = PostTypes::EVENT === (string) $post->post_type && Cancel::is_cancelled( (int) $post->ID );
 
+		// A span shows where it ends ("to 22 Oct"); a one-day event shows its time.
+		$extra = '' !== $parts['to']
+			? '<span class="dgl-date__to">' . esc_html( $parts['to'] ) . '</span>'
+			: ( '' !== $parts['time'] ? '<span class="dgl-date__time">' . esc_html( $parts['time'] ) . '</span>' : '' );
+
 		return sprintf(
-			'<time class="dgl-date%s" datetime="%s" aria-hidden="true"><span class="dgl-date__month">%s</span><span class="dgl-date__day">%s</span>%s</time>',
+			'<time class="dgl-date%s%s" datetime="%s" aria-hidden="true"><span class="dgl-date__month">%s</span><span class="dgl-date__day">%s</span>%s</time>',
 			$off ? ' dgl-date--off' : '',
+			'' !== $parts['to'] ? ' dgl-date--span' : '',
 			esc_attr( $parts['iso'] ),
 			esc_html( $parts['month'] ),
 			esc_html( $parts['day'] ),
-			'' !== $parts['time'] ? '<span class="dgl-date__time">' . esc_html( $parts['time'] ) . '</span>' : ''
+			$extra
 		);
 	}
 
