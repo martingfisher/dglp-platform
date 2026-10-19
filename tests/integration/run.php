@@ -4591,7 +4591,7 @@ $ok( str_contains( $home_html, 'Forum Central' ) && str_contains( $home_html, 'V
 
 $group( 'Home page shortcodes: the live sections for a page built in the theme' );
 
-$ok( 7 === count( array_filter( \DGL\Frontend\HomeBlocks::TAGS, 'shortcode_exists' ) ), 'seven shortcodes are registered' );
+$ok( 8 === count( array_filter( \DGL\Frontend\HomeBlocks::TAGS, 'shortcode_exists' ) ), 'eight shortcodes are registered' );
 $sc_events = do_shortcode( '[dgl_home_events count="2"]' );
 $ok( str_starts_with( $sc_events, '<div class="dgl-home-block dgl-home-block--events">' ) && 2 === substr_count( $sc_events, 'class="dgl-home__row"' ) && str_contains( $sc_events, '>What&#039;s on</h2>' ) && str_contains( $sc_events, '>All events</a>' ), 'events: wrapped, two rows, the default heading and the All link' );
 $ok( $home_evt['later'] === (int) ( preg_match( '#<h3 class="dgl-home__rowtitle"><a href="[^"]*/(?:events|\?[^"]*)[^"]*">Home event later</a>#', $sc_events ) ? $home_evt['later'] : 0 ), 'and the featured event comes first' );
@@ -5476,6 +5476,50 @@ $rc_acc2 = Invites::accept( $rc_tok2, 'Rc Lapsed', 'rc-lapsed-pass-1' );
 $ok( $rc_inv2['ok'] && ! $rc_acc2['ok'] && 'inviter_lapsed' === $rc_acc2['outcome'] && false === get_user_by( 'email', 'rc-lapsed@example.test' ), 'an invitation from an owner no longer approved is refused, and no account is made' );
 update_user_meta( $bella, Meta::USER_ACCOUNT_STATUS, 'approved' );
 Access::flush_cache();
+
+/* --------------------------------------------------------- topic feed */
+
+$group( 'Topic feed: one topic, one type, several blocks on a page' );
+
+\DGL\Topics\Topics::sync();
+$tf_topic = 'children-and-young-people';
+
+foreach ( [ 1, 2, 3, 4, 5 ] as $tf_i ) {
+	$tf_id = wp_insert_post( [ 'post_type' => PostTypes::NEWS, 'post_title' => "Feed story {$tf_i}", 'post_status' => Statuses::LIVE, 'post_author' => $alice, 'post_date' => "2026-10-0{$tf_i} 09:00:00" ] );
+	wp_set_object_terms( $tf_id, $tf_topic, \DGL\Taxonomies::TOPIC );
+}
+
+$tf_off = wp_insert_post( [ 'post_type' => PostTypes::NEWS, 'post_title' => 'Feed story from another topic', 'post_status' => Statuses::LIVE, 'post_author' => $alice, 'post_date' => '2026-10-09 09:00:00' ] );
+wp_set_object_terms( $tf_off, 'mental-health', \DGL\Taxonomies::TOPIC );
+
+$tf_html = do_shortcode( '[dgl_feed type="news" topic="' . $tf_topic . '"][dgl_feed type="news" topic="' . $tf_topic . '" count="2"][dgl_feed type="event" topic="' . $tf_topic . '"]' );
+preg_match_all( '/<section[^>]*id="(dgl-feed-\d+)"/', $tf_html, $tf_ids );
+$ok( 3 === count( $tf_ids[1] ) && 3 === count( array_unique( $tf_ids[1] ) ), 'three blocks on one page have three different ids' );
+preg_match_all( '/\sid="([^"]+)"/', $tf_html, $tf_all );
+$ok( count( $tf_all[1] ) === count( array_unique( $tf_all[1] ) ), 'and no id repeats anywhere in them' );
+$ok( str_contains( $tf_html, 'Feed story 5' ) && ! str_contains( $tf_html, 'Feed story from another topic' ), 'the topic\'s stories are shown and another topic\'s are not' );
+$ok( 4 === preg_match_all( '/<article/', explode( 'id="dgl-feed-2"', $tf_html )[0] ), 'four cards by default' );
+$ok( 2 === preg_match_all( '/<article/', explode( 'dgl-feed--event', explode( 'id="dgl-feed-2"', $tf_html )[1] )[0] ), 'count="2" shows two' );
+$ok( 1 === preg_match( '#<time datetime="2026-10-05">5 Oct 2026</time>#', $tf_html ), 'a story carries its posted date as a machine-readable time' );
+$ok( 1 === preg_match( '#href="[^"]*topic=children-and-young-people[^"]*">All news on Children and Young People</a>#', $tf_html ), 'the All link goes to that topic\'s list' );
+
+preg_match_all( '#<script type="application/ld\+json">(.*?)</script>#s', $tf_html, $tf_ld );
+$tf_graphs = array_map( static fn( string $j ): array => (array) json_decode( $j, true ), $tf_ld[1] );
+$ok( [] !== $tf_graphs && 'ItemList' === ( $tf_graphs[0]['@graph'][0]['@type'] ?? '' ), 'a block states its list as an ItemList' );
+$tf_list_ids = array_map( static fn( array $g ): string => (string) ( $g['@graph'][0]['@id'] ?? '' ), $tf_graphs );
+$ok( count( $tf_list_ids ) === count( array_unique( $tf_list_ids ) ), 'each block\'s ItemList has its own id' );
+
+$tf_empty = do_shortcode( '[dgl_feed type="news" topic="wellbeing"]' );
+$ok( substr_count( $tf_empty, '<article' ) > 0 && str_contains( $tf_empty, '>Latest news</h2>' ), 'a topic with nothing yet shows the most recent news, headed as the latest' );
+$ok( ! str_contains( $tf_empty, 'topic=wellbeing' ), 'and does not link to a topic it has nothing in' );
+$ok( '' !== do_shortcode( '[dgl_feed type="bogus" topic="not a slug!" count="500"]' ), 'junk attributes still draw a sensible row' );
+$ok( ! str_contains( do_shortcode( '[dgl_feed type="news" topic="' . $tf_topic . '" heading=""]' ), '<h2' ), 'heading="" drops the heading' );
+
+$tf_block = render_block( [ 'blockName' => 'dgl/feed', 'attrs' => [ 'type' => 'news', 'topic' => $tf_topic, 'count' => 3 ], 'innerBlocks' => [], 'innerHTML' => '', 'innerContent' => [] ] );
+$ok( null !== WP_Block_Type_Registry::get_instance()->get_registered( 'dgl/feed' ) && 3 === preg_match_all( '/<article/', $tf_block ), 'the editor block is registered and draws the same list' );
+
+$ok( str_contains( $tf_html, 'dgl-card__img--none' ), 'an item with no picture and no stand-in shows the plain tile' );
+update_option( 'dgl_feed_image_news', 0 );
 
 /* ----------------------------------------------------------------- report */
 

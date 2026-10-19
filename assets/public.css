@@ -2114,3 +2114,70 @@ h2.dgl-listing__heading:only-child,
 @container ( max-width: 560px ) {
 	.dgl-jobs--carousel > .dgl-jobs__item { flex-basis: 82%; }
 }
+
+/*
+ * Topic feed: [dgl_feed]. A picture over the words, four across, two in a
+ * medium column, one in a narrow one. Answers to the column it sits in, like
+ * the other blocks; the plain media queries are the fallback for a browser
+ * without container queries. The title's link covers the whole card.
+ */
+.dgl-home-block--feed { padding-block: 16px 24px; }
+
+.dgl-feed__list { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--dgl-gap-lg); margin: 0; padding: 0; list-style: none; }
+
+.dgl-feed__item { display: flex; margin: 0; }
+
+.dgl-feed__card {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	overflow: hidden;
+	border: 1px solid var(--dgl-border);
+	border-radius: 16px;
+	background: var(--dgl-white);
+	box-shadow: var(--dgl-shadow-rest);
+}
+
+.dgl-feed__pic { display: block; text-decoration: none; aspect-ratio: 3 / 2; overflow: hidden; background: var(--dgl-surface); }
+
+.dgl-feed__pic .dgl-card__img { display: block; width: 100%; height: 100%; object-fit: cover; }
+
+.dgl-feed__pic .dgl-card__img--none { display: grid; place-items: center; background: var(--dgl-navy); color: var(--dgl-white); font-size: 0.8em; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+
+.dgl-feed__body { display: flex; flex-direction: column; gap: 6px; min-width: 0; padding: 14px 16px 16px; }
+
+.dgl-feed__date { margin: 0; font-size: 0.82em; font-weight: 600; line-height: 1.4; color: var(--dgl-teal-text); }
+
+.dgl-feed__title { margin: 0; font-size: 1.02em; font-weight: var(--dgl-weight-heading); line-height: 1.3; }
+
+.dgl-feed__title a { color: var(--dgl-navy); text-decoration: none; }
+
+.dgl-feed__title a::after { content: ""; position: absolute; inset: 0; border-radius: 16px; }
+
+.dgl-feed__title a:hover,
+.dgl-feed__title a:focus { text-decoration: underline; text-underline-offset: 3px; }
+
+.dgl-feed__card:focus-within { outline: 2px solid var(--dgl-navy); outline-offset: 2px; }
+
+.dgl-feed__title a:focus-visible { outline: none; }
+
+.dgl-feed__card:hover .dgl-card__img { filter: brightness(0.94); }
+
+.dgl-feed__meta { margin: 0; font-size: 0.82em; line-height: 1.4; color: var(--dgl-text-muted); }
+
+@media ( max-width: 900px ) {
+	.dgl-feed__list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media ( max-width: 560px ) {
+	.dgl-feed__list { grid-template-columns: minmax(0, 1fr); }
+}
+
+@container ( max-width: 900px ) {
+	.dgl-feed__list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@container ( max-width: 560px ) {
+	.dgl-feed__list { grid-template-columns: minmax(0, 1fr); }
+}

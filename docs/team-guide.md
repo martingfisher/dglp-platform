@@ -311,6 +311,31 @@ every night, and each one opens the full advert on VAL's website in a
 new tab. If the
 update stops working, System health says so under "Jobs from VAL".
 
+## The topic feed block
+
+A network's page can show its own news, events or training. In the block
+editor add the **Topic feed** block (under Widgets) and choose two things in
+the sidebar: the **content type** (News, Events or Training) and the
+**topic** (for example Children and Young People). Add a second or third
+block to the same page for the other types. Each block shows four items by
+default, picture on top, then the title, the date and the organisation.
+
+Prefer a shortcode? The same block is
+`[dgl_feed type="news" topic="children-and-young-people"]`. The other
+options are `count` (1 to 12), `heading` (empty for none) and `link="no"`.
+
+Things worth knowing:
+
+- Events and training show the soonest first. News shows the newest first.
+- If the topic has nothing yet, the block shows the newest of that type
+  instead, under the plain heading ("Latest news"), so a story is never
+  presented as belonging to a network it does not.
+- An item with no picture shows the picture chosen for its type under
+  **Settings, Topic feed pictures**. With none chosen it shows a plain tile.
+- Search engines read the block as ordinary page text, and each block also
+  states its list as data.
+- Which topic belongs to which page is in `docs/feed-block.md`.
+
 ## The directory
 
 Every organisation's profile carries the details from Forum Central's list:

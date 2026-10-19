@@ -1319,3 +1319,5 @@ clean. They are the only DGLP content on staging.
   1,324 images, 956 with no alt text (55 of them SVG, which the AltText.ai
   account has switched off). `wp alttext generate --dry-run` counts 953
   to process. Not run: it spends one credit per image.
+- **0.48.0 built** (19 October 2026, not yet deployed): the Topic feed
+  block, `[dgl_feed]` and "Topic feed" in the editor. See `docs/feed-block.md`.
