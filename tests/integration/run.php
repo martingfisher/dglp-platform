@@ -5499,8 +5499,8 @@ $ok( 3 === count( $tf_ids[1] ) && 3 === count( array_unique( $tf_ids[1] ) ), 'th
 preg_match_all( '/\sid="([^"]+)"/', $tf_html, $tf_all );
 $ok( count( $tf_all[1] ) === count( array_unique( $tf_all[1] ) ), 'and no id repeats anywhere in them' );
 $ok( str_contains( $tf_html, 'Feed story 5' ) && ! str_contains( $tf_html, 'Feed story from another topic' ), 'the topic\'s stories are shown and another topic\'s are not' );
-$ok( 4 === preg_match_all( '/<article/', explode( 'id="dgl-feed-2"', $tf_html )[0] ), 'four cards by default' );
-$ok( 2 === preg_match_all( '/<article/', explode( 'dgl-feed--event', explode( 'id="dgl-feed-2"', $tf_html )[1] )[0] ), 'count="2" shows two' );
+$ok( 4 === preg_match_all( '/<article/', explode( 'id="' . $tf_ids[1][1] . '"', $tf_html )[0] ), 'four cards by default' );
+$ok( 2 === preg_match_all( '/<article/', explode( 'dgl-feed--event', explode( 'id="' . $tf_ids[1][1] . '"', $tf_html )[1] )[0] ), 'count="2" shows two' );
 $ok( 1 === preg_match( '#<time datetime="2026-10-05">5 Oct 2026</time>#', $tf_html ), 'a story carries its posted date as a machine-readable time' );
 $ok( 1 === preg_match( '#href="[^"]*topic=children-and-young-people[^"]*">All news on Children and Young People</a>#', $tf_html ), 'the All link goes to that topic\'s list' );
 
@@ -5593,6 +5593,35 @@ update_option( \DGL\Frontend\ListingIntro::option( 'intro', PostTypes::TRAINING 
 $ok( str_contains( \DGL\Dashboard\View::render( 'public/archive', [ 'type' => PostTypes::TRAINING ] ), '>Training</h1>' ) && '' === \DGL\Frontend\ListingIntro::description( PostTypes::TRAINING ), 'emptied again, an empty-looking intro falls back to the standard' );
 delete_option( \DGL\Frontend\ListingIntro::option( 'title', PostTypes::TRAINING ) );
 delete_option( \DGL\Frontend\ListingIntro::option( 'intro', PostTypes::TRAINING ) );
+
+/* ------------------------------------------------ stand-in pictures */
+
+$group( 'Topic feed: a missing picture file falls back to the stand-in, not the plain tile' );
+
+$sp_att = wp_insert_attachment( [ 'post_title' => 'stand-in picture', 'post_mime_type' => 'image/png', 'post_status' => 'inherit' ], 'standin.png' );
+add_filter( 'wp_get_attachment_image', static fn( $html, $id ) => (int) $id === (int) $GLOBALS['sp_att_id'] ? '<img class="dgl-card__img dgl-card__img--stand-in" src="/standin.png" alt="">' : $html, 10, 2 );
+$GLOBALS['sp_att_id'] = $sp_att;
+update_option( 'dgl_feed_image_news', $sp_att );
+
+$sp_story = wp_insert_post( [ 'post_type' => PostTypes::NEWS, 'post_title' => 'Story with a lost picture', 'post_status' => Statuses::LIVE, 'post_author' => $alice ] );
+\DGL\Schema\Store::write( $sp_story, PostTypes::NEWS, [ 'image' => 99999999 ] );
+$sp_html = \DGL\Frontend\Feed::picture( get_post( $sp_story ), 'news' );
+$ok( str_contains( $sp_html, 'dgl-card__img--stand-in' ), 'an item whose picture file is gone shows the stand-in' );
+
+$sp_plain = wp_insert_post( [ 'post_type' => PostTypes::NEWS, 'post_title' => 'Story with no picture', 'post_status' => Statuses::LIVE, 'post_author' => $alice ] );
+$ok( str_contains( \DGL\Frontend\Feed::picture( get_post( $sp_plain ), 'news' ), 'dgl-card__img--stand-in' ), 'and so does one with no picture at all' );
+
+$ok( str_contains( \DGL\Dashboard\View::render( 'public/card-row', [ 'item' => get_post( $sp_plain ) ] ), 'dgl-card__img--stand-in' ), 'the news list rows use the stand-in too' );
+$ok( str_contains( \DGL\Frontend\Cards::picture( get_post( $sp_story ), 'large', true ), 'dgl-card__img--stand-in' ), 'and the featured block, at its larger size' );
+$ok( str_contains( \DGL\Frontend\HomeBlocks::section( 'news', [ 'count' => 24 ] ), 'dgl-card__img--stand-in' ), 'and the home page news block' );
+$sp_event = wp_insert_post( [ 'post_type' => PostTypes::EVENT, 'post_title' => 'Event with no picture', 'post_status' => Statuses::LIVE, 'post_author' => $alice ] );
+$ok( str_contains( \DGL\Frontend\Cards::picture( get_post( $sp_event ), 'medium' ), 'dgl-card__img--none' ), 'an event is not given the news picture: each type has its own' );
+$sp_venue = wp_insert_post( [ 'post_type' => PostTypes::VENUE, 'post_title' => 'Venue with no picture', 'post_status' => Statuses::LIVE, 'post_author' => $alice ] );
+$ok( str_contains( \DGL\Frontend\Cards::picture( get_post( $sp_venue ), 'medium' ), 'dgl-card__img--none' ), 'and a venue, which has no setting, keeps the plain tile' );
+
+update_option( 'dgl_feed_image_news', 0 );
+$ok( str_contains( \DGL\Frontend\Feed::picture( get_post( $sp_story ), 'news' ), 'dgl-card__img--none' ), 'with no stand-in chosen, either gets the plain tile' );
+delete_option( 'dgl_feed_image_news' );
 
 /* ----------------------------------------------------------------- report */
 

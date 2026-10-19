@@ -1348,3 +1348,9 @@ clean. They are the only DGLP content on staging.
   (Young Lives Leeds, Culturally Diverse Hub, Funding, Health and Care
   Leaders, Local Care Partnerships, Mental Health, Physical Sensory
   Impairment, Representation, Support, Volunteering); each is one revision.
+- **0.49.2** (19 October 2026): the stand-in picture (Settings, Topic feed
+  pictures) now applies wherever a news, event or training card is drawn, not
+  only in topic feeds, and also when an item's own picture file has gone
+  missing (the imported stories often point at deleted files, which showed the
+  plain tile). No stand-in pictures are chosen on production yet. Learning
+  Disability (page 3427) got its three feed blocks.

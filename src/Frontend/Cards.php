@@ -290,6 +290,8 @@ final class Cards {
 	public static function picture( WP_Post $post, string $size = 'medium_large', bool $eager = false ): string {
 		$image_id = (int) Frontend::value( $post, 'image' );
 
+		// An item can name a picture whose file has since gone (the imported
+		// stories often do). That counts as no picture.
 		if ( $image_id > 0 ) {
 			$img = wp_get_attachment_image( $image_id, $size, false, [ 'loading' => $eager ? 'eager' : 'lazy', 'alt' => '', 'class' => 'dgl-card__img' ] );
 
@@ -298,11 +300,38 @@ final class Cards {
 			}
 		}
 
+		$stand_in = self::stand_in( (string) $post->post_type, $size, $eager );
+
+		if ( '' !== $stand_in ) {
+			return $stand_in;
+		}
+
 		// No picture: a plain tile with one word for what it is, so the row keeps
 		// its shape and nobody mistakes the gap for a broken image.
 		$word = (string) strtok( Frontend::type_label( (string) $post->post_type ), ' ' );
 
 		return '<span class="dgl-card__img dgl-card__img--none" aria-hidden="true"><span>' . esc_html( $word ) . '</span></span>';
+	}
+
+	/**
+	 * The picture an administrator chose for news, events or training that
+	 * have none of their own (Settings, Topic feed pictures), as an <img>;
+	 * '' when none is chosen or the type has no setting.
+	 */
+	public static function stand_in( string $post_type, string $size = 'medium_large', bool $eager = false ): string {
+		$key = array_search( $post_type, Feed::TYPES, true );
+
+		if ( false === $key ) {
+			return '';
+		}
+
+		$id = (int) get_option( sprintf( Feed::IMAGE_OPTION, (string) $key ), 0 );
+
+		if ( $id <= 0 ) {
+			return '';
+		}
+
+		return wp_get_attachment_image( $id, $size, false, [ 'loading' => $eager ? 'eager' : 'lazy', 'alt' => '', 'class' => 'dgl-card__img dgl-card__img--stand-in' ] );
 	}
 
 	/**

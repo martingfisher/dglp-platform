@@ -162,7 +162,7 @@ final class FeedBlock {
 		?>
 		<div class="wrap">
 			<h1><?php esc_html_e( 'Topic feed pictures', 'dgl-platform' ); ?></h1>
-			<p><?php esc_html_e( 'When a news story, event or course has no picture of its own, a topic feed shows the picture chosen here for that kind of content. With none chosen it shows a plain coloured tile.', 'dgl-platform' ); ?></p>
+			<p><?php esc_html_e( 'When a news story, event or course has no picture of its own, or its picture file has gone missing, the picture chosen here for that kind of content is shown instead: in topic feeds, on the News, Events and Training pages, on the home page lists and in search results. With none chosen, a plain coloured tile is shown.', 'dgl-platform' ); ?></p>
 			<form method="post" action="options.php">
 				<?php settings_fields( self::GROUP ); ?>
 				<table class="form-table" role="presentation">

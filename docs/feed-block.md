@@ -21,8 +21,11 @@ the sidebar. Code: `src/Frontend/Feed.php` (what it shows),
 - A topic with no items shows the newest of that type instead, under the
   type's plain heading, with an "All news" link to the whole list rather than
   to the topic.
-- An item without a picture uses the picture chosen for its type under
-  Settings, Topic feed pictures. None chosen: the plain coloured tile.
+- An item without a picture, or whose picture file is gone, uses the picture
+  chosen for its type under Settings, Topic feed pictures (News, Events,
+  Training; venues and spaces have none). None chosen: the plain coloured tile.
+  The fallback lives in `Cards::picture()` / `Cards::stand_in()`, so every list
+  surface gets it, not just the feed.
 - Several blocks on one page: every block takes its own id
   (`dgl-feed-1`, `dgl-feed-2`, ...) from `wp_unique_id()`, and so does its
   JSON-LD `@id`.

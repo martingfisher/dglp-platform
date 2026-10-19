@@ -354,8 +354,12 @@ Things worth knowing:
 - If the topic has nothing yet, the block shows the newest of that type
   instead, under the plain heading ("Latest news"), so a story is never
   presented as belonging to a network it does not.
-- An item with no picture shows the picture chosen for its type under
-  **Settings, Topic feed pictures**. With none chosen it shows a plain tile.
+- An item with no picture, or whose picture file has gone missing, shows the
+  picture chosen for its type under **Settings, Topic feed pictures** (one each
+  for News, Events and Training; administrators only). That applies everywhere
+  the item is shown as a card: topic feeds, the News, Events and Training pages,
+  the featured block, the home page lists and search results. With none chosen
+  it shows a plain coloured tile, so choose all three.
 - Search engines read the block as ordinary page text, and each block also
   states its list as data.
 - Which topic belongs to which page is in `docs/feed-block.md`.

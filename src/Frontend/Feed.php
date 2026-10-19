@@ -233,22 +233,8 @@ final class Feed {
 			: Home::upcoming( $post_type, $limit, $slug );
 	}
 
-	/** The picture: the item's own, else the type's chosen stand-in, else the plain tile. */
+	/** The picture: the item's own, else the type's chosen stand-in, else the plain tile (see Cards::picture). */
 	public static function picture( WP_Post $post, string $type ): string {
-		if ( Cards::has_picture( $post ) ) {
-			return Cards::picture( $post, 'medium_large' );
-		}
-
-		$stand_in = (int) get_option( sprintf( self::IMAGE_OPTION, $type ), 0 );
-
-		if ( $stand_in > 0 ) {
-			$img = wp_get_attachment_image( $stand_in, 'medium_large', false, [ 'loading' => 'lazy', 'alt' => '', 'class' => 'dgl-card__img dgl-card__img--stand-in' ] );
-
-			if ( '' !== $img ) {
-				return $img;
-			}
-		}
-
 		return Cards::picture( $post, 'medium_large' );
 	}
 
