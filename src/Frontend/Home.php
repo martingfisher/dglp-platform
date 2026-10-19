@@ -167,7 +167,7 @@ final class Home {
 	 *
 	 * @return WP_Post[]
 	 */
-	public static function upcoming( string $post_type, int $limit ): array {
+	public static function upcoming( string $post_type, int $limit, ?string $topic = null ): array {
 		$sort_field = Frontend::sort_key( $post_type );
 		$field      = null === $sort_field ? null : \DGL\Schema\FieldRegistry::find( $post_type, $sort_field );
 		$date_key   = PostTypes::EVENT === $post_type ? Meta::ITEM_NEXT_AT : ( null === $field ? '' : $field->meta_key() );
@@ -179,7 +179,7 @@ final class Home {
 			'no_found_rows'    => true,
 			'suppress_filters' => false,
 			'dgl_pin_first'    => true,
-		];
+		] + self::topic_args( $topic );
 
 		if ( '' !== $date_key ) {
 			// Undated rows still appear, first: see Frontend::order_archive().
@@ -201,7 +201,7 @@ final class Home {
 	 *
 	 * @return WP_Post[]
 	 */
-	public static function newest( string $post_type, int $limit ): array {
+	public static function newest( string $post_type, int $limit, ?string $topic = null ): array {
 		return self::posts(
 			[
 				'post_type'        => $post_type,
@@ -211,8 +211,25 @@ final class Home {
 				'suppress_filters' => false,
 				'orderby'          => [ 'date' => 'DESC' ],
 				'dgl_pin_first'    => true,
-			]
+			] + self::topic_args( $topic )
 		);
+	}
+
+	/**
+	 * The query arguments that narrow a list to one topic, or none.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private static function topic_args( ?string $topic ): array {
+		if ( null === $topic || '' === $topic ) {
+			return [];
+		}
+
+		return [
+			'tax_query' => [ // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query -- one indexed term, a bounded list.
+				[ 'taxonomy' => \DGL\Taxonomies::TOPIC, 'field' => 'slug', 'terms' => $topic ],
+			],
+		];
 	}
 
 	/**

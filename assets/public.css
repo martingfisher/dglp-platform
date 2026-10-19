@@ -699,12 +699,17 @@
 h2.dgl-listing__heading:only-child,
 .dgl-listing > h2.dgl-listing__heading { padding-bottom: 12px; border-bottom: 1px solid var(--dgl-border); margin-bottom: var(--dgl-gap); }
 
-.dgl-listing__filter { display: inline-flex; align-items: center; gap: 8px; font-size: 0.86em; color: var(--dgl-text-muted); }
+/* margin: 0 because the theme gives every label a bottom margin, which pushes the Show button off the dropdowns' centre line. */
+.dgl-listing__filter { display: inline-flex; align-items: center; gap: 8px; margin: 0; font-size: 0.86em; color: var(--dgl-text-muted); }
 
 .dgl-listing__filterlabel { font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; font-size: 12px; }
 
 .dgl-pub .dgl-listing__select {
-	min-height: 40px;
+	height: 44px;
+	min-height: 44px;
+	/* Capped, because a dropdown is as wide as its longest option and three of them push the Show button onto a row of its own. */
+	max-width: 260px;
+	text-overflow: ellipsis;
 	padding: 0 32px 0 12px;
 	border: var(--dgl-field-border) solid var(--dgl-field-outline);
 	border-radius: var(--dgl-radius-field);
@@ -716,17 +721,19 @@ h2.dgl-listing__heading:only-child,
 .dgl-pub .dgl-listing__select:focus-visible { outline: 3px solid var(--dgl-focus); outline-offset: 2px; }
 
 .dgl-pub .dgl-listing__apply {
-	min-height: 40px;
-	padding: 0 16px;
-	border: var(--dgl-field-border) solid var(--dgl-field-outline);
+	height: 44px;
+	min-height: 44px;
+	padding: 0 22px;
+	border: 2px solid var(--dgl-primary);
 	border-radius: var(--dgl-radius-button);
-	background: var(--dgl-white);
-	color: var(--dgl-navy);
-	font: var(--dgl-weight-button) 14px / 1 var(--dgl-font);
+	background: var(--dgl-primary);
+	color: var(--dgl-primary-text);
+	font: 600 14px / 1 var(--dgl-font);
 	cursor: pointer;
 }
 
-.dgl-pub .dgl-listing__apply:hover { background: var(--dgl-surface); }
+/* A filled button: the one thing in the row that says "do it", where the dropdowns are fields. */
+.dgl-pub .dgl-listing__apply:hover { background: color-mix(in srgb, var(--dgl-primary) 82%, #000000); border-color: color-mix(in srgb, var(--dgl-primary) 82%, #000000); }
 
 .dgl-pub .dgl-listing__apply:focus-visible { outline: 3px solid var(--dgl-focus); outline-offset: 2px; }
 
@@ -750,7 +757,7 @@ h2.dgl-listing__heading:only-child,
 	.dgl-listing__filterrow[hidden] { display: none; }
 	.dgl-listing__filterrow .dgl-listing__heading { display: none; }
 	.dgl-listing__filter { display: grid; gap: 4px; }
-	.dgl-pub .dgl-listing__select { width: 100%; min-height: 44px; }
+	.dgl-pub .dgl-listing__select { width: 100%; max-width: none; min-height: 44px; }
 	.dgl-pub .dgl-listing__apply { min-height: 44px; }
 	.dgl-listing__filters .dgl-dir__toggle { width: 100%; }
 }
@@ -2114,3 +2121,104 @@ h2.dgl-listing__heading:only-child,
 @container ( max-width: 560px ) {
 	.dgl-jobs--carousel > .dgl-jobs__item { flex-basis: 82%; }
 }
+
+/*
+ * Topic feed: [dgl_feed]. A picture over the words, four across, two in a
+ * medium column, one in a narrow one. Answers to the column it sits in, like
+ * the other blocks; the plain media queries are the fallback for a browser
+ * without container queries. The title's link covers the whole card.
+ */
+.dgl-home-block--feed { padding-block: 16px 24px; }
+
+.dgl-feed__list { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--dgl-gap-lg); margin: 0; padding: 0; list-style: none; }
+
+.dgl-feed__item { display: flex; margin: 0; }
+
+.dgl-feed__card {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	overflow: hidden;
+	border: 1px solid var(--dgl-border);
+	border-radius: 16px;
+	background: var(--dgl-white);
+	box-shadow: var(--dgl-shadow-rest);
+}
+
+.dgl-feed__pic { display: block; text-decoration: none; aspect-ratio: 3 / 2; overflow: hidden; background: var(--dgl-surface); }
+
+.dgl-feed__pic .dgl-card__img { display: block; width: 100%; height: 100%; object-fit: cover; }
+
+.dgl-feed__pic .dgl-card__img--none { display: grid; place-items: center; background: var(--dgl-navy); color: var(--dgl-white); font-size: 0.8em; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+
+.dgl-feed__body { display: flex; flex-direction: column; gap: 6px; min-width: 0; padding: 14px 16px 16px; }
+
+.dgl-feed__date { margin: 0; font-size: 0.82em; font-weight: 600; line-height: 1.4; color: var(--dgl-teal-text); }
+
+.dgl-feed__title { margin: 0; font-size: 1.02em; font-weight: var(--dgl-weight-heading); line-height: 1.3; }
+
+.dgl-feed__title a { color: var(--dgl-navy); text-decoration: none; }
+
+.dgl-feed__title a::after { content: ""; position: absolute; inset: 0; border-radius: 16px; }
+
+.dgl-feed__title a:hover,
+.dgl-feed__title a:focus { text-decoration: underline; text-underline-offset: 3px; }
+
+.dgl-feed__card:focus-within { outline: 2px solid var(--dgl-navy); outline-offset: 2px; }
+
+.dgl-feed__title a:focus-visible { outline: none; }
+
+.dgl-feed__card:hover .dgl-card__img { filter: brightness(0.94); }
+
+.dgl-feed__meta { margin: 0; font-size: 0.82em; line-height: 1.4; color: var(--dgl-text-muted); }
+
+@media ( max-width: 900px ) {
+	.dgl-feed__list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media ( max-width: 560px ) {
+	.dgl-feed__list { grid-template-columns: minmax(0, 1fr); }
+}
+
+@container ( max-width: 900px ) {
+	.dgl-feed__list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@container ( max-width: 560px ) {
+	.dgl-feed__list { grid-template-columns: minmax(0, 1fr); }
+}
+
+/*
+ * A date span ("OCT 15", "to 22 Oct"): the leaf grows to fit its third line
+ * rather than squeezing it, and the line stays on one row.
+ */
+.dgl-date__to {
+	margin-top: 2px;
+	font-size: 0.62rem;
+	font-weight: 600;
+	color: var(--dgl-text-muted);
+	white-space: nowrap;
+	font-variant-numeric: tabular-nums;
+}
+
+.dgl-date.dgl-date--span,
+.dgl-hero__item .dgl-date.dgl-date--span,
+.dgl-home__row .dgl-date.dgl-date--span { width: auto; min-width: 56px; padding-inline: 8px; }
+
+/* In a topic feed the leaf sits on the picture's top left corner. */
+.dgl-feed__card > .dgl-date {
+	position: absolute;
+	top: 12px;
+	left: 12px;
+	z-index: 1;
+	pointer-events: none;
+	box-shadow: var(--dgl-shadow-rest);
+}
+
+/* The listing intro can be several paragraphs now that the team can write it. */
+.dgl-pub__lede p { margin: 0 0 0.6em; }
+
+.dgl-pub__lede p:last-child { margin-bottom: 0; }
+
+.dgl-pub__lede .dgl-pub__callink { margin-left: 0; }

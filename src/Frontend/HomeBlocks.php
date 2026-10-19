@@ -31,6 +31,7 @@ defined( 'ABSPATH' ) || exit;
  *   [dgl_val_jobs layout="carousel" count="12"]
  *   [dgl_val_jobs layout="feed" count="6"]
  *   [dgl_val_jobs layout="feed" count="100"]   (the jobs page: every vacancy)
+ *   [dgl_feed type="news" topic="children-and-young-people"]   (see Feed)
  *
  * `heading=""` drops the heading so the page can supply its own;
  * `link="no"` drops the "All events" link. The stylesheet loads only on a
@@ -51,6 +52,7 @@ final class HomeBlocks {
 		'directory' => 'dgl_home_directory',
 		'roundup'   => 'dgl_home_roundup',
 		'jobs'      => 'dgl_val_jobs',
+		'feed'      => Feed::TAG,
 	];
 
 	/** The most rows one list will show, whatever `count` says. */
@@ -147,6 +149,10 @@ final class HomeBlocks {
 
 			case 'jobs':
 				return self::jobs( $atts, $id );
+
+			case 'feed':
+				// Feed gives each block its own id: a page carries several.
+				return Feed::render( $atts );
 		}
 
 		return '';

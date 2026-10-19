@@ -1319,3 +1319,49 @@ clean. They are the only DGLP content on staging.
   1,324 images, 956 with no alt text (55 of them SVG, which the AltText.ai
   account has switched off). `wp alttext generate --dry-run` counts 953
   to process. Not run: it spends one credit per image.
+- **0.48.0 deployed** (19 October 2026, production): the Topic feed block,
+  `[dgl_feed]` and "Topic feed" in the editor. See `docs/feed-block.md`.
+  Installed from the commit-pinned zip with `wp plugin install ... --force`;
+  the restore point was the nightly automatic backup of 19 October 01:21.
+  Three feed blocks added to the Young Lives Leeds page (7968), between "How
+  we work" and "Contact" (one revision; restore it to take them out). Live
+  check: three sections with ids `dgl-feed-1` to `-3`, three `ItemList`s with
+  their own ids, 4 columns at 1280px and 1 at 390px, no horizontal overflow.
+- **0.48.1** (19 October 2026): the search magnifier is no longer added to
+  the Top Bar menu, DGLP's request. The phone drawer's Main Menu still has it
+  and the theme's own search box stays dropped. Wiring: `Finder::menu_items()`.
+- **0.48.2** (19 October 2026): on every listing page (news, events, training,
+  funding, volunteering) the filters now sit directly under the page title,
+  above the featured block. The "All training" / "3 training" heading moved
+  with the list it describes. Template: `templates/public/archive.php`.
+- **0.49.0** (19 October 2026): dates on events and courses say the whole span
+  and whether it is running (`DateSpan`), the badge shows "to 22 Oct" for a
+  span and sits on the picture in a topic feed, and events and courses no
+  longer show a posted date. Listing pages (news, events, training, funding,
+  volunteering) have an editable title and introduction under Settings,
+  Listing pages (`ListingIntro`); the title feeds the browser title and the
+  introduction the meta description.
+- **0.49.1** (19 October 2026): the filter's Show button on the listing pages
+  is a solid navy button (white on navy, 10.8:1), the same height as the
+  dropdowns, instead of a white outlined box that read as another field.
+  The same session added the three topic feed blocks to ten network pages
+  (Young Lives Leeds, Culturally Diverse Hub, Funding, Health and Care
+  Leaders, Local Care Partnerships, Mental Health, Physical Sensory
+  Impairment, Representation, Support, Volunteering); each is one revision.
+- **0.49.2** (19 October 2026): the stand-in picture (Settings, Topic feed
+  pictures) now applies wherever a news, event or training card is drawn, not
+  only in topic feeds, and also when an item's own picture file has gone
+  missing (the imported stories often point at deleted files, which showed the
+  plain tile). No stand-in pictures are chosen on production yet. Learning
+  Disability (page 3427) got its three feed blocks.
+- **0.49.3** (19 October 2026): the filter row is truly aligned on the live
+  theme. Blocksy gives every label a 7.74px bottom margin, which pushed the Show
+  button about 4px below the dropdowns' centre line, and makes selects 45px
+  where the button is 44px. The label margin is reset and the dropdowns and
+  button are both 44px. Ships with 0.49.2 (stand-in pictures everywhere), which
+  had been built but not deployed.
+- **0.49.4** (19 October 2026): on the Events page the three dropdowns filled
+  the row and left the Show button alone on a second line. The dropdowns are now
+  capped at 260px (a dropdown is as wide as its longest option), so Topic, When,
+  Organisation and Show sit on one row on a desktop. On a phone they stay full
+  width behind the Filters button.

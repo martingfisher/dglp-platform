@@ -411,7 +411,7 @@ final class Seo {
 	private static function for_archive( string $type ): array {
 		global $wp_query;
 
-		$label  = Frontend::type_label( $type, true );
+		$label  = ListingIntro::title( $type );
 		$paged  = max( 1, (int) get_query_var( 'paged' ) );
 		$base   = Frontend::archive_url( $type );
 		$url    = $paged > 1 ? (string) get_pagenum_link( $paged, false ) : $base;
@@ -424,11 +424,16 @@ final class Seo {
 			}
 		}
 
-		$desc = sprintf(
-			/* translators: %s: content type, plural, lower case. */
-			__( '%s posted by organisations in the Doing Good Leeds Partnership: charities, community groups and social enterprises across Leeds.', 'dgl-platform' ),
-			$label
-		);
+		// The team's own intro, when there is one, is the description.
+		$desc = ListingIntro::description( $type );
+
+		if ( '' === $desc ) {
+			$desc = sprintf(
+				/* translators: %s: content type, plural, lower case. */
+				__( '%s posted by organisations in the Doing Good Leeds Partnership: charities, community groups and social enterprises across Leeds.', 'dgl-platform' ),
+				Frontend::type_label( $type, true )
+			);
+		}
 
 		return [
 			'kind'        => 'archive',
