@@ -1319,5 +1319,14 @@ clean. They are the only DGLP content on staging.
   1,324 images, 956 with no alt text (55 of them SVG, which the AltText.ai
   account has switched off). `wp alttext generate --dry-run` counts 953
   to process. Not run: it spends one credit per image.
-- **0.48.0 built** (19 October 2026, not yet deployed): the Topic feed
-  block, `[dgl_feed]` and "Topic feed" in the editor. See `docs/feed-block.md`.
+- **0.48.0 deployed** (19 October 2026, production): the Topic feed block,
+  `[dgl_feed]` and "Topic feed" in the editor. See `docs/feed-block.md`.
+  Installed from the commit-pinned zip with `wp plugin install ... --force`;
+  the restore point was the nightly automatic backup of 19 October 01:21.
+  Three feed blocks added to the Young Lives Leeds page (7968), between "How
+  we work" and "Contact" (one revision; restore it to take them out). Live
+  check: three sections with ids `dgl-feed-1` to `-3`, three `ItemList`s with
+  their own ids, 4 columns at 1280px and 1 at 390px, no horizontal overflow.
+- **0.48.1** (19 October 2026): the search magnifier is no longer added to
+  the Top Bar menu, DGLP's request. The phone drawer's Main Menu still has it
+  and the theme's own search box stays dropped. Wiring: `Finder::menu_items()`.

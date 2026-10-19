@@ -54,7 +54,7 @@ $schema    = (string) ( $data['schema'] ?? '' );
 				$when  = Feed::date_line( $item );
 				$org   = Frontend::organisation( $item )['name'];
 				$where = 'news' === $type ? '' : Frontend::where( $item );
-				$line  = implode( ' · ', array_filter( [ $where, $org ] ) );
+				$line  = implode( ' · ', array_unique( array_filter( [ $where, $org ] ) ) );
 				?>
 				<li class="dgl-feed__item">
 					<article class="dgl-feed__card">

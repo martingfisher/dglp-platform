@@ -4962,7 +4962,7 @@ $ok( [] === array_diff( $ds_made['spaces'], $ds_gone_spaces ) && [] === array_di
 $ok( null !== get_post( $ds_other ) && PostTypes::VENUE === get_post_type( $ds_other ), 'and leaves the organisation\'s own venue alone' );
 $ok( [] === \DGL\Demo\Command::remove( PostTypes::SPACE ) && [] === \DGL\Demo\Command::remove( PostTypes::VENUE ), 'a second remove finds nothing' );
 
-$group( 'Finder: the magnifier in the menus, the theme box gone, and the dialog at the foot of the page' );
+$group( 'Finder: the magnifier in the phone drawer, none in the Top Bar, the theme box gone, and the dialog at the foot of the page' );
 
 $fx_menus = [];
 foreach ( [ 'Top Bar', 'Main Menu', 'Footer' ] as $fx_name ) {
@@ -4973,10 +4973,10 @@ foreach ( [ 'Top Bar', 'Main Menu', 'Footer' ] as $fx_name ) {
 $fx_top   = wp_nav_menu( [ 'menu' => $fx_menus['Top Bar'], 'echo' => false, 'container' => false, 'fallback_cb' => false ] );
 $fx_main  = wp_nav_menu( [ 'menu' => $fx_menus['Main Menu'], 'echo' => false, 'container' => false, 'fallback_cb' => false ] );
 $fx_other = wp_nav_menu( [ 'menu' => $fx_menus['Footer'], 'echo' => false, 'container' => false, 'fallback_cb' => false ] );
-$ok( str_contains( $fx_top, 'dgl-finder-item--top-bar' ) && str_contains( $fx_top, 'data-dgl-finder-open' ) && 1 === substr_count( $fx_top, 'dgl-finder-trigger"' ), 'the Top Bar menu carries one trigger' );
-$ok( strrpos( $fx_top, '<li' ) === strrpos( $fx_top, '<li class="menu-item dgl-finder-item' ), 'as its last item' );
-$ok( str_contains( $fx_top, 'aria-haspopup="dialog"' ) && str_contains( $fx_top, 'aria-controls="dgl-finder"' ) && str_contains( $fx_top, '<svg' ) && str_contains( $fx_top, '>Search</span>' ), 'a button with a magnifier, a label and the dialog named' );
-$ok( str_contains( $fx_main, 'dgl-finder-item--main' ), 'the Main Menu carries it too, for the phone drawer' );
+$ok( ! str_contains( $fx_top, 'dgl-finder' ) && str_contains( $fx_top, 'News' ), 'the Top Bar menu carries no search button, and keeps its own items' );
+$ok( str_contains( $fx_main, 'dgl-finder-item--main' ) && str_contains( $fx_main, 'data-dgl-finder-open' ) && 1 === substr_count( $fx_main, 'dgl-finder-trigger"' ), 'the Main Menu carries one trigger, for the phone drawer' );
+$ok( strrpos( $fx_main, '<li' ) === strrpos( $fx_main, '<li class="menu-item dgl-finder-item' ), 'as its last item' );
+$ok( str_contains( $fx_main, 'aria-haspopup="dialog"' ) && str_contains( $fx_main, 'aria-controls="dgl-finder"' ) && str_contains( $fx_main, '<svg' ) && str_contains( $fx_main, '>Search</span>' ), 'a button with a magnifier, a label and the dialog named' );
 $ok( ! str_contains( $fx_other, 'dgl-finder' ), 'any other menu is left alone' );
 foreach ( $fx_menus as $fx_id ) {
 	wp_delete_nav_menu( $fx_id );
