@@ -699,11 +699,13 @@
 h2.dgl-listing__heading:only-child,
 .dgl-listing > h2.dgl-listing__heading { padding-bottom: 12px; border-bottom: 1px solid var(--dgl-border); margin-bottom: var(--dgl-gap); }
 
-.dgl-listing__filter { display: inline-flex; align-items: center; gap: 8px; font-size: 0.86em; color: var(--dgl-text-muted); }
+/* margin: 0 because the theme gives every label a bottom margin, which pushes the Show button off the dropdowns' centre line. */
+.dgl-listing__filter { display: inline-flex; align-items: center; gap: 8px; margin: 0; font-size: 0.86em; color: var(--dgl-text-muted); }
 
 .dgl-listing__filterlabel { font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; font-size: 12px; }
 
 .dgl-pub .dgl-listing__select {
+	height: 44px;
 	min-height: 44px;
 	padding: 0 32px 0 12px;
 	border: var(--dgl-field-border) solid var(--dgl-field-outline);
@@ -716,6 +718,7 @@ h2.dgl-listing__heading:only-child,
 .dgl-pub .dgl-listing__select:focus-visible { outline: 3px solid var(--dgl-focus); outline-offset: 2px; }
 
 .dgl-pub .dgl-listing__apply {
+	height: 44px;
 	min-height: 44px;
 	padding: 0 22px;
 	border: 2px solid var(--dgl-primary);

@@ -1354,3 +1354,9 @@ clean. They are the only DGLP content on staging.
   missing (the imported stories often point at deleted files, which showed the
   plain tile). No stand-in pictures are chosen on production yet. Learning
   Disability (page 3427) got its three feed blocks.
+- **0.49.3** (19 October 2026): the filter row is truly aligned on the live
+  theme. Blocksy gives every label a 7.74px bottom margin, which pushed the Show
+  button about 4px below the dropdowns' centre line, and makes selects 45px
+  where the button is 44px. The label margin is reset and the dropdowns and
+  button are both 44px. Ships with 0.49.2 (stand-in pictures everywhere), which
+  had been built but not deployed.
