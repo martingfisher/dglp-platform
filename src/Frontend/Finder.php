@@ -19,8 +19,8 @@ defined( 'ABSPATH' ) || exit;
  * Blocksy Pro "Search Input" element in the top row) is dropped from the
  * header layout as it is read, so nothing stored changes and switching the
  * plugin off brings it straight back. A button with a magnifier joins the
- * end of the Top Bar menu, where the box was, and the end of the Main Menu
- * for the phone drawer. Pressing it opens a dialog in the middle of the
+ * end of the Main Menu for the phone drawer (it joined the Top Bar menu too,
+ * where the box was, until DGLP asked for it to go). Pressing it opens a dialog in the middle of the
  * screen: one box, a row of kinds to search (all, events, news, training,
  * spaces to hire, organisations) and Search. The dialog is the ordinary
  * search form, so it lands on the same results page as before.
@@ -99,17 +99,21 @@ final class Finder {
 	}
 
 	/**
-	 * Add the trigger to the end of the two menus that carry it.
+	 * Add the trigger to the end of the menu that carries it: the Main
+	 * Menu, for the phone drawer. The Top Bar had it until 19 October 2026.
 	 *
 	 * @param string $items The menu's list items.
 	 * @param object $args  The menu arguments, with `menu` resolved to a term.
 	 */
 	public static function menu_items( string $items, object $args ): string {
-		if ( is_admin() || '' === self::placement( $args ) ) {
+		$placement = self::placement( $args );
+
+		// The desktop Top Bar no longer carries the magnifier (DGLP, 19 October 2026). The phone drawer does.
+		if ( is_admin() || 'main' !== $placement ) {
 			return $items;
 		}
 
-		return $items . self::item( self::placement( $args ) );
+		return $items . self::item( $placement );
 	}
 
 	/**

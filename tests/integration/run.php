@@ -3961,7 +3961,7 @@ update_post_meta( $cd_event, 'dgl_format', 'in_person' );
 update_post_meta( $cd_event, 'dgl_venue_name', 'The Hub' );
 \DGL\Events\Series::stamp( $cd_event, PostTypes::EVENT );
 $cd_emeta = \DGL\Frontend\Cards::meta( get_post( $cd_event ) );
-$ok( 3 === count( $cd_emeta ) && 'The Hub' === $cd_emeta[0] && 'Org A' === $cd_emeta[1] && str_starts_with( $cd_emeta[2], 'Posted: ' ) && ! str_contains( implode( ' ', $cd_emeta ), '2031' ), 'a one-off event: where, organisation, when it was posted; the event date is on the leaf (' . implode( ' / ', $cd_emeta ) . ')' );
+$ok( 3 === count( $cd_emeta ) && str_contains( $cd_emeta[0], '4 Mar 2031, 18:30' ) && 'The Hub' === $cd_emeta[1] && 'Org A' === $cd_emeta[2] && ! str_contains( implode( ' ', $cd_emeta ), 'Posted' ), 'a one-off event: its date and time, where, organisation, and no posted date (' . implode( ' / ', $cd_emeta ) . ')' );
 $cd_leaf = \DGL\Frontend\Cards::date_parts( get_post( $cd_event ) );
 $ok( null !== $cd_leaf && 'Mar' === $cd_leaf['month'] && '4' === $cd_leaf['day'] && '18:30' === $cd_leaf['time'] && '2031-03-04T18:30' === $cd_leaf['iso'], 'the leaf carries the event date and time (' . implode( ' ', $cd_leaf ?? [] ) . ')' );
 $cd_series = $make_item( $org_a, $alice, Statuses::LIVE );
@@ -3970,7 +3970,7 @@ update_post_meta( $cd_series, 'dgl_start_datetime', $cd_tue->format( 'Y-m-d' ) .
 update_post_meta( $cd_series, 'dgl_repeat', [ 'freq' => 'weekly', 'weekdays' => [ (int) $cd_tue->format( 'N' ) ], 'until' => $cd_tue->modify( '+2 months' )->format( 'Y-m-d' ) ] );
 \DGL\Events\Series::stamp( $cd_series, PostTypes::EVENT );
 $cd_smeta = \DGL\Frontend\Cards::meta( get_post( $cd_series ) );
-$ok( str_starts_with( $cd_smeta[0], 'Every ' ) && str_contains( $cd_smeta[0], '13:00' ) && str_starts_with( end( $cd_smeta ), 'Posted: ' ), 'a series: its pattern, then when it was posted (' . implode( ' / ', $cd_smeta ) . ')' );
+$ok( str_starts_with( $cd_smeta[0], 'Every ' ) && str_contains( $cd_smeta[0], '13:00' ) && str_starts_with( $cd_smeta[1], 'Next ' ) && ! str_contains( implode( ' ', $cd_smeta ), 'Posted' ), 'a series: its pattern, then its next date, and no posted date (' . implode( ' / ', $cd_smeta ) . ')' );
 $ok( '13:00' === \DGL\Frontend\Cards::date_parts( get_post( $cd_series ) )['time'], 'and its leaf carries the next date\'s time' );
 \DGL\Events\Cancel::cancel( $cd_event, '', $alice );
 $ok( 'Cancelled' === \DGL\Frontend\Cards::meta( get_post( $cd_event ) )[0], 'a cancelled event says so first' );
@@ -4513,7 +4513,8 @@ $ok( 7 === count( array_filter( $demo_tr, static fn( int $id ): bool => in_array
 $ok( 2 === count( array_filter( $demo_tr, static fn( int $id ): bool => 'blended' === get_post_meta( $id, 'dgl_delivery', true ) ) ) && 2 === count( array_filter( $demo_tr, static fn( int $id ): bool => 'online' === get_post_meta( $id, 'dgl_delivery', true ) ) ), 'two blended, two online, three in person' );
 $demo_tr_leaf = \DGL\Frontend\Cards::date_parts( get_post( $demo_tr[0] ) );
 $ok( null !== $demo_tr_leaf && '' === $demo_tr_leaf['time'] && $demo_tr_leaf['iso'] === get_post_meta( $demo_tr[0], 'dgl_start_date', true ), 'a training listing\'s leaf is its start date with no time' );
-$ok( str_starts_with( end( \DGL\Frontend\Cards::meta( get_post( $demo_tr[0] ) ) ) ?: '', 'Posted: ' ), 'and its line ends with when it was posted' );
+$demo_tr_line = implode( ' / ', \DGL\Frontend\Cards::meta( get_post( $demo_tr[0] ) ) );
+$ok( str_contains( $demo_tr_line, wp_date( 'Y', strtotime( (string) get_post_meta( $demo_tr[0], 'dgl_start_date', true ) ) ) ) && ! str_contains( $demo_tr_line, 'Posted' ), 'and its line says its date, with the year, and not when it was posted' );
 $ok( 0 === count( \DGL\Demo\Command::remove() ), 'removing demo events leaves training alone' );
 $ok( 7 === count( \DGL\Demo\Command::remove( PostTypes::TRAINING ) ) && null === get_post( $demo_tr[0] ), 'removing demo training takes the seven' );
 
@@ -4591,7 +4592,7 @@ $ok( str_contains( $home_html, 'Forum Central' ) && str_contains( $home_html, 'V
 
 $group( 'Home page shortcodes: the live sections for a page built in the theme' );
 
-$ok( 7 === count( array_filter( \DGL\Frontend\HomeBlocks::TAGS, 'shortcode_exists' ) ), 'seven shortcodes are registered' );
+$ok( 8 === count( array_filter( \DGL\Frontend\HomeBlocks::TAGS, 'shortcode_exists' ) ), 'eight shortcodes are registered' );
 $sc_events = do_shortcode( '[dgl_home_events count="2"]' );
 $ok( str_starts_with( $sc_events, '<div class="dgl-home-block dgl-home-block--events">' ) && 2 === substr_count( $sc_events, 'class="dgl-home__row"' ) && str_contains( $sc_events, '>What&#039;s on</h2>' ) && str_contains( $sc_events, '>All events</a>' ), 'events: wrapped, two rows, the default heading and the All link' );
 $ok( $home_evt['later'] === (int) ( preg_match( '#<h3 class="dgl-home__rowtitle"><a href="[^"]*/(?:events|\?[^"]*)[^"]*">Home event later</a>#', $sc_events ) ? $home_evt['later'] : 0 ), 'and the featured event comes first' );
@@ -4962,7 +4963,7 @@ $ok( [] === array_diff( $ds_made['spaces'], $ds_gone_spaces ) && [] === array_di
 $ok( null !== get_post( $ds_other ) && PostTypes::VENUE === get_post_type( $ds_other ), 'and leaves the organisation\'s own venue alone' );
 $ok( [] === \DGL\Demo\Command::remove( PostTypes::SPACE ) && [] === \DGL\Demo\Command::remove( PostTypes::VENUE ), 'a second remove finds nothing' );
 
-$group( 'Finder: the magnifier in the menus, the theme box gone, and the dialog at the foot of the page' );
+$group( 'Finder: the magnifier in the phone drawer, none in the Top Bar, the theme box gone, and the dialog at the foot of the page' );
 
 $fx_menus = [];
 foreach ( [ 'Top Bar', 'Main Menu', 'Footer' ] as $fx_name ) {
@@ -4973,10 +4974,10 @@ foreach ( [ 'Top Bar', 'Main Menu', 'Footer' ] as $fx_name ) {
 $fx_top   = wp_nav_menu( [ 'menu' => $fx_menus['Top Bar'], 'echo' => false, 'container' => false, 'fallback_cb' => false ] );
 $fx_main  = wp_nav_menu( [ 'menu' => $fx_menus['Main Menu'], 'echo' => false, 'container' => false, 'fallback_cb' => false ] );
 $fx_other = wp_nav_menu( [ 'menu' => $fx_menus['Footer'], 'echo' => false, 'container' => false, 'fallback_cb' => false ] );
-$ok( str_contains( $fx_top, 'dgl-finder-item--top-bar' ) && str_contains( $fx_top, 'data-dgl-finder-open' ) && 1 === substr_count( $fx_top, 'dgl-finder-trigger"' ), 'the Top Bar menu carries one trigger' );
-$ok( strrpos( $fx_top, '<li' ) === strrpos( $fx_top, '<li class="menu-item dgl-finder-item' ), 'as its last item' );
-$ok( str_contains( $fx_top, 'aria-haspopup="dialog"' ) && str_contains( $fx_top, 'aria-controls="dgl-finder"' ) && str_contains( $fx_top, '<svg' ) && str_contains( $fx_top, '>Search</span>' ), 'a button with a magnifier, a label and the dialog named' );
-$ok( str_contains( $fx_main, 'dgl-finder-item--main' ), 'the Main Menu carries it too, for the phone drawer' );
+$ok( ! str_contains( $fx_top, 'dgl-finder' ) && str_contains( $fx_top, 'News' ), 'the Top Bar menu carries no search button, and keeps its own items' );
+$ok( str_contains( $fx_main, 'dgl-finder-item--main' ) && str_contains( $fx_main, 'data-dgl-finder-open' ) && 1 === substr_count( $fx_main, 'dgl-finder-trigger"' ), 'the Main Menu carries one trigger, for the phone drawer' );
+$ok( strrpos( $fx_main, '<li' ) === strrpos( $fx_main, '<li class="menu-item dgl-finder-item' ), 'as its last item' );
+$ok( str_contains( $fx_main, 'aria-haspopup="dialog"' ) && str_contains( $fx_main, 'aria-controls="dgl-finder"' ) && str_contains( $fx_main, '<svg' ) && str_contains( $fx_main, '>Search</span>' ), 'a button with a magnifier, a label and the dialog named' );
 $ok( ! str_contains( $fx_other, 'dgl-finder' ), 'any other menu is left alone' );
 foreach ( $fx_menus as $fx_id ) {
 	wp_delete_nav_menu( $fx_id );
@@ -5517,6 +5518,151 @@ wp_delete_post( $am_o2, true );
 // The reply-time note, the space types and the login screen.
 $ok( isset( \DGL\Schema\Types\Space::TYPES['office'] ) && 'Office/hot-desking' === \DGL\Schema\Types\Space::TYPES['office'], 'Office/hot-desking is a type of space' );
 $ok( str_contains( \DGL\Dashboard\LoginBrand::css(), 'body.login' ) && ! str_contains( \DGL\Dashboard\LoginBrand::css(), '<' ), 'the login screen styling is plain CSS' );
+
+/* --------------------------------------------------------- topic feed */
+
+$group( 'Topic feed: one topic, one type, several blocks on a page' );
+
+\DGL\Topics\Topics::sync();
+$tf_topic = 'children-and-young-people';
+
+foreach ( [ 1, 2, 3, 4, 5 ] as $tf_i ) {
+	$tf_id = wp_insert_post( [ 'post_type' => PostTypes::NEWS, 'post_title' => "Feed story {$tf_i}", 'post_status' => Statuses::LIVE, 'post_author' => $alice, 'post_date' => "2026-10-0{$tf_i} 09:00:00" ] );
+	wp_set_object_terms( $tf_id, $tf_topic, \DGL\Taxonomies::TOPIC );
+}
+
+$tf_off = wp_insert_post( [ 'post_type' => PostTypes::NEWS, 'post_title' => 'Feed story from another topic', 'post_status' => Statuses::LIVE, 'post_author' => $alice, 'post_date' => '2026-10-09 09:00:00' ] );
+wp_set_object_terms( $tf_off, 'mental-health', \DGL\Taxonomies::TOPIC );
+
+$tf_html = do_shortcode( '[dgl_feed type="news" topic="' . $tf_topic . '"][dgl_feed type="news" topic="' . $tf_topic . '" count="2"][dgl_feed type="event" topic="' . $tf_topic . '"]' );
+preg_match_all( '/<section[^>]*id="(dgl-feed-\d+)"/', $tf_html, $tf_ids );
+$ok( 3 === count( $tf_ids[1] ) && 3 === count( array_unique( $tf_ids[1] ) ), 'three blocks on one page have three different ids' );
+preg_match_all( '/\sid="([^"]+)"/', $tf_html, $tf_all );
+$ok( count( $tf_all[1] ) === count( array_unique( $tf_all[1] ) ), 'and no id repeats anywhere in them' );
+$ok( str_contains( $tf_html, 'Feed story 5' ) && ! str_contains( $tf_html, 'Feed story from another topic' ), 'the topic\'s stories are shown and another topic\'s are not' );
+$ok( 4 === preg_match_all( '/<article/', explode( 'id="' . $tf_ids[1][1] . '"', $tf_html )[0] ), 'four cards by default' );
+$ok( 2 === preg_match_all( '/<article/', explode( 'dgl-feed--event', explode( 'id="' . $tf_ids[1][1] . '"', $tf_html )[1] )[0] ), 'count="2" shows two' );
+$ok( 1 === preg_match( '#<time datetime="2026-10-05">5 Oct 2026</time>#', $tf_html ), 'a story carries its posted date as a machine-readable time' );
+$ok( 1 === preg_match( '#href="[^"]*topic=children-and-young-people[^"]*">All news on Children and Young People</a>#', $tf_html ), 'the All link goes to that topic\'s list' );
+
+preg_match_all( '#<script type="application/ld\+json">(.*?)</script>#s', $tf_html, $tf_ld );
+$tf_graphs = array_map( static fn( string $j ): array => (array) json_decode( $j, true ), $tf_ld[1] );
+$ok( [] !== $tf_graphs && 'ItemList' === ( $tf_graphs[0]['@graph'][0]['@type'] ?? '' ), 'a block states its list as an ItemList' );
+$tf_list_ids = array_map( static fn( array $g ): string => (string) ( $g['@graph'][0]['@id'] ?? '' ), $tf_graphs );
+$ok( count( $tf_list_ids ) === count( array_unique( $tf_list_ids ) ), 'each block\'s ItemList has its own id' );
+
+$tf_empty = do_shortcode( '[dgl_feed type="news" topic="wellbeing"]' );
+$ok( substr_count( $tf_empty, '<article' ) > 0 && str_contains( $tf_empty, '>Latest news</h2>' ), 'a topic with nothing yet shows the most recent news, headed as the latest' );
+$ok( ! str_contains( $tf_empty, 'topic=wellbeing' ), 'and does not link to a topic it has nothing in' );
+$ok( '' !== do_shortcode( '[dgl_feed type="bogus" topic="not a slug!" count="500"]' ), 'junk attributes still draw a sensible row' );
+$ok( ! str_contains( do_shortcode( '[dgl_feed type="news" topic="' . $tf_topic . '" heading=""]' ), '<h2' ), 'heading="" drops the heading' );
+
+$tf_block = render_block( [ 'blockName' => 'dgl/feed', 'attrs' => [ 'type' => 'news', 'topic' => $tf_topic, 'count' => 3 ], 'innerBlocks' => [], 'innerHTML' => '', 'innerContent' => [] ] );
+$ok( null !== WP_Block_Type_Registry::get_instance()->get_registered( 'dgl/feed' ) && 3 === preg_match_all( '/<article/', $tf_block ), 'the editor block is registered and draws the same list' );
+
+$ok( str_contains( $tf_html, 'dgl-card__img--none' ), 'an item with no picture and no stand-in shows the plain tile' );
+update_option( 'dgl_feed_image_news', 0 );
+
+/* ------------------------------------------------- listing filter order */
+
+$group( 'Listing pages: the filter sits above the featured block and the list' );
+
+foreach ( [ 1, 2, 3 ] as $lf_i ) {
+	$lf_id = wp_insert_post( [ 'post_type' => PostTypes::TRAINING, 'post_title' => "Filter order course {$lf_i}", 'post_status' => Statuses::LIVE, 'post_author' => $alice ] );
+	wp_set_object_terms( $lf_id, 'mental-health', \DGL\Taxonomies::TOPIC );
+}
+
+$GLOBALS['wp_query'] = new WP_Query( [ 'post_type' => PostTypes::TRAINING, 'post_status' => Statuses::LIVE, 'posts_per_page' => 10 ] );
+$lf_html = \DGL\Dashboard\View::render( 'public/archive', [ 'type' => PostTypes::TRAINING ] );
+$lf_form = strpos( $lf_html, 'class="dgl-listing__filters"' );
+$lf_hero = strpos( $lf_html, 'class="dgl-hero"' );
+$lf_head = strpos( $lf_html, 'class="dgl-listing__heading"' );
+$lf_list = strpos( $lf_html, 'class="dgl-pub__list"' );
+$ok( false !== $lf_form && false !== $lf_hero && false !== $lf_head && false !== $lf_list, 'the page has its filters, a featured block, a list heading and a list' );
+$ok( $lf_form < $lf_hero && $lf_hero < $lf_head && $lf_head < $lf_list, 'in that order: filters, featured, heading, list' );
+$ok( 1 === substr_count( $lf_html, 'class="dgl-listing__heading"' ), 'and the heading is printed once' );
+$ok( ! str_contains( substr( $lf_html, (int) $lf_form, (int) $lf_hero - (int) $lf_form ), 'dgl-listing__heading' ), 'not inside the filter form any more' );
+
+/* ------------------------------------------------------- date spans */
+
+$group( 'Dates: a course that runs over several days says so, and says when it is running now' );
+
+$ds_today = new DateTimeImmutable( 'now', wp_timezone() );
+$ds_run   = wp_insert_post( [ 'post_type' => PostTypes::TRAINING, 'post_title' => 'Span running course', 'post_status' => Statuses::LIVE, 'post_author' => $alice ] );
+\DGL\Schema\Store::write( $ds_run, PostTypes::TRAINING, [ 'start_date' => $ds_today->modify( '-2 days' )->format( 'Y-m-d' ), 'end_date' => $ds_today->modify( '+3 days' )->format( 'Y-m-d' ) ] );
+$ds_soon = wp_insert_post( [ 'post_type' => PostTypes::TRAINING, 'post_title' => 'Span future course', 'post_status' => Statuses::LIVE, 'post_author' => $alice ] );
+\DGL\Schema\Store::write( $ds_soon, PostTypes::TRAINING, [ 'start_date' => $ds_today->modify( '+10 days' )->format( 'Y-m-d' ), 'end_date' => $ds_today->modify( '+12 days' )->format( 'Y-m-d' ) ] );
+$ds_one = wp_insert_post( [ 'post_type' => PostTypes::TRAINING, 'post_title' => 'Span one day course', 'post_status' => Statuses::LIVE, 'post_author' => $alice ] );
+\DGL\Schema\Store::write( $ds_one, PostTypes::TRAINING, [ 'start_date' => $ds_today->modify( '+5 days' )->format( 'Y-m-d' ) ] );
+
+$ds_run_line = \DGL\Frontend\Cards::when_line( get_post( $ds_run ) );
+$ok( null !== $ds_run_line && str_starts_with( $ds_run_line['text'], 'Running now, until ' ), 'a course already under way says it is running now and when it ends' );
+$ok( 'to ' . $ds_today->modify( '+3 days' )->format( 'j M' ) === \DGL\Frontend\Cards::date_parts( get_post( $ds_run ) )['to'], 'and its leaf carries the end' );
+$ok( str_contains( \DGL\Frontend\Cards::date_block( get_post( $ds_run ) ), 'dgl-date__to' ) && str_contains( \DGL\Frontend\Cards::date_block( get_post( $ds_run ) ), 'dgl-date--span' ), 'the leaf prints the extra line and widens for it' );
+$ok( str_contains( \DGL\Frontend\Cards::when_line( get_post( $ds_soon ) )['text'], ' to ' ) && ! str_contains( \DGL\Frontend\Cards::when_line( get_post( $ds_soon ) )['text'], 'Running' ), 'a course that has not started says its whole span' );
+$ok( '' === \DGL\Frontend\Cards::date_parts( get_post( $ds_one ) )['to'] && ! str_contains( \DGL\Frontend\Cards::date_block( get_post( $ds_one ) ), 'dgl-date__to' ), 'a one-day course has no extra line on its leaf' );
+
+foreach ( [ $ds_run, $ds_soon, $ds_one ] as $ds_id ) {
+	wp_set_object_terms( $ds_id, 'workforce', \DGL\Taxonomies::TOPIC );
+}
+$ds_feed = do_shortcode( '[dgl_feed type="training" topic="workforce" count="12"]' );
+$ok( str_contains( $ds_feed, 'dgl-date--span' ) && str_contains( $ds_feed, 'Running now, until ' ), 'a topic feed shows the span on the card and says it is running' );
+$ok( 1 === preg_match( '#<article class="dgl-feed__card">\s*<time class="dgl-date#', $ds_feed ), 'with the date leaf on the picture' );
+$ok( ! str_contains( do_shortcode( '[dgl_feed type="news"]' ), 'dgl-date' ), 'but news cards carry no leaf' );
+
+/* ----------------------------------------------------- listing intro */
+
+$group( 'Listing pages: the team can change the title and the intro' );
+
+$li_plain = \DGL\Dashboard\View::render( 'public/archive', [ 'type' => PostTypes::TRAINING ] );
+$ok( str_contains( $li_plain, '>Training</h1>' ) && str_contains( $li_plain, 'Posted by organisations in the Doing Good Leeds Partnership.' ), 'with nothing set, the standard title and line' );
+$ok( str_contains( \DGL\Frontend\ListingIntro::intro_html( PostTypes::TRAINING ), '<p>' ), 'the standard line is a paragraph' );
+
+update_option( \DGL\Frontend\ListingIntro::option( 'title', PostTypes::TRAINING ), 'Courses and learning' );
+update_option( \DGL\Frontend\ListingIntro::option( 'intro', PostTypes::TRAINING ), '<p>Find a <a href="/x/">course</a> near you.</p><script>alert(1)</script>' );
+$li_custom = \DGL\Dashboard\View::render( 'public/archive', [ 'type' => PostTypes::TRAINING ] );
+$ok( str_contains( $li_custom, '>Courses and learning</h1>' ), 'a custom title is the page heading' );
+$ok( str_contains( $li_custom, 'Find a <a href="/x/">course</a> near you.' ), 'a custom intro replaces the standard line, links kept' );
+$ok( ! str_contains( $li_custom, 'Posted by organisations in the Doing Good Leeds Partnership.' ) && ! str_contains( $li_custom, '<script>alert' ), 'the standard line is gone and script is stripped' );
+$ok( str_contains( $li_custom, '>All training</h2>' ) || str_contains( $li_custom, 'All training' ), 'the list heading still names the type, not the custom title' );
+$ok( 'Courses and learning' === apply_filters( 'post_type_archive_title', 'Training', PostTypes::TRAINING ), 'the browser title follows the custom title' );
+$ok( 'Training' === apply_filters( 'post_type_archive_title', 'Training', 'page' ), 'and only for our listing pages' );
+$ok( str_starts_with( \DGL\Frontend\ListingIntro::description( PostTypes::TRAINING ), 'Find a course near you.' ), 'the meta description is the intro as plain text' );
+
+update_option( \DGL\Frontend\ListingIntro::option( 'title', PostTypes::TRAINING ), '' );
+update_option( \DGL\Frontend\ListingIntro::option( 'intro', PostTypes::TRAINING ), '<p> </p>' );
+$ok( str_contains( \DGL\Dashboard\View::render( 'public/archive', [ 'type' => PostTypes::TRAINING ] ), '>Training</h1>' ) && '' === \DGL\Frontend\ListingIntro::description( PostTypes::TRAINING ), 'emptied again, an empty-looking intro falls back to the standard' );
+delete_option( \DGL\Frontend\ListingIntro::option( 'title', PostTypes::TRAINING ) );
+delete_option( \DGL\Frontend\ListingIntro::option( 'intro', PostTypes::TRAINING ) );
+
+/* ------------------------------------------------ stand-in pictures */
+
+$group( 'Topic feed: a missing picture file falls back to the stand-in, not the plain tile' );
+
+$sp_att = wp_insert_attachment( [ 'post_title' => 'stand-in picture', 'post_mime_type' => 'image/png', 'post_status' => 'inherit' ], 'standin.png' );
+add_filter( 'wp_get_attachment_image', static fn( $html, $id ) => (int) $id === (int) $GLOBALS['sp_att_id'] ? '<img class="dgl-card__img dgl-card__img--stand-in" src="/standin.png" alt="">' : $html, 10, 2 );
+$GLOBALS['sp_att_id'] = $sp_att;
+update_option( 'dgl_feed_image_news', $sp_att );
+
+$sp_story = wp_insert_post( [ 'post_type' => PostTypes::NEWS, 'post_title' => 'Story with a lost picture', 'post_status' => Statuses::LIVE, 'post_author' => $alice ] );
+\DGL\Schema\Store::write( $sp_story, PostTypes::NEWS, [ 'image' => 99999999 ] );
+$sp_html = \DGL\Frontend\Feed::picture( get_post( $sp_story ), 'news' );
+$ok( str_contains( $sp_html, 'dgl-card__img--stand-in' ), 'an item whose picture file is gone shows the stand-in' );
+
+$sp_plain = wp_insert_post( [ 'post_type' => PostTypes::NEWS, 'post_title' => 'Story with no picture', 'post_status' => Statuses::LIVE, 'post_author' => $alice ] );
+$ok( str_contains( \DGL\Frontend\Feed::picture( get_post( $sp_plain ), 'news' ), 'dgl-card__img--stand-in' ), 'and so does one with no picture at all' );
+
+$ok( str_contains( \DGL\Dashboard\View::render( 'public/card-row', [ 'item' => get_post( $sp_plain ) ] ), 'dgl-card__img--stand-in' ), 'the news list rows use the stand-in too' );
+$ok( str_contains( \DGL\Frontend\Cards::picture( get_post( $sp_story ), 'large', true ), 'dgl-card__img--stand-in' ), 'and the featured block, at its larger size' );
+$ok( str_contains( \DGL\Frontend\HomeBlocks::section( 'news', [ 'count' => 24 ] ), 'dgl-card__img--stand-in' ), 'and the home page news block' );
+$sp_event = wp_insert_post( [ 'post_type' => PostTypes::EVENT, 'post_title' => 'Event with no picture', 'post_status' => Statuses::LIVE, 'post_author' => $alice ] );
+$ok( str_contains( \DGL\Frontend\Cards::picture( get_post( $sp_event ), 'medium' ), 'dgl-card__img--none' ), 'an event is not given the news picture: each type has its own' );
+$sp_venue = wp_insert_post( [ 'post_type' => PostTypes::VENUE, 'post_title' => 'Venue with no picture', 'post_status' => Statuses::LIVE, 'post_author' => $alice ] );
+$ok( str_contains( \DGL\Frontend\Cards::picture( get_post( $sp_venue ), 'medium' ), 'dgl-card__img--none' ), 'and a venue, which has no setting, keeps the plain tile' );
+
+update_option( 'dgl_feed_image_news', 0 );
+$ok( str_contains( \DGL\Frontend\Feed::picture( get_post( $sp_story ), 'news' ), 'dgl-card__img--none' ), 'with no stand-in chosen, either gets the plain tile' );
+delete_option( 'dgl_feed_image_news' );
 
 /* ----------------------------------------------------------------- report */
 

@@ -311,6 +311,59 @@ every night, and each one opens the full advert on VAL's website in a
 new tab. If the
 update stops working, System health says so under "Jobs from VAL".
 
+## Listing pages: title and introduction
+
+`/news/`, `/events/`, `/training/`, `/funding/` and `/volunteering/` are
+drawn by the plugin, so they are not pages in the block editor. Their title
+and the introduction under it are set in **Settings, Listing pages**: a title
+box and a small editor for the introduction, one pair per page. Leave a box
+empty to keep the standard wording. The title is also the page's browser title
+and its name in search results; the introduction is its description in search
+results.
+
+## Dates on events and training
+
+An event or course now says when it happens, in words, and no longer shows when
+it was posted:
+
+- A one-day event: "Tue 20 Oct 2026, 10:00" (or "Today, 18:30" on the day).
+- A course over several days: "Thu 15 to Thu 22 Oct 2026". The badge shows the
+  start day with "to 22 Oct" under it.
+- A course that has started and not finished: "Running now, until Thu 22 Oct
+  2026", so it never reads as a date in the past.
+- A repeating event keeps its pattern ("Every Tuesday, 13:00") and its next date.
+
+News still shows when it was posted.
+
+## The topic feed block
+
+A network's page can show its own news, events or training. In the block
+editor add the **Topic feed** block (under Widgets) and choose two things in
+the sidebar: the **content type** (News, Events or Training) and the
+**topic** (for example Children and Young People). Add a second or third
+block to the same page for the other types. Each block shows four items by
+default, picture on top, then the title, the date and the organisation.
+
+Prefer a shortcode? The same block is
+`[dgl_feed type="news" topic="children-and-young-people"]`. The other
+options are `count` (1 to 12), `heading` (empty for none) and `link="no"`.
+
+Things worth knowing:
+
+- Events and training show the soonest first. News shows the newest first.
+- If the topic has nothing yet, the block shows the newest of that type
+  instead, under the plain heading ("Latest news"), so a story is never
+  presented as belonging to a network it does not.
+- An item with no picture, or whose picture file has gone missing, shows the
+  picture chosen for its type under **Settings, Topic feed pictures** (one each
+  for News, Events and Training; administrators only). That applies everywhere
+  the item is shown as a card: topic feeds, the News, Events and Training pages,
+  the featured block, the home page lists and search results. With none chosen
+  it shows a plain coloured tile, so choose all three.
+- Search engines read the block as ordinary page text, and each block also
+  states its list as data.
+- Which topic belongs to which page is in `docs/feed-block.md`.
+
 ## The directory
 
 Every organisation's profile carries the details from Forum Central's list:
