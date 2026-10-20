@@ -39,9 +39,9 @@ $reasons_of = static function ( array $match ): string {
 <div class="dgl-signin">
 	<header class="dgl-page-head">
 		<div>
-			<h1 class="dgl-page-head__title"><?php esc_html_e( 'Join the user area', 'dgl-platform' ); ?></h1>
+			<h1 class="dgl-page-head__title"><?php esc_html_e( 'Join the Doing Good Leeds platform', 'dgl-platform' ); ?></h1>
 			<?php if ( 'email' === $stage ) : ?>
-				<p class="dgl-page-head__lede"><?php esc_html_e( 'For people at organisations in the Doing Good Leeds Partnership. Start with your work email address: it is how we tell which organisation you are part of.', 'dgl-platform' ); ?></p>
+				<p class="dgl-page-head__lede"><?php esc_html_e( 'For local community groups and charity organisations in Leeds to share your news, events, training, and room hire. Start with your work email address: it is how we tell which organisation you are part of.', 'dgl-platform' ); ?></p>
 			<?php endif; ?>
 		</div>
 	</header>
@@ -82,12 +82,12 @@ $reasons_of = static function ( array $match ): string {
 			<div class="dgl-field-row">
 				<label class="dgl-label" for="dgl_email"><?php esc_html_e( 'Your work email address', 'dgl-platform' ); ?> <span class="dgl-req" aria-hidden="true">*</span></label>
 				<input class="dgl-field" type="email" id="dgl_email" name="dgl_email" required autocomplete="email" value="<?php echo esc_attr( (string) ( $data['email'] ?? '' ) ); ?>">
-				<p class="dgl-help"><?php esc_html_e( 'We send a link to confirm it is yours. Nothing is created until you use it.', 'dgl-platform' ); ?></p>
+				<p class="dgl-help"><?php esc_html_e( 'We send a link to your email address. Click it to confirm your account.', 'dgl-platform' ); ?></p>
 			</div>
 			<button class="dgl-button" type="submit"><?php esc_html_e( 'Send me the link', 'dgl-platform' ); ?></button>
 		</form>
 		<p class="dgl-signin__foot">
-			<?php esc_html_e( 'Already a member?', 'dgl-platform' ); ?>
+			<?php esc_html_e( 'Already got an account?', 'dgl-platform' ); ?>
 			<a href="<?php echo esc_url( Router::url() ); ?>"><?php esc_html_e( 'Sign in', 'dgl-platform' ); ?></a>
 		</p>
 
@@ -125,7 +125,7 @@ $reasons_of = static function ( array $match ): string {
 				<?php
 				printf(
 					/* translators: %s: email address. */
-					esc_html__( 'Your address is confirmed: %s. That is what you will sign in with.', 'dgl-platform' ),
+					esc_html__( 'Your email address is confirmed: %s. Use this to sign in.', 'dgl-platform' ),
 					'<strong>' . esc_html( (string) ( $data['email'] ?? '' ) ) . '</strong>'
 				);
 				?>
@@ -196,7 +196,7 @@ $reasons_of = static function ( array $match ): string {
 					<input type="radio" name="dgl_intent" value="claim" <?php checked( 'claim', $intent ); ?>>
 					<span>
 						<strong><?php echo 'match' === $stage ? esc_html__( 'A different organisation on the list', 'dgl-platform' ) : esc_html__( 'An organisation on the list', 'dgl-platform' ); ?></strong>
-						<span class="dgl-help"><?php esc_html_e( 'Find it below. The DGLP team check you are part of it first, usually within a working day; then you can add and post listings for it.', 'dgl-platform' ); ?></span>
+						<span class="dgl-help"><?php esc_html_e( 'Find it below. The DGLP team check you are part of it before you can post; you can save drafts in the meantime.', 'dgl-platform' ); ?></span>
 					</span>
 				</label>
 				<label class="dgl-check">
@@ -239,7 +239,7 @@ $reasons_of = static function ( array $match ): string {
 
 			<div class="dgl-join__block" data-dgl-when="register">
 				<h2 class="dgl-section__title"><?php esc_html_e( 'Register your organisation', 'dgl-platform' ); ?></h2>
-				<p class="dgl-help"><?php esc_html_e( 'Only if it is not on the list. The DGLP team check every new organisation before it can post; you can draft in the meantime. We check what you type against the list, so the same organisation is not listed twice.', 'dgl-platform' ); ?></p>
+				<p class="dgl-help"><?php esc_html_e( 'Only if it is not on the list. The DGLP team check every new organisation before it can post; you can draft in the meantime.', 'dgl-platform' ); ?></p>
 
 				<?php if ( 'confirm' === $check && [] !== $matches ) : ?>
 					<div class="dgl-matches" role="status">
@@ -313,17 +313,21 @@ $reasons_of = static function ( array $match ): string {
 					);
 
 					if ( '' !== $check ) {
-						echo ' ' . esc_html__( 'Type it again to finish.', 'dgl-platform' );
+						echo ' ' . esc_html__( 'Re-type it to finish.', 'dgl-platform' );
 					}
 					?>
 				</p>
 			</div>
 			<div class="dgl-field-row">
-				<label class="dgl-label" for="dgl_password_confirm"><?php esc_html_e( 'Type it again', 'dgl-platform' ); ?> <span class="dgl-req" aria-hidden="true">*</span></label>
+				<label class="dgl-label" for="dgl_password_confirm"><?php esc_html_e( 'Re-type password', 'dgl-platform' ); ?> <span class="dgl-req" aria-hidden="true">*</span></label>
 				<input class="dgl-field" type="password" id="dgl_password_confirm" name="dgl_password_confirm" required minlength="<?php echo (int) InviteRules::PASSWORD_MIN; ?>" autocomplete="new-password">
 			</div>
 
-			<p class="dgl-help"><?php esc_html_e( 'Once your account is approved we will email you a weekly round-up of the news, events and training other member organisations post. You can change what it covers or stop it at any time, from your dashboard or from the link in every email.', 'dgl-platform' ); ?></p>
+			<?php /* Opt in, never pre-ticked: a ticked box is the consent. */ ?>
+			<label class="dgl-check">
+				<input type="checkbox" name="dgl_digest_optin" value="1" <?php checked( '1', $v( 'digest_optin' ) ); ?>>
+				<span><?php esc_html_e( 'Tick here to get a weekly round-up of the news, events and training added to Doing Good Leeds. You can tailor what\'s included by category or stop it at any time from your dashboard or from the link in every email.', 'dgl-platform' ); ?></span>
+			</label>
 
 			<button class="dgl-button" type="submit" data-dgl-working="<?php esc_attr_e( 'Working…', 'dgl-platform' ); ?>"><?php esc_html_e( 'Continue', 'dgl-platform' ); ?></button>
 		</form>

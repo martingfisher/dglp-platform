@@ -81,6 +81,7 @@ final class Plugin {
 		Router::init();
 		AdminLockout::init();
 		SignIn::init();
+		\DGL\Dashboard\LoginBrand::init();
 		Admin::init();
 		\DGL\Dashboard\UploadEndpoint::init();
 		\DGL\Joining\MatchEndpoint::init();

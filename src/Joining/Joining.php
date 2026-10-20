@@ -104,7 +104,7 @@ final class Joining {
 	 *
 	 * @return int|WP_Error The new user ID.
 	 */
-	public static function join( Signup $signup, int $org_id, string $name, string $password ) {
+	public static function join( Signup $signup, int $org_id, string $name, string $password, ?bool $digest = null ) {
 		$offered = Domains::can_match( $signup->email ) ? Org::by_domain( $signup->domain ) : [];
 
 		if ( Signup::VERIFIED !== $signup->state || ! in_array( $org_id, $offered, true ) ) {
@@ -115,7 +115,7 @@ final class Joining {
 		$role     = Rules::role_for( $existing );
 		$status   = Org::is_approved( $org_id ) ? UserContext::ACCOUNT_APPROVED : UserContext::ACCOUNT_PENDING;
 
-		$user_id = self::account( $signup, $org_id, $role, $status, $name, $password );
+		$user_id = self::account( $signup, $org_id, $role, $status, $name, $password, $digest );
 
 		if ( is_wp_error( $user_id ) ) {
 			return $user_id;
@@ -147,7 +147,7 @@ final class Joining {
 	 *
 	 * @return int|WP_Error The new user ID.
 	 */
-	public static function claim( Signup $signup, int $org_id, string $note, string $name, string $password ) {
+	public static function claim( Signup $signup, int $org_id, string $note, string $name, string $password, ?bool $digest = null ) {
 		if ( Signup::VERIFIED !== $signup->state ) {
 			return new WP_Error( 'dgl_not_verified', __( 'Confirm your email address first.', 'dgl-platform' ) );
 		}
@@ -163,7 +163,7 @@ final class Joining {
 
 		$note    = trim( mb_substr( $note, 0, Rules::NOTE_MAX ) );
 		// No organisation yet: the claim, kept on the signup, is what links it on approval.
-		$user_id = self::account( $signup, 0, UserContext::ORG_CONTRIBUTOR, UserContext::ACCOUNT_PENDING, $name, $password );
+		$user_id = self::account( $signup, 0, UserContext::ORG_CONTRIBUTOR, UserContext::ACCOUNT_PENDING, $name, $password, $digest );
 
 		if ( is_wp_error( $user_id ) ) {
 			return $user_id;
@@ -205,7 +205,7 @@ final class Joining {
 	 * @param bool $confirmed The person has seen the soft matches and said none is theirs.
 	 * @return int|WP_Error The new user ID.
 	 */
-	public static function register( Signup $signup, string $org_name, array $details, string $name, string $password, bool $confirmed = false ) {
+	public static function register( Signup $signup, string $org_name, array $details, string $name, string $password, bool $confirmed = false, ?bool $digest = null ) {
 		if ( Signup::VERIFIED !== $signup->state ) {
 			return new WP_Error( 'dgl_not_verified', __( 'Confirm your email address first.', 'dgl-platform' ) );
 		}
@@ -256,7 +256,7 @@ final class Joining {
 			update_post_meta( $org_id, $field->meta_key(), \DGL\Schema\Store::sanitise( $field, $value ) );
 		}
 
-		$user_id = self::account( $signup, $org_id, UserContext::ORG_OWNER, UserContext::ACCOUNT_PENDING, $name, $password );
+		$user_id = self::account( $signup, $org_id, UserContext::ORG_OWNER, UserContext::ACCOUNT_PENDING, $name, $password, $digest );
 
 		if ( is_wp_error( $user_id ) ) {
 			wp_delete_post( $org_id, true );
@@ -397,7 +397,7 @@ final class Joining {
 		Log::record( 'org_status_changed', 'org', $signup->org_id, $signup->org_id, __( 'Verified from a registration.', 'dgl-platform' ), [ 'status' => [ Meta::ORG_PENDING, Meta::ORG_APPROVED ] ], $actor_id );
 		Log::record( 'join_approved', 'signup', $signup_id, $signup->org_id, $signup->email, [], $actor_id );
 
-		$message = JoinCopy::approved( get_the_title( $signup->org_id ), Router::url() );
+		$message = JoinCopy::approved( get_the_title( $signup->org_id ), Router::url(), ! \DGL\Email\Digest\Store::declined_at_registration( $signup->user_id ) );
 		Mailer::send( $message->for_recipients( [ $signup->email ] ) );
 
 		return true;
@@ -713,7 +713,7 @@ final class Joining {
 	 *
 	 * @return int|WP_Error
 	 */
-	private static function account( Signup $signup, int $org_id, string $role, string $status, string $name, string $password ) {
+	private static function account( Signup $signup, int $org_id, string $role, string $status, string $name, string $password, ?bool $digest = null ) {
 		if ( get_user_by( 'email', $signup->email ) instanceof \WP_User ) {
 			return new WP_Error( 'dgl_exists', __( 'There is already an account for that address. Sign in instead.', 'dgl-platform' ) );
 		}
@@ -730,6 +730,11 @@ final class Joining {
 
 		update_user_meta( $user_id, Meta::USER_ORG_ROLE, $role );
 		update_user_meta( $user_id, Meta::USER_ACCOUNT_STATUS, $status );
+
+		// What they ticked at registration. Null: the caller asked nothing (invitations, tests).
+		if ( null !== $digest ) {
+			\DGL\Email\Digest\Store::record_choice( (int) $user_id, $digest );
+		}
 
 		return $user_id;
 	}

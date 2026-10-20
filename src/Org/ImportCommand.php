@@ -193,6 +193,57 @@ final class ImportCommand {
 	}
 
 	/**
+	 * Take every organisation out of the public directory, until each one has
+	 * made an account and confirmed its own listing. The list of who was in is
+	 * kept, so `directory-restore` can put the same ones back.
+	 *
+	 * ## OPTIONS
+	 *
+	 * [--dry-run]
+	 * : Count them and write nothing.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp dgl org directory-off-all --dry-run
+	 *     wp dgl org directory-off-all
+	 *
+	 * @subcommand directory-off-all
+	 * @when after_wp_load
+	 *
+	 * @param string[]              $args
+	 * @param array<string, string> $assoc
+	 */
+	public function directory_off_all( array $args, array $assoc ): void {
+		$dry_run = isset( $assoc['dry-run'] );
+		$done    = Directory::unlist_all( ! $dry_run );
+
+		WP_CLI::log( sprintf( '%s%d organisation(s) %s the directory.', $dry_run ? 'DRY RUN. ' : '', count( $done ), $dry_run ? 'are in' : 'taken out of' ) );
+		WP_CLI::success( $dry_run ? 'Nothing was written.' : 'Done. `wp dgl org directory-restore` puts them back.' );
+	}
+
+	/**
+	 * Put back the organisations `directory-off-all` took out.
+	 *
+	 * ## OPTIONS
+	 *
+	 * [--dry-run]
+	 * : Count them and write nothing.
+	 *
+	 * @subcommand directory-restore
+	 * @when after_wp_load
+	 *
+	 * @param string[]              $args
+	 * @param array<string, string> $assoc
+	 */
+	public function directory_restore( array $args, array $assoc ): void {
+		$dry_run = isset( $assoc['dry-run'] );
+		$done    = Directory::relist_unlisted( ! $dry_run );
+
+		WP_CLI::log( sprintf( '%s%d organisation(s) %s.', $dry_run ? 'DRY RUN. ' : '', count( $done ), $dry_run ? 'would go back in' : 'put back' ) );
+		WP_CLI::success( $dry_run ? 'Nothing was written.' : 'Done.' );
+	}
+
+	/**
 	 * @return array<int, array<string, string>>
 	 */
 	private static function read( string $file ): array {

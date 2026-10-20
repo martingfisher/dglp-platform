@@ -454,7 +454,7 @@ final class Seo {
 		$base = home_url( '/' . Directory::BASE . '/' );
 		$args = DirectoryQuery::args_from( wp_unslash( $_GET ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- read only, sanitised inside.
 		$run  = DirectoryQuery::run( $args );
-		$name = __( 'Member organisations', 'dgl-platform' );
+		$name = __( 'Organisation Directory', 'dgl-platform' );
 		$desc = __( 'Charities, community groups and social enterprises in the Doing Good Leeds Partnership: who they are, where they are and what they do. Search by name or by what they do.', 'dgl-platform' );
 		$busy = '' !== $args['q'] || [] !== array_filter( $args['filters'] );
 		$url  = $args['page'] > 1 ? add_query_arg( 'pg', $args['page'], $base ) : $base;
@@ -540,7 +540,7 @@ final class Seo {
 				'main'        => $entity,
 				'breadcrumbs' => self::breadcrumbs(
 					[
-						[ __( 'Member organisations', 'dgl-platform' ), home_url( '/' . Directory::BASE . '/' ) ],
+						[ __( 'Organisation Directory', 'dgl-platform' ), home_url( '/' . Directory::BASE . '/' ) ],
 						[ $name, $url ],
 					]
 				),

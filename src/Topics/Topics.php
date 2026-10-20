@@ -27,7 +27,7 @@ defined( 'ABSPATH' ) || exit;
 final class Topics {
 
 	/** Bumped whenever the list below changes, so `maybe_sync()` runs once per change. */
-	public const LIST_VERSION = 1;
+	public const LIST_VERSION = 2;
 
 	public const OPTION = 'dgl_topics_version';
 
@@ -45,7 +45,7 @@ final class Topics {
 			'children-and-young-people'          => 'Children and Young People',
 			'communities-of-interest'            => 'Communities of Interest',
 			'community-power'                    => 'Community Power',
-			'cultural-diverse-communities'       => 'Cultural Diverse Communities',
+			'cultural-diverse-communities'       => 'Culturally Diverse Communities',
 			'data-and-digital'                   => 'Data and Digital',
 			'doing-good-leeds-partnership'       => 'Doing Good Leeds Partnership',
 			'environment-and-nature'             => 'Environment and Nature',

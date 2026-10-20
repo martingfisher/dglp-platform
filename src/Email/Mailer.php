@@ -44,6 +44,17 @@ final class Mailer {
 	 */
 	private const AUTO_HEADER = 'Auto-Submitted: auto-generated';
 
+	/**
+	 * What the emails call the site: "it is on X now". The domain people type, if
+	 * the team have set one (option `dgl_mail_site_domain`); otherwise the site
+	 * title. There is no screen for it: it changes once, when the site moves.
+	 */
+	public static function site_label(): string {
+		$domain = trim( (string) get_option( 'dgl_mail_site_domain', '' ) );
+
+		return '' !== $domain ? $domain : (string) get_bloginfo( 'name' );
+	}
+
 	public static function init(): void {
 		add_action( 'dgl_item_transitioned', [ self::class, 'on_transition' ], 10, 4 );
 		add_action( 'wp_mail_failed', [ self::class, 'on_failure' ] );
@@ -149,7 +160,7 @@ final class Mailer {
 			type_label: (string) $type_label,
 			org_name: $org_name,
 			actor_name: self::actor_name( $actor_id ),
-			site_name: (string) get_bloginfo( 'name' ),
+			site_name: self::site_label(),
 			// Always the item's own page. An edit has no page of its own once
 			// it has been applied, so a link to it would die on approval.
 			item_url: Router::url( 'item', (string) $subject->ID ),

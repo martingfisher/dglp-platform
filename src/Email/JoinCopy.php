@@ -110,7 +110,7 @@ final class JoinCopy {
 	}
 
 	/** To the person: approved. */
-	public static function approved( string $org_name, string $dashboard_url ): Message {
+	public static function approved( string $org_name, string $dashboard_url, bool $digest = true ): Message {
 		return new Message(
 			key: 'join_approved',
 			audience: 'joiner',
@@ -121,14 +121,15 @@ final class JoinCopy {
 			),
 			preheader: __( 'The team have checked your organisation.', 'dgl-platform' ),
 			heading: __( 'You are in', 'dgl-platform' ),
-			paragraphs: [
+			paragraphs: array_values( array_filter( [
 				sprintf(
 					/* translators: %s: organisation. */
 					__( 'The DGLP team have verified %s. Anything you drafted while you waited can be sent for review now, and you can invite colleagues from the Members page.', 'dgl-platform' ),
 					$org_name
 				),
-				__( 'On Tuesday mornings we will email you a round-up of the news, events and training other member organisations posted that week. Change what it covers, or stop it, under Email preferences in your dashboard or from the link in every round-up.', 'dgl-platform' ),
-			],
+				// Only for people who ticked the round-up box. Nothing recorded means they joined before the box, and keep it.
+				$digest ? __( 'On Tuesday mornings we will email you a round-up of the news, events and training other member organisations posted that week. Change what it covers, or stop it, under Email preferences in your dashboard or from the link in every round-up.', 'dgl-platform' ) : '',
+			] ) ),
 			cta_label: __( 'Go to your dashboard', 'dgl-platform' ),
 			cta_url: $dashboard_url
 		);

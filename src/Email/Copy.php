@@ -278,7 +278,7 @@ final class Copy {
 				? [
 					sprintf(
 						/* translators: 1: item title, 2: site name. */
-						__( 'The DGLP team have approved your edit to %1$s. %2$s now shows the updated version.', 'dgl-platform' ),
+						__( 'The DGL team have approved your edit to %1$s. %2$s now shows the updated version.', 'dgl-platform' ),
 						$c->title(),
 						$c->site()
 					),
@@ -286,7 +286,7 @@ final class Copy {
 				: [
 					sprintf(
 						/* translators: 1: item title, 2: site name. */
-						__( 'The DGLP team have approved %1$s. It is on %2$s now.', 'dgl-platform' ),
+						__( 'The DGL team have approved %1$s. It is on %2$s now.', 'dgl-platform' ),
 						$c->title(),
 						$c->site()
 					),

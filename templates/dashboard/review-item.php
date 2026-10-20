@@ -360,7 +360,7 @@ $check_word = static fn( string $status ): string => match ( $status ) {
 					<?php wp_nonce_field( Wizard::NONCE ); ?>
 
 					<div class="dgl-field-row">
-						<label class="dgl-label" for="dgl-note"><?php esc_html_e( 'Note to the member', 'dgl-platform' ); ?></label>
+						<label class="dgl-label" for="dgl-note"><?php esc_html_e( 'Note to the user', 'dgl-platform' ); ?></label>
 						<textarea class="dgl-field dgl-field--area" id="dgl-note" name="dgl_note" rows="3"></textarea>
 						<p class="dgl-help"><?php esc_html_e( 'Optional. For example, that the refusal was a mistake.', 'dgl-platform' ); ?></p>
 					</div>
@@ -399,7 +399,7 @@ $check_word = static fn( string $status ): string => match ( $status ) {
 					<?php wp_nonce_field( Wizard::NONCE ); ?>
 
 					<div class="dgl-field-row">
-						<label class="dgl-label" for="dgl-note"><?php esc_html_e( 'Note to the member', 'dgl-platform' ); ?></label>
+						<label class="dgl-label" for="dgl-note"><?php esc_html_e( 'Note to the user', 'dgl-platform' ); ?></label>
 						<textarea class="dgl-field dgl-field--area" id="dgl-note" name="dgl_note" rows="5"></textarea>
 						<p class="dgl-help"><?php esc_html_e( 'Required if you are asking for a change or refusing. They see this on their dashboard and by email, so write it to them rather than about them.', 'dgl-platform' ); ?></p>
 					</div>

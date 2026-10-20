@@ -40,7 +40,7 @@ final class Event implements TypeDefinition {
 				key: 'end_datetime',
 				label: __( 'End date and time', 'dgl-platform' ),
 				type: Field::DATETIME,
-				help: __( 'A one-off event comes off the listings once this passes. For a repeating event it is the finish time of each session.', 'dgl-platform' ),
+				help: __( 'A one-off event comes off the listings once this passes. For a repeating event enter the finish time of each session.', 'dgl-platform' ),
 				schedule: true,
 			),
 			/*

@@ -504,7 +504,7 @@ final class Controller {
 	 * a soft match is shown once for the person to say it is not theirs.
 	 */
 	private static function join( string $token ): void {
-		$title = __( 'Join the user area', 'dgl-platform' );
+		$title = __( 'Join the Doing Good Leeds platform', 'dgl-platform' );
 		$data  = [ 'stage' => 'email', 'email' => '', 'error' => '', 'token' => $token, 'orgs' => [], 'values' => [], 'pickable' => [], 'matches' => [], 'check' => '', 'intent' => '' ];
 
 		if ( is_user_logged_in() ) {
@@ -601,6 +601,8 @@ final class Controller {
 			$confirm  = (string) ( $post['dgl_password_confirm'] ?? '' );
 			$intent   = sanitize_key( (string) ( $post['dgl_intent'] ?? '' ) );
 			$take     = (int) ( $post['dgl_take'] ?? 0 );
+			// The round-up is opt in: only a ticked box means yes.
+			$digest   = ! empty( $post['dgl_digest_optin'] );
 
 			// "Join X instead" and "Yes, that is mine" are a claim on X, whatever the radio says.
 			$claim_org = $take > 0 ? $take : (int) ( $post['dgl_claim_org'] ?? 0 );
@@ -618,6 +620,7 @@ final class Controller {
 				'org_description' => sanitize_textarea_field( (string) ( $post['dgl_org_description'] ?? '' ) ),
 				'claim_org'       => $claim_org > 0 ? (string) $claim_org : '',
 				'claim_note'      => sanitize_textarea_field( (string) ( $post['dgl_claim_note'] ?? '' ) ),
+				'digest_optin'    => $digest ? '1' : '',
 			];
 			$data['intent'] = in_array( $intent, [ 'join', 'claim', 'register' ], true ) ? $intent : $data['intent'];
 
@@ -636,13 +639,13 @@ final class Controller {
 			if ( '' !== $problem ) {
 				$data['error'] = $problem;
 			} elseif ( 'join' === $intent ) {
-				$result = \DGL\Joining\Joining::join( $signup, (int) ( $post['dgl_org_id'] ?? 0 ), $name, $password );
+				$result = \DGL\Joining\Joining::join( $signup, (int) ( $post['dgl_org_id'] ?? 0 ), $name, $password, $digest );
 			} elseif ( 'claim' === $intent ) {
-				$result = \DGL\Joining\Joining::claim( $signup, $claim_org, $data['values']['claim_note'], $name, $password );
+				$result = \DGL\Joining\Joining::claim( $signup, $claim_org, $data['values']['claim_note'], $name, $password, $digest );
 			} elseif ( 'register' === $intent ) {
 				$details = $data['values'];
-				unset( $details['name'], $details['claim_org'], $details['claim_note'] );
-				$result = \DGL\Joining\Joining::register( $signup, $details['org_name'], $details, $name, $password, $confirmed );
+				unset( $details['name'], $details['claim_org'], $details['claim_note'], $details['digest_optin'] );
+				$result = \DGL\Joining\Joining::register( $signup, $details['org_name'], $details, $name, $password, $confirmed, $digest );
 			} else {
 				$data['error'] = __( 'Choose what to do.', 'dgl-platform' );
 			}

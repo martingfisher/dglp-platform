@@ -36,6 +36,7 @@ final class Space implements TypeDefinition {
 		'kitchen'        => 'Kitchen',
 		'outdoor'        => 'Outdoor space',
 		'whole_building' => 'Whole building',
+		'office'         => 'Office/hot-desking',
 		'other'          => 'Other',
 	];
 

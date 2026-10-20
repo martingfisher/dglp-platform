@@ -152,9 +152,8 @@ final class Enquiry {
 			$errors['space'] = __( 'Pick a space, or "Not sure yet".', 'dgl-platform' );
 		}
 
-		if ( '' === $values['date'] ) {
-			$errors['date'] = __( 'Tell the venue the date you have in mind.', 'dgl-platform' );
-		} else {
+		// The date is optional: a first question is often "do you have anything free?".
+		if ( '' !== $values['date'] ) {
 			$date = DateTimeImmutable::createFromFormat( '!Y-m-d', $values['date'], $today->getTimezone() );
 
 			if ( ! $date instanceof DateTimeImmutable || $date->format( 'Y-m-d' ) !== $values['date'] ) {
@@ -322,12 +321,18 @@ final class Enquiry {
 			'item',
 			$venue_id,
 			$org_id,
-			sprintf(
-				/* translators: 1: a space or "Not sure yet", 2: a date. */
-				__( 'Enquiry about %1$s for %2$s, sent to the venue contact.', 'dgl-platform' ),
-				$space_label,
-				$values['date']
-			),
+			'' !== $values['date']
+				? sprintf(
+					/* translators: 1: a space or "Not sure yet", 2: a date. */
+					__( 'Enquiry about %1$s for %2$s, sent to the venue contact.', 'dgl-platform' ),
+					$space_label,
+					$values['date']
+				)
+				: sprintf(
+					/* translators: %s: a space or "Not sure yet". */
+					__( 'Enquiry about %s, sent to the venue contact.', 'dgl-platform' ),
+					$space_label
+				),
 			[ 'space' => $space_id ],
 			0
 		);

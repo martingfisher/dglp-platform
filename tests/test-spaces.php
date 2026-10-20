@@ -108,6 +108,9 @@ Harness::assert_same( [], Enquiry::validate( [ 'space' => 'any', 'date' => '2026
 $bad = Enquiry::validate( [ 'space' => '99', 'date' => '2026-09-30', 'time_from' => '6pm', 'time_to' => '25:00', 'people' => '0', 'message' => 'short', 'name' => '', 'email' => 'nope' ], $options, $today );
 Harness::assert_same( [ 'space', 'date', 'time_from', 'time_to', 'people', 'message', 'name', 'email' ], array_keys( $bad['errors'] ), 'every rule speaks: unknown space, yesterday, two bad times, zero people, short message, no name, bad email' );
 Harness::assert_true( isset( Enquiry::validate( [ 'date' => '2026-02-30' ] + $good, $options, $today )['errors']['date'] ), '30 February is not a date' );
+Harness::assert_same( [], Enquiry::validate( [ 'date' => '' ] + $good, $options, $today )['errors'], 'the date is optional: only the space and the message are needed, plus a name and an address to reply to' );
+$nodate = \DGL\Email\SpacesCopy::enquiry( 'Chapel Rooms', 'Church hall', Enquiry::validate( [ 'date' => '', 'time_from' => '', 'time_to' => '' ] + $good, $options, $today )['values'], 'https://example.test/item', 'https://example.test/venue' );
+Harness::assert_true( ! array_key_exists( 'When', $nodate->facts ) && ! str_contains( $nodate->preheader, '1970' ), 'the venue email leaves "When" out and never invents a date when none was given' );
 Harness::assert_true( isset( Enquiry::validate( [ 'message' => str_repeat( 'a', Enquiry::MESSAGE_MAX + 1 ) ] + $good, $options, $today )['errors']['message'] ), 'a message over the cap is refused' );
 Harness::assert_true( isset( Enquiry::validate( [ 'people' => '5001' ] + $good, $options, $today )['errors']['people'] ), 'and more people than the site allows' );
 Harness::assert_same( 'Reply-To: Pat Example <pat@example.test>', Enquiry::reply_to( 'Pat Example', 'pat@example.test' ), 'a Reply-To header' );

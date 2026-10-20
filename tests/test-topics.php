@@ -38,4 +38,4 @@ Harness::assert_same( [], array_intersect( Topics::retired(), array_keys( $topic
 Harness::assert_same( 'featured', Topics::legacy()['featured-2'], 'the duplicate Featured folds into the one Featured' );
 Harness::assert_same( 'health-and-social-care', Topics::legacy()['forumcentral'], 'Forum Central and Health & Care both become Health and Social Care' );
 Harness::assert_same( 'health-and-social-care', Topics::legacy()['health-care'], 'Forum Central and Health & Care both become Health and Social Care' );
-Harness::assert_same( 1, Topics::LIST_VERSION, 'list version 1: bump it when the list changes' );
+Harness::assert_same( 2, Topics::LIST_VERSION, 'list version 2: bump it when the list changes' );

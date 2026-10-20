@@ -24,16 +24,19 @@ final class SpacesCopy {
 	 * @param array<string, string> $values The validated enquiry: date, time_from, time_to, people, message, name, email, phone.
 	 */
 	public static function enquiry( string $venue_name, string $space_label, array $values, string $item_url, string $public_url ): Message {
+		// The date is optional. Without one, "When" is only the times, or left out.
 		$when = $values['date'];
 
-		try {
-			$when = (string) wp_date( (string) get_option( 'date_format', 'j F Y' ), ( new \DateTimeImmutable( $values['date'], wp_timezone() ) )->getTimestamp() );
-		} catch ( \Exception ) {
-			// The date was validated; the raw value stands in if formatting fails.
+		if ( '' !== $when ) {
+			try {
+				$when = (string) wp_date( (string) get_option( 'date_format', 'j F Y' ), ( new \DateTimeImmutable( $values['date'], wp_timezone() ) )->getTimestamp() );
+			} catch ( \Exception ) {
+				// The date was validated; the raw value stands in if formatting fails.
+			}
 		}
 
 		if ( '' !== $values['time_from'] ) {
-			$when .= ', ' . $values['time_from'] . ( '' !== $values['time_to'] ? ' ' . __( 'to', 'dgl-platform' ) . ' ' . $values['time_to'] : '' );
+			$when .= ( '' !== $when ? ', ' : '' ) . $values['time_from'] . ( '' !== $values['time_to'] ? ' ' . __( 'to', 'dgl-platform' ) . ' ' . $values['time_to'] : '' );
 		}
 
 		$facts = array_filter(
@@ -60,7 +63,7 @@ final class SpacesCopy {
 				/* translators: 1: a person, 2: a date. */
 				__( '%1$s is asking about %2$s. Reply to this email to answer them.', 'dgl-platform' ),
 				$values['name'],
-				$when
+				'' !== $when ? $when : $space_label
 			),
 			heading: __( 'Somebody is asking about your space', 'dgl-platform' ),
 			paragraphs: [

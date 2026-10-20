@@ -186,7 +186,7 @@ final class Content {
 					'id'      => 'email',
 					'heading' => __( 'Email and notifications', 'dgl-platform' ),
 					'blocks'  => [
-						[ 'p', __( 'Every decision about your work comes as one email, and everything that happens to your organisation\'s listings is on the Notifications screen. Once your account is approved you also get a round-up of what other member organisations have posted, on Tuesday mornings. Under Email preferences you can narrow it by type or topic, make it daily or monthly, or stop it. Every round-up has an unsubscribe link that works without signing in.', 'dgl-platform' ) ],
+						[ 'p', __( 'Every decision about your work comes as one email, and everything that happens to your organisation\'s listings is on the Notifications screen. If you ticked the round-up box when you joined, once your account is approved you also get a round-up of what organisations have posted to the Doing Good Leeds platform, on Tuesday mornings. Under Email preferences you can switch it on or off, narrow it by type or topic, or make it daily or monthly. Every round-up has an unsubscribe link that works without signing in.', 'dgl-platform' ) ],
 					],
 				],
 			],

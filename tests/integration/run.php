@@ -5477,6 +5477,47 @@ $ok( $rc_inv2['ok'] && ! $rc_acc2['ok'] && 'inviter_lapsed' === $rc_acc2['outcom
 update_user_meta( $bella, Meta::USER_ACCOUNT_STATUS, 'approved' );
 Access::flush_cache();
 
+/* ------------------------------------------------ platform amends, 20 October */
+
+// The round-up is opt in at registration: a "no" is kept, a "yes" is kept, silence is the old behaviour.
+$am_yes    = wp_create_user( 'am-yes', 'pw-am-yes-1', 'am-yes@example.test' );
+$am_no     = wp_create_user( 'am-no', 'pw-am-no-1', 'am-no@example.test' );
+$am_legacy = wp_create_user( 'am-legacy', 'pw-am-legacy-1', 'am-legacy@example.test' );
+\DGL\Email\Digest\Store::record_choice( (int) $am_yes, true );
+\DGL\Email\Digest\Store::record_choice( (int) $am_no, false );
+$ok( '1' === get_user_meta( $am_yes, \DGL\Email\Digest\Store::OPTIN_META, true ) && '' !== (string) get_user_meta( $am_yes, \DGL\Email\Digest\Store::OPTIN_AT_META, true ), 'a ticked box is recorded, with when' );
+$ok( '0' === get_user_meta( $am_no, \DGL\Email\Digest\Store::OPTIN_META, true ) && '' === (string) get_user_meta( $am_no, \DGL\Email\Digest\Store::OPTIN_AT_META, true ), 'an unticked box is recorded as a no, with no date' );
+$ok( ! \DGL\Email\Digest\Store::subscribe_default( (int) $am_no, 'approval' ) && null === \DGL\Email\Digest\Store::for_user( (int) $am_no ), 'approval does not subscribe somebody who did not tick the box' );
+$ok( \DGL\Email\Digest\Store::subscribe_default( (int) $am_yes, 'approval' ) && \DGL\Email\Digest\Store::for_user( (int) $am_yes )?->has_consent(), 'approval subscribes somebody who did, with consent recorded' );
+$ok( \DGL\Email\Digest\Store::subscribe_default( (int) $am_legacy, 'approval' ), 'an account made before the box existed keeps the round-up it was promised' );
+$ok( ! \DGL\Email\Digest\Store::declined_at_registration( (int) $am_legacy ) && \DGL\Email\Digest\Store::declined_at_registration( (int) $am_no ), 'only an explicit no counts as declined' );
+$am_with = \DGL\Email\JoinCopy::approved( 'Org', 'https://example.test/dashboard/', true );
+$am_without = \DGL\Email\JoinCopy::approved( 'Org', 'https://example.test/dashboard/', false );
+$ok( count( $am_with->paragraphs ) === count( $am_without->paragraphs ) + 1, 'the approval email promises the round-up only to people who asked for it' );
+foreach ( [ $am_yes, $am_no, $am_legacy ] as $am_u ) {
+	wp_delete_user( (int) $am_u );
+}
+
+// Taking every organisation out of the directory is reversible, audited, and leaves the members' own choices to come back.
+$am_o1  = wp_insert_post( [ 'post_type' => \DGL\PostTypes::ORG, 'post_status' => 'publish', 'post_title' => 'Amends Org One' ] );
+$am_o2  = wp_insert_post( [ 'post_type' => \DGL\PostTypes::ORG, 'post_status' => 'publish', 'post_title' => 'Amends Org Two' ] );
+update_post_meta( $am_o1, Meta::ORG_IN_DIRECTORY, '1' );
+$am_before = \DGL\Org\Directory::unlist_all( false );
+$ok( in_array( $am_o1, $am_before, true ) && ! in_array( $am_o2, $am_before, true ) && '1' === get_post_meta( $am_o1, Meta::ORG_IN_DIRECTORY, true ), 'a dry run counts who is listed and changes nothing' );
+$am_done = \DGL\Org\Directory::unlist_all( true );
+$ok( in_array( $am_o1, $am_done, true ) && '' === (string) get_post_meta( $am_o1, Meta::ORG_IN_DIRECTORY, true ), 'taking everybody out switches off the members\' own listing flag' );
+$ok( in_array( $am_o1, (array) ( get_option( \DGL\Org\Directory::UNLISTED_BACKUP )['ids'] ?? [] ), true ), 'and keeps a list of who was in' );
+$ok( [] === \DGL\Org\Directory::unlist_all( false ) || ! in_array( $am_o1, \DGL\Org\Directory::unlist_all( false ), true ), 'nobody from the first run is listed afterwards' );
+$am_back = \DGL\Org\Directory::relist_unlisted( true );
+$ok( in_array( $am_o1, $am_back, true ) && '1' === get_post_meta( $am_o1, Meta::ORG_IN_DIRECTORY, true ) && ! in_array( $am_o2, $am_back, true ), 'restoring puts back the same organisations and no others' );
+$ok( false === get_option( \DGL\Org\Directory::UNLISTED_BACKUP, false ), 'and clears the backup' );
+wp_delete_post( $am_o1, true );
+wp_delete_post( $am_o2, true );
+
+// The reply-time note, the space types and the login screen.
+$ok( isset( \DGL\Schema\Types\Space::TYPES['office'] ) && 'Office/hot-desking' === \DGL\Schema\Types\Space::TYPES['office'], 'Office/hot-desking is a type of space' );
+$ok( str_contains( \DGL\Dashboard\LoginBrand::css(), 'body.login' ) && ! str_contains( \DGL\Dashboard\LoginBrand::css(), '<' ), 'the login screen styling is plain CSS' );
+
 /* ----------------------------------------------------------------- report */
 
 echo "\n" . str_repeat( '-', 60 ) . "\n";

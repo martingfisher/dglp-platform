@@ -56,7 +56,7 @@ $filters_on = count( array_filter( [ $args['ward'], $args['type'], $args['price'
 <div class="dgl-pub dgl-spaces">
 	<header class="dgl-pub__head">
 		<h1 class="dgl-pub__title"><?php esc_html_e( 'Find a space in Leeds', 'dgl-platform' ); ?></h1>
-		<p class="dgl-pub__lede"><?php esc_html_e( 'Rooms, halls and whole buildings run by organisations in the Doing Good Leeds Partnership. Enquire direct with the venue.', 'dgl-platform' ); ?></p>
+		<p class="dgl-pub__lede"><?php esc_html_e( 'Rooms, halls and whole buildings run by organisations and community groups in Leeds. Enquire from here, book direct.', 'dgl-platform' ); ?></p>
 	</header>
 
 	<form class="dgl-dir__search dgl-spaces__search" method="get" action="<?php echo esc_url( $base ); ?>" role="search">
@@ -186,5 +186,5 @@ $filters_on = count( array_filter( [ $args['ward'], $args['type'], $args['price'
 		<?php endif; ?>
 	<?php endif; ?>
 
-	<p class="dgl-dir__foot"><?php esc_html_e( 'Member organisations list their venues from their own dashboard. Every one is checked by the partnership team before it appears.', 'dgl-platform' ); ?></p>
+	<p class="dgl-dir__foot"><?php esc_html_e( 'Organisations manage their posts and listings from their own dashboard. Every one is checked by the partnership team before it appears.', 'dgl-platform' ); ?></p>
 </div>
