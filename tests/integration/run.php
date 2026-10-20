@@ -1495,7 +1495,7 @@ $ok( in_array( StateMachine::SUBMIT, $actions, true ), 'and so does the submissi
 foreach ( $feed as $row ) {
 	if ( StateMachine::REQUEST_CHANGES === $row['action'] ) {
 		$ok( 'Add a contact email.' === $row['note'], 'the moderator note is carried through' );
-		$ok( 'The DGLP team' === $row['who'], 'the reviewer is not named to the member' );
+		$ok( 'The DGL team' === $row['who'], 'the reviewer is not named to the member' );
 		$ok( str_contains( $row['url'], 'item/' . $feed_item ), 'and it links to the item' );
 		break;
 	}

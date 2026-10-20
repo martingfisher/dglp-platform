@@ -3,8 +3,8 @@
  * The enquiry form on a venue page.
  *
  * Expects `$data['post']` (the venue), `$data['spaces']` (from
- * SpacesQuery::spaces), `$data['enquiry']` (from Enquiry::state) and
- * `$data['reply']` (the venue's usual reply time, in words, or '').
+ * SpacesQuery::spaces) and `$data['enquiry']` (from Enquiry::state).
+ * No reply time is promised anywhere: the team cannot guarantee one.
  *
  * @var array<string,mixed> $data
  * @package DGL
@@ -22,9 +22,6 @@ $state   = (array) ( $data['enquiry'] ?? [] );
 $values  = (array) ( $state['values'] ?? [] );
 $errors  = (array) ( $state['errors'] ?? [] );
 $options = Enquiry::options( (int) $post->ID );
-$reply   = (string) ( $data['reply'] ?? '' );
-// "Within a week" is not worth saying to somebody waiting on an answer: the team asked for it to go.
-$reply   = \DGL\Schema\Types\Venue::REPLY['week'] === $reply ? '' : $reply;
 $action  = (string) get_permalink( $post );
 $val     = static fn( string $key ): string => (string) ( $values[ $key ] ?? '' );
 $today   = ( new DateTimeImmutable( 'today', wp_timezone() ) )->format( 'Y-m-d' );
@@ -35,14 +32,11 @@ $today   = ( new DateTimeImmutable( 'today', wp_timezone() ) )->format( 'Y-m-d' 
 	<?php if ( ! empty( $state['sent'] ) ) : ?>
 		<div class="dgl-enquiry__sent" role="status">
 			<p><strong><?php esc_html_e( 'Sent to the venue.', 'dgl-platform' ); ?></strong></p>
-			<p><?php echo esc_html( '' !== $reply ? sprintf( /* translators: %s: a reply time, e.g. "within two working days". */ __( 'They reply by email, %s.', 'dgl-platform' ), strtolower( $reply ) ) : __( 'They reply by email.', 'dgl-platform' ) ); ?></p>
+			<p><?php esc_html_e( 'They reply by email.', 'dgl-platform' ); ?></p>
 		</div>
 	<?php else : ?>
 		<p class="dgl-pub__note">
 			<?php esc_html_e( 'Goes straight to the venue. They reply to you by email.', 'dgl-platform' ); ?>
-			<?php if ( '' !== $reply ) : ?>
-				<?php echo esc_html( $reply . '.' ); ?>
-			<?php endif; ?>
 		</p>
 
 		<?php if ( ! empty( $state['limited'] ) ) : ?>

@@ -53,10 +53,10 @@ final class Content {
 					'heading' => __( 'Getting in', 'dgl-platform' ),
 					'blocks'  => [
 						[ 'p', __( 'The user area is at the "Sign in" link in the site header. Sign in with the email address and password you set when you joined.', 'dgl-platform' ) ],
-						[ 'p', __( 'Not a member yet? Press "Join the user area" on the sign-in page and give your work email address. We send a link that works once, for 48 hours. When you click it:', 'dgl-platform' ) ],
+						[ 'p', __( 'Not a member yet? Press "Join the Doing Good Leeds platform" on the sign-in page and give your work email address. We send a link that works once, for 48 hours. When you click it:', 'dgl-platform' ) ],
 						[ 'ul', [
 							__( 'If your address is at an organisation already on the list, you are offered that organisation and join it with one click. Its owner is told.', 'dgl-platform' ),
-							__( 'Otherwise, pick your organisation from the list. The DGLP team check that you are part of it before you can post. You can draft in the meantime.', 'dgl-platform' ),
+							__( 'Otherwise, pick your organisation from the list. The DGL team check that you are part of it before you can post. You can draft in the meantime.', 'dgl-platform' ),
 							__( 'Only if it is not on the list, register it. We check what you type against the list first, so the same organisation is never listed twice, and the team check every new organisation before it can post.', 'dgl-platform' ),
 							__( 'A colleague who already uses the user area can also invite you from their Members page, which skips the check.', 'dgl-platform' ),
 						] ],
@@ -199,10 +199,10 @@ final class Content {
 				[ 'q' => __( 'Our weekly group is not running next Tuesday.', 'dgl-platform' ), 'a' => __( 'Open the event and use "Cancel one date". That date shows as cancelled; the rest carry on. If you knew in advance, "Dates it does not run" on the Details step does the same when you set the event up.', 'dgl-platform' ) ],
 				[ 'q' => __( 'Why did our event come off the site?', 'dgl-platform' ), 'a' => __( 'A one-off event comes off after it has happened. A repeating event comes off on its "until" date unless somebody at your organisation pressed the button in the reminder email or on the event\'s screen. It is in your archive; copy it to a new draft to list it again.', 'dgl-platform' ) ],
 				[ 'q' => __( 'Why did our news story come off the site?', 'dgl-platform' ), 'a' => __( 'News is listed for a set spell and then comes off, unless somebody at your organisation pressed the "keep it listed" button in the reminder email or on the story\'s screen. It is in your archive.', 'dgl-platform' ) ],
-				[ 'q' => __( 'My link was refused because it starts with http://.', 'dgl-platform' ), 'a' => __( 'The site only links to pages served over https, the padlock in the browser. Type the address as https://... instead; most sites work that way already. If yours does not, leave the link out for now and ask the DGLP team, who can help you secure your hosting.', 'dgl-platform' ) ],
+				[ 'q' => __( 'My link was refused because it starts with http://.', 'dgl-platform' ), 'a' => __( 'The site only links to pages served over https, the padlock in the browser. Type the address as https://... instead; most sites work that way already. If yours does not, leave the link out for now and ask the DGL team, who can help you secure your hosting.', 'dgl-platform' ) ],
 				[ 'q' => __( 'What size and shape should the picture be?', 'dgl-platform' ), 'a' => __( 'Any photo from a phone is fine. It is shrunk in your browser before it is sent. Landscape works best on the list pages. Describe it in a few words when asked.', 'dgl-platform' ) ],
 				[ 'q' => __( 'How do I change our organisation\'s name or logo?', 'dgl-platform' ), 'a' => __( 'On the Organisation tab, if you are an owner. The change is checked by the team before it shows, so the listings keep the old details until then.', 'dgl-platform' ) ],
-				[ 'q' => __( 'How do I close my account?', 'dgl-platform' ), 'a' => __( 'Email the DGLP team. They close it and tell you what happens to anything you have published, which stays with your organisation.', 'dgl-platform' ) ],
+				[ 'q' => __( 'How do I close my account?', 'dgl-platform' ), 'a' => __( 'Email the DGL team. They close it and tell you what happens to anything you have published, which stays with your organisation.', 'dgl-platform' ) ],
 			],
 		];
 	}
@@ -317,7 +317,7 @@ final class Content {
 					'id'      => 'joining',
 					'heading' => __( 'How people join', 'dgl-platform' ),
 					'blocks'  => [
-						[ 'p', __( 'The sign-in page links to "Join the user area". The person gives an email address and we send a link that works once, for 48 hours. A domain match joins them to that organisation and emails its owner. No match means they pick their organisation from the list, or register one that is not there; both land in your queue under "Joining requests to check". A registration is checked against the list before it is created: a clear match is offered instead, a near match is shown for the person to confirm. Owners invite and remove colleagues themselves from the Members tab. A removed colleague is signed out everywhere and emailed.', 'dgl-platform' ) ],
+						[ 'p', __( 'The sign-in page links to "Join the Doing Good Leeds platform". The person gives an email address and we send a link that works once, for 48 hours. A domain match joins them to that organisation and emails its owner. No match means they pick their organisation from the list, or register one that is not there; both land in your queue under "Joining requests to check". A registration is checked against the list before it is created: a clear match is offered instead, a near match is shown for the person to confirm. Owners invite and remove colleagues themselves from the Members tab. A removed colleague is signed out everywhere and emailed.', 'dgl-platform' ) ],
 					],
 				],
 				[

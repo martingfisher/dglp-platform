@@ -111,7 +111,7 @@ final readonly class Context {
 	public function actor(): string {
 		$name = trim( $this->actor_name );
 
-		return '' !== $name ? $name : __( 'The DGLP team', 'dgl-platform' );
+		return '' !== $name ? $name : __( 'The DGL team', 'dgl-platform' );
 	}
 
 	public function site(): string {

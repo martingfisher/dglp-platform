@@ -68,7 +68,7 @@ Harness::assert_false( Rules::may_invite( $owner( [ 'account_status' => UserCont
 Harness::assert_false( Rules::may_invite( UserContext::anonymous(), 5, UserContext::ORG_CONTRIBUTOR ), 'nor a stranger' );
 
 $mod = new UserContext( user_id: 7, roles: [ UserContext::ROLE_MODERATOR ], org_id: null, org_role: null, account_status: UserContext::ACCOUNT_APPROVED );
-Harness::assert_true( Rules::may_invite( $mod, 5, UserContext::ORG_OWNER ), 'the DGLP team may invite the first owner of any organisation' );
+Harness::assert_true( Rules::may_invite( $mod, 5, UserContext::ORG_OWNER ), 'the DGL team may invite the first owner of any organisation' );
 Harness::assert_true( Rules::may_invite( $mod, 99, UserContext::ORG_OWNER ), 'including one they have no link to, which is how a new partner starts' );
 
 Harness::assert_false( Rules::may_invite( $owner(), 5, 'administrator' ), 'no role outside the two organisation roles can be handed out' );
@@ -79,7 +79,7 @@ Harness::group( 'Withdrawing one' );
 Harness::assert_true( Rules::may_revoke( $owner(), $inv() ), 'an owner can withdraw an invitation' );
 Harness::assert_true( Rules::may_revoke( $owner( [ 'user_id' => 88 ] ), $inv() ), 'including one a colleague sent, so a holiday cannot strand a mistake' );
 Harness::assert_false( Rules::may_revoke( $owner( [ 'org_role' => UserContext::ORG_CONTRIBUTOR ] ), $inv() ), 'a contributor cannot' );
-Harness::assert_true( Rules::may_revoke( $mod, $inv() ), 'the DGLP team can' );
+Harness::assert_true( Rules::may_revoke( $mod, $inv() ), 'the DGL team can' );
 
 Harness::group( 'Refusing to send, with a reason worth reading' );
 
@@ -137,7 +137,7 @@ Harness::group( 'The person holding a dead link is told which kind of dead' );
 Harness::assert_true( str_contains( Rules::accept_error( Rules::ACCEPT_CLOSED, Rules::ACCEPTED ), 'signing in' ), 'an already-used link points at the sign-in page' );
 Harness::assert_true( str_contains( Rules::accept_error( Rules::ACCEPT_CLOSED, Rules::EXPIRED ), 'expired' ), 'an expired link says so' );
 Harness::assert_true( str_contains( Rules::accept_error( Rules::ACCEPT_CLOSED, Rules::REVOKED ), 'withdrawn' ), 'a withdrawn link says so' );
-Harness::assert_true( str_contains( Rules::accept_error( Rules::ACCEPT_OTHER_ORG ), 'DGLP team' ), 'and the one case a member cannot fix themselves names who can' );
+Harness::assert_true( str_contains( Rules::accept_error( Rules::ACCEPT_OTHER_ORG ), 'DGL team' ), 'and the one case a member cannot fix themselves names who can' );
 
 Harness::group( 'Addresses are compared the way people use them' );
 

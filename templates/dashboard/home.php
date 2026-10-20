@@ -152,7 +152,7 @@ $tiles = [
 				<?php
 				printf(
 					/* translators: %s: organisation name. */
-					esc_html__( 'The DGLP team are checking you are part of %s', 'dgl-platform' ),
+					esc_html__( 'The DGL team are checking you are part of %s', 'dgl-platform' ),
 					esc_html( get_the_title( $claiming ) )
 				);
 				?>
@@ -160,7 +160,7 @@ $tiles = [
 			<p><?php esc_html_e( 'This usually takes a working day. You will get an email when it is done, and then you can add and post listings for it.', 'dgl-platform' ); ?></p>
 		<?php else : ?>
 			<h2 class="dgl-section__title" id="dgl-noorg-heading"><?php esc_html_e( 'Your account is not linked to an organisation yet', 'dgl-platform' ); ?></h2>
-			<p><?php esc_html_e( 'Submissions are made on behalf of an organisation, so there is nothing to start until you are part of one. If somebody at your organisation already uses the member area, ask them to invite you from their Members page. Otherwise the DGLP team can link you.', 'dgl-platform' ); ?></p>
+			<p><?php esc_html_e( 'Submissions are made on behalf of an organisation, so there is nothing to start until you are part of one. If somebody at your organisation already uses the member area, ask them to invite you from their Members page. Otherwise the DGL team can link you.', 'dgl-platform' ); ?></p>
 		<?php endif; ?>
 	</section>
 <?php else : ?>

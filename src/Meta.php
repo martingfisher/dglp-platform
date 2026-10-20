@@ -30,7 +30,7 @@ final class Meta {
 
 	/* Organisation post meta. */
 
-	/** Whether the DGLP team has verified the organisation. */
+	/** Whether the DGL team has verified the organisation. */
 	public const ORG_STATUS = 'dgl_org_status';
 
 	/**

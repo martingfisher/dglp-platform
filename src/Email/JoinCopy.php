@@ -22,7 +22,7 @@ final class JoinCopy {
 			preheader: __( 'One click and you can carry on.', 'dgl-platform' ),
 			heading: __( 'Confirm it is you', 'dgl-platform' ),
 			paragraphs: [
-				__( 'Somebody used this address to start joining the Doing Good Leeds Partnership user area. If that was you, use the button below and you can carry on. If it was not, ignore this and nothing will happen.', 'dgl-platform' ),
+				__( 'Somebody used this email address to join the Doing Good Leeds platform. If that was you, use the button below to create your account. If it was not, ignore this and nothing will happen.', 'dgl-platform' ),
 			],
 			cta_label: __( 'Confirm my email address', 'dgl-platform' ),
 			cta_url: $link,
@@ -48,7 +48,7 @@ final class JoinCopy {
 			),
 			preheader: $by_domain
 				? __( 'Their email address is on your domain, so they were let in.', 'dgl-platform' )
-				: __( 'The DGLP team checked they are part of your organisation.', 'dgl-platform' ),
+				: __( 'The DGL team checked they are part of your organisation.', 'dgl-platform' ),
 			heading: __( 'Somebody has joined', 'dgl-platform' ),
 			paragraphs: [
 				$by_domain
@@ -61,12 +61,12 @@ final class JoinCopy {
 					)
 					: sprintf(
 						/* translators: 1: person, 2: email, 3: organisation. */
-						__( '%1$s (%2$s) asked to join %3$s and the DGLP team checked they are part of it, so they now post for it.', 'dgl-platform' ),
+						__( '%1$s (%2$s) asked to join %3$s and the DGL team checked they are part of it, so they now post for it.', 'dgl-platform' ),
 						$who,
 						$email,
 						$org_name
 					),
-				__( 'If you do not recognise them, remove them from the Members page and tell the DGLP team.', 'dgl-platform' ),
+				__( 'If you do not recognise them, remove them from the Members page and tell the DGL team.', 'dgl-platform' ),
 			],
 			facts: [
 				__( 'They can', 'dgl-platform' ) => $role_label,
@@ -124,7 +124,7 @@ final class JoinCopy {
 			paragraphs: array_values( array_filter( [
 				sprintf(
 					/* translators: %s: organisation. */
-					__( 'The DGLP team have verified %s. Anything you drafted while you waited can be sent for review now, and you can invite colleagues from the Members page.', 'dgl-platform' ),
+					__( 'The DGL team have verified %s. Anything you drafted while you waited can be sent for review now, and you can invite colleagues from the Members page.', 'dgl-platform' ),
 					$org_name
 				),
 				// Only for people who ticked the round-up box. Nothing recorded means they joined before the box, and keep it.
@@ -170,7 +170,7 @@ final class JoinCopy {
 		$paragraphs = [
 			sprintf(
 				/* translators: %s: organisation. */
-				__( 'The DGLP team have confirmed you are part of %s.', 'dgl-platform' ),
+				__( 'The DGL team have confirmed you are part of %s.', 'dgl-platform' ),
 				$org_name
 			),
 			$owner
@@ -213,7 +213,7 @@ final class JoinCopy {
 			paragraphs: [
 				sprintf(
 					/* translators: %s: organisation. */
-					__( 'The DGLP team could not confirm you are part of %s, so the user area is not open to you. They said:', 'dgl-platform' ),
+					__( 'The DGL team could not confirm you are part of %s, so the user area is not open to you. They said:', 'dgl-platform' ),
 					$org_name
 				),
 				$reason,
@@ -227,7 +227,7 @@ final class JoinCopy {
 		$paragraphs = [
 			sprintf(
 				/* translators: 1: what was typed, 2: the organisation on the list. */
-				__( 'The DGLP team recognised %1$s as %2$s, which is already on the list, so you have been added to it instead of a second entry being created.', 'dgl-platform' ),
+				__( 'The DGL team recognised %1$s as %2$s, which is already on the list, so you have been added to it instead of a second entry being created.', 'dgl-platform' ),
 				$typed_name,
 				$org_name
 			),
@@ -271,7 +271,7 @@ final class JoinCopy {
 			paragraphs: [
 				sprintf(
 					/* translators: %s: organisation. */
-					__( 'The DGLP team could not verify %s, so the member area is not open to it. They said:', 'dgl-platform' ),
+					__( 'The DGL team could not verify %s, so the member area is not open to it. They said:', 'dgl-platform' ),
 					$org_name
 				),
 				$reason,

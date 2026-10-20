@@ -223,7 +223,7 @@ final class InviteCopy {
 				__( 'Anything you posted stays on the site under the organisation, as it always did. Your account has not been deleted, so you can be invited again or join a different organisation.', 'dgl-platform' ),
 			],
 			footnotes: [
-				__( 'If you think this is a mistake, ask the organisation. The DGLP team cannot see why an owner removed somebody.', 'dgl-platform' ),
+				__( 'If you think this is a mistake, ask the organisation. The DGL team cannot see why an owner removed somebody.', 'dgl-platform' ),
 			]
 		);
 	}

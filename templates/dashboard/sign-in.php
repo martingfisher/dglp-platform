@@ -49,6 +49,6 @@ if ( '' === $message && '' !== $prefill ) {
 		</p>
 		<p class="dgl-signin__foot">
 			<?php esc_html_e( 'Not a member yet?', 'dgl-platform' ); ?>
-			<a href="<?php echo esc_url( \DGL\Dashboard\Router::url( 'join' ) ); ?>"><?php esc_html_e( 'Join the user area', 'dgl-platform' ); ?></a>
+			<a href="<?php echo esc_url( \DGL\Dashboard\Router::url( 'join' ) ); ?>"><?php esc_html_e( 'Join the Doing Good Leeds platform', 'dgl-platform' ); ?></a>
 		</p>
 	</div>

@@ -151,13 +151,13 @@ final class Notifications {
 		$user = get_userdata( $actor_id );
 
 		if ( ! $user ) {
-			return __( 'The DGLP team', 'dgl-platform' );
+			return __( 'The DGL team', 'dgl-platform' );
 		}
 
 		$org = \DGL\Org\Org::for_user( $actor_id );
 
 		return null !== $org
 			? (string) $user->display_name
-			: __( 'The DGLP team', 'dgl-platform' );
+			: __( 'The DGL team', 'dgl-platform' );
 	}
 }

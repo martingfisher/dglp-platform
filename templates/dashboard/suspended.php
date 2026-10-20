@@ -17,5 +17,5 @@ defined( 'ABSPATH' ) || exit;
 		<a class="dgl-button dgl-button--secondary" href="<?php echo esc_url( home_url() ); ?>"><?php esc_html_e( 'Back to the website', 'dgl-platform' ); ?></a>
 		<a class="dgl-button dgl-button--secondary" href="<?php echo esc_url( wp_logout_url( home_url() ) ); ?>"><?php esc_html_e( 'Sign out', 'dgl-platform' ); ?></a>
 	</p>
-	<p class="dgl-help"><?php esc_html_e( 'Questions go to the DGLP team through the main website.', 'dgl-platform' ); ?></p>
+	<p class="dgl-help"><?php esc_html_e( 'Questions go to the DGL team through the main website.', 'dgl-platform' ); ?></p>
 </div>

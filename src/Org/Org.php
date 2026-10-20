@@ -52,7 +52,7 @@ final class Org {
 	}
 
 	/**
-	 * Whether the DGLP team has verified the organisation.
+	 * Whether the DGL team has verified the organisation.
 	 */
 	public static function is_approved( ?int $org_id ): bool {
 		if ( null === $org_id || $org_id <= 0 ) {

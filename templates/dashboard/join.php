@@ -137,7 +137,7 @@ $reasons_of = static function ( array $match ): string {
 						<?php
 						printf(
 							/* translators: 1: organisation, 2: why it matched. */
-							esc_html__( 'That looks like %1$s, which is already on the list (%2$s). Join it instead and the DGLP team will check you are part of it.', 'dgl-platform' ),
+							esc_html__( 'That looks like %1$s, which is already on the list (%2$s). Join it instead and the DGL team will check you are part of it.', 'dgl-platform' ),
 							'<strong>' . esc_html( (string) $matches[0]['name'] ) . '</strong>',
 							esc_html( $reasons_of( $matches[0] ) )
 						);
@@ -156,7 +156,7 @@ $reasons_of = static function ( array $match ): string {
 							</button>
 						<?php endforeach; ?>
 					</div>
-					<p class="dgl-help"><?php esc_html_e( 'Not your organisation? Correct what you typed below: a wrong website is the usual cause. If it still will not go through, contact the DGLP team through the main website and they can sort it out.', 'dgl-platform' ); ?></p>
+					<p class="dgl-help"><?php esc_html_e( 'Not your organisation? Correct what you typed below: a wrong website is the usual cause. If it still will not go through, contact the DGL team through the main website and they can sort it out.', 'dgl-platform' ); ?></p>
 				</div>
 			<?php endif; ?>
 
@@ -196,14 +196,14 @@ $reasons_of = static function ( array $match ): string {
 					<input type="radio" name="dgl_intent" value="claim" <?php checked( 'claim', $intent ); ?>>
 					<span>
 						<strong><?php echo 'match' === $stage ? esc_html__( 'A different organisation on the list', 'dgl-platform' ) : esc_html__( 'An organisation on the list', 'dgl-platform' ); ?></strong>
-						<span class="dgl-help"><?php esc_html_e( 'Find it below. The DGLP team check you are part of it before you can post; you can save drafts in the meantime.', 'dgl-platform' ); ?></span>
+						<span class="dgl-help"><?php esc_html_e( 'Find it below. The DGL team check you are part of it before you can post; you can save drafts in the meantime.', 'dgl-platform' ); ?></span>
 					</span>
 				</label>
 				<label class="dgl-check">
 					<input type="radio" name="dgl_intent" value="register" <?php checked( 'register', $intent ); ?>>
 					<span>
 						<strong><?php esc_html_e( 'An organisation that is not on the list yet', 'dgl-platform' ); ?></strong>
-						<span class="dgl-help"><?php esc_html_e( 'Register it below. The DGLP team check every new organisation before it can post.', 'dgl-platform' ); ?></span>
+						<span class="dgl-help"><?php esc_html_e( 'Register it below. The DGL team check every new organisation before it can post.', 'dgl-platform' ); ?></span>
 					</span>
 				</label>
 			</fieldset>
@@ -239,12 +239,12 @@ $reasons_of = static function ( array $match ): string {
 
 			<div class="dgl-join__block" data-dgl-when="register">
 				<h2 class="dgl-section__title"><?php esc_html_e( 'Register your organisation', 'dgl-platform' ); ?></h2>
-				<p class="dgl-help"><?php esc_html_e( 'Only if it is not on the list. The DGLP team check every new organisation before it can post; you can draft in the meantime.', 'dgl-platform' ); ?></p>
+				<p class="dgl-help"><?php esc_html_e( 'Only if it is not on the list. The DGL team check every new organisation before it can post; you can draft in the meantime.', 'dgl-platform' ); ?></p>
 
 				<?php if ( 'confirm' === $check && [] !== $matches ) : ?>
 					<div class="dgl-matches" role="status">
 						<h3 class="dgl-matches__title"><?php esc_html_e( 'Is it one of these?', 'dgl-platform' ); ?></h3>
-						<p><?php esc_html_e( 'These organisations on the list look like the one you typed. If one of them is yours, join it instead and the DGLP team will check you are part of it.', 'dgl-platform' ); ?></p>
+						<p><?php esc_html_e( 'These organisations on the list look like the one you typed. If one of them is yours, join it instead and the DGL team will check you are part of it.', 'dgl-platform' ); ?></p>
 						<ul class="dgl-matches__list">
 							<?php foreach ( $matches as $match ) : ?>
 								<li class="dgl-match">

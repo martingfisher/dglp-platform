@@ -61,13 +61,6 @@ final class Venue implements TypeDefinition {
 		'bike_racks'    => 'Bike racks',
 	];
 
-	/** How quickly the venue usually answers an enquiry. */
-	public const REPLY = [
-		'same_day' => 'Usually the same day',
-		'two_days' => 'Within two working days',
-		'week'     => 'Within a week',
-	];
-
 	/**
 	 * @return Field[]
 	 */
@@ -169,13 +162,6 @@ final class Venue implements TypeDefinition {
 					type: Field::TEXTAREA,
 					max_length: 600,
 					help: __( 'House rules, insurance, alcohol, noise, anything a hirer should know before they ask.', 'dgl-platform' ),
-				),
-				new Field(
-					key: 'reply_time',
-					label: __( 'How quickly do you usually reply?', 'dgl-platform' ),
-					type: Field::SELECT,
-					options: self::labelled( self::REPLY ),
-					help: __( 'Shown next to the enquiry form, so people know what to expect.', 'dgl-platform' ),
 				),
 			]
 		);

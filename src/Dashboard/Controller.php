@@ -691,7 +691,7 @@ final class Controller {
 		}
 
 		if ( '' !== $values['org_website'] && ! \DGL\Schema\Links::is_secure( $values['org_website'] ) ) {
-			return __( 'The website has to start with https://. The site does not link to pages served over plain http. Leave it out for now if the site has no https, and the DGLP team can help.', 'dgl-platform' );
+			return __( 'The website has to start with https://. The site does not link to pages served over plain http. Leave it out for now if the site has no https, and the DGL team can help.', 'dgl-platform' );
 		}
 
 		$postcode = \DGL\Org\Schema::find( 'org_postcode' );

@@ -172,7 +172,7 @@ $is_owner = $user instanceof UserContext && $user->is_org_owner();
 	<?php if ( ! empty( $data['imported_facts'] ) ) : ?>
 		<section class="dgl-card dgl-section" aria-labelledby="dgl-imported-heading">
 			<h2 class="dgl-section__title" id="dgl-imported-heading"><?php esc_html_e( 'From Forum Central\'s records', 'dgl-platform' ); ?></h2>
-			<p class="dgl-help"><?php esc_html_e( 'Carried over when your organisation was added. Ask the DGLP team if anything here is wrong.', 'dgl-platform' ); ?></p>
+			<p class="dgl-help"><?php esc_html_e( 'Carried over when your organisation was added. Ask the DGL team if anything here is wrong.', 'dgl-platform' ); ?></p>
 			<dl class="dgl-review__list">
 				<?php foreach ( $data['imported_facts'] as $label => $value ) : ?>
 					<dt><?php echo esc_html( $label ); ?></dt>
@@ -437,7 +437,7 @@ $is_owner = $user instanceof UserContext && $user->is_org_owner();
 		</dl>
 
 		<p class="dgl-help">
-			<?php esc_html_e( 'Closing your account is not built yet. Email the DGLP team and they will close it and tell you what happens to anything you have published.', 'dgl-platform' ); ?>
+			<?php esc_html_e( 'Closing your account is not built yet. Email the DGL team and they will close it and tell you what happens to anything you have published.', 'dgl-platform' ); ?>
 		</p>
 	</section>
 

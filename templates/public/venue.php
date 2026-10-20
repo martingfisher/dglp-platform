@@ -39,7 +39,6 @@ $type     = Venue::labelled( Venue::TYPES )[ $value( 'venue_type' ) ] ?? '';
 $ward     = Venue::wards()[ $value( 'ward' ) ] ?? '';
 $access   = array_intersect_key( Venue::labelled( Venue::ACCESS ), array_flip( (array) Frontend::value( $post, 'access' ) ) );
 $fac      = array_intersect_key( Venue::labelled( Venue::FACILITIES ), array_flip( (array) Frontend::value( $post, 'facilities' ) ) );
-$reply    = Venue::labelled( Venue::REPLY )[ $value( 'reply_time' ) ] ?? '';
 $spaces   = SpacesQuery::spaces( $id );
 $facts    = SpacesQuery::quick_facts( array_column( $spaces, 'meta' ) );
 $enquiry  = (array) ( $data['enquiry'] ?? [] );
@@ -193,7 +192,7 @@ $phone   = $value( 'contact_phone' );
 
 			<aside class="dgl-pub__aside dgl-venue__aside" id="enquire">
 				<?php if ( $has_form ) : ?>
-					<?php View::output( 'public/enquiry-form', [ 'post' => $post, 'spaces' => $spaces, 'enquiry' => $enquiry, 'reply' => $reply ] ); ?>
+					<?php View::output( 'public/enquiry-form', [ 'post' => $post, 'spaces' => $spaces, 'enquiry' => $enquiry ] ); ?>
 				<?php elseif ( ! empty( $enquiry['off'] ) ) : ?>
 					<div class="dgl-pub__card">
 						<h2 class="dgl-pub__card-title"><?php esc_html_e( 'Enquire', 'dgl-platform' ); ?></h2>

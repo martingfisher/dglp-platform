@@ -18,7 +18,7 @@ defined( 'ABSPATH' ) || exit;
  */
 final readonly class UserContext {
 
-	/** Registered, not yet approved by the DGLP team. Can draft, cannot submit. */
+	/** Registered, not yet approved by the DGL team. Can draft, cannot submit. */
 	public const ACCOUNT_PENDING = 'pending';
 
 	/** Approved. Full member. */

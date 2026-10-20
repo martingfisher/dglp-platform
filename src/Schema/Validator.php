@@ -253,7 +253,7 @@ final class Validator {
 
 		if ( ! Links::is_secure( $value ) ) {
 			/* translators: %s: field label. */
-			return [ null, sprintf( __( '%s has to start with https://. The site does not link to pages served over plain http. If the site does not work over https, ask the DGLP team about securing it.', 'dgl-platform' ), $field->label ) ];
+			return [ null, sprintf( __( '%s has to start with https://. The site does not link to pages served over plain http. If the site does not work over https, ask the DGL team about securing it.', 'dgl-platform' ), $field->label ) ];
 		}
 
 		if ( false === filter_var( $value, FILTER_VALIDATE_URL ) ) {

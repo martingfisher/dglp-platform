@@ -64,7 +64,7 @@ final class Joining {
 		Log::record( 'join_started', 'signup', $started['id'], 0, $email, [], 0 );
 
 		if ( ! $sent ) {
-			return [ 'ok' => false, 'code' => 'unsent', 'error' => __( 'The confirmation email could not be sent. Try again in a minute, or contact the DGLP team.', 'dgl-platform' ) ];
+			return [ 'ok' => false, 'code' => 'unsent', 'error' => __( 'The confirmation email could not be sent. Try again in a minute, or contact the DGL team.', 'dgl-platform' ) ];
 		}
 
 		return [ 'ok' => true, 'code' => '', 'error' => '' ];
@@ -343,7 +343,7 @@ final class Joining {
 				'dgl_duplicate_hard',
 				sprintf(
 					/* translators: %s: organisation. */
-					__( 'That looks like %s, which is already on the list. Join it instead and the DGLP team will check you are part of it.', 'dgl-platform' ),
+					__( 'That looks like %s, which is already on the list. Join it instead and the DGL team will check you are part of it.', 'dgl-platform' ),
 					$hard[0]['name']
 				),
 				[ 'matches' => $hard ]
