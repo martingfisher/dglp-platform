@@ -1378,3 +1378,19 @@ clean. They are the only DGLP content on staging.
   to martin@resultsyoucanmeasure.com: processed and delivered. Password
   resets, the team inbox (hello@) copies and the 15-minute round-up retry
   were all failing before this.
+- **0.47.11 deployed** (20 October 2026, production): Jenny Bull's 16:07
+  replies. "DGLP team" is now "DGL team" in every message and screen (her
+  call: "everywhere"); no reply time is promised anywhere, so the venue
+  form's "How quickly do you usually reply?" field, its options and the
+  note on the enquiry card and the sent confirmation are gone (values
+  already stored on venues are left in the database, unused); the welcome
+  email's sentence is hers word for word; the sign-in page link and the
+  help say "Join the Doing Good Leeds platform". Settings changed on
+  production, not in code: `dgl_mail_from_name` and the SMTP2GO plugin's
+  `smtp2go_from_name` are "Doing Good Leeds" (a delivered sample shows
+  `From: Doing Good Leeds <hello@doinggoodleeds.org.uk>`, with DKIM, SPF
+  and DMARC passing). Not changed, asked about: the welcome email's
+  subject still says "DGLP user area", the organisation-owner email
+  footers say "DGLP member area", and the directory's "Become a member"
+  has no link until the About us anchor exists. Tests: unit 2375,
+  integration 1516.
