@@ -1464,3 +1464,15 @@ clean. They are the only DGLP content on staging.
   four files: the plugin header, the two changelogs' tails and the
   integration tests' tail (all appended on both sides, both kept). Tests on
   the merged code: unit 2459, integration 1561.
+- **Physical Sensory Impairment page (3385)** (20 October 2026, production,
+  content only): its three topic feed blocks had gone from the page by the
+  revision saved on 19 October 15:47 (site time) by user 2, which also held
+  other edits to the page (renamed heading, a rewritten list, a new
+  Resources section), so the revision was not rolled back. The three
+  `dgl/feed` blocks (news, event, training; topic
+  `physical-and-sensory-impairments`) were put back in their old place,
+  before the "International Day of Disabled People" row, with
+  `replace_in_post` (one match, one revision, so it can be rolled back).
+  Live: three sections ("Latest news", "What's on", "Training and
+  learning"), three `ItemList`s, no raw shortcode text, the later edits
+  intact. All eleven feed pages now show their three sections.
