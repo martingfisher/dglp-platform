@@ -18,7 +18,7 @@ final class JoinCopy {
 		return new Message(
 			key: 'join_verify',
 			audience: 'joiner',
-			subject: __( 'Confirm your email address for the DGLP user area', 'dgl-platform' ),
+			subject: __( 'Confirm your email address for the Doing Good Leeds platform', 'dgl-platform' ),
 			preheader: __( 'One click and you can carry on.', 'dgl-platform' ),
 			heading: __( 'Confirm it is you', 'dgl-platform' ),
 			paragraphs: [
