@@ -378,7 +378,7 @@ never show whatever the switch says.
 
 ## How people join
 
-The sign-in page links to "Join the user area". The person gives their email
+The sign-in page links to "Join the Doing Good Leeds platform". The person gives their email
 address first and nothing else. We send a link. It works once and for 48
 hours; after that they ask for another. When they click it:
 

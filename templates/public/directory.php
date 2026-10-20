@@ -38,9 +38,9 @@ $page_url = static function ( int $page ) use ( $args, $base ): string {
 ?>
 <div class="dgl-pub dgl-dir">
 	<header class="dgl-pub__head">
-		<h1 class="dgl-pub__title"><?php esc_html_e( 'Member organisations', 'dgl-platform' ); ?></h1>
+		<h1 class="dgl-pub__title"><?php esc_html_e( 'Organisation Directory', 'dgl-platform' ); ?></h1>
 		<p class="dgl-pub__lede">
-			<?php esc_html_e( 'Charities, community groups and social enterprises in the Doing Good Leeds Partnership. Search by name or by what they do.', 'dgl-platform' ); ?>
+			<?php esc_html_e( 'Charities, community groups and social enterprises in Leeds. Search by name or by what they do. Want to appear in this directory? Become a member of one of the DGL partners.', 'dgl-platform' ); ?>
 		</p>
 	</header>
 
@@ -93,7 +93,10 @@ $page_url = static function ( int $page ) use ( $args, $base ): string {
 
 	<p class="dgl-dir__count" role="status">
 		<?php
-		if ( 0 === $result['total'] ) {
+		if ( 0 === $result['total'] && ! $active ) {
+			// Nobody listed at all (every organisation confirms its own listing), not a search that found nothing.
+			esc_html_e( 'Organisations are being added. Each one appears here once it has confirmed its own listing.', 'dgl-platform' );
+		} elseif ( 0 === $result['total'] ) {
 			esc_html_e( 'No organisations match. Try fewer filters, or a different word.', 'dgl-platform' );
 		} elseif ( $active ) {
 			/* translators: %s: number of organisations. */

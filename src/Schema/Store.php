@@ -17,7 +17,7 @@ defined( 'ABSPATH' ) || exit;
  * The one place field values are written.
  *
  * There are now two ways into a submission: the member's wizard on the front
- * end and the DGLP team's edit screen in wp-admin. Both write the same fields to
+ * end and the DGL team's edit screen in wp-admin. Both write the same fields to
  * the same post, and if each had its own writer they would drift — a rule added
  * in one and forgotten in the other produces data that is correct depending on
  * who typed it, which is the worst kind of bug to find.

@@ -164,6 +164,84 @@ final class Directory {
 		return $done;
 	}
 
+	/** Where the list of organisations taken out by {@see self::unlist_all()} is kept, so it can be put back. */
+	public const UNLISTED_BACKUP = 'dgl_directory_unlisted_backup';
+
+	/**
+	 * Take every organisation out of the public directory.
+	 *
+	 * Decided 20 October 2026 at Forum Central's request: until each
+	 * organisation has made its own account and confirmed its own listing, nobody
+	 * is listed on its behalf. This is the members' own switch, not the review
+	 * team's hide switch, so an organisation that switches itself on later
+	 * appears at once with no one needing to undo anything. The organisations
+	 * taken out are kept in an option, so {@see self::relist_unlisted()} puts the
+	 * same ones back. Audited, one entry each.
+	 *
+	 * @return int[] The organisations switched off by this call.
+	 */
+	public static function unlist_all( bool $write ): array {
+		$ids = array_map(
+			'intval',
+			(array) get_posts(
+				[
+					'post_type'      => \DGL\PostTypes::ORG,
+					'post_status'    => 'any',
+					'posts_per_page' => -1,
+					'fields'         => 'ids',
+					'no_found_rows'  => true,
+					'meta_query'     => [ [ 'key' => Meta::ORG_IN_DIRECTORY, 'value' => '1' ] ], // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+				]
+			)
+		);
+
+		if ( ! $write || [] === $ids ) {
+			return $ids;
+		}
+
+		$kept = (array) get_option( self::UNLISTED_BACKUP, [] );
+		$was  = array_map( 'intval', (array) ( $kept['ids'] ?? [] ) );
+
+		update_option( self::UNLISTED_BACKUP, [ 'at' => gmdate( 'Y-m-d H:i:s' ), 'ids' => array_values( array_unique( array_merge( $was, $ids ) ) ) ], false );
+
+		foreach ( $ids as $id ) {
+			delete_post_meta( $id, Meta::ORG_IN_DIRECTORY );
+			Log::record( 'directory_off', 'org', $id, $id, 'Taken out until the organisation confirms its own listing', [ 'in_directory' => [ 'yes', 'no' ] ], 0 );
+		}
+
+		return $ids;
+	}
+
+	/**
+	 * Put back the organisations {@see self::unlist_all()} took out.
+	 *
+	 * @return int[] The organisations switched back on by this call.
+	 */
+	public static function relist_unlisted( bool $write ): array {
+		$kept = (array) get_option( self::UNLISTED_BACKUP, [] );
+		$ids  = array_map( 'intval', (array) ( $kept['ids'] ?? [] ) );
+		$todo = [];
+
+		foreach ( $ids as $id ) {
+			if ( Org::exists( $id ) && ! self::wants_listing( $id ) ) {
+				$todo[] = $id;
+			}
+		}
+
+		if ( ! $write ) {
+			return $todo;
+		}
+
+		foreach ( $todo as $id ) {
+			update_post_meta( $id, Meta::ORG_IN_DIRECTORY, '1' );
+			Log::record( 'directory_on', 'org', $id, $id, 'Put back after the all-organisations switch-off', [ 'in_directory' => [ 'no', 'yes' ] ], 0 );
+		}
+
+		delete_option( self::UNLISTED_BACKUP );
+
+		return $todo;
+	}
+
 	/**
 	 * What Forum Central's records say, for the read-only panel on the
 	 * Organisation tab. Empty when the organisation was not imported.

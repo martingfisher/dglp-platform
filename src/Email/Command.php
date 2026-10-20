@@ -348,7 +348,7 @@ final class Command {
 			type_label: 'Event',
 			org_name: 'Sample Organisation',
 			actor_name: 'Sample Reviewer',
-			site_name: (string) get_bloginfo( 'name' ),
+			site_name: Mailer::site_label(),
 			item_url: home_url( '/dashboard/item/0' ),
 			review_url: home_url( '/dashboard/review/0' ),
 			public_url: home_url( '/' ),

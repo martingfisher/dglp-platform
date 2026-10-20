@@ -447,3 +447,10 @@ $m = Copy::compose( 'published_on_trust', Plan::NOTIFY_MEMBER, $edit( [ 'trusted
 Harness::assert_true( null !== $m && str_contains( implode( ' ', $m->paragraphs ), 'trusted for edits' ), 'an edit let through on the edits switch says so' );
 $m = Copy::compose( 'published_on_trust', Plan::NOTIFY_MEMBER, $ctx() );
 Harness::assert_true( null !== $m && str_contains( implode( ' ', $m->paragraphs ), 'trusted for this kind of listing' ), 'with nothing known the wording still reads' );
+
+Harness::group( 'The welcome email and the approval email, as the team worded them' );
+$welcome = \DGL\Email\JoinCopy::verify( 'https://example.test/join/x' );
+Harness::assert_same( 'Somebody used this email address to join the Doing Good Leeds platform. If that was you, use the button below to create your account. If it was not, ignore this and nothing will happen.', $welcome->paragraphs[0], 'the welcome email says what the team asked' );
+Harness::assert_same( 'Confirm your email address for the Doing Good Leeds platform', $welcome->subject, 'and its subject says the platform, not the DGLP user area' );
+$m = Copy::compose( 'approved', Plan::NOTIFY_MEMBER, $ctx() );
+Harness::assert_true( null !== $m && str_contains( implode( ' ', $m->paragraphs ), 'The DGL team have approved' ) && ! str_contains( implode( ' ', $m->paragraphs ), 'DGLP' ), 'the approval email says "The DGL team", with no P' );

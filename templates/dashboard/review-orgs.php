@@ -62,7 +62,8 @@ $q    = (string) ( $data['q'] ?? '' );
 				<th scope="col" class="dgl-orgs__num"><?php esc_html_e( 'Members', 'dgl-platform' ); ?></th>
 			</tr>
 		</thead>
-		<tbody>
+		<?php /* Opts in to the "load more" script: the shared pager below is hidden when it runs, so without this the list stopped at the first page. */ ?>
+		<tbody data-dgl-autoload="tr">
 			<?php foreach ( $rows as $row ) : ?>
 				<tr>
 					<td>

@@ -225,7 +225,7 @@ final class Frontend {
 		}
 
 		$org  = self::directory_org();
-		$name = $org instanceof WP_Post ? get_the_title( $org ) : __( 'Member organisations', 'dgl-platform' );
+		$name = $org instanceof WP_Post ? get_the_title( $org ) : __( 'Organisation Directory', 'dgl-platform' );
 
 		if ( '1' !== $request && null === $org ) {
 			$name = __( 'Not found', 'dgl-platform' );

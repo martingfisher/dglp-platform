@@ -29,6 +29,36 @@ defined( 'ABSPATH' ) || exit;
  */
 final class Store {
 
+	/** '1' when somebody ticked the round-up box at registration, '0' when they did not. Absent: they joined before the box existed. */
+	public const OPTIN_META = 'dgl_digest_optin';
+
+	/** When they ticked it, UTC `Y-m-d H:i:s`. */
+	public const OPTIN_AT_META = 'dgl_digest_optin_at';
+
+	/**
+	 * Keep what somebody chose at registration, so approval honours it later.
+	 */
+	public static function record_choice( int $user_id, bool $wants ): void {
+		if ( $user_id <= 0 ) {
+			return;
+		}
+
+		update_user_meta( $user_id, self::OPTIN_META, $wants ? '1' : '0' );
+
+		if ( $wants ) {
+			update_user_meta( $user_id, self::OPTIN_AT_META, self::now() );
+		}
+	}
+
+	/**
+	 * Whether somebody said no at registration. Nothing recorded is not a no:
+	 * accounts made before the box existed were told the round-up came with
+	 * approval, and keep it.
+	 */
+	public static function declined_at_registration( int $user_id ): bool {
+		return '0' === (string) get_user_meta( $user_id, self::OPTIN_META, true );
+	}
+
 	public static function name(): string {
 		global $wpdb;
 
@@ -268,6 +298,11 @@ final class Store {
 	 */
 	public static function subscribe_default( int $user_id, string $source ): bool {
 		if ( $user_id <= 0 || ! self::exists() || null !== self::for_user( $user_id ) ) {
+			return false;
+		}
+
+		// They did not tick the box at registration: no round-up, whatever approves them later.
+		if ( self::declined_at_registration( $user_id ) ) {
 			return false;
 		}
 

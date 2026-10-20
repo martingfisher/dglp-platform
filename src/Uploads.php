@@ -23,7 +23,7 @@ defined( 'ABSPATH' ) || exit;
  * administrator uploads. It is not fine for files arriving from a few thousand
  * member organisations: an SVG is an XML document that can carry script, and
  * WordPress serves uploads from the same origin as the site, so a malicious
- * one becomes stored cross-site scripting against the DGLP team.
+ * one becomes stored cross-site scripting against the DGL team.
  *
  * So member uploads are rasters only. This is an allowlist rather than a
  * blocklist, because a blocklist is a list of the attacks somebody already

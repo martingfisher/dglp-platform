@@ -90,7 +90,7 @@ final class Rules {
 
 		foreach ( $existing_names as $existing ) {
 			if ( '' !== $wanted && Duplicates::normalise_name( html_entity_decode( (string) $existing, ENT_QUOTES, 'UTF-8' ) ) === $wanted ) {
-				return 'An organisation with that name is already on the list. Choose it from the list instead, and the DGLP team will check you are part of it.';
+				return 'An organisation with that name is already on the list. Choose it from the list instead, and the DGL team will check you are part of it.';
 			}
 		}
 

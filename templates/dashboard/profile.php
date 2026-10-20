@@ -172,7 +172,7 @@ $is_owner = $user instanceof UserContext && $user->is_org_owner();
 	<?php if ( ! empty( $data['imported_facts'] ) ) : ?>
 		<section class="dgl-card dgl-section" aria-labelledby="dgl-imported-heading">
 			<h2 class="dgl-section__title" id="dgl-imported-heading"><?php esc_html_e( 'From Forum Central\'s records', 'dgl-platform' ); ?></h2>
-			<p class="dgl-help"><?php esc_html_e( 'Carried over when your organisation was added. Ask the DGLP team if anything here is wrong.', 'dgl-platform' ); ?></p>
+			<p class="dgl-help"><?php esc_html_e( 'Carried over when your organisation was added. Ask the DGL team if anything here is wrong.', 'dgl-platform' ); ?></p>
 			<dl class="dgl-review__list">
 				<?php foreach ( $data['imported_facts'] as $label => $value ) : ?>
 					<dt><?php echo esc_html( $label ); ?></dt>
@@ -437,7 +437,7 @@ $is_owner = $user instanceof UserContext && $user->is_org_owner();
 		</dl>
 
 		<p class="dgl-help">
-			<?php esc_html_e( 'Closing your account is not built yet. Email the DGLP team and they will close it and tell you what happens to anything you have published.', 'dgl-platform' ); ?>
+			<?php esc_html_e( 'Closing your account is not built yet. Email the DGL team and they will close it and tell you what happens to anything you have published.', 'dgl-platform' ); ?>
 		</p>
 	</section>
 
@@ -453,7 +453,7 @@ $is_owner = $user instanceof UserContext && $user->is_org_owner();
 		<h2 class="dgl-section__title"><?php esc_html_e( 'Your round-up email', 'dgl-platform' ); ?></h2>
 
 		<p>
-			<?php esc_html_e( 'A round-up of what other member organisations have posted. It comes weekly on Tuesday mornings once your account is approved. Tick what you want it to cover, or tick nothing to stop it.', 'dgl-platform' ); ?>
+			<?php esc_html_e( 'A round-up of what organisations have posted to the Doing Good Leeds platform. It comes weekly on Tuesday mornings once your account is approved. Tick what you want it to cover, or untick everything to stop it.', 'dgl-platform' ); ?>
 		</p>
 
 		<form method="post" class="dgl-form">

@@ -256,7 +256,7 @@ final class Rules {
 			self::SEND_BAD_EMAIL       => __( 'That does not look like an email address. Check it and try again.', 'dgl-platform' ),
 			self::SEND_ALREADY_MEMBER  => __( 'They are already part of your organisation.', 'dgl-platform' ),
 			self::SEND_ALREADY_INVITED => __( 'They already have an invitation waiting. You can withdraw it and send a new one.', 'dgl-platform' ),
-			self::SEND_OTHER_ORG       => __( 'That address already belongs to another organisation on the site. Ask the DGLP team to move the account.', 'dgl-platform' ),
+			self::SEND_OTHER_ORG       => __( 'That address already belongs to another organisation on the site. Ask the DGL team to move the account.', 'dgl-platform' ),
 			self::SEND_TOO_MANY        => __( 'There are too many invitations waiting. Withdraw some before sending more.', 'dgl-platform' ),
 			default                    => __( 'The invitation could not be sent.', 'dgl-platform' ),
 		};
@@ -320,7 +320,7 @@ final class Rules {
 	 */
 	public static function accept_error( string $outcome, string $state = '' ): string {
 		if ( self::ACCEPT_OTHER_ORG === $outcome ) {
-			return __( 'Your account is already linked to a different organisation. The DGLP team can move it for you.', 'dgl-platform' );
+			return __( 'Your account is already linked to a different organisation. The DGL team can move it for you.', 'dgl-platform' );
 		}
 
 		return match ( $state ) {

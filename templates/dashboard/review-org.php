@@ -63,7 +63,7 @@ $changes = $data['changes'] ?? [];
 			<?php wp_nonce_field( Wizard::NONCE ); ?>
 
 			<div class="dgl-field-row">
-				<label class="dgl-label" for="dgl-note"><?php esc_html_e( 'Note to the member', 'dgl-platform' ); ?></label>
+				<label class="dgl-label" for="dgl-note"><?php esc_html_e( 'Note to the user', 'dgl-platform' ); ?></label>
 				<textarea class="dgl-field dgl-field--area" id="dgl-note" name="dgl_note" rows="4"></textarea>
 				<p class="dgl-help"><?php esc_html_e( 'Required if you are refusing. They see it on their dashboard and by email.', 'dgl-platform' ); ?></p>
 			</div>

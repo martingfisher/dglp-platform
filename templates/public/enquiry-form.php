@@ -3,8 +3,8 @@
  * The enquiry form on a venue page.
  *
  * Expects `$data['post']` (the venue), `$data['spaces']` (from
- * SpacesQuery::spaces), `$data['enquiry']` (from Enquiry::state) and
- * `$data['reply']` (the venue's usual reply time, in words, or '').
+ * SpacesQuery::spaces) and `$data['enquiry']` (from Enquiry::state).
+ * No reply time is promised anywhere: the team cannot guarantee one.
  *
  * @var array<string,mixed> $data
  * @package DGL
@@ -22,7 +22,6 @@ $state   = (array) ( $data['enquiry'] ?? [] );
 $values  = (array) ( $state['values'] ?? [] );
 $errors  = (array) ( $state['errors'] ?? [] );
 $options = Enquiry::options( (int) $post->ID );
-$reply   = (string) ( $data['reply'] ?? '' );
 $action  = (string) get_permalink( $post );
 $val     = static fn( string $key ): string => (string) ( $values[ $key ] ?? '' );
 $today   = ( new DateTimeImmutable( 'today', wp_timezone() ) )->format( 'Y-m-d' );
@@ -33,14 +32,11 @@ $today   = ( new DateTimeImmutable( 'today', wp_timezone() ) )->format( 'Y-m-d' 
 	<?php if ( ! empty( $state['sent'] ) ) : ?>
 		<div class="dgl-enquiry__sent" role="status">
 			<p><strong><?php esc_html_e( 'Sent to the venue.', 'dgl-platform' ); ?></strong></p>
-			<p><?php echo esc_html( '' !== $reply ? sprintf( /* translators: %s: a reply time, e.g. "within two working days". */ __( 'They reply by email, %s.', 'dgl-platform' ), strtolower( $reply ) ) : __( 'They reply by email.', 'dgl-platform' ) ); ?></p>
+			<p><?php esc_html_e( 'They reply by email.', 'dgl-platform' ); ?></p>
 		</div>
 	<?php else : ?>
 		<p class="dgl-pub__note">
 			<?php esc_html_e( 'Goes straight to the venue. They reply to you by email.', 'dgl-platform' ); ?>
-			<?php if ( '' !== $reply ) : ?>
-				<?php echo esc_html( $reply . '.' ); ?>
-			<?php endif; ?>
 		</p>
 
 		<?php if ( ! empty( $state['limited'] ) ) : ?>
@@ -88,7 +84,7 @@ $today   = ( new DateTimeImmutable( 'today', wp_timezone() ) )->format( 'Y-m-d' 
 			$select .= '</select>';
 
 			$field( 'space', __( 'Which space?', 'dgl-platform' ), $select, $errors['space'] ?? '' );
-			$field( 'date', __( 'Date', 'dgl-platform' ), '<input class="dgl-dir__input" type="date" min="' . esc_attr( $today ) . '" value="' . esc_attr( $val( 'date' ) ) . '"' . $attrs( 'date' ) . ' required>', $errors['date'] ?? '' );
+			$field( 'date', __( 'Date', 'dgl-platform' ), '<input class="dgl-dir__input" type="date" min="' . esc_attr( $today ) . '" value="' . esc_attr( $val( 'date' ) ) . '"' . $attrs( 'date' ) . '>', $errors['date'] ?? '' );
 			?>
 			<div class="dgl-enquiry__row">
 				<?php $field( 'time_from', __( 'From', 'dgl-platform' ), '<input class="dgl-dir__input" type="time" value="' . esc_attr( $val( 'time_from' ) ) . '"' . $attrs( 'time_from' ) . '>', $errors['time_from'] ?? '' ); ?>
@@ -98,8 +94,8 @@ $today   = ( new DateTimeImmutable( 'today', wp_timezone() ) )->format( 'Y-m-d' 
 			$field( 'people', __( 'How many people?', 'dgl-platform' ), '<input class="dgl-dir__input" type="number" min="1" max="' . (int) \DGL\Spaces\SpacesQuery::MAX_PEOPLE . '" inputmode="numeric" value="' . esc_attr( $val( 'people' ) ) . '"' . $attrs( 'people' ) . '>', $errors['people'] ?? '' );
 			$field( 'message', __( 'What is it for?', 'dgl-platform' ), '<textarea class="dgl-dir__input dgl-enquiry__text" rows="4" maxlength="' . (int) Enquiry::MESSAGE_MAX . '"' . $attrs( 'message' ) . ' required>' . esc_textarea( $val( 'message' ) ) . '</textarea>', $errors['message'] ?? '', __( 'The kind of event, anything you need, any questions.', 'dgl-platform' ) );
 			$field( 'name', __( 'Your name', 'dgl-platform' ), '<input class="dgl-dir__input" type="text" autocomplete="name" maxlength="120" value="' . esc_attr( $val( 'name' ) ) . '"' . $attrs( 'name' ) . ' required>', $errors['name'] ?? '' );
-			$field( 'email', __( 'Your email', 'dgl-platform' ), '<input class="dgl-dir__input" type="email" autocomplete="email" maxlength="200" value="' . esc_attr( $val( 'email' ) ) . '"' . $attrs( 'email' ) . ' required>', $errors['email'] ?? '', __( 'The venue replies here.', 'dgl-platform' ) );
-			$field( 'phone', __( 'Phone, if you would rather be called', 'dgl-platform' ), '<input class="dgl-dir__input" type="tel" autocomplete="tel" maxlength="40" value="' . esc_attr( $val( 'phone' ) ) . '"' . $attrs( 'phone' ) . '>', $errors['phone'] ?? '' );
+			$field( 'email', __( 'Your email', 'dgl-platform' ), '<input class="dgl-dir__input" type="email" autocomplete="email" maxlength="200" value="' . esc_attr( $val( 'email' ) ) . '"' . $attrs( 'email' ) . ' required>', $errors['email'] ?? '', __( 'The venue replies to this email address.', 'dgl-platform' ) );
+			$field( 'phone', __( 'Phone', 'dgl-platform' ), '<input class="dgl-dir__input" type="tel" autocomplete="tel" maxlength="40" value="' . esc_attr( $val( 'phone' ) ) . '"' . $attrs( 'phone' ) . '>', $errors['phone'] ?? '', __( 'If you\'d like them to be able to call you', 'dgl-platform' ) );
 			?>
 			<button class="dgl-pub__button dgl-enquiry__send" type="submit"><?php esc_html_e( 'Send enquiry', 'dgl-platform' ); ?></button>
 			<p class="dgl-pub__note"><?php esc_html_e( 'Your details go to the venue and nowhere else. This is an enquiry, not a booking.', 'dgl-platform' ); ?></p>

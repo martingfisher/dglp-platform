@@ -1319,6 +1319,90 @@ clean. They are the only DGLP content on staging.
   1,324 images, 956 with no alt text (55 of them SVG, which the AltText.ai
   account has switched off). `wp alttext generate --dry-run` counts 953
   to process. Not run: it spends one credit per image.
+- **Theme colours and page fixes** (18 October 2026, production, no plugin
+  change): the top-menu buttons (Forum Central, VAL, LOPF) had stopped
+  showing. Seven Blocksy palette colours (2, 4, 5, 6, 7, 9, 12, stored in
+  `theme_mods_blocksy-child` under `colorPalette`) were saved with a
+  trailing space. Blocksy's colour check rejects such a value, so it left
+  those colours out of its generated `global.css`. The spaces were
+  removed with `wp option patch update`. Blocksy only rewrites
+  `global.css` on a Customizer save, so the saved version in
+  `blocksy_db_versions` was set one step back (2.1.59, no migrations
+  between it and 2.1.60) to make it rebuild; caches were then cleared.
+  The live CDN file carries all seven colours and the three buttons
+  render in a browser. A site-wide scan of 250 pages found six more
+  contrast problems; all were fixed with page-scoped rules in the child
+  theme's Additional CSS (`custom_css` post 11, previous content kept at
+  the top): palette colour 11 does not exist and is now mapped to
+  colour 10; headings and buttons on pages 3825, 3697, 2791, 2129 and
+  9548 use palette colours 3, 10 or 14. Block IDs are reused between
+  pages by Greenshift, so every rule is scoped with `body.page-id-N`.
+  The proper long-term fix is in the page builder; remove each rule when
+  its block is corrected. A six-page re-check shows no text below 3:1.
+  Project setting: `mcp__Wordify__*` is allowed in `.claude/settings.json`.
+- **0.47.10 deployed** (20 October 2026, production): Jenny Bull's
+  "Platform amends" email. Wording: join page (heading, lede, link line,
+  "Already got an account?", "Your email address is confirmed: ... Use this
+  to sign in.", the claim line, the sentence about checking what you type
+  removed, "Re-type password"); email preferences text; the event finish
+  time help; "Note to the user" on the item and organisation review
+  screens; "Culturally Diverse Communities" (topic list version 2 renamed
+  the term, slug and its 3 items untouched); "Organisation Directory"
+  heading, title and intro; the spaces intro and footer; Office/hot-desking
+  as a type of space; enquiry form (date optional, "The venue replies to
+  this email address.", Phone as a plain heading with "If you'd like them
+  to be able to call you" underneath, "Within a week" no longer shown);
+  approval email says "The DGL team" and "doinggoodleeds.org.uk" (option
+  `dgl_mail_site_domain`, set on production, which every email's "the
+  site" now uses). Behaviour: the round-up is a tickbox at registration,
+  unticked by default; the choice is kept in user meta
+  `dgl_digest_optin` and approval subscribes only people who ticked (an
+  account with no recorded choice is treated as before, because it was
+  told the round-up came with approval); the approval email mentions the
+  round-up only to people who asked. The organisations list in the review
+  area now loads more (its table had not opted in to the "load more"
+  script, and the shared pager is hidden when that script runs, so the
+  list stopped at the first 24). wp-login.php screens (sign in, forgotten
+  password, reset) are styled as the site, with its logo. Directory:
+  `wp dgl org directory-off-all` took all 146 listed organisations out
+  (members' own switch; the list of who was in is kept in option
+  `dgl_directory_unlisted_backup`; `wp dgl org directory-restore` puts
+  the same ones back); the directory page says organisations are being
+  added when nobody is listed. Tests: unit 2376, integration 1516.
+- **Email was being rejected** (found 20 October 2026): SMTP2GO refused
+  every platform email ("From header sender domain not verified
+  (doinggoodleeds.co.uk)") because the SMTP2GO plugin's own
+  `smtp2go_from_address` was `hello@doinggoodLeeds.co.uk` and
+  `smtp2go_force_from_address` was on, so it overrode the platform's
+  `.org.uk` address. Set to `hello@doinggoodleeds.org.uk`. Sample email
+  to martin@resultsyoucanmeasure.com: processed and delivered. Password
+  resets, the team inbox (hello@) copies and the 15-minute round-up retry
+  were all failing before this.
+- **0.47.11 deployed** (20 October 2026, production): Jenny Bull's 16:07
+  replies. "DGLP team" is now "DGL team" in every message and screen (her
+  call: "everywhere"); no reply time is promised anywhere, so the venue
+  form's "How quickly do you usually reply?" field, its options and the
+  note on the enquiry card and the sent confirmation are gone (values
+  already stored on venues are left in the database, unused); the welcome
+  email's sentence is hers word for word; the sign-in page link and the
+  help say "Join the Doing Good Leeds platform". Settings changed on
+  production, not in code: `dgl_mail_from_name` and the SMTP2GO plugin's
+  `smtp2go_from_name` are "Doing Good Leeds" (a delivered sample shows
+  `From: Doing Good Leeds <hello@doinggoodleeds.org.uk>`, with DKIM, SPF
+  and DMARC passing). Not changed, asked about: the welcome email's
+  subject still says "DGLP user area", the organisation-owner email
+  footers say "DGLP member area", and the directory's "Become a member"
+  has no link until the About us anchor exists. Tests: unit 2375,
+  integration 1516.
+- **0.47.12 deployed** (20 October 2026, production): the welcome email's
+  subject is "Confirm your email address for the Doing Good Leeds
+  platform" and the three organisation-owner email footers say "on the
+  Doing Good Leeds platform" instead of "in the DGLP member area". Staff
+  labels (admin dashboard widget, role names, privacy tool names, staff
+  help) still say DGLP, by Martin's decision. Live: plugin 0.47.12 (plugin
+  list and stored version agree), home, join and cron answer 200, cache
+  cleared. Tests: unit 2376, integration 1516.
+
 - **0.48.0 deployed** (19 October 2026, production): the Topic feed block,
   `[dgl_feed]` and "Topic feed" in the editor. See `docs/feed-block.md`.
   Installed from the commit-pinned zip with `wp plugin install ... --force`;
@@ -1365,3 +1449,30 @@ clean. They are the only DGLP content on staging.
   capped at 260px (a dropdown is as wide as its longest option), so Topic, When,
   Organisation and Show sit on one row on a desktop. On a phone they stay full
   width behind the Filters button.
+- **0.49.5 deployed** (20 October 2026, production): main's 0.48.0 to 0.49.4
+  (topic feed block and shortcode, listing filters and intros, stand-in
+  pictures) merged with this branch's 0.47.10 to 0.47.12 (Jenny Bull's
+  platform amends). **Why:** the amends branch was started on 18 October,
+  before 0.48.0 existed, and its three releases (0.47.10, 0.47.11, 0.47.12)
+  were installed with `--force` over a production that was already on
+  0.49.x. That removed the topic feed sections from the 11 network pages
+  for about seven and a half hours (they are page content and stayed in the
+  pages, so installing a 0.49.x plugin brought them back with no page
+  edits). The branch should have been checked against main's version
+  before each deploy; `git fetch origin main` and a look at its
+  `dgl-platform.php` is now part of the deploy routine. The merge touched
+  four files: the plugin header, the two changelogs' tails and the
+  integration tests' tail (all appended on both sides, both kept). Tests on
+  the merged code: unit 2459, integration 1561.
+- **Physical Sensory Impairment page (3385)** (20 October 2026, production,
+  content only): its three topic feed blocks had gone from the page by the
+  revision saved on 19 October 15:47 (site time) by user 2, which also held
+  other edits to the page (renamed heading, a rewritten list, a new
+  Resources section), so the revision was not rolled back. The three
+  `dgl/feed` blocks (news, event, training; topic
+  `physical-and-sensory-impairments`) were put back in their old place,
+  before the "International Day of Disabled People" row, with
+  `replace_in_post` (one match, one revision, so it can be rolled back).
+  Live: three sections ("Latest news", "What's on", "Training and
+  learning"), three `ItemList`s, no raw shortcode text, the later edits
+  intact. All eleven feed pages now show their three sections.

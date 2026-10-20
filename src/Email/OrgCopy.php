@@ -83,7 +83,7 @@ final class OrgCopy {
 			cta_label: __( 'See your organisation profile', 'dgl-platform' ),
 			cta_url: $profile_url,
 			footnotes: [
-				Footer::sent_because( __( 'you are an owner of the organisation in the DGLP member area.', 'dgl-platform' ) ),
+				Footer::sent_because( __( 'you are an owner of the organisation on the Doing Good Leeds platform.', 'dgl-platform' ) ),
 				Footer::questions(),
 			]
 		);
@@ -120,7 +120,7 @@ final class OrgCopy {
 			cta_label: __( 'Go to your organisation profile', 'dgl-platform' ),
 			cta_url: $profile_url,
 			footnotes: [
-				Footer::sent_because( __( 'you are an owner of the organisation in the DGLP member area.', 'dgl-platform' ) ),
+				Footer::sent_because( __( 'you are an owner of the organisation on the Doing Good Leeds platform.', 'dgl-platform' ) ),
 				Footer::questions(),
 			]
 		);
@@ -155,7 +155,7 @@ final class OrgCopy {
 			cta_label: __( 'Go to your member area', 'dgl-platform' ),
 			cta_url: $profile_url,
 			footnotes: [
-				Footer::sent_because( __( 'you are an owner of the organisation in the DGLP member area.', 'dgl-platform' ) ),
+				Footer::sent_because( __( 'you are an owner of the organisation on the Doing Good Leeds platform.', 'dgl-platform' ) ),
 				Footer::questions(),
 			]
 		);

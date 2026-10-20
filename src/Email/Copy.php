@@ -105,7 +105,7 @@ final class Copy {
 					? [
 						sprintf(
 							/* translators: %s: item title. */
-							__( 'Your edit to %s is with the DGLP team. The version on the site has not changed, and it stays up while they read the edit.', 'dgl-platform' ),
+							__( 'Your edit to %s is with the DGL team. The version on the site has not changed, and it stays up while they read the edit.', 'dgl-platform' ),
 							$c->title()
 						),
 						__( 'You will get an email when they decide. You cannot make another edit to this one until they have.', 'dgl-platform' ),
@@ -113,7 +113,7 @@ final class Copy {
 					: [
 						sprintf(
 							/* translators: %s: item title. */
-							__( '%s is with the DGLP team. It is not on the site yet, and it will not be until somebody has read it.', 'dgl-platform' ),
+							__( '%s is with the DGL team. It is not on the site yet, and it will not be until somebody has read it.', 'dgl-platform' ),
 							$c->title()
 						),
 						__( 'You will get an email when they decide. You do not need to do anything until then, and you cannot edit it while they have it.', 'dgl-platform' ),
@@ -191,7 +191,7 @@ final class Copy {
 							$c->org(),
 							$c->trusted_for()
 						),
-						__( 'The DGLP team still read edits from trusted organisations, so they may come back to you about it.', 'dgl-platform' ),
+						__( 'The DGL team still read edits from trusted organisations, so they may come back to you about it.', 'dgl-platform' ),
 					]
 					: [
 						sprintf(
@@ -201,7 +201,7 @@ final class Copy {
 							$c->org(),
 							$c->trusted_for()
 						),
-						__( 'The DGLP team still read trusted submissions, so they may come back to you about it.', 'dgl-platform' ),
+						__( 'The DGL team still read trusted submissions, so they may come back to you about it.', 'dgl-platform' ),
 					],
 				facts: self::facts( $c, [ 'type', 'org', 'expires' ] ),
 				cta_label: __( 'View it on the site', 'dgl-platform' ),
@@ -278,7 +278,7 @@ final class Copy {
 				? [
 					sprintf(
 						/* translators: 1: item title, 2: site name. */
-						__( 'The DGLP team have approved your edit to %1$s. %2$s now shows the updated version.', 'dgl-platform' ),
+						__( 'The DGL team have approved your edit to %1$s. %2$s now shows the updated version.', 'dgl-platform' ),
 						$c->title(),
 						$c->site()
 					),
@@ -286,7 +286,7 @@ final class Copy {
 				: [
 					sprintf(
 						/* translators: 1: item title, 2: site name. */
-						__( 'The DGLP team have approved %1$s. It is on %2$s now.', 'dgl-platform' ),
+						__( 'The DGL team have approved %1$s. It is on %2$s now.', 'dgl-platform' ),
 						$c->title(),
 						$c->site()
 					),
@@ -362,7 +362,7 @@ final class Copy {
 				? [
 					sprintf(
 						/* translators: 1: item title, 2: site name. */
-						__( 'The DGLP team have not approved your edit to %1$s, so the change will not appear on %2$s. The published version is unchanged and still on the site. Their reason is below.', 'dgl-platform' ),
+						__( 'The DGL team have not approved your edit to %1$s, so the change will not appear on %2$s. The published version is unchanged and still on the site. Their reason is below.', 'dgl-platform' ),
 						$c->title(),
 						$c->site()
 					),
@@ -371,7 +371,7 @@ final class Copy {
 				: [
 					sprintf(
 						/* translators: 1: item title, 2: site name. */
-						__( 'The DGLP team have not approved %1$s, so it will not appear on %2$s. Their reason is below.', 'dgl-platform' ),
+						__( 'The DGL team have not approved %1$s, so it will not appear on %2$s. Their reason is below.', 'dgl-platform' ),
 						$c->title(),
 						$c->site()
 					),
@@ -405,7 +405,7 @@ final class Copy {
 			paragraphs: [
 				sprintf(
 					/* translators: %s: item title. */
-					__( '%s was not approved earlier. The DGLP team have put it back in the review queue to decide again. You do not need to do anything, and you will get an email when they have.', 'dgl-platform' ),
+					__( '%s was not approved earlier. The DGL team have put it back in the review queue to decide again. You do not need to do anything, and you will get an email when they have.', 'dgl-platform' ),
 					$c->title()
 				),
 			],
@@ -431,7 +431,7 @@ final class Copy {
 				paragraphs: [
 					sprintf(
 						/* translators: %s: item title. */
-						__( 'The DGLP team have taken %s off the site while they look at it. Their reason is below.', 'dgl-platform' ),
+						__( 'The DGL team have taken %s off the site while they look at it. Their reason is below.', 'dgl-platform' ),
 						$c->title()
 					),
 				],
@@ -521,12 +521,12 @@ final class Copy {
 			audience: $audience,
 			/* translators: %s: item title. */
 			subject: sprintf( __( 'Archived: %s', 'dgl-platform' ), $c->title() ),
-			preheader: __( 'The DGLP team have archived it.', 'dgl-platform' ),
+			preheader: __( 'The DGL team have archived it.', 'dgl-platform' ),
 			heading: __( 'The team have archived this', 'dgl-platform' ),
 			paragraphs: [
 				sprintf(
 					/* translators: 1: item title, 2: site name. */
-					__( 'The DGLP team have archived %1$s, so it is no longer on %2$s. Their reason is below.', 'dgl-platform' ),
+					__( 'The DGL team have archived %1$s, so it is no longer on %2$s. Their reason is below.', 'dgl-platform' ),
 					$c->title(),
 					$c->site()
 				),
