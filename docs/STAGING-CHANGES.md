@@ -1394,3 +1394,11 @@ clean. They are the only DGLP content on staging.
   footers say "DGLP member area", and the directory's "Become a member"
   has no link until the About us anchor exists. Tests: unit 2375,
   integration 1516.
+- **0.47.12 deployed** (20 October 2026, production): the welcome email's
+  subject is "Confirm your email address for the Doing Good Leeds
+  platform" and the three organisation-owner email footers say "on the
+  Doing Good Leeds platform" instead of "in the DGLP member area". Staff
+  labels (admin dashboard widget, role names, privacy tool names, staff
+  help) still say DGLP, by Martin's decision. Live: plugin 0.47.12 (plugin
+  list and stored version agree), home, join and cron answer 200, cache
+  cleared. Tests: unit 2376, integration 1516.
