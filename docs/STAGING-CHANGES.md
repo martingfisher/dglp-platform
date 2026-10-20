@@ -1340,3 +1340,41 @@ clean. They are the only DGLP content on staging.
   The proper long-term fix is in the page builder; remove each rule when
   its block is corrected. A six-page re-check shows no text below 3:1.
   Project setting: `mcp__Wordify__*` is allowed in `.claude/settings.json`.
+- **0.47.10 deployed** (20 October 2026, production): Jenny Bull's
+  "Platform amends" email. Wording: join page (heading, lede, link line,
+  "Already got an account?", "Your email address is confirmed: ... Use this
+  to sign in.", the claim line, the sentence about checking what you type
+  removed, "Re-type password"); email preferences text; the event finish
+  time help; "Note to the user" on the item and organisation review
+  screens; "Culturally Diverse Communities" (topic list version 2 renamed
+  the term, slug and its 3 items untouched); "Organisation Directory"
+  heading, title and intro; the spaces intro and footer; Office/hot-desking
+  as a type of space; enquiry form (date optional, "The venue replies to
+  this email address.", Phone as a plain heading with "If you'd like them
+  to be able to call you" underneath, "Within a week" no longer shown);
+  approval email says "The DGL team" and "doinggoodleeds.org.uk" (option
+  `dgl_mail_site_domain`, set on production, which every email's "the
+  site" now uses). Behaviour: the round-up is a tickbox at registration,
+  unticked by default; the choice is kept in user meta
+  `dgl_digest_optin` and approval subscribes only people who ticked (an
+  account with no recorded choice is treated as before, because it was
+  told the round-up came with approval); the approval email mentions the
+  round-up only to people who asked. The organisations list in the review
+  area now loads more (its table had not opted in to the "load more"
+  script, and the shared pager is hidden when that script runs, so the
+  list stopped at the first 24). wp-login.php screens (sign in, forgotten
+  password, reset) are styled as the site, with its logo. Directory:
+  `wp dgl org directory-off-all` took all 146 listed organisations out
+  (members' own switch; the list of who was in is kept in option
+  `dgl_directory_unlisted_backup`; `wp dgl org directory-restore` puts
+  the same ones back); the directory page says organisations are being
+  added when nobody is listed. Tests: unit 2376, integration 1516.
+- **Email was being rejected** (found 20 October 2026): SMTP2GO refused
+  every platform email ("From header sender domain not verified
+  (doinggoodleeds.co.uk)") because the SMTP2GO plugin's own
+  `smtp2go_from_address` was `hello@doinggoodLeeds.co.uk` and
+  `smtp2go_force_from_address` was on, so it overrode the platform's
+  `.org.uk` address. Set to `hello@doinggoodleeds.org.uk`. Sample email
+  to martin@resultsyoucanmeasure.com: processed and delivered. Password
+  resets, the team inbox (hello@) copies and the 15-minute round-up retry
+  were all failing before this.
