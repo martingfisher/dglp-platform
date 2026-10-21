@@ -1499,3 +1499,18 @@ clean. They are the only DGLP content on staging.
   (`Field::CHOICES`) on the form, in storage and in the import. Tests: unit
   2478, integration 1568. Checked on the local copy in Chromium at 1300
   and 390 wide and with JavaScript off.
+- **0.50.0 deployed** (21 October 2026, production): installed from the
+  pinned zip at `babf1d1` with production on 0.49.5 and main at the same
+  commit the build came from. Checked live: the directory page carries the
+  two checkbox panels (17 groups), the chips and `assets/directory.js`,
+  `?area=older_people` returns 200 with the full list, and `/home/` (the
+  page that carries `[dgl_home_directory]`; the front page itself does not
+  use it) shows six "Browse by who they work with" chips linking to
+  `?for=`. With two approved organisations (Hamara, LASSN) listed for a
+  minute: `service[]=community_befriending&service[]=food_bank_parcels`
+  found both, `service[]=education&for[]=circ_refugees_asylum_seekers_and_migrants`
+  found only LASSN, `for[]=age_older_people` only Hamara. Both taken out
+  again (0 listed) and every cache layer cleared. In Chromium at 1440 wide
+  on production: the panel floats, the find box takes focus, "walk" narrows
+  to 1 of 52, the button reads "2 selected", chips read Education and
+  Training.
