@@ -25,12 +25,18 @@ final class DirectoryQuery {
 	/**
 	 * Which filters the page offers, keyed by URL parameter.
 	 *
+	 * A `list` filter looks inside a several-of-a-list field and takes any
+	 * number of values (`?service[]=a&service[]=b`): an organisation matches
+	 * if it has any of them. Ward is one value. Filters combine with AND.
+	 *
+	 * Area of work (`dgl_org_specialism`) was a filter until 0.50.0; DGLP
+	 * asked for it to go. The field stays on the record and the pages.
+	 *
 	 * @return array<string, array{label: string, meta: string, options: array<string, string>, list: bool}>
 	 */
 	public static function filters(): array {
 		return [
 			'ward'    => [ 'label' => __( 'Ward', 'dgl-platform' ), 'meta' => 'dgl_org_ward', 'options' => Options::wards(), 'list' => false ],
-			'area'    => [ 'label' => __( 'Area of work', 'dgl-platform' ), 'meta' => 'dgl_org_specialism', 'options' => Options::specialism(), 'list' => true ],
 			'service' => [ 'label' => __( 'Service', 'dgl-platform' ), 'meta' => 'dgl_org_services', 'options' => Options::services(), 'list' => true ],
 			'for'     => [ 'label' => __( 'Who they work with', 'dgl-platform' ), 'meta' => 'dgl_org_service_users', 'options' => Options::service_users(), 'list' => true ],
 		];
@@ -39,13 +45,28 @@ final class DirectoryQuery {
 	/**
 	 * Clean the request into the arguments the query takes.
 	 *
+	 * A list filter arrives as an array (`service[]=`) or, from an older link
+	 * or a home-page chip, as one value; both are kept as a list of known
+	 * keys in option order, so the same choice always makes the same URL.
+	 *
 	 * @param array<string, mixed> $request Usually $_GET.
-	 * @return array{q: string, page: int, filters: array<string, string>}
+	 * @return array{q: string, page: int, filters: array<string, string|string[]>}
 	 */
 	public static function args_from( array $request ): array {
 		$filters = [];
 
 		foreach ( self::filters() as $param => $filter ) {
+			if ( $filter['list'] ) {
+				$wanted = array_filter( array_map( 'strval', array_filter( (array) ( $request[ $param ] ?? [] ), 'is_scalar' ) ), 'strlen' );
+				$values = array_keys( array_intersect_key( $filter['options'], array_flip( $wanted ) ) );
+
+				if ( [] !== $values ) {
+					$filters[ $param ] = array_map( 'strval', $values );
+				}
+
+				continue;
+			}
+
 			$value = isset( $request[ $param ] ) && is_scalar( $request[ $param ] ) ? (string) $request[ $param ] : '';
 
 			if ( '' !== $value && isset( $filter['options'][ $value ] ) ) {
@@ -69,7 +90,7 @@ final class DirectoryQuery {
 	 * review team have not hidden it. All three are checked here, not on the
 	 * page, so no template can show one by accident.
 	 *
-	 * @param array{q: string, page: int, filters: array<string, string>} $args
+	 * @param array{q: string, page: int, filters: array<string, string|string[]>} $args
 	 * @return array{ids: int[], total: int, pages: int}
 	 */
 	public static function run( array $args ): array {
@@ -110,18 +131,37 @@ final class DirectoryQuery {
 				continue;
 			}
 
+			$values = $filter['list']
+				? array_values( array_filter( array_map( 'strval', (array) $value ), 'strlen' ) )
+				: [ (string) $value ];
+
+			if ( [] === $values || '' === $values[0] ) {
+				continue;
+			}
+
 			++$n;
 			$alias         = 'f' . $n;
 			$joins[]       = "INNER JOIN {$wpdb->postmeta} {$alias} ON {$alias}.post_id = p.ID AND {$alias}.meta_key = %s";
 			$join_params[] = $filter['meta'];
 
 			if ( $filter['list'] ) {
-				// A serialised array holds each key as s:N:"key"; the quotes make the match exact.
-				$where[]        = "{$alias}.meta_value LIKE %s";
-				$where_params[] = '%' . $wpdb->esc_like( '"' . $value . '"' ) . '%';
+				/*
+				 * A serialised array holds each key as s:N:"key"; the quotes make
+				 * the match exact, so people_of_faith never matches
+				 * people_of_faith_buddhist, and esc_like keeps underscores literal.
+				 * Several values are any-of: one OR group on the one join.
+				 */
+				$likes = [];
+
+				foreach ( $values as $key ) {
+					$likes[]        = "{$alias}.meta_value LIKE %s";
+					$where_params[] = '%' . $wpdb->esc_like( '"' . $key . '"' ) . '%';
+				}
+
+				$where[] = '( ' . implode( ' OR ', $likes ) . ' )';
 			} else {
 				$where[]        = "{$alias}.meta_value = %s";
-				$where_params[] = $value;
+				$where_params[] = $values[0];
 			}
 		}
 
@@ -162,6 +202,80 @@ final class DirectoryQuery {
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery
 		return (int) $wpdb->get_var( $wpdb->prepare( (string) $count_sql, $params ) );
+	}
+
+	/**
+	 * The query string for a set of arguments, in the shape the page's own
+	 * form submits: `q`, then each filter in its definition order with a
+	 * list as `service[]=a&service[]=b`, then `pg` when past page one.
+	 * Built by hand because add_query_arg() writes a list as `service[0]=`.
+	 * Empty when nothing is set.
+	 *
+	 * @param array{q?: string, page?: int, filters?: array<string, string|string[]>} $args
+	 */
+	public static function query_string( array $args ): string {
+		$parts = [];
+		$q     = trim( (string) ( $args['q'] ?? '' ) );
+
+		if ( '' !== $q ) {
+			$parts[] = 'q=' . rawurlencode( $q );
+		}
+
+		foreach ( self::filters() as $param => $filter ) {
+			$value = $args['filters'][ $param ] ?? null;
+
+			if ( null === $value || '' === $value || [] === $value ) {
+				continue;
+			}
+
+			foreach ( $filter['list'] ? (array) $value : [ (string) $value ] as $one ) {
+				$parts[] = rawurlencode( $param ) . ( $filter['list'] ? '%5B%5D=' : '=' ) . rawurlencode( (string) $one );
+			}
+		}
+
+		if ( (int) ( $args['page'] ?? 1 ) > 1 ) {
+			$parts[] = 'pg=' . (int) $args['page'];
+		}
+
+		return implode( '&', $parts );
+	}
+
+	/**
+	 * The same arguments with one filter value taken out: the link behind a
+	 * "remove this filter" chip. A list loses that one value, a single-value
+	 * filter is cleared, and the page goes back to one.
+	 *
+	 * @param array{q?: string, page?: int, filters?: array<string, string|string[]>} $args
+	 * @return array{q: string, page: int, filters: array<string, string|string[]>}
+	 */
+	public static function without( array $args, string $param, string $value = '' ): array {
+		$filters = (array) ( $args['filters'] ?? [] );
+		$current = $filters[ $param ] ?? null;
+
+		if ( is_array( $current ) ) {
+			$kept = array_values( array_filter( $current, static fn( $v ): bool => (string) $v !== $value ) );
+
+			if ( [] === $kept ) {
+				unset( $filters[ $param ] );
+			} else {
+				$filters[ $param ] = $kept;
+			}
+		} else {
+			unset( $filters[ $param ] );
+		}
+
+		return [ 'q' => (string) ( $args['q'] ?? '' ), 'page' => 1, 'filters' => $filters ];
+	}
+
+	/**
+	 * The directory page for a set of arguments.
+	 *
+	 * @param array{q?: string, page?: int, filters?: array<string, string|string[]>} $args
+	 */
+	public static function search_url( array $args ): string {
+		$query = self::query_string( $args );
+
+		return home_url( '/' . Directory::BASE . '/' ) . ( '' !== $query ? '?' . $query : '' );
 	}
 
 	/**

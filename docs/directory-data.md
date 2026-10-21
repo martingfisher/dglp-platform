@@ -65,8 +65,13 @@ Built 17 September 2026, deployed in 0.9.4.
 
 - `/directory/` lists every organisation that is verified and has the
   directory switch on, A to Z, 24 to a page. A search box covers the name
-  and the short description; four filters cover ward, area of work,
-  service and who they work with. Filters and search combine.
+  and the short description; three filters cover ward (one), service and
+  who they work with (tick any number; several ticked means any of them).
+  Filters and search combine with AND. The URL carries the choice
+  (`?service[]=education&service[]=training&for[]=age_older_people`), so
+  a filtered page can be shared; an old single-value link still works.
+  Area of work was a filter until 0.50.0 and is not any more, DGLP's call;
+  the field stays on the record, the cards and the organisation page.
 - `/directory/<slug>/` is one organisation: description, every list
   grouped by category, contact details, legal status and size, and up to
   six of their live listings. A slug that matches nothing listed is a 404.

@@ -771,7 +771,7 @@ h2.dgl-listing__heading:only-child,
  */
 .dgl-dir__search {
 	display: grid;
-	grid-template-columns: minmax(0, 2fr) repeat(4, minmax(0, 1fr)) auto;
+	grid-template-columns: minmax(0, 2fr) repeat(3, minmax(0, 1fr)) auto;
 	gap: 12px var(--dgl-gap);
 	align-items: end;
 	margin: 0 0 var(--dgl-gap-lg);
@@ -829,6 +829,131 @@ h2.dgl-listing__heading:only-child,
 }
 
 .dgl-dir__clear { color: var(--dgl-link); font-size: 0.9em; white-space: nowrap; }
+
+/* ---- Several of a list: a panel of checkboxes behind one button ---------
+ *
+ * The button is a <details> summary. Without JavaScript the panel opens in
+ * the page under it, which is plain but complete; with it (html.dgl-js,
+ * set by directory.js) the panel floats over the results, the box at the
+ * top narrows the list, and the summary says how many are ticked. */
+
+.dgl-dir__dd { position: relative; }
+
+.dgl-pub .dgl-dir__ddbtn {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	min-height: var(--dgl-field-height);
+	padding: 0 12px;
+	list-style: none;
+	cursor: pointer;
+	user-select: none;
+}
+
+.dgl-pub .dgl-dir__ddbtn::-webkit-details-marker { display: none; }
+
+.dgl-pub .dgl-dir__ddbtn::after {
+	content: "";
+	flex: none;
+	width: 8px;
+	height: 8px;
+	margin-right: 2px;
+	border: solid currentColor;
+	border-width: 0 2px 2px 0;
+	transform: translateY(-2px) rotate(45deg);
+	transition: transform 120ms;
+}
+
+.dgl-dir__dd[open] > .dgl-dir__ddbtn::after { transform: translateY(2px) rotate(-135deg); }
+
+.dgl-dir__ddtext { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.dgl-dir__ddpanel {
+	margin-top: 6px;
+	padding: 10px 12px;
+	background: var(--dgl-white);
+	border: 1px solid var(--dgl-border);
+	border-radius: var(--dgl-radius-button);
+}
+
+.dgl-js .dgl-dir__ddpanel {
+	position: absolute;
+	top: calc(100% + 4px);
+	left: 0;
+	z-index: 20;
+	width: max(100%, 320px);
+	max-height: 340px;
+	overflow: auto;
+	margin-top: 0;
+	box-shadow: var(--dgl-shadow-rest);
+}
+
+html:not(.dgl-js) .dgl-dir__ddfind { display: none; }
+
+.dgl-dir__ddfind { display: block; margin: 0 0 8px; }
+
+.dgl-pub .dgl-dir__ddfind .dgl-dir__input { min-height: 36px; }
+
+.dgl-dir__ddgroup { border: 0; margin: 0 0 8px; padding: 0; min-width: 0; }
+
+.dgl-dir__ddgroup:last-child { margin-bottom: 0; }
+
+.dgl-dir__ddgroup[hidden] { display: none; }
+
+.dgl-dir__ddlegend {
+	padding: 4px 0;
+	font-size: 0.78em;
+	font-weight: 600;
+	letter-spacing: 0.03em;
+	text-transform: uppercase;
+	color: var(--dgl-text-muted);
+}
+
+.dgl-dir__check {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	min-height: 34px;
+	font-size: 0.92em;
+	cursor: pointer;
+}
+
+.dgl-dir__check[hidden] { display: none; }
+
+.dgl-dir__check input { flex: none; width: 18px; height: 18px; margin: 0; accent-color: var(--dgl-navy); }
+
+/* The filters in use, each a link to the same search without it. */
+.dgl-dir__chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin: calc(-1 * var(--dgl-gap)) 0 var(--dgl-gap);
+	padding: 0;
+	list-style: none;
+}
+
+.dgl-dir__chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	min-height: 32px;
+	padding: 2px 10px 2px 12px;
+	border-radius: 999px;
+	background: var(--dgl-surface);
+	border: 1px solid var(--dgl-border);
+	font-size: 0.8em;
+	font-weight: 600;
+	line-height: 1.3;
+	color: var(--dgl-navy);
+	text-decoration: none;
+}
+
+.dgl-dir__chip:hover, .dgl-dir__chip:focus-visible { border-color: var(--dgl-navy); }
+
+.dgl-dir__chipx { font-size: 1.25em; line-height: 1; }
+
+.dgl-dir__chip--clear { background: transparent; border-color: transparent; color: var(--dgl-link); text-decoration: underline; }
 
 .dgl-pub__filterbar {
 	margin: 0 0 var(--dgl-gap-lg);
@@ -1284,7 +1409,7 @@ h2.dgl-listing__heading:only-child,
  *
  * Read on a phone as often as at a desk. Everything pressable is at least
  * 44px tall there; list and calendar titles take the whole row; the
- * directory's four filters fold behind one button so the search box and
+ * directory's three filters fold behind one button so the search box and
  * the first results share the first screen. */
 
 .dgl-dir__filters { display: contents; }
@@ -1311,6 +1436,9 @@ h2.dgl-listing__heading:only-child,
 @media ( max-width: 560px ) {
 	.dgl-dir__filters { display: grid; gap: 12px; }
 	.dgl-dir__filters[hidden] { display: none; }
+	/* Inside the folded filters the panel sits in flow rather than floating over them. */
+	.dgl-js .dgl-dir__ddpanel { position: static; width: auto; max-height: 260px; margin-top: 6px; box-shadow: none; }
+	.dgl-dir__chips { margin-top: 0; }
 	.dgl-pub__filters { grid-template-columns: minmax(0, 1fr); margin-top: 12px; }
 	.dgl-pub__filters[hidden] { display: none; }
 	.dgl-pub__filterbar .dgl-dir__toggle { width: 100%; }

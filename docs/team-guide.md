@@ -369,7 +369,12 @@ Things worth knowing:
 Every organisation's profile carries the details from Forum Central's list:
 address, ward, type, services, who they work with, size, accreditations.
 Owners edit them. The public directory at `/directory/` shows an
-organisation when it is verified and its switch is on. The 146 that gave
+organisation when it is verified and its switch is on. Visitors filter by
+ward, by service and by who the organisation works with; the last two take
+any number of ticks, and an organisation matches if it has any of them.
+The home page's "Browse by who they work with" chips open the directory
+with one of those ticked (`[dgl_home_directory chips="6"]`, or name the
+keys: `chips="age_older_people,circ_carers"`). The 146 that gave
 Forum Central permission to publish were switched on at the start; the
 rest appear when a member of that organisation presses "Show us in the
 directory" on the Organisation tab. Any approved member can switch it on

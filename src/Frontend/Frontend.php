@@ -287,6 +287,24 @@ final class Frontend {
 		Assets::style( 'assets/public.css', 'dgl-public' );
 		Assets::autoload();
 
+		// The directory index's filter panels, with their few words translated.
+		if ( '1' === self::directory_request() ) {
+			Assets::script( 'assets/directory.js', 'dgl-directory' );
+			wp_add_inline_script(
+				'dgl-directory',
+				'window.dglDirectory = ' . wp_json_encode(
+					[
+						'any'      => __( 'Any', 'dgl-platform' ),
+						/* translators: %d: how many options are ticked. */
+						'selected' => __( '%d selected', 'dgl-platform' ),
+						/* translators: 1: how many options match what was typed, 2: how many there are. */
+						'shown'    => __( '%1$d of %2$d shown', 'dgl-platform' ),
+					]
+				) . ';',
+				'before'
+			);
+		}
+
 		if ( self::spaces_request() ) {
 			Assets::style( 'assets/spaces.css', 'dgl-spaces', [ 'dgl-public' ] );
 			\DGL\Spaces\MapAssets::enqueue();

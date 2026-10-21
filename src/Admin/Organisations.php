@@ -256,6 +256,24 @@ final class Organisations {
 				: '<em>' . esc_html__( 'None', 'dgl-platform' ) . '</em>';
 		}
 
+		// A several-of-a-list field: its labels, in option order.
+		if ( is_array( $value ) ) {
+			$options = [];
+
+			foreach ( \DGL\Org\Schema::fields() as $field ) {
+				if ( $field->key === $key ) {
+					$options = $field->options;
+					break;
+				}
+			}
+
+			$labels = array_map( static fn( $v ): string => (string) ( $options[ (string) $v ] ?? $v ), $value );
+
+			return [] === $labels
+				? '<em>' . esc_html__( 'None', 'dgl-platform' ) . '</em>'
+				: esc_html( implode( ', ', $labels ) );
+		}
+
 		return '' === (string) $value
 			? '<em>' . esc_html__( 'None', 'dgl-platform' ) . '</em>'
 			: esc_html( (string) $value );

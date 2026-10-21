@@ -26,7 +26,7 @@ defined( 'ABSPATH' ) || exit;
  *   [dgl_home_news count="5" heading="Latest news"]
  *   [dgl_home_training count="3"]
  *   [dgl_home_funding]
- *   [dgl_home_directory areas="6"]
+ *   [dgl_home_directory chips="6"]   (or chips="age_older_people,circ_carers" to name them; areas= still accepted)
  *   [dgl_home_roundup heading="Get the weekly round-up" text="…"]
  *   [dgl_val_jobs layout="carousel" count="12"]
  *   [dgl_val_jobs layout="feed" count="6"]
@@ -57,6 +57,22 @@ final class HomeBlocks {
 
 	/** The most rows one list will show, whatever `count` says. */
 	public const MAX_COUNT = 24;
+
+	/**
+	 * The "Browse by who they work with" chips the directory block shows
+	 * when it is only told how many: the questions visitors most often
+	 * arrive with, in this order.
+	 */
+	public const DIRECTORY_CHIPS = [
+		'age_older_people',
+		'age_children_under_18',
+		'age_young_people_16_25',
+		'circ_carers',
+		'people_from_culturally_diverse_communities',
+		'circ_refugees_asylum_seekers_and_migrants',
+		'dementia',
+		'long_term_chronic_health_conditions',
+	];
 
 	public static function init(): void {
 		foreach ( self::TAGS as $section => $tag ) {
@@ -114,7 +130,12 @@ final class HomeBlocks {
 				);
 
 			case 'directory':
-				$a = self::atts( $atts, [ 'heading' => __( 'Find an organisation', 'dgl-platform' ), 'areas' => Home::TOPICS ] );
+				// `areas` was the attribute until 0.50.0, when the chips moved from areas of work to who they work with.
+				if ( isset( $atts['areas'] ) && ! isset( $atts['chips'] ) ) {
+					$atts['chips'] = $atts['areas'];
+				}
+
+				$a = self::atts( $atts, [ 'heading' => __( 'Find an organisation', 'dgl-platform' ), 'chips' => Home::TOPICS ] );
 
 				return View::render(
 					'public/home/directory',
@@ -122,7 +143,7 @@ final class HomeBlocks {
 						'heading'   => $a['heading'],
 						'org_total' => (int) \DGL\Org\DirectoryQuery::run( [ 'q' => '', 'page' => 1, 'filters' => [] ] )['total'],
 						'dir_url'   => home_url( '/' . \DGL\Org\Directory::BASE . '/' ),
-						'areas'     => array_slice( \DGL\Org\Options::specialism(), 0, max( 0, min( self::MAX_COUNT, (int) $a['areas'] ) ), true ),
+						'chips'     => self::directory_chips( (string) $a['chips'] ),
 						'id'        => $id,
 					]
 				);
@@ -260,5 +281,41 @@ final class HomeBlocks {
 		}
 
 		Assets::style( 'assets/public.css', 'dgl-public' );
+	}
+
+	/**
+	 * The chips under the directory search box: key => short label, from
+	 * "who they work with". A number takes the first so many of
+	 * DIRECTORY_CHIPS; a comma list names the keys, in that order. The label
+	 * is the item without its group ("Older People", not "Age Groups: Older
+	 * People"), because the chip is a button, not a read-out.
+	 *
+	 * @return array<string, string>
+	 */
+	private static function directory_chips( string $spec ): array {
+		$options = \DGL\Org\Options::service_users();
+		$spec    = trim( $spec );
+
+		if ( '' === $spec || ctype_digit( $spec ) ) {
+			$keys = array_slice( self::DIRECTORY_CHIPS, 0, max( 0, min( self::MAX_COUNT, '' === $spec ? Home::TOPICS : (int) $spec ) ) );
+		} else {
+			$keys = array_slice( array_values( array_unique( array_filter( array_map( 'trim', explode( ',', $spec ) ), static fn( string $k ): bool => isset( $options[ $k ] ) ) ) ), 0, self::MAX_COUNT );
+		}
+
+		$short = [];
+
+		foreach ( \DGL\Org\Options::grouped( $options ) as $items ) {
+			$short += $items;
+		}
+
+		$chips = [];
+
+		foreach ( $keys as $key ) {
+			if ( isset( $options[ $key ] ) ) {
+				$chips[ $key ] = (string) ( $short[ $key ] ?? $options[ $key ] );
+			}
+		}
+
+		return $chips;
 	}
 }

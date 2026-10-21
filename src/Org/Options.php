@@ -304,4 +304,41 @@ final class Options {
 
 		return null;
 	}
+
+	/**
+	 * A list arranged by the "Group: item" prefix its labels carry, for a
+	 * panel of checkboxes or a grouped read-out.
+	 *
+	 * The result is group label => (key => item label). Options with no
+	 * prefix sit under '' first. An option whose whole label is also a group
+	 * name ("People of Faith" beside "People of Faith: Buddhist") heads that
+	 * group, keeping its full label, rather than being orphaned in the
+	 * ungrouped set.
+	 *
+	 * @param array<string, string> $options
+	 * @return array<string, array<string, string>>
+	 */
+	public static function grouped( array $options ): array {
+		$groups = [];
+		$plain  = [];
+
+		foreach ( $options as $key => $label ) {
+			$parts = explode( ': ', (string) $label, 2 );
+
+			if ( 2 === count( $parts ) ) {
+				$groups[ $parts[0] ][ (string) $key ] = $parts[1];
+			} else {
+				$plain[ (string) $key ] = (string) $label;
+			}
+		}
+
+		foreach ( $plain as $key => $label ) {
+			if ( isset( $groups[ $label ] ) ) {
+				$groups[ $label ] = [ $key => $label ] + $groups[ $label ];
+				unset( $plain[ $key ] );
+			}
+		}
+
+		return ( [] !== $plain ? [ '' => $plain ] : [] ) + $groups;
+	}
 }
