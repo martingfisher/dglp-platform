@@ -3036,6 +3036,10 @@ update_post_meta( $da, 'dgl_org_ward', 'kippax_and_methley' );
 update_post_meta( $da, 'dgl_org_specialism', [ 'older_people', 'mental_health' ] );
 update_post_meta( $db, 'dgl_org_ward', 'kippax_and_methley' );
 update_post_meta( $db, 'dgl_org_specialism', [ 'mental_health' ] );
+update_post_meta( $da, 'dgl_org_services', [ 'education', 'social_art' ] );
+update_post_meta( $db, 'dgl_org_services', [ 'training' ] );
+update_post_meta( $da, 'dgl_org_service_users', [ 'people_of_faith' ] );
+update_post_meta( $db, 'dgl_org_service_users', [ 'people_of_faith_buddhist' ] );
 update_post_meta( $dg, 'dgl_org_description', 'Older people too, but not listed.' );
 
 $run = static fn( array $extra = [] ) => \DGL\Org\DirectoryQuery::run( \DGL\Org\DirectoryQuery::args_from( $extra ) );
@@ -3051,11 +3055,20 @@ $ok( [ $da ] === $ids( $run( [ 'q' => 'lunch club for older residents' ] ) ), 's
 $ok( [ $da ] === $ids( $run( [ 'q' => 'DIRTEST ALPHA' ] ) ), 'search finds the name, any case' );
 $ok( [] === $ids( $run( [ 'q' => 'Dirtest Gamma' ] ) ), 'search never finds an unlisted organisation' );
 $ok( [ $da, $db ] === $ids( $run( [ 'ward' => 'kippax_and_methley' ] ) ), 'ward filter, in name order' );
-$ok( [ $da ] === $ids( $run( [ 'q' => 'Dirtest', 'area' => 'older_people' ] ) ), 'a list filter matches inside the serialised array' );
+$ok( [ $da ] === $ids( $run( [ 'q' => 'Dirtest', 'service' => 'education' ] ) ), 'a list filter matches inside the serialised array, one value as a plain string too' );
 $ok( [ $da ] === $ids( $run( [ 'q' => 'older', 'ward' => 'kippax_and_methley' ] ) ), 'search and a filter together' );
-$ok( [ $da ] === $ids( $run( [ 'q' => 'older', 'area' => 'older_people', 'ward' => 'kippax_and_methley' ] ) ), 'search and two filters together' );
-$ok( [] === $ids( $run( [ 'q' => 'older', 'area' => 'mental_health', 'ward' => 'wetherby' ] ) ), 'a filter nobody matches empties the result' );
-$ok( [] === \DGL\Org\DirectoryQuery::args_from( [ 'ward' => 'not_a_ward', 'area' => '<script>' ] )['filters'], 'unknown filter values are dropped' );
+$ok( [ $da ] === $ids( $run( [ 'q' => 'older', 'service' => [ 'education' ], 'ward' => 'kippax_and_methley' ] ) ), 'search and two filters together' );
+$ok( [] === $ids( $run( [ 'q' => 'older', 'service' => [ 'training' ], 'ward' => 'wetherby' ] ) ), 'a filter nobody matches empties the result' );
+$ok( [] === \DGL\Org\DirectoryQuery::args_from( [ 'ward' => 'not_a_ward', 'service' => [ '<script>' ], 'area' => 'older_people' ] )['filters'], 'unknown values and the retired area filter are dropped' );
+$ok( [ 'education', 'training' ] === \DGL\Org\DirectoryQuery::args_from( [ 'service' => [ 'training', 'education', 'education', 'zzz' ] ] )['filters']['service'], 'a list is kept in option order, once each' );
+$ok( [] === \DGL\Org\DirectoryQuery::args_from( [ 'ward' => [ 'armley' ] ] )['filters'], 'ward takes one value, never a list' );
+$both = $run( [ 'q' => 'Dirtest', 'service' => [ 'education', 'training' ] ] );
+$ok( [ $da, $db ] === $both['ids'] && 2 === $both['total'], 'several values in one filter match any of them, and the count agrees' );
+$ok( [ $db ] === $ids( $run( [ 'q' => 'Dirtest', 'service' => [ 'education', 'training' ], 'for' => [ 'people_of_faith_buddhist' ] ] ) ), 'filters still combine with AND across fields' );
+$ok( [ $da ] === $ids( $run( [ 'q' => 'Dirtest', 'for' => [ 'people_of_faith' ] ] ) ), 'a key that is the start of another key matches only itself' );
+$dir_args = \DGL\Org\DirectoryQuery::args_from( [ 'q' => 'Dirtest', 'service' => [ 'education', 'training' ] ] );
+$ok( str_contains( \DGL\Org\DirectoryQuery::search_url( $dir_args ), 'service%5B%5D=education' ) && ! str_contains( \DGL\Org\DirectoryQuery::search_url( \DGL\Org\DirectoryQuery::without( $dir_args, 'service', 'education' ) ), 'education' ), 'the chip link drops one value from the URL' );
+$ok( str_ends_with( \DGL\Org\DirectoryQuery::search_url( [ 'q' => '', 'page' => 1, 'filters' => [] ] ), '/' . \DGL\Org\Directory::BASE . '/' ), 'nothing set links to the plain directory' );
 $ok( 100 === mb_strlen( \DGL\Org\DirectoryQuery::args_from( [ 'q' => str_repeat( 'a', 500 ) ] )['q'] ), 'the search term is capped' );
 
 $found = \DGL\Org\DirectoryQuery::find( get_post( $da )->post_name );

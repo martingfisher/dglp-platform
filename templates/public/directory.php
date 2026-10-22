@@ -2,7 +2,7 @@
 /**
  * The public directory of member organisations.
  *
- * A search box and four filters over one grid of cards. Read mode: the
+ * A search box and three filters over one grid of cards. Read mode: the
  * visitor is finding an organisation, so the page is built to scan. Every
  * card carries the same four things in the same places: the mark, the
  * name, where they are, what they do.
@@ -25,16 +25,21 @@ $filters = DirectoryQuery::filters();
 $base    = home_url( '/' . \DGL\Org\Directory::BASE . '/' );
 $active  = '' !== $args['q'] || [] !== $args['filters'];
 
-$page_url = static function ( int $page ) use ( $args, $base ): string {
-	$query = array_merge( [ 'q' => $args['q'] ], $args['filters'] );
-	$query = array_filter( $query, static fn( string $v ): bool => '' !== $v );
+$page_url = static fn( int $page ): string => DirectoryQuery::search_url( [ 'page' => $page ] + $args );
 
-	if ( $page > 1 ) {
-		$query['pg'] = $page;
+/*
+ * The chips above the results: one per value in use, each a link to the
+ * same search without it, in the order the filters are defined.
+ */
+$chips = [];
+foreach ( $filters as $param => $filter ) {
+	foreach ( (array) ( $args['filters'][ $param ] ?? [] ) as $value ) {
+		$chips[] = [
+			'label' => (string) ( $filter['options'][ (string) $value ] ?? $value ),
+			'url'   => DirectoryQuery::search_url( DirectoryQuery::without( $args, $param, (string) $value ) ),
+		];
 	}
-
-	return [] === $query ? $base : add_query_arg( array_map( 'rawurlencode', $query ), $base );
-};
+}
 ?>
 <div class="dgl-pub dgl-dir">
 	<header class="dgl-pub__head">
@@ -69,6 +74,7 @@ $page_url = static function ( int $page ) use ( $args, $base ): string {
 
 		<div class="dgl-dir__filters" id="dgl-dir-filters" data-dgl-open="<?php echo $filters_on > 0 ? '1' : '0'; ?>">
 		<?php foreach ( $filters as $param => $filter ) : ?>
+			<?php if ( ! $filter['list'] ) : ?>
 			<div class="dgl-dir__filter">
 				<label class="dgl-dir__label" for="dgl-dir-<?php echo esc_attr( $param ); ?>"><?php echo esc_html( $filter['label'] ); ?></label>
 				<select class="dgl-dir__input" id="dgl-dir-<?php echo esc_attr( $param ); ?>" name="<?php echo esc_attr( $param ); ?>">
@@ -78,6 +84,52 @@ $page_url = static function ( int $page ) use ( $args, $base ): string {
 					<?php endforeach; ?>
 				</select>
 			</div>
+			<?php else : ?>
+			<?php
+			/*
+			 * Several of a list: a panel of checkboxes behind one button. The
+			 * button is a <details> summary, so without JavaScript it is a native
+			 * disclosure that opens the list in the page; directory.js makes it
+			 * float, counts the ticks and adds the type-to-narrow box.
+			 */
+			$chosen = array_map( 'strval', (array) ( $args['filters'][ $param ] ?? [] ) );
+			$ticked = count( $chosen );
+			$dd_id  = 'dgl-dir-' . $param;
+			?>
+			<div class="dgl-dir__filter dgl-dir__multi" data-dgl-multi>
+				<span class="dgl-dir__label" id="<?php echo esc_attr( $dd_id ); ?>-label"><?php echo esc_html( $filter['label'] ); ?></span>
+				<details class="dgl-dir__dd">
+					<summary class="dgl-dir__input dgl-dir__ddbtn" aria-labelledby="<?php echo esc_attr( $dd_id ); ?>-label <?php echo esc_attr( $dd_id ); ?>-text">
+						<span class="dgl-dir__ddtext" id="<?php echo esc_attr( $dd_id ); ?>-text" data-dgl-multi-text>
+							<?php
+							echo $ticked > 0
+								/* translators: %d: how many options are ticked. */
+								? esc_html( sprintf( _n( '%d selected', '%d selected', $ticked, 'dgl-platform' ), $ticked ) )
+								: esc_html__( 'Any', 'dgl-platform' );
+							?>
+						</span>
+					</summary>
+					<div class="dgl-dir__ddpanel">
+						<label class="dgl-dir__ddfind">
+							<span class="screen-reader-text"><?php esc_html_e( 'Narrow the list', 'dgl-platform' ); ?></span>
+							<input class="dgl-dir__input" type="search" data-dgl-multi-find autocomplete="off" placeholder="<?php esc_attr_e( 'Type to narrow', 'dgl-platform' ); ?>">
+						</label>
+						<p class="dgl-dir__ddstatus screen-reader-text" role="status" data-dgl-multi-status></p>
+						<?php foreach ( Options::grouped( $filter['options'] ) as $group => $items ) : ?>
+							<fieldset class="dgl-dir__ddgroup">
+								<legend class="dgl-dir__ddlegend"><?php echo '' === $group ? esc_html__( 'General', 'dgl-platform' ) : esc_html( $group ); ?></legend>
+								<?php foreach ( $items as $value => $label ) : ?>
+									<label class="dgl-dir__check">
+										<input type="checkbox" name="<?php echo esc_attr( $param ); ?>[]" value="<?php echo esc_attr( (string) $value ); ?>"<?php checked( in_array( (string) $value, $chosen, true ) ); ?>>
+										<span><?php echo esc_html( $label ); ?></span>
+									</label>
+								<?php endforeach; ?>
+							</fieldset>
+						<?php endforeach; ?>
+					</div>
+				</details>
+			</div>
+			<?php endif; ?>
 		<?php endforeach; ?>
 		</div>
 
@@ -90,6 +142,22 @@ $page_url = static function ( int $page ) use ( $args, $base ): string {
 	</form>
 
 	<?php \DGL\Dashboard\View::output( 'public/fold-script' ); ?>
+
+	<?php if ( [] !== $chips ) : ?>
+		<ul class="dgl-dir__chips" aria-label="<?php esc_attr_e( 'Filters in use', 'dgl-platform' ); ?>">
+			<?php foreach ( $chips as $chip ) : ?>
+				<li>
+					<a class="dgl-dir__chip" rel="nofollow" href="<?php echo esc_url( $chip['url'] ); ?>">
+						<span class="screen-reader-text"><?php esc_html_e( 'Remove filter:', 'dgl-platform' ); ?> </span><?php echo esc_html( $chip['label'] ); ?>
+						<span class="dgl-dir__chipx" aria-hidden="true">&times;</span>
+					</a>
+				</li>
+			<?php endforeach; ?>
+			<li>
+				<a class="dgl-dir__chip dgl-dir__chip--clear" rel="nofollow" href="<?php echo esc_url( DirectoryQuery::search_url( [ 'q' => $args['q'], 'page' => 1, 'filters' => [] ] ) ); ?>"><?php esc_html_e( 'Clear filters', 'dgl-platform' ); ?></a>
+			</li>
+		</ul>
+	<?php endif; ?>
 
 	<p class="dgl-dir__count" role="status">
 		<?php

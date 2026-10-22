@@ -10,6 +10,7 @@ declare( strict_types=1 );
 
 use DGL\Access\Policy;
 use DGL\Access\UserContext;
+use DGL\Org\DirectoryQuery;
 use DGL\Org\Import;
 use DGL\Org\Options;
 use DGL\Org\Schema as OrgSchema;
@@ -57,6 +58,39 @@ foreach ( OrgSchema::open_fields() as $field ) {
 	}
 	Harness::assert_true( isset( OrgSchema::sections()[ $field->step ] ), $field->key . ' sits under a section heading' );
 }
+
+Harness::group( 'Option lists group by the "Group: item" prefix their labels carry' );
+
+$g = Options::grouped( Options::services() );
+Harness::assert_same( '', array_key_first( $g ), 'the ungrouped options come first' );
+Harness::assert_same( 5, count( $g['Care'] ), 'five kinds of care' );
+Harness::assert_same( 'Day Services', $g['Care']['care_day_services'], 'an item keeps only its own part of the label' );
+Harness::assert_same( 'social_groups_activities', array_key_first( $g['Social groups/Activities'] ), 'an option that is also a group name heads that group' );
+Harness::assert_same( 'Social groups/Activities', $g['Social groups/Activities']['social_groups_activities'], 'with its full label' );
+$all = array_merge( ...array_map( 'array_keys', array_values( $g ) ) );
+Harness::assert_same( count( Options::services() ), count( $all ), 'every service is in exactly one group' );
+Harness::assert_same( count( $all ), count( array_unique( $all ) ), 'and none twice' );
+Harness::assert_same( [], Options::grouped( [] ), 'nothing groups to nothing' );
+
+$u = Options::grouped( Options::service_users() );
+Harness::assert_same( [ 'people_of_faith', 'people_of_faith_buddhist', 'people_of_faith_christian', 'people_of_faith_jewish', 'people_of_faith_muslim', 'people_of_faith_sikh' ], array_keys( $u['People of Faith'] ), 'People of Faith heads its own group' );
+Harness::assert_same( 4, count( $u['Age Groups'] ), 'four age groups' );
+
+Harness::group( 'Directory URLs carry a list as service[]=a&service[]=b' );
+
+$qs = DirectoryQuery::query_string( [ 'q' => '', 'page' => 1, 'filters' => [ 'service' => [ 'education', 'training' ], 'for' => [ 'age_older_people' ] ] ] );
+Harness::assert_same( 'service%5B%5D=education&service%5B%5D=training&for%5B%5D=age_older_people', $qs, 'one pair per value, filters in definition order' );
+$qs = DirectoryQuery::query_string( [ 'q' => 'a b', 'page' => 2, 'filters' => [ 'service' => [ 'education' ], 'ward' => 'armley' ] ] );
+Harness::assert_true( str_starts_with( $qs, 'q=a%20b&ward=armley&' ) && str_ends_with( $qs, '&pg=2' ), 'the search term first, ward as one value, the page last' );
+Harness::assert_same( '', DirectoryQuery::query_string( [ 'q' => '', 'page' => 1, 'filters' => [] ] ), 'nothing set is an empty string' );
+Harness::assert_same( '', DirectoryQuery::query_string( [ 'filters' => [ 'area' => 'older_people' ] ] ), 'the retired area filter never reaches a URL' );
+
+$args = [ 'q' => 'x', 'page' => 3, 'filters' => [ 'service' => [ 'education', 'training' ], 'ward' => 'armley' ] ];
+Harness::assert_same( [ 'service' => [ 'training' ], 'ward' => 'armley' ], DirectoryQuery::without( $args, 'service', 'education' )['filters'], 'taking one value out leaves the rest' );
+Harness::assert_same( 1, DirectoryQuery::without( $args, 'service', 'education' )['page'], 'and goes back to page one' );
+Harness::assert_same( [ 'ward' => 'armley' ], DirectoryQuery::without( [ 'filters' => [ 'service' => [ 'education' ], 'ward' => 'armley' ] ], 'service', 'education' )['filters'], 'taking the last value out drops the filter' );
+Harness::assert_same( [ 'service' => [ 'education', 'training' ] ], DirectoryQuery::without( $args, 'ward' )['filters'], 'a one-value filter is cleared and the list beside it kept' );
+Harness::assert_same( 'x', DirectoryQuery::without( $args, 'ward' )['q'], 'the search term is kept' );
 
 $keys = array_map( static fn( Field $f ): string => $f->key, OrgSchema::fields() );
 Harness::assert_same( count( $keys ), count( array_unique( $keys ) ), 'profile field keys are unique' );

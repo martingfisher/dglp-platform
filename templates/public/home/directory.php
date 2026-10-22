@@ -1,10 +1,10 @@
 <?php
 /**
  * Find an organisation: the navy band with a search box into the
- * directory and area-of-work chips.
+ * directory and "who they work with" chips.
  *
  * Expects `$data['heading']`, `$data['org_total']`, `$data['dir_url']`,
- * `$data['areas']` (key => label), `$data['id']`.
+ * `$data['chips']` (who-they-work-with key => short label), `$data['id']`.
  *
  * @var array<string,mixed> $data
  * @package DGL
@@ -17,7 +17,7 @@ defined( 'ABSPATH' ) || exit;
 $heading   = (string) ( $data['heading'] ?? '' );
 $org_total = (int) ( $data['org_total'] ?? 0 );
 $dir_url   = (string) ( $data['dir_url'] ?? '' );
-$areas     = (array) ( $data['areas'] ?? [] );
+$chips     = (array) ( $data['chips'] ?? [] );
 $id        = (string) ( $data['id'] ?? 'dgl-home-' . wp_unique_id() );
 ?>
 <section class="dgl-home__section dgl-home__find" id="<?php echo esc_attr( $id ); ?>"<?php echo '' !== $heading ? ' aria-labelledby="' . esc_attr( $id ) . '-h"' : ' aria-label="' . esc_attr__( 'Find an organisation', 'dgl-platform' ) . '"'; ?>>
@@ -40,10 +40,10 @@ $id        = (string) ( $data['id'] ?? 'dgl-home-' . wp_unique_id() );
 		<button class="dgl-home__searchbutton" type="submit"><?php esc_html_e( 'Search', 'dgl-platform' ); ?></button>
 	</form>
 	<div class="dgl-home__chips">
-		<?php if ( [] !== $areas ) : ?>
-			<span class="dgl-home__chipslabel"><?php esc_html_e( 'Browse by area of work', 'dgl-platform' ); ?></span>
-			<?php foreach ( $areas as $key => $label ) : ?>
-				<a class="dgl-home__chip" href="<?php echo esc_url( add_query_arg( 'area', (string) $key, $dir_url ) ); ?>"><?php echo esc_html( (string) $label ); ?></a>
+		<?php if ( [] !== $chips ) : ?>
+			<span class="dgl-home__chipslabel"><?php esc_html_e( 'Browse by who they work with', 'dgl-platform' ); ?></span>
+			<?php foreach ( $chips as $key => $label ) : ?>
+				<a class="dgl-home__chip" href="<?php echo esc_url( add_query_arg( 'for', (string) $key, $dir_url ) ); ?>"><?php echo esc_html( (string) $label ); ?></a>
 			<?php endforeach; ?>
 		<?php endif; ?>
 		<a class="dgl-home__browse" href="<?php echo esc_url( $dir_url ); ?>"><?php esc_html_e( 'Browse the full directory', 'dgl-platform' ); ?></a>

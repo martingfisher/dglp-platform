@@ -1476,3 +1476,41 @@ clean. They are the only DGLP content on staging.
   Live: three sections ("Latest news", "What's on", "Training and
   learning"), three `ItemList`s, no raw shortcode text, the later edits
   intact. All eleven feed pages now show their three sections.
+- **0.50.0** (21 October 2026): the directory's Service and Who they work
+  with filters take any number of ticks (`?service[]=a&service[]=b`; an
+  organisation matches if it has any of them; filters still combine with
+  AND across fields; an old one-value link still works), as a panel of
+  checkboxes grouped by their "Care:", "Age Groups:" prefixes behind one
+  button that says how many are ticked, with a type-to-narrow box; without
+  JavaScript it is a native disclosure that opens the list in the page. The
+  filters in use show as chips above the results, each a link to the same
+  search without it. The Area of work filter is gone, DGLP's call; the
+  field stays on the record, the edit form, the cards and the organisation
+  page (`DirectoryQuery::filters()` says why). The home page's "Browse by
+  area of work" chips are now "Browse by who they work with"
+  (`[dgl_home_directory chips="6"]` or `chips="age_older_people,circ_carers"`;
+  the old `areas=` attribute is read as `chips=`). New:
+  `Options::grouped()`, `DirectoryQuery::query_string()`, `without()` and
+  `search_url()` (the page's URLs are built by hand because
+  `add_query_arg()` writes a list as `service[0]=`), `assets/directory.js`.
+  Fixed in passing: the wp-admin organisation screen printed "Array" for
+  every several-of-a-list field; it now lists the labels. The record side
+  needed nothing: these fields were already several-of-a-list
+  (`Field::CHOICES`) on the form, in storage and in the import. Tests: unit
+  2478, integration 1568. Checked on the local copy in Chromium at 1300
+  and 390 wide and with JavaScript off.
+- **0.50.0 deployed** (21 October 2026, production): installed from the
+  pinned zip at `babf1d1` with production on 0.49.5 and main at the same
+  commit the build came from. Checked live: the directory page carries the
+  two checkbox panels (17 groups), the chips and `assets/directory.js`,
+  `?area=older_people` returns 200 with the full list, and `/home/` (the
+  page that carries `[dgl_home_directory]`; the front page itself does not
+  use it) shows six "Browse by who they work with" chips linking to
+  `?for=`. With two approved organisations (Hamara, LASSN) listed for a
+  minute: `service[]=community_befriending&service[]=food_bank_parcels`
+  found both, `service[]=education&for[]=circ_refugees_asylum_seekers_and_migrants`
+  found only LASSN, `for[]=age_older_people` only Hamara. Both taken out
+  again (0 listed) and every cache layer cleared. In Chromium at 1440 wide
+  on production: the panel floats, the find box takes focus, "walk" narrows
+  to 1 of 52, the button reads "2 selected", chips read Education and
+  Training.
