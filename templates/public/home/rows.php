@@ -1,8 +1,8 @@
 <?php
 /**
  * A dated list for the home page: events, training or funding, three
- * across. Each row is the calendar leaf, the picture, the title and the
- * where/organisation line.
+ * across. Each row is the calendar leaf, the picture, the title, the
+ * where/organisation line and a line or two of the summary.
  *
  * Expects `$data['items']` (WP_Post[]), `$data['heading']`, `$data['all_url']`,
  * `$data['all_label']`, `$data['id']`, and optionally `$data['placeholder']`
@@ -69,6 +69,10 @@ $empty       = (string) ( $data['empty'] ?? __( 'Nothing is listed at the moment
 						<h3 class="dgl-home__rowtitle"><a href="<?php echo esc_url( (string) get_permalink( $item ) ); ?>"><?php echo esc_html( get_the_title( $item ) ); ?></a></h3>
 						<?php if ( '' !== $line ) : ?>
 							<p class="dgl-home__rowmeta"><?php echo esc_html( $line ); ?></p>
+						<?php endif; ?>
+						<?php $summary = Cards::summary( $item, 22 ); ?>
+						<?php if ( '' !== $summary ) : ?>
+							<p class="dgl-home__rowsummary"><?php echo esc_html( $summary ); ?></p>
 						<?php endif; ?>
 					</div>
 				</li>

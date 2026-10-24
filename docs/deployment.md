@@ -309,7 +309,7 @@ live sections dropped in as Shortcode blocks wherever they belong:
 ```
 
 `count` is the number of items (1 to 24); `heading=""` drops the heading so
-the page can supply its own; `link="no"` drops the "All events" link;
+the page can supply its own; `link="no"` drops the "View all events" link;
 `areas` is how many area-of-work chips the directory block shows; `text`
 is the round-up's sentence. Featured items take the first slot. The
 stylesheet loads only on a page that uses one of these, and the grids

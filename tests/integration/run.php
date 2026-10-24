@@ -4607,7 +4607,7 @@ $group( 'Home page shortcodes: the live sections for a page built in the theme' 
 
 $ok( 8 === count( array_filter( \DGL\Frontend\HomeBlocks::TAGS, 'shortcode_exists' ) ), 'eight shortcodes are registered' );
 $sc_events = do_shortcode( '[dgl_home_events count="2"]' );
-$ok( str_starts_with( $sc_events, '<div class="dgl-home-block dgl-home-block--events">' ) && 2 === substr_count( $sc_events, 'class="dgl-home__row"' ) && str_contains( $sc_events, '>What&#039;s on</h2>' ) && str_contains( $sc_events, '>All events</a>' ), 'events: wrapped, two rows, the default heading and the All link' );
+$ok( str_starts_with( $sc_events, '<div class="dgl-home-block dgl-home-block--events">' ) && 2 === substr_count( $sc_events, 'class="dgl-home__row"' ) && str_contains( $sc_events, '>What&#039;s on</h2>' ) && str_contains( $sc_events, '>View all events</a>' ), 'events: wrapped, two rows, the default heading and the All link' );
 $ok( $home_evt['later'] === (int) ( preg_match( '#<h3 class="dgl-home__rowtitle"><a href="[^"]*/(?:events|\?[^"]*)[^"]*">Home event later</a>#', $sc_events ) ? $home_evt['later'] : 0 ), 'and the featured event comes first' );
 $sc_bare = do_shortcode( '[dgl_home_events heading="" link="no" count="1"]' );
 $ok( ! str_contains( $sc_bare, '<h2' ) && ! str_contains( $sc_bare, 'dgl-home__all' ) && 1 === substr_count( $sc_bare, 'class="dgl-home__row"' ), 'heading="" and link="no" leave only the rows' );

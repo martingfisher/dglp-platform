@@ -1514,3 +1514,48 @@ clean. They are the only DGLP content on staging.
   on production: the panel floats, the find box takes focus, "walk" narrows
   to 1 of 52, the button reads "2 selected", chips read Education and
   Training.
+- **0.50.1** (24 October 2026): the home page dated rows (events, training,
+  funding) stack the calendar leaf above the picture in one 64px column,
+  so the title and the where/organisation line get the rest of the card;
+  before, leaf, picture and text sat in three columns and the text was
+  squeezed. The news list rows are untouched. The home blocks' links now
+  read "View all events", "View all training", "View all funding" and
+  "View all news" (were "All events" and so on). Both asked for by Martin
+  after seeing the events block on the new front page.
+- **Site changes, 24 October 2026** (configuration only, no release):
+  the "DGL Partnership" Blocksy header (`ct-custom-NWQeb6Oy8c1stUf33NoG4`,
+  the mega menu) now shows everywhere: Blocksy Pro keeps custom header
+  conditions in the theme mod `blocksy_premium_header_conditions`, and
+  its entry changed from `page_ids: 9548` to `everywhere` (`type-1` stays
+  as the fallback). The front page is now `/home/` (page 9548,
+  `page_on_front` was 8132); the old "Home - DGLP" page 8132 stays
+  published at `/home-dglp/` because the top bar's About item (menu item
+  10025) points at it, but it is `rank_math_robots: noindex`.
+  `[dgl_home_events count="6" heading="What's on"]` added to 9548 inside
+  a full-width core group between the Sector News row and the FAQ row.
+  New "Mobile Menu" (menu 172): Volunteering, Support, Networks and
+  Forums, Resources, News, Contact with the mega panels' linked items as
+  children (unlinked panel entries left out: Trustee Recruitment, Funding
+  Support and Network, Search for Training, VAL Training, Workforce HR
+  Network, Workforce Wellbeing, Age Friendly Leeds, Health and Care
+  Leaders Network, Third Sector Strategy, Volunteering Strategy); the
+  custom header's drawer `mobile-menu` item (`items[5]`) now uses it (was
+  menu 22) with navy text, accent hover, 19px/16px type, dividers and
+  left alignment on the pale teal drawer.
+- **0.50.2** (24 October 2026): the home page dated rows carry a line or
+  two of the summary (`Cards::summary()`, 22 words) under the
+  where/organisation line, now the stacked leaf and picture leave room
+  for it. Martin: "we can now afford to have a bit more content".
+- **0.50.2 deployed** (24 October 2026, production), with 0.50.1 before
+  it the same morning. Checked live in Chromium: the "What's on" block on
+  the front page shows the leaf above the picture and the summary line;
+  the drawer shows navy 19px items, left aligned, with dividers. The demo
+  event "Community coffee morning" (9448, `dgl_demo`) and its picture
+  (attachment 9338, also referenced by the expired demo training 9455 and
+  the pending demo event 9335) were deleted at Martin's request; the
+  Forum Central AGM is the one live event. Lesson: Blocksy writes its
+  dynamic CSS to `uploads/blocksy/css/global.css` and caches a descriptor
+  in the transient `blocksy_dynamic_styles_descriptor`; a theme mod
+  changed by WP-CLI does not rebuild it. Setting `blocksy_db_versions`
+  one version lower and loading a page makes the theme fire
+  `blocksy:dynamic-css:refresh-caches` and restore the version.
