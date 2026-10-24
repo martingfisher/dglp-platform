@@ -1891,6 +1891,8 @@ html:not(.dgl-js) .dgl-dir__ddfind { display: none; }
 
 .dgl-home__rowmeta { margin: 0; font-size: 0.82em; line-height: 1.4; color: var(--dgl-text-muted); }
 
+.dgl-home__rowsummary { margin: 6px 0 0; font-size: 0.88em; line-height: 1.5; color: var(--dgl-text); }
+
 /* News: the featured story large, the rest as a list beside it. */
 .dgl-home__news { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--dgl-gap-xl, 40px); }
 

@@ -1542,3 +1542,7 @@ clean. They are the only DGLP content on staging.
   custom header's drawer `mobile-menu` item (`items[5]`) now uses it (was
   menu 22) with navy text, accent hover, 19px/16px type, dividers and
   left alignment on the pale teal drawer.
+- **0.50.2** (24 October 2026): the home page dated rows carry a line or
+  two of the summary (`Cards::summary()`, 22 words) under the
+  where/organisation line, now the stacked leaf and picture leave room
+  for it. Martin: "we can now afford to have a bit more content".
