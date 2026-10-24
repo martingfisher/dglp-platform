@@ -1546,3 +1546,16 @@ clean. They are the only DGLP content on staging.
   two of the summary (`Cards::summary()`, 22 words) under the
   where/organisation line, now the stacked leaf and picture leave room
   for it. Martin: "we can now afford to have a bit more content".
+- **0.50.2 deployed** (24 October 2026, production), with 0.50.1 before
+  it the same morning. Checked live in Chromium: the "What's on" block on
+  the front page shows the leaf above the picture and the summary line;
+  the drawer shows navy 19px items, left aligned, with dividers. The demo
+  event "Community coffee morning" (9448, `dgl_demo`) and its picture
+  (attachment 9338, also referenced by the expired demo training 9455 and
+  the pending demo event 9335) were deleted at Martin's request; the
+  Forum Central AGM is the one live event. Lesson: Blocksy writes its
+  dynamic CSS to `uploads/blocksy/css/global.css` and caches a descriptor
+  in the transient `blocksy_dynamic_styles_descriptor`; a theme mod
+  changed by WP-CLI does not rebuild it. Setting `blocksy_db_versions`
+  one version lower and loading a page makes the theme fire
+  `blocksy:dynamic-css:refresh-caches` and restore the version.
