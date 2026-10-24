@@ -107,13 +107,13 @@ final class HomeBlocks {
 
 		switch ( $section ) {
 			case 'events':
-				return self::rows( PostTypes::EVENT, $atts, Home::EVENTS, __( "What's on", 'dgl-platform' ), __( 'All events', 'dgl-platform' ), $id );
+				return self::rows( PostTypes::EVENT, $atts, Home::EVENTS, __( "What's on", 'dgl-platform' ), __( 'View all events', 'dgl-platform' ), $id );
 
 			case 'training':
-				return self::rows( PostTypes::TRAINING, $atts, Home::TRAINING, __( 'Training and learning', 'dgl-platform' ), __( 'All training', 'dgl-platform' ), $id );
+				return self::rows( PostTypes::TRAINING, $atts, Home::TRAINING, __( 'Training and learning', 'dgl-platform' ), __( 'View all training', 'dgl-platform' ), $id );
 
 			case 'funding':
-				return self::rows( PostTypes::GRANT, $atts, Home::GRANTS, __( 'Funding and grants', 'dgl-platform' ), __( 'All funding', 'dgl-platform' ), $id );
+				return self::rows( PostTypes::GRANT, $atts, Home::GRANTS, __( 'Funding and grants', 'dgl-platform' ), __( 'View all funding', 'dgl-platform' ), $id );
 
 			case 'news':
 				$a = self::atts( $atts, [ 'count' => Home::NEWS, 'heading' => __( 'Latest news', 'dgl-platform' ), 'link' => 'yes' ] );
@@ -124,7 +124,7 @@ final class HomeBlocks {
 						'items'     => Home::newest( PostTypes::NEWS, $a['count'] ),
 						'heading'   => $a['heading'],
 						'all_url'   => $a['link'] ? Frontend::archive_url( PostTypes::NEWS ) : '',
-						'all_label' => __( 'All news', 'dgl-platform' ),
+						'all_label' => __( 'View all news', 'dgl-platform' ),
 						'id'        => $id,
 					]
 				);
