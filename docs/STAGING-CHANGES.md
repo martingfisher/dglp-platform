@@ -1630,3 +1630,21 @@ clean. They are the only DGLP content on staging.
   posts show under More support until placed. `group="men"` shows one
   group; `heading=""` and `link="no"` as for the other blocks.
   `wp dgl padlet refresh|status`. Health screen row.
+- **0.53.0** (25 October 2026): the wellbeing board now reads the board's
+  own data, the public answer Padlet's board page loads in a visitor's
+  browser (`/api/10/wishes` and `/api/10/wall_sections`). Padlet's RSS
+  feeds carry neither the columns nor the thumbnails; this does. Every card
+  now has Padlet's own thumbnail (55 of 55 on 25 October), the groups are
+  the board's 7 columns in its order with each column's header post as the
+  line under its heading, and a post with no words of its own shows its
+  linked page's summary. The two links posted without a title now take
+  their page's title (Citizens Advice "Benefits", "Menopause Awareness at
+  Work"), so 55 are shown and 16 left out (9 Amazon, 7 column headers).
+  Padlet does not document that data, so if it stops answering the RSS
+  feeds are read instead: posts keep their last known column and picture,
+  new ones show under More support, and Health goes amber. The seeded
+  grouping is gone; Settings, Wellbeing board now renames a column,
+  changes its line, or moves a post, on this site only. Column ids for
+  `group=` are shown there (e.g. `s137217582`, Men's Wellbeing). The nightly
+  run spends at most 15 seconds on new pictures and carries the rest over;
+  `wp dgl padlet refresh` fetches them all.

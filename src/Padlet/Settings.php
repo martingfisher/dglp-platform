@@ -1,6 +1,6 @@
 <?php
 /**
- * Settings, Wellbeing board: the groups the Padlet posts are shown in.
+ * Settings, Wellbeing board: the Padlet board as this site shows it.
  *
  * @package DGL
  */
@@ -12,12 +12,11 @@ namespace DGL\Padlet;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Padlet's feeds do not say which column of the board a post is in, so the
- * team decides here: name the groups, write a line under each, and put each
- * post in one. A post that arrives later lands in "More support" and is
- * listed at the top of this screen until it is placed. The posts left out
- * (Amazon links, posts with no title) are listed too, with why, so nobody
- * wonders where they went.
+ * The block follows the board's own columns, so nothing here needs keeping
+ * up. The screen says when the board was last read and what is left out
+ * and why, fetches it on request, and lets the team change three things on
+ * this site only: a column's heading, a column's introduction, and which
+ * column one post is shown in. Every change can be undone by clearing it.
  */
 final class Settings {
 
@@ -25,8 +24,8 @@ final class Settings {
 	public const ACTION = 'dgl_padlet_save';
 	public const FETCH  = 'dgl_padlet_fetch';
 
-	/** Blank rows offered for new groups. */
-	private const SPARE = 2;
+	/** Seconds a fetch from this screen may spend on new pictures: a web request, so less than the command line. */
+	private const FETCH_BUDGET = 25;
 
 	public static function init(): void {
 		add_action( 'admin_menu', [ self::class, 'menu' ] );
@@ -51,28 +50,27 @@ final class Settings {
 
 		check_admin_referer( self::ACTION );
 
-		// phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- every value is cleaned by Board::clean_grouping().
-		$names  = (array) wp_unslash( $_POST['group_name'] ?? [] );
-		$intros = (array) wp_unslash( $_POST['group_intro'] ?? [] );
-		$ids    = (array) wp_unslash( $_POST['group_id'] ?? [] );
-		$orders = (array) wp_unslash( $_POST['group_order'] ?? [] );
-		$assign = (array) wp_unslash( $_POST['assign'] ?? [] );
+		// phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- every value is cleaned by Board::clean_overrides().
+		$names  = (array) wp_unslash( $_POST['column_name'] ?? [] );
+		$intros = (array) wp_unslash( $_POST['column_intro'] ?? [] );
+		$moves  = (array) wp_unslash( $_POST['assign'] ?? [] );
 		// phpcs:enable
 
-		$groups = [];
+		$own    = [];
+		$assign = [];
 
-		foreach ( $names as $i => $name ) {
-			$groups[] = [
-				'id'    => (string) ( $ids[ $i ] ?? '' ),
-				'name'  => (string) $name,
-				'intro' => (string) ( $intros[ $i ] ?? '' ),
-				'order' => is_numeric( $orders[ $i ] ?? null ) ? (float) $orders[ $i ] : 1000 + (int) $i,
-			];
+		foreach ( Board::items() as $item ) {
+			$own[ (string) $item['key'] ] = '' !== (string) ( $item['section'] ?? '' ) ? (string) $item['section'] : Board::DEFAULT_GROUP;
 		}
 
-		usort( $groups, static fn( array $a, array $b ): int => $a['order'] <=> $b['order'] );
+		// Only a post shown somewhere other than its own column is a change worth keeping.
+		foreach ( $moves as $key => $group ) {
+			if ( isset( $own[ (string) $key ] ) && $own[ (string) $key ] !== (string) $group ) {
+				$assign[ (string) $key ] = (string) $group;
+			}
+		}
 
-		update_option( Board::OPTION_GROUPS, Board::clean_grouping( [ 'groups' => $groups, 'assign' => $assign ] ), false );
+		update_option( Board::OPTION_GROUPS, Board::clean_overrides( [ 'names' => $names, 'intros' => $intros, 'assign' => $assign ] ), false );
 
 		wp_safe_redirect( add_query_arg( [ 'page' => self::SLUG, 'saved' => '1' ], admin_url( 'options-general.php' ) ) );
 		exit;
@@ -85,7 +83,7 @@ final class Settings {
 
 		check_admin_referer( self::FETCH );
 
-		$last = Board::refresh();
+		$last = Board::refresh( self::FETCH_BUDGET );
 
 		wp_safe_redirect( add_query_arg( [ 'page' => self::SLUG, 'fetched' => $last['ok'] ? '1' : '0' ], admin_url( 'options-general.php' ) ) );
 		exit;
@@ -96,17 +94,17 @@ final class Settings {
 			return;
 		}
 
-		$grouping = Board::grouping();
-		$items    = Board::items();
-		$left_out = Board::left_out();
-		$last     = Board::last();
-		$fetched  = Board::fetched();
-		$unplaced = array_filter( $items, static fn( array $item ): bool => ! isset( $grouping['assign'][ (string) ( $item['key'] ?? '' ) ] ) );
-		$rows     = array_merge( $grouping['groups'], array_fill( 0, self::SPARE, [ 'id' => '', 'name' => '', 'intro' => '' ] ) );
-		$choices  = [ Board::DEFAULT_GROUP => __( 'More support', 'dgl-platform' ) ];
+		$sections  = Board::sections();
+		$overrides = Board::overrides();
+		$items     = Board::items();
+		$left_out  = Board::left_out();
+		$last      = Board::last();
+		$fetched   = Board::fetched();
+		$names     = [ Board::DEFAULT_GROUP => __( 'More support', 'dgl-platform' ) ];
+		$no_pic    = count( array_filter( $items, static fn( array $item ): bool => '' === Board::picture_url( $item ) ) );
 
-		foreach ( $grouping['groups'] as $group ) {
-			$choices[ $group['id'] ] = $group['name'];
+		foreach ( $sections as $section ) {
+			$names[ $section['id'] ] = $overrides['names'][ $section['id'] ] ?? $section['name'];
 		}
 
 		usort( $items, static fn( array $a, array $b ): int => strnatcasecmp( (string) $a['title'], (string) $b['title'] ) );
@@ -118,10 +116,13 @@ final class Settings {
 		<div class="wrap">
 			<h1><?php esc_html_e( 'Wellbeing board', 'dgl-platform' ); ?></h1>
 			<?php if ( $saved ) : ?>
-				<div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Saved. The board shows the new groups straight away.', 'dgl-platform' ); ?></p></div>
+				<div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Saved. The board shows the changes straight away.', 'dgl-platform' ); ?></p></div>
 			<?php endif; ?>
 			<?php if ( null !== $fetch_said ) : ?>
 				<div class="notice notice-<?php echo $fetch_said ? 'success' : 'error'; ?> is-dismissible"><p><?php echo esc_html( $fetch_said ? __( 'Fetched from Padlet.', 'dgl-platform' ) : sprintf( /* translators: %s: the error. */ __( 'The fetch failed: %s The last good board is still showing.', 'dgl-platform' ), (string) ( $last['error'] ?? '' ) ) ); ?></p></div>
+			<?php endif; ?>
+			<?php if ( null !== $last && $last['ok'] && Board::FROM_FEEDS === $last['source'] ) : ?>
+				<div class="notice notice-warning"><p><?php esc_html_e( 'Padlet\'s board data did not answer at the last fetch, so the board was read from its RSS feeds. Posts keep their last known column and picture; new posts show under More support until the board data answers again.', 'dgl-platform' ); ?></p></div>
 			<?php endif; ?>
 
 			<p>
@@ -129,7 +130,7 @@ final class Settings {
 				echo wp_kses(
 					sprintf(
 						/* translators: %s: the board's address, linked. */
-						__( 'The [dgl_padlet] block shows the posts from Leeds Health and Care Academy\'s %s as cards on this site. It is fetched from Padlet every night. Padlet does not say which column a post is in, so the groups are set here.', 'dgl-platform' ),
+						__( 'The [dgl_padlet] block shows the posts on Leeds Health and Care Academy\'s %s as cards on this site, in the board\'s own columns, with Padlet\'s pictures. It is read from Padlet every night, so new posts appear by themselves.', 'dgl-platform' ),
 						'<a href="' . esc_url( Board::BOARD_URL ) . '" target="_blank" rel="noopener">' . esc_html__( 'Health and Wellbeing Support board', 'dgl-platform' ) . '</a>'
 					),
 					[ 'a' => [ 'href' => true, 'target' => true, 'rel' => true ] ]
@@ -140,11 +141,12 @@ final class Settings {
 				<?php
 				echo esc_html(
 					sprintf(
-						/* translators: 1: when, 2: how many shown, 3: how many left out. */
-						__( 'Last fetched: %1$s. %2$d posts shown, %3$d left out.', 'dgl-platform' ),
+						/* translators: 1: when, 2: how many shown, 3: how many left out, 4: how many still waiting for a picture. */
+						__( 'Last read: %1$s. %2$d posts shown, %3$d left out, %4$d still waiting for their picture.', 'dgl-platform' ),
 						$fetched > 0 ? wp_date( 'j F Y, H:i', $fetched ) : __( 'never', 'dgl-platform' ),
 						count( $items ),
-						count( $left_out )
+						count( $left_out ),
+						$no_pic
 					)
 				);
 				?>
@@ -159,77 +161,66 @@ final class Settings {
 				<input type="hidden" name="action" value="<?php echo esc_attr( self::ACTION ); ?>">
 				<?php wp_nonce_field( self::ACTION ); ?>
 
-				<?php if ( [] !== $unplaced && [] !== $grouping['groups'] ) : ?>
-					<div class="notice notice-warning inline"><p>
-						<?php
-						echo esc_html(
-							sprintf(
-								/* translators: %d: how many posts. */
-								_n( '%d post has no group yet, so it shows under More support. Choose a group for it below.', '%d posts have no group yet, so they show under More support. Choose a group for them below.', count( $unplaced ), 'dgl-platform' ),
-								count( $unplaced )
-							)
-						);
-						?>
-					</p></div>
+				<h2><?php esc_html_e( 'Columns', 'dgl-platform' ); ?></h2>
+				<p><?php esc_html_e( 'These are the board\'s columns, in its order. Leave a box empty to use the board\'s own wording, shown in grey. The id is what [dgl_padlet group="…"] takes to show one column on its own.', 'dgl-platform' ); ?></p>
+				<?php if ( [] === $sections ) : ?>
+					<p><?php esc_html_e( 'No columns yet. Use Fetch from Padlet now above.', 'dgl-platform' ); ?></p>
+				<?php else : ?>
+					<table class="widefat striped" style="max-width:1000px">
+						<thead><tr>
+							<th scope="col" style="width:110px"><?php esc_html_e( 'Id', 'dgl-platform' ); ?></th>
+							<th scope="col" style="width:280px"><?php esc_html_e( 'Heading on this site', 'dgl-platform' ); ?></th>
+							<th scope="col"><?php esc_html_e( 'Line under the heading', 'dgl-platform' ); ?></th>
+						</tr></thead>
+						<tbody>
+							<?php foreach ( $sections as $section ) : ?>
+								<?php $sid = $section['id']; ?>
+								<tr>
+									<td><code><?php echo esc_html( $sid ); ?></code></td>
+									<td>
+										<label class="screen-reader-text" for="dgl-c-n-<?php echo esc_attr( $sid ); ?>"><?php esc_html_e( 'Heading', 'dgl-platform' ); ?></label>
+										<input type="text" id="dgl-c-n-<?php echo esc_attr( $sid ); ?>" name="column_name[<?php echo esc_attr( $sid ); ?>]" value="<?php echo esc_attr( $overrides['names'][ $sid ] ?? '' ); ?>" placeholder="<?php echo esc_attr( $section['name'] ); ?>" style="width:100%">
+									</td>
+									<td>
+										<label class="screen-reader-text" for="dgl-c-i-<?php echo esc_attr( $sid ); ?>"><?php esc_html_e( 'Line under the heading', 'dgl-platform' ); ?></label>
+										<textarea id="dgl-c-i-<?php echo esc_attr( $sid ); ?>" name="column_intro[<?php echo esc_attr( $sid ); ?>]" rows="2" placeholder="<?php echo esc_attr( $section['intro'] ); ?>" style="width:100%"><?php echo esc_textarea( $overrides['intros'][ $sid ] ?? '' ); ?></textarea>
+									</td>
+								</tr>
+							<?php endforeach; ?>
+						</tbody>
+					</table>
 				<?php endif; ?>
 
-				<h2><?php esc_html_e( 'Groups', 'dgl-platform' ); ?></h2>
-				<p><?php esc_html_e( 'Shown in order, lowest number first. Clear a name to remove that group: its posts move to More support. More support always comes last and only shows when something is in it.', 'dgl-platform' ); ?></p>
-				<table class="widefat striped" style="max-width:960px">
-					<thead><tr>
-						<th scope="col" style="width:70px"><?php esc_html_e( 'Order', 'dgl-platform' ); ?></th>
-						<th scope="col" style="width:260px"><?php esc_html_e( 'Name', 'dgl-platform' ); ?></th>
-						<th scope="col"><?php esc_html_e( 'Line under the heading (optional)', 'dgl-platform' ); ?></th>
-					</tr></thead>
-					<tbody>
-						<?php foreach ( $rows as $i => $group ) : ?>
-							<tr>
-								<td>
-									<input type="hidden" name="group_id[<?php echo (int) $i; ?>]" value="<?php echo esc_attr( $group['id'] ); ?>">
-									<label class="screen-reader-text" for="dgl-g-o-<?php echo (int) $i; ?>"><?php esc_html_e( 'Order', 'dgl-platform' ); ?></label>
-									<input type="number" id="dgl-g-o-<?php echo (int) $i; ?>" name="group_order[<?php echo (int) $i; ?>]" value="<?php echo (int) ( $i + 1 ); ?>" min="1" step="1" style="width:60px">
-								</td>
-								<td>
-									<label class="screen-reader-text" for="dgl-g-n-<?php echo (int) $i; ?>"><?php esc_html_e( 'Name', 'dgl-platform' ); ?></label>
-									<input type="text" id="dgl-g-n-<?php echo (int) $i; ?>" name="group_name[<?php echo (int) $i; ?>]" value="<?php echo esc_attr( $group['name'] ); ?>" class="regular-text" style="width:100%"<?php echo '' === $group['id'] ? ' placeholder="' . esc_attr__( 'New group', 'dgl-platform' ) . '"' : ''; ?>>
-								</td>
-								<td>
-									<label class="screen-reader-text" for="dgl-g-i-<?php echo (int) $i; ?>"><?php esc_html_e( 'Line under the heading', 'dgl-platform' ); ?></label>
-									<input type="text" id="dgl-g-i-<?php echo (int) $i; ?>" name="group_intro[<?php echo (int) $i; ?>]" value="<?php echo esc_attr( $group['intro'] ); ?>" style="width:100%">
-								</td>
-							</tr>
-						<?php endforeach; ?>
-					</tbody>
-				</table>
-				<p class="description"><?php esc_html_e( 'A new group can be given posts after it has been saved once.', 'dgl-platform' ); ?></p>
-
 				<h2><?php esc_html_e( 'Posts', 'dgl-platform' ); ?></h2>
+				<p><?php esc_html_e( 'Each post shows in its own column on the board. Choose another column to show it there on this site instead.', 'dgl-platform' ); ?></p>
 				<?php if ( [] === $items ) : ?>
 					<p><?php esc_html_e( 'Nothing fetched yet. Use Fetch from Padlet now above.', 'dgl-platform' ); ?></p>
 				<?php else : ?>
-					<table class="widefat striped" style="max-width:960px">
+					<table class="widefat striped" style="max-width:1000px">
 						<thead><tr>
 							<th scope="col"><?php esc_html_e( 'Post', 'dgl-platform' ); ?></th>
-							<th scope="col" style="width:280px"><?php esc_html_e( 'Group', 'dgl-platform' ); ?></th>
+							<th scope="col" style="width:300px"><?php esc_html_e( 'Shown in', 'dgl-platform' ); ?></th>
 						</tr></thead>
 						<tbody>
 							<?php foreach ( $items as $item ) : ?>
 								<?php
 								$key     = (string) $item['key'];
-								$current = $grouping['assign'][ $key ] ?? Board::DEFAULT_GROUP;
+								$own     = '' !== (string) ( $item['section'] ?? '' ) && isset( $names[ (string) $item['section'] ] ) ? (string) $item['section'] : Board::DEFAULT_GROUP;
+								$current = $overrides['assign'][ $key ] ?? $own;
+								$current = isset( $names[ $current ] ) ? $current : $own;
 								?>
 								<tr>
 									<td>
 										<label for="dgl-a-<?php echo esc_attr( $key ); ?>"><strong><?php echo esc_html( (string) $item['title'] ); ?></strong></label>
-										<?php if ( ! isset( $grouping['assign'][ $key ] ) ) : ?>
-											<span class="dgl-badge" style="margin-left:6px;padding:1px 8px;border-radius:10px;background:#fcf0c3;font-size:12px"><?php esc_html_e( 'New', 'dgl-platform' ); ?></span>
-										<?php endif; ?>
 										<br><a href="<?php echo esc_url( (string) $item['link'] ); ?>" target="_blank" rel="noopener"><?php echo esc_html( (string) $item['host'] ); ?></a>
+										<?php if ( '' === Board::picture_url( $item ) ) : ?>
+											<span class="description"> &middot; <?php esc_html_e( 'picture to follow', 'dgl-platform' ); ?></span>
+										<?php endif; ?>
 									</td>
 									<td>
 										<select id="dgl-a-<?php echo esc_attr( $key ); ?>" name="assign[<?php echo esc_attr( $key ); ?>]">
-											<?php foreach ( $choices as $value => $label ) : ?>
-												<option value="<?php echo esc_attr( (string) $value ); ?>"<?php selected( $current, (string) $value ); ?>><?php echo esc_html( $label ); ?></option>
+											<?php foreach ( $names as $value => $label ) : ?>
+												<option value="<?php echo esc_attr( (string) $value ); ?>"<?php selected( $current, (string) $value ); ?>><?php echo esc_html( $label . ( $own === (string) $value ? ' ' . __( '(its column on Padlet)', 'dgl-platform' ) : '' ) ); ?></option>
 											<?php endforeach; ?>
 										</select>
 									</td>
@@ -238,16 +229,16 @@ final class Settings {
 						</tbody>
 					</table>
 				<?php endif; ?>
-				<?php submit_button( __( 'Save groups', 'dgl-platform' ) ); ?>
+				<?php submit_button( __( 'Save', 'dgl-platform' ) ); ?>
 			</form>
 
 			<?php if ( [] !== $left_out ) : ?>
 				<h2><?php esc_html_e( 'Left out', 'dgl-platform' ); ?></h2>
-				<p><?php esc_html_e( 'These posts are on the Padlet board but not shown here. To show one, it needs changing on Padlet: give it a title, or link it somewhere other than Amazon.', 'dgl-platform' ); ?></p>
-				<table class="widefat striped" style="max-width:960px">
+				<p><?php esc_html_e( 'These posts are on the Padlet board but not shown here. A column\'s header post is not a card: its words are the line under the column\'s heading.', 'dgl-platform' ); ?></p>
+				<table class="widefat striped" style="max-width:1000px">
 					<thead><tr>
 						<th scope="col"><?php esc_html_e( 'Post', 'dgl-platform' ); ?></th>
-						<th scope="col" style="width:280px"><?php esc_html_e( 'Why', 'dgl-platform' ); ?></th>
+						<th scope="col" style="width:300px"><?php esc_html_e( 'Why', 'dgl-platform' ); ?></th>
 					</tr></thead>
 					<tbody>
 						<?php foreach ( $left_out as $post ) : ?>
@@ -256,7 +247,7 @@ final class Settings {
 									<?php echo esc_html( '' !== (string) ( $post['title'] ?? '' ) ? (string) $post['title'] : __( '(no title)', 'dgl-platform' ) ); ?>
 									<br><a href="<?php echo esc_url( (string) ( $post['link'] ?? '' ) ); ?>" target="_blank" rel="noopener"><?php echo esc_html( Board::host_label( (string) ( $post['link'] ?? '' ) ) ); ?></a>
 								</td>
-								<td><?php echo esc_html( Board::LEFT_SHOP === ( $post['why'] ?? '' ) ? __( 'Links to Amazon', 'dgl-platform' ) : __( 'No title (a column introduction, or a link posted without one)', 'dgl-platform' ) ); ?></td>
+								<td><?php echo esc_html( Board::LEFT_SHOP === ( $post['why'] ?? '' ) ? __( 'Links to Amazon', 'dgl-platform' ) : __( 'A column header, or a post with no title', 'dgl-platform' ) ); ?></td>
 							</tr>
 						<?php endforeach; ?>
 					</tbody>

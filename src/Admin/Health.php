@@ -306,6 +306,8 @@ final class Health {
 			$pad_todo = __( 'The first fetch is due within minutes of the plugin being updated. Use Settings, Wellbeing board, Fetch from Padlet now.', 'dgl-platform' );
 		} elseif ( self::BAD === $pad_status ) {
 			$pad_todo = __( 'The board is over a month old and is no longer shown. Fetch it from Settings, Wellbeing board and read the error; if Padlet has changed its feeds, the import needs updating.', 'dgl-platform' );
+		} elseif ( null !== $pad_last && $pad_last['ok'] && \DGL\Padlet\Board::FROM_FEEDS === $pad_last['source'] ) {
+			$pad_todo = __( 'Padlet\'s board data did not answer, so the board was read from its RSS feeds: posts keep their last known column and picture, and new posts show under More support. If this lasts more than a few days, Padlet has changed its board data and the import needs updating.', 'dgl-platform' );
 		} else {
 			$pad_todo = __( 'The last fetch failed, so the previous board is still showing. If it fails again tomorrow, fetch it from Settings, Wellbeing board and read the error.', 'dgl-platform' );
 		}

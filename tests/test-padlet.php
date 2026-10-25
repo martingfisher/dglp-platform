@@ -2,7 +2,7 @@
 /**
  * The wellbeing board from Padlet: the pure parts.
  *
- * The fixtures follow the shape of Padlet's two real feeds for Leeds
+ * The feed fixtures follow the shape of Padlet's two real feeds for Leeds
  * Health and Care Academy's board as fetched on 25 October 2026: the
  * export feed (outbound link as the enclosure, numeric post id in the
  * link, "Y-m-d H:i:s UTC" dates) and the full feed (description as HTML
@@ -195,7 +195,6 @@ Harness::assert_same( '', Board::safe_url( 'https://user:pw@example.org/' ), 'no
 Harness::assert_same( '', Board::safe_url( 'https://example.org:8080/' ), 'no ports in links' );
 Harness::assert_same( '', Board::safe_url( 'https://example.org/"onmouseover="x' ), 'nothing that breaks out of an attribute' );
 Harness::assert_same( 'http://example.org/', Board::safe_url( 'http://example.org/' ), 'plain http is a link' );
-Harness::assert_same( '', Board::safe_https( 'http://example.org/a.png' ), 'but a picture is only fetched over https' );
 Harness::assert_same( 'Podcast', Board::kind( 'https://open.spotify.com/show/1' ), 'Spotify is a podcast' );
 Harness::assert_same( 'Video', Board::kind( 'https://www.ted.com/talks/x' ), 'a TED talk is a video' );
 Harness::assert_same( 'Document', Board::kind( 'https://drive.google.com/file/d/1' ), 'a Drive file is a document' );
@@ -203,63 +202,100 @@ Harness::assert_same( '', Board::kind( 'https://www.leedsmind.org.uk/' ), 'a web
 
 Harness::group( 'Wellbeing board: pictures' );
 
-$a = Board::pic_name( 'https://u1.padletusercontent.com/uploads/x/Screenshot.png?expiry_token=AAA' );
-$b = Board::pic_name( 'https://u1.padletusercontent.com/uploads/x/Screenshot.png?expiry_token=BBB' );
-Harness::assert_true( 1 === preg_match( '/^[a-f0-9]{32}\.png$/', $a ), 'a picture is kept under a hash of its address' );
-Harness::assert_same( $a, $b, 'a fresh token tomorrow is the same picture, not a new copy' );
-Harness::assert_same( 'jpg', pathinfo( Board::pic_name( 'https://example.org/a.jpeg' ), PATHINFO_EXTENSION ), 'jpeg is kept as jpg' );
-Harness::assert_same( '', Board::pic_name( 'https://example.org/a.svg' ), 'an SVG is not a picture we keep' );
-Harness::assert_same( '', Board::pic_name( 'https://example.org/page' ), 'a page is not a picture' );
+$a = Board::pic_base( 'https://u1.padletusercontent.com/uploads/x/Screenshot.png?expiry_token=AAA' );
+$b = Board::pic_base( 'https://u1.padletusercontent.com/uploads/x/Screenshot.png?expiry_token=BBB' );
+Harness::assert_true( 1 === preg_match( '/^[a-f0-9]{32}$/', $a ), 'a picture is kept under a hash of its address' );
+Harness::assert_same( $a, $b, 'a fresh Padlet token tomorrow is the same picture, not a new copy' );
+Harness::assert_true( Board::pic_base( 'https://images.example.org/p?id=1' ) !== Board::pic_base( 'https://images.example.org/p?id=2' ), 'elsewhere the query names the picture, so two pictures are two copies' );
+Harness::assert_same( '', Board::pic_base( 'javascript:alert(1)' ), 'nothing unsafe is fetched' );
 
-Harness::group( 'Wellbeing board: groups' );
+Harness::group( 'Wellbeing board: reading the board\'s own data' );
 
-$clean = Board::clean_grouping(
+// Shaped like Padlet's /api/10/wishes and /api/10/wall_sections answers on 25 October 2026.
+$sections_json = '{"data":[{"id":"137217582","type":"wall_section","attributes":{"id":137217582,"title":"Men’s Wellbeing","sort_index":4096}},{"id":"137217244","type":"wall_section","attributes":{"id":137217244,"title":"Mental Wellbeing","sort_index":0}},{"id":"x","type":"wall_section","attributes":{"id":"not-a-number","title":"Bad"}}]}';
+$wish          = static fn( array $a ): array => [ 'id' => $a['id'], 'type' => 'wish', 'attributes' => $a + [ 'published' => true, 'visibility' => 'everyone', 'is_content_hidden' => false, 'wall_id' => 174909383, 'permalink' => 'https://padlet.com/lhca1/board/wish/' . $a['id'] ] ];
+$preview       = static fn( string $name ): array => [ 'url' => 'https://padlet-artifacts.storage.googleapis.com/abc/' . $name . '.png', 'width' => 1200, 'height' => 630 ];
+$wishes_json   = json_encode(
 	[
-		'groups' => [
-			[ 'id' => 'mental', 'name' => 'Mental health', 'intro' => '<b>Support</b> for the mind.' ],
-			[ 'id' => '', 'name' => 'Money & bills!', 'intro' => '' ],
-			[ 'id' => 'mental', 'name' => 'Duplicate', 'intro' => '' ],
-			[ 'id' => 'gone', 'name' => '   ', 'intro' => 'No name, so dropped.' ],
-			[ 'id' => 'more', 'name' => 'Trying to take the default', 'intro' => '' ],
-			'not a group',
+		'data' => [
+			$wish( [ 'id' => 1, 'wall_section_id' => 137217244, 'sort_index' => 900, 'subject' => '', 'body' => '<div>Mental health encompasses emotional wellbeing.</div>', 'attachment' => 'https://media3.giphy.com/media/x/giphy.gif', 'attachment_link' => [ 'content_category' => 'photo', 'content_type' => 'image/gif', 'preview_image' => $preview( 'gif' ) ] ] ),
+			$wish( [ 'id' => 2, 'wall_section_id' => 137217244, 'sort_index' => 100, 'subject' => 'Calm', 'body' => '<p>Sleep, Meditation, Relaxation.</p>', 'attachment' => 'https://www.calm.com/', 'attachment_link' => [ 'content_category' => 'page', 'content_type' => 'text/html', 'title' => 'Experience Calm', 'description' => 'Calm is the #1 app.', 'preview_image' => $preview( 'calm' ) ] ] ),
+			$wish( [ 'id' => 3, 'wall_section_id' => 137217244, 'sort_index' => 500, 'subject' => 'Leeds Mental Wellbeing Service ', 'body' => '', 'attachment' => 'https://www.leedscommunityhealthcare.nhs.uk/mws/', 'attachment_link' => [ 'content_category' => 'page', 'content_type' => 'text/html', 'description' => 'Talking therapies for people in Leeds.', 'preview_image' => $preview( 'lch' ) ] ] ),
+			$wish( [ 'id' => 4, 'wall_section_id' => 137217582, 'sort_index' => 10, 'subject' => 'Man Down', 'body' => '', 'attachment' => 'https://www.amazon.co.uk/Man-Down/dp/1787832503/ref=asc_df', 'attachment_link' => [ 'content_category' => 'page', 'preview_image' => $preview( 'book' ) ] ] ),
+			$wish( [ 'id' => 5, 'wall_section_id' => 137217582, 'sort_index' => 20, 'subject' => '', 'body' => '', 'attachment' => 'https://www.citizensadvice.org.uk/benefits/', 'attachment_link' => [ 'content_category' => 'page', 'content_type' => 'text/html', 'title' => 'Benefits', 'description' => 'Get advice on benefits.', 'preview_image' => $preview( 'cab' ) ] ] ),
+			$wish( [ 'id' => 6, 'wall_section_id' => 137217582, 'sort_index' => 30, 'subject' => 'Move your Way', 'body' => '<p>A free <a href="https://www.mindwell-leeds.org.uk/move.pdf">guide</a>.</p>', 'attachment' => 'https://u1.padletusercontent.com/uploads/s.png?expiry_token=AAA', 'attachment_link' => [ 'content_category' => 'photo', 'content_type' => 'image/png', 'preview_image' => [ 'url' => 'https://u1.padletusercontent.com/uploads/s.png?expiry_token=AAA' ] ] ] ),
+			$wish( [ 'id' => 7, 'wall_section_id' => 137217582, 'sort_index' => 40, 'subject' => 'Hidden draft', 'published' => false ] ),
+			$wish( [ 'id' => 8, 'wall_section_id' => null, 'sort_index' => 50, 'subject' => 'Loose post <script>x</script>', 'body' => '', 'attachment' => 'https://www.ted.com/talks/x', 'attachment_link' => [ 'content_category' => 'video', 'content_type' => 'text/html' ] ] ),
+			$wish( [ 'id' => 9, 'wall_section_id' => 137217244, 'sort_index' => 60, 'subject' => 'Sneaky', 'attachment' => 'javascript:alert(1)' ] ),
+			[ 'id' => 'junk' ],
 		],
-		'assign' => [
-			'111'    => 'mental',
-			'222'    => 'money-bills',
-			'333'    => 'gone',
-			'444'    => 'more',
-			'<x>'    => 'mental',
-			'555'    => 'nowhere',
-		],
+		'meta' => [ 'next' => null ],
 	]
 );
 
-Harness::assert_same( [ 'mental', 'money-bills' ], array_column( $clean['groups'], 'id' ), 'a new group\'s id is made from its name; duplicates, nameless groups and the reserved id are dropped' );
-Harness::assert_same( 'Support for the mind.', $clean['groups'][0]['intro'], 'the line under a heading is plain text' );
-Harness::assert_same( [ '111' => 'mental', '222' => 'money-bills', '444' => 'more' ], $clean['assign'], 'a post is only placed in a group that exists, or in More support by choice' );
+Harness::assert_true( null === Board::json_rows( '<html>Rate limited</html>' ), 'an HTML error page is not the board' );
+Harness::assert_true( null === Board::json_rows( '{"errors":[{"status":"400"}]}' ), 'nor is an error answer' );
+Harness::assert_same( 9, count( (array) Board::json_rows( $wishes_json ) ), 'a row with no attributes is dropped' );
 
-$items = [
-	[ 'key' => '111', 'title' => 'Zebra crossing' ],
-	[ 'key' => '112', 'title' => 'New post' ],
-	[ 'key' => '113', 'title' => 'apple' ],
-	[ 'key' => '444', 'title' => 'Chosen for More' ],
-];
-$grouped = Board::grouped( $items, [ 'groups' => $clean['groups'], 'assign' => [ '111' => 'mental', '113' => 'mental', '444' => 'more' ] ] );
+$pb  = Board::parse_board( (array) Board::json_rows( $wishes_json ), (array) Board::json_rows( $sections_json ) );
+$pbt = array_column( $pb['items'], null, 'key' );
+$pbo = array_column( $pb['left_out'], 'why', 'key' );
 
-Harness::assert_same( [ 'mental', 'more' ], array_column( $grouped, 'id' ), 'groups in their order, empty ones left out, More support last' );
-Harness::assert_same( [ 'apple', 'Zebra crossing' ], array_column( $grouped[0]['items'], 'title' ), 'a group\'s posts by title, ignoring case' );
-Harness::assert_same( [ 'Chosen for More', 'New post' ], array_column( $grouped[1]['items'], 'title' ), 'a post nobody has placed is in More support' );
+Harness::assert_same( [ 's137217244', 's137217582' ], array_column( $pb['sections'], 'id' ), 'the columns, in the board\'s order; a column with a bad id is dropped' );
+Harness::assert_same( 'Men’s Wellbeing', $pb['sections'][1]['name'], 'a column keeps its own name' );
+Harness::assert_same( 'Mental health encompasses emotional wellbeing.', $pb['sections'][0]['intro'], 'a column header post\'s words are the column\'s introduction' );
+Harness::assert_same( Board::LEFT_UNTITLED, $pbo['1'] ?? '', 'and the header post is not a card' );
+Harness::assert_same( Board::LEFT_SHOP, $pbo['4'] ?? '', 'an Amazon link is left out' );
+Harness::assert_false( isset( $pbt['7'] ) || isset( $pbo['7'] ), 'an unpublished post is not read at all' );
+Harness::assert_same( 'Benefits', $pbt['5']['title'] ?? '', 'a post with no title of its own takes its linked page\'s' );
+Harness::assert_same( 'Get advice on benefits.', $pbt['5']['text'] ?? '', 'and a post with no words takes the page\'s own summary' );
+Harness::assert_same( 'Leeds Mental Wellbeing Service', $pbt['3']['title'] ?? '', 'titles are trimmed' );
+Harness::assert_same( 'Talking therapies for people in Leeds.', $pbt['3']['text'] ?? '', 'the page\'s summary fills an empty post' );
+Harness::assert_same( 'Sleep, Meditation, Relaxation.', $pbt['2']['text'] ?? '', 'a post\'s own words come first' );
+Harness::assert_same( 'https://padlet-artifacts.storage.googleapis.com/abc/calm.png', $pbt['2']['picture'] ?? '', 'the picture is Padlet\'s thumbnail' );
+Harness::assert_same( 's137217244', $pbt['2']['section'] ?? '', 'a post knows its column' );
+Harness::assert_same( 100, $pbt['2']['order'] ?? 0, 'and its place in the column' );
+Harness::assert_same( 'https://www.mindwell-leeds.org.uk/move.pdf', $pbt['6']['link'] ?? '', 'a post whose attachment is a picture leads where its words point' );
+Harness::assert_true( str_starts_with( (string) ( $pbt['6']['picture'] ?? '' ), 'https://u1.padletusercontent.com/' ), 'and shows the picture' );
+Harness::assert_same( '', $pbt['8']['section'] ?? 'x', 'a post in no column has no section' );
+Harness::assert_same( 'Video', $pbt['8']['kind'] ?? '', 'a video says so' );
+Harness::assert_same( 'Loose post x', $pbt['8']['title'] ?? '', 'a title is plain text' );
+Harness::assert_same( 'https://padlet.com/lhca1/board/wish/9', $pbt['9']['link'] ?? '', 'an unsafe link leads to the post on Padlet instead' );
 
-$seed = Board::seed_assign();
-Harness::assert_same( count( $seed ), count( array_unique( array_keys( $seed ) ) ), 'the seed places each post once' );
-Harness::assert_true( [] === array_diff( array_unique( array_values( $seed ) ), array_column( Board::seed_groups(), 'id' ) ), 'the seed only uses groups it defines' );
+Harness::group( 'Wellbeing board: columns as this site shows them' );
+
+$cols = $pb['sections'];
+$gr   = Board::grouped( $pb['items'], $cols );
+Harness::assert_same( [ 's137217244', 's137217582', 'more' ], array_column( $gr, 'id' ), 'the board\'s columns in order, More support last for posts in no column' );
+Harness::assert_same( [ 'Leeds Mental Wellbeing Service', 'Calm', 'Sneaky' ], array_column( $gr[0]['items'], 'title' ), 'within a column, the board\'s own order: highest place first, as Padlet shows it' );
+Harness::assert_same( 'Mental Wellbeing', $gr[0]['name'], 'a column is headed with its own name' );
+
+$ov = Board::clean_overrides(
+	[
+		'names'  => [ 's137217244' => '<b>Mental health</b>', 's137217582' => '   ', 'bad' => 'x' ],
+		'intros' => [ 's137217582' => 'Support for men.' ],
+		'assign' => [ '2' => 's137217582', '3' => 'more', '<x>' => 's137217582', '5' => 'nowhere' ],
+	]
+);
+Harness::assert_same( [ 's137217244' => 'Mental health' ], $ov['names'], 'a heading is plain text, for a real column id; an empty one is no change' );
+Harness::assert_same( [ '2' => 's137217582', '3' => 'more' ], $ov['assign'], 'a post moves only by its id, and only to a column or to More support' );
+
+$gr2 = Board::grouped( $pb['items'], $cols, $ov );
+Harness::assert_same( 'Mental health', $gr2[0]['name'], 'a heading changed on this site replaces the board\'s' );
+Harness::assert_same( 'Support for men.', $gr2[1]['intro'], 'and so does an introduction' );
+Harness::assert_true( in_array( 'Calm', array_column( $gr2[1]['items'], 'title' ), true ) && in_array( 'Leeds Mental Wellbeing Service', array_column( $gr2[2]['items'], 'title' ), true ), 'a moved post shows where it was moved to' );
+Harness::assert_same( 'more', end( $gr2 )['id'], 'More support is still last' );
+
+$gone = Board::grouped( $pb['items'], [ $cols[1] ], $ov );
+Harness::assert_true( in_array( 'Sneaky', array_column( end( $gone )['items'], 'title' ), true ), 'a post whose column has gone shows under More support' );
 
 Harness::group( 'Wellbeing board: stale and fresh' );
 
 $now = 1_800_000_000;
 Harness::assert_same( 1, count( Board::fresh( [ 'items' => [ [ 'key' => '1' ] ], 'fetched' => $now - 10 * DAY_IN_SECONDS ], $now ) ), 'a board ten days old is still shown' );
 Harness::assert_same( 0, count( Board::fresh( [ 'items' => [ [ 'key' => '1' ] ], 'fetched' => $now - 31 * DAY_IN_SECONDS ], $now ) ), 'a board over a month old is not' );
-Harness::assert_same( Board::GOOD, Board::verdict( [ 'at' => $now, 'ok' => true, 'count' => 1, 'left_out' => 0, 'error' => '' ], $now - 3600, $now ), 'fetched an hour ago is good' );
+Harness::assert_same( Board::GOOD, Board::verdict( [ 'at' => $now, 'ok' => true, 'count' => 1, 'left_out' => 0, 'error' => '', 'source' => 'board' ], $now - 3600, $now ), 'fetched an hour ago is good' );
+Harness::assert_same( Board::WARN, Board::verdict( [ 'at' => $now, 'ok' => true, 'count' => 1, 'left_out' => 0, 'error' => 'HTTP 500', 'source' => Board::FROM_FEEDS ], $now - 3600, $now ), 'read from the feeds because the board data did not answer is amber' );
 Harness::assert_same( Board::WARN, Board::verdict( [ 'at' => $now, 'ok' => false, 'count' => 0, 'left_out' => 0, 'error' => 'x' ], $now - DAY_IN_SECONDS, $now ), 'a failed night with a current board is amber' );
 Harness::assert_same( Board::BAD, Board::verdict( [ 'at' => $now, 'ok' => false, 'count' => 0, 'left_out' => 0, 'error' => 'x' ], $now - 40 * DAY_IN_SECONDS, $now ), 'a stale board is red' );
 Harness::assert_same( Board::WARN, Board::verdict( null, 0, $now ), 'never fetched yet is amber, not red' );

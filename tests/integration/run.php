@@ -5817,23 +5817,44 @@ $ok( get_post_field( 'post_content', $cr_post, 'raw' ) === $cr_b, 'with --apply 
 $ok( count( wp_get_post_revisions( $cr_post ) ) === $cr_before + 1, 'the restore is saved as a revision of its own' );
 wp_delete_post( $cr_post, true );
 
-$group( 'Wellbeing board: fetched from Padlet, shown as cards' );
+$group( 'Wellbeing board: read from Padlet, shown as cards' );
 
 delete_option( \DGL\Padlet\Board::OPTION );
 delete_option( \DGL\Padlet\Board::OPTION_LAST );
 delete_option( \DGL\Padlet\Board::OPTION_GROUPS );
+foreach ( (array) glob( wp_upload_dir( null, false )['basedir'] . '/dgl-padlet/*' ) as $pd_file ) {
+	wp_delete_file( (string) $pd_file );
+}
 $ok( str_contains( do_shortcode( '[dgl_padlet]' ), 'will appear here after the overnight update' ), 'before the first fetch the block says what is coming' );
 
+$pd_pv    = static fn( string $n ): array => [ 'url' => 'https://padlet-artifacts.storage.googleapis.com/x/' . $n . '.png' ];
+$pd_w     = static fn( array $a ): array => [ 'id' => (string) $a['id'], 'type' => 'wish', 'attributes' => $a + [ 'published' => true, 'visibility' => 'everyone', 'wall_id' => 174909383, 'body' => '', 'permalink' => 'https://padlet.com/lhca1/board/wish/' . $a['id'] ] ];
+$pd_board = (string) wp_json_encode(
+	[
+		'data' => [
+			$pd_w( [ 'id' => 2315442981, 'wall_section_id' => 137217582, 'sort_index' => 99, 'subject' => '', 'body' => '<div>This section includes tailored advice for men.</div>', 'attachment' => 'https://images.unsplash.com/photo-1', 'attachment_link' => [ 'content_category' => 'photo', 'content_type' => 'image/jpeg', 'preview_image' => $pd_pv( 'intro' ) ] ] ),
+			$pd_w( [ 'id' => 2315243333, 'wall_section_id' => 137217244, 'sort_index' => 50, 'subject' => 'Able Futures', 'body' => '<div>Able futures provides support.</div>', 'attachment' => 'https://able-futures.co.uk/', 'attachment_link' => [ 'content_category' => 'page', 'preview_image' => $pd_pv( 'able' ) ] ] ),
+			$pd_w( [ 'id' => 2315420308, 'wall_section_id' => 137217582, 'sort_index' => 40, 'subject' => "Andy's Man Club <script>alert(1)</script>", 'attachment' => 'https://andysmanclub.co.uk/', 'attachment_link' => [ 'content_category' => 'page', 'description' => 'Peer support groups for men.', 'preview_image' => $pd_pv( 'andy' ) ] ] ),
+			$pd_w( [ 'id' => 2703972238, 'wall_section_id' => 137217439, 'sort_index' => 30, 'subject' => 'Rich Dad Poor Dad', 'attachment' => 'https://www.amazon.co.uk/dp/1612680178/', 'attachment_link' => [ 'content_category' => 'page', 'preview_image' => $pd_pv( 'book' ) ] ] ),
+			$pd_w( [ 'id' => 2997525110, 'wall_section_id' => 137217286, 'sort_index' => 20, 'subject' => 'Move your Way', 'body' => '<p>A free <a href="https://www.mindwell-leeds.org.uk/move.pdf">downloadable guide</a>.</p>', 'attachment' => 'https://u1.padletusercontent.com/uploads/1/2/Screenshot.png?expiry_token=AAA', 'attachment_link' => [ 'content_category' => 'photo', 'content_type' => 'image/png', 'preview_image' => [ 'url' => 'https://u1.padletusercontent.com/uploads/1/2/Screenshot.png?expiry_token=AAA' ] ] ] ),
+			$pd_w( [ 'id' => 9999999999, 'wall_section_id' => null, 'sort_index' => 10, 'subject' => 'A brand new post', 'attachment' => 'https://example.org/new', 'attachment_link' => [ 'content_category' => 'page', 'preview_image' => $pd_pv( 'new' ) ] ] ),
+		],
+		'meta' => [ 'next' => null ],
+	]
+);
+$pd_cols  = (string) wp_json_encode(
+	[
+		'data' => [
+			[ 'id' => '137217244', 'attributes' => [ 'id' => 137217244, 'title' => 'Mental Wellbeing', 'sort_index' => 0 ] ],
+			[ 'id' => '137217582', 'attributes' => [ 'id' => 137217582, 'title' => "Men's Wellbeing", 'sort_index' => 4096 ] ],
+			[ 'id' => '137217439', 'attributes' => [ 'id' => 137217439, 'title' => 'Financial Wellbeing', 'sort_index' => 7680 ] ],
+			[ 'id' => '137217286', 'attributes' => [ 'id' => 137217286, 'title' => 'Physical Wellbeing', 'sort_index' => 7936 ] ],
+		],
+	]
+);
 $pd_export = '<?xml version="1.0"?><rss version="2.0"><channel><title>Board</title>'
 	. '<item><title>Able Futures</title><link>https://padlet.com/lhca1/3sjincg4tfx4hxlm/wish/2315243333</link><description><![CDATA[<div>Able futures provides support.</div>]]></description><enclosure url="https://able-futures.co.uk/" /><pubDate>2022-09-27 09:37:10 UTC</pubDate></item>'
-	. '<item><title>Andy&#039;s Man Club &lt;script&gt;alert(1)&lt;/script&gt;</title><link>https://padlet.com/lhca1/3sjincg4tfx4hxlm/wish/2315420308</link><enclosure url="https://andysmanclub.co.uk/" /><pubDate>2022-09-27 10:00:00 UTC</pubDate></item>'
-	. '<item><title>Rich Dad Poor Dad</title><link>https://padlet.com/lhca1/3sjincg4tfx4hxlm/wish/2703972238</link><enclosure url="https://www.amazon.co.uk/dp/1612680178/" /><pubDate>2023-09-14 10:00:00 UTC</pubDate></item>'
-	. '<item><title></title><link>https://padlet.com/lhca1/3sjincg4tfx4hxlm/wish/2315442981</link><description>This section includes advice for men.</description><pubDate>2022-09-27 12:15:39 UTC</pubDate></item>'
-	. '<item><title>Move your Way</title><link>https://padlet.com/lhca1/3sjincg4tfx4hxlm/wish/2997525110</link><enclosure url="https://padlet-uploads.storage.googleapis.com/1/2/Screenshot.png" /><pubDate>2024-05-17 12:18:02 UTC</pubDate></item>'
-	. '<item><title>A brand new post</title><link>https://padlet.com/lhca1/3sjincg4tfx4hxlm/wish/9999999999</link><enclosure url="https://example.org/new" /><pubDate>2026-10-24 10:00:00 UTC</pubDate></item>'
-	. '</channel></rss>';
-$pd_full   = '<?xml version="1.0"?><rss version="2.0"><channel><title>Board</title>'
-	. '<item><title>Move your Way</title><description><![CDATA[<p>A free <a href="https://www.mindwell-leeds.org.uk/move.pdf">downloadable guide</a>.</p>]]></description><enclosure url="https://u1.padletusercontent.com/uploads/1/2/Screenshot.png?expiry_token=AAA" type="image/png"/><pubDate>Fri, 17 May 2024 13:46:16 +0000</pubDate></item>'
+	. '<item><title>A post since the board data went quiet</title><link>https://padlet.com/lhca1/3sjincg4tfx4hxlm/wish/8888888888</link><enclosure url="https://example.org/later" /><pubDate>2026-10-25 10:00:00 UTC</pubDate></item>'
 	. '</channel></rss>';
 $pd_img    = imagecreatetruecolor( 1600, 900 );
 ob_start();
@@ -5841,7 +5862,7 @@ imagepng( $pd_img );
 $pd_png  = (string) ob_get_clean();
 $pd_mode = 'ok';
 $pd_urls = [];
-$pd_stub = static function ( $pre, $args, $url ) use ( &$pd_mode, &$pd_urls, $pd_export, $pd_full, $pd_png ) {
+$pd_stub = static function ( $pre, $args, $url ) use ( &$pd_mode, &$pd_urls, $pd_board, $pd_cols, $pd_export, $pd_png ) {
 	if ( ! str_contains( $url, 'padlet' ) ) {
 		return $pre;
 	}
@@ -5850,9 +5871,11 @@ $pd_stub = static function ( $pre, $args, $url ) use ( &$pd_mode, &$pd_urls, $pd
 		return new WP_Error( 'http_request_failed', 'cURL error 28: timed out' );
 	}
 	$pd_body = match ( true ) {
+		\DGL\Padlet\Board::WISHES_URL === $url => 'board-down' === $pd_mode ? '<html><body>Something went wrong</body></html>' : $pd_board,
+		sprintf( \DGL\Padlet\Board::SECTIONS_URL, 174909383 ) === $url => $pd_cols,
 		\DGL\Padlet\Board::EXPORT_URL === $url => $pd_export,
-		\DGL\Padlet\Board::FEED_URL === $url => $pd_full,
-		str_starts_with( $url, 'https://u1.padletusercontent.com/' ) => $pd_png,
+		\DGL\Padlet\Board::FEED_URL === $url => '<?xml version="1.0"?><rss version="2.0"><channel></channel></rss>',
+		str_starts_with( $url, 'https://u1.padletusercontent.com/' ), str_starts_with( $url, 'https://padlet-artifacts.storage.googleapis.com/' ) => $pd_png,
 		default => '<html>no</html>',
 	};
 	return [ 'headers' => [], 'response' => [ 'code' => 200, 'message' => 'OK' ], 'body' => $pd_body, 'cookies' => [] ];
@@ -5862,10 +5885,11 @@ add_filter( 'pre_http_request', $pd_stub, 10, 3 );
 do_action( \DGL\Padlet\Board::HOOK );
 $pd_items = \DGL\Padlet\Board::items();
 $pd_last  = \DGL\Padlet\Board::last();
-$ok( 4 === count( $pd_items ) && 2 === count( \DGL\Padlet\Board::left_out() ) && true === ( $pd_last['ok'] ?? false ), 'the cron hook reads both feeds: four posts shown, the Amazon one and the untitled one left out' );
+$ok( 4 === count( $pd_items ) && 2 === count( \DGL\Padlet\Board::left_out() ) && true === ( $pd_last['ok'] ?? false ) && \DGL\Padlet\Board::FROM_BOARD === ( $pd_last['source'] ?? '' ), 'the cron hook reads the board\'s own data: four posts shown, the Amazon one and the column header left out' );
+$ok( [ 's137217244', 's137217582', 's137217439', 's137217286' ] === array_column( \DGL\Padlet\Board::sections(), 'id' ), 'the board\'s columns are kept, in its order' );
+$ok( 4 === count( array_filter( $pd_items, static fn( array $i ): bool => '' !== \DGL\Padlet\Board::picture_url( $i ) ) ), 'every post\'s Padlet thumbnail is copied into this site\'s uploads' );
 $pd_move = array_values( array_filter( $pd_items, static fn( array $i ): bool => 'Move your Way' === $i['title'] ) )[0] ?? [];
 $pd_pic  = \DGL\Padlet\Board::picture_url( $pd_move );
-$ok( '' !== $pd_pic && str_starts_with( $pd_pic, wp_upload_dir( null, false )['baseurl'] . '/dgl-padlet/' ), 'a post\'s picture is copied into this site\'s uploads' );
 $pd_size = getimagesize( wp_upload_dir( null, false )['basedir'] . '/dgl-padlet/' . $pd_move['picture_file'] );
 $ok( is_array( $pd_size ) && $pd_size[0] <= \DGL\Padlet\Board::PIC_WIDTH, 'and shrunk to the card\'s width (' . ( is_array( $pd_size ) ? $pd_size[0] . 'x' . $pd_size[1] : 'unreadable' ) . ')' );
 
@@ -5873,27 +5897,45 @@ $pd_html = do_shortcode( '[dgl_padlet]' );
 $ok( str_starts_with( $pd_html, '<div class="dgl-home-block dgl-home-block--padlet">' ) && str_contains( $pd_html, '>Health and wellbeing support</h2>' ), 'the block is wrapped and headed' );
 $ok( ! str_contains( $pd_html, 'amazon' ) && ! str_contains( $pd_html, 'Rich Dad' ), 'nothing from Amazon is shown' );
 $ok( ! str_contains( $pd_html, '<script' ) && str_contains( $pd_html, 'Andy&#039;s Man Club alert(1)' ), 'a title is text, never markup' );
-$ok( str_contains( $pd_html, '>Mental health</h3>' ) && str_contains( $pd_html, '>Men&#039;s health</h3>' ) && str_contains( $pd_html, '>Physical wellbeing</h3>' ), 'the seeded groups head their posts' );
-$ok( str_contains( $pd_html, '>More support</h3>' ) && str_contains( $pd_html, 'A brand new post' ), 'a post nobody has placed shows under More support' );
-$ok( str_contains( $pd_html, 'class="dgl-padlet__jump"' ) && 4 === substr_count( $pd_html, 'class="dgl-padlet__group"' ), 'four groups, with links to jump to each' );
-$ok( str_contains( $pd_html, 'href="https://www.mindwell-leeds.org.uk/move.pdf" target="_blank" rel="noopener"' ) && str_contains( $pd_html, '>PDF</p>' ) && str_contains( $pd_html, 'src="' . $pd_pic . '"' ), 'the uploaded picture is shown from this site and the card leads to the guide' );
+$ok( str_contains( $pd_html, '>Mental Wellbeing</h3>' ) && str_contains( $pd_html, '>Men&#039;s Wellbeing</h3>' ) && str_contains( $pd_html, '>Physical Wellbeing</h3>' ) && ! str_contains( $pd_html, '>Financial Wellbeing</h3>' ), 'the board\'s columns head their posts; a column left with no posts is not shown' );
+$ok( str_contains( $pd_html, 'This section includes tailored advice for men.</p>' ), 'a column\'s header post is the line under its heading' );
+$ok( str_contains( $pd_html, '>More support</h3>' ) && str_contains( $pd_html, 'A brand new post' ), 'a post in no column shows under More support' );
+$ok( str_contains( $pd_html, 'href="https://www.mindwell-leeds.org.uk/move.pdf" target="_blank" rel="noopener"' ) && str_contains( $pd_html, 'src="' . $pd_pic . '"' ), 'the uploaded picture is shown from this site and the card leads to the guide' );
+$ok( str_contains( $pd_html, 'Peer support groups for men.' ), 'a post with no words shows its linked page\'s own summary' );
 $ok( str_contains( $pd_html, 'href="' . \DGL\Padlet\Board::BOARD_URL . '"' ) && str_contains( $pd_html, 'See the full board on Padlet' ), 'the full board is a link away' );
 
-$pd_one = do_shortcode( '[dgl_padlet group="men" heading=""]' );
-$ok( 1 === substr_count( $pd_one, 'class="dgl-padlet__group"' ) && str_contains( $pd_one, '>Men&#039;s health</h2>' ) && ! str_contains( $pd_one, 'dgl-padlet__jump' ), 'group= shows one group; with no heading the group is the h2 and there is nothing to jump to' );
+$pd_one = do_shortcode( '[dgl_padlet group="s137217582" heading=""]' );
+$ok( 1 === substr_count( $pd_one, 'class="dgl-padlet__group"' ) && str_contains( $pd_one, '>Men&#039;s Wellbeing</h2>' ) && ! str_contains( $pd_one, 'dgl-padlet__jump' ), 'group= shows one column; with no heading the column is the h2 and there is nothing to jump to' );
 
-update_option( \DGL\Padlet\Board::OPTION_GROUPS, \DGL\Padlet\Board::clean_grouping( [ 'groups' => [ [ 'id' => 'mental', 'name' => 'Feeling low', 'intro' => '' ] ], 'assign' => [ '2315243333' => 'mental', '9999999999' => 'mental' ] ] ), false );
+update_option( \DGL\Padlet\Board::OPTION_GROUPS, \DGL\Padlet\Board::clean_overrides( [ 'names' => [ 's137217244' => 'Feeling low' ], 'assign' => [ '9999999999' => 's137217244' ] ] ), false );
 $pd_moved = do_shortcode( '[dgl_padlet]' );
-$ok( str_contains( $pd_moved, '>Feeling low</h3>' ) && ! str_contains( $pd_moved, ">Men&#039;s health</h3>" ) && str_contains( $pd_moved, '>More support</h3>' ), 'a saved grouping replaces the seed: renamed group, removed groups\' posts in More support' );
+$ok( str_contains( $pd_moved, '>Feeling low</h3>' ) && ! str_contains( $pd_moved, '>More support</h3>' ), 'a column renamed on this site, and a post moved into it' );
+delete_option( \DGL\Padlet\Board::OPTION_GROUPS );
+
+$pd_urls = [];
+\DGL\Padlet\Board::refresh();
+$ok( [ \DGL\Padlet\Board::WISHES_URL, sprintf( \DGL\Padlet\Board::SECTIONS_URL, 174909383 ) ] === $pd_urls, 'the next night, no picture already copied is fetched again' );
+
+$pd_mode = 'board-down';
+$pd_fb   = \DGL\Padlet\Board::refresh();
+$pd_fbi  = array_column( \DGL\Padlet\Board::items(), null, 'key' );
+$ok( true === $pd_fb['ok'] && \DGL\Padlet\Board::FROM_FEEDS === $pd_fb['source'] && \DGL\Padlet\Board::WARN === \DGL\Padlet\Board::verdict( $pd_fb, \DGL\Padlet\Board::fetched(), time() ), 'when the board data answers with something else, the RSS feeds are read instead, and the Health screen is amber' );
+$ok( 's137217244' === ( $pd_fbi['2315243333']['section'] ?? '' ) && '' !== \DGL\Padlet\Board::picture_url( $pd_fbi['2315243333'] ?? [] ), 'a post keeps the column and the picture it had at the last good read' );
+$ok( '' === ( $pd_fbi['8888888888']['section'] ?? 'x' ) && 4 === count( \DGL\Padlet\Board::sections() ), 'a post new since then has no column, and the columns are the last good ones' );
 
 $pd_mode = 'down';
 $pd_fail = \DGL\Padlet\Board::refresh();
-$ok( false === $pd_fail['ok'] && 4 === count( \DGL\Padlet\Board::items() ), 'a night Padlet is down keeps the last good board' );
+$ok( false === $pd_fail['ok'] && 2 === count( \DGL\Padlet\Board::items() ), 'a night Padlet is down altogether keeps the last good board' );
 
-$pd_urls = [];
 $pd_mode = 'ok';
-\DGL\Padlet\Board::refresh();
-$ok( [ \DGL\Padlet\Board::EXPORT_URL, \DGL\Padlet\Board::FEED_URL ] === $pd_urls, 'the next night, a picture already copied is not fetched again' );
+foreach ( (array) glob( wp_upload_dir( null, false )['basedir'] . '/dgl-padlet/*' ) as $pd_file ) {
+	wp_delete_file( (string) $pd_file );
+}
+$pd_urls = [];
+\DGL\Padlet\Board::refresh( 0 );
+$ok( [ \DGL\Padlet\Board::WISHES_URL, sprintf( \DGL\Padlet\Board::SECTIONS_URL, 174909383 ) ] === $pd_urls && 4 === count( \DGL\Padlet\Board::items() ), 'with no time left for pictures, the board is still saved whole and no picture is fetched' );
+\DGL\Padlet\Board::refresh( 60 );
+$ok( 4 === count( array_filter( \DGL\Padlet\Board::items(), static fn( array $i ): bool => '' !== \DGL\Padlet\Board::picture_url( $i ) ) ), 'and the next run with time to spare catches up' );
 
 \DGL\Padlet\Board::unschedule();
 \DGL\Padlet\Board::schedule();

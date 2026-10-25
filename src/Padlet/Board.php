@@ -18,29 +18,32 @@ defined( 'ABSPATH' ) || exit;
  * Leeds Health and Care Academy keeps a Padlet board of health and
  * wellbeing support for people working in health and care in Leeds. The
  * board's own embed is an iframe that works badly on this site, so the
- * board is read from the two RSS feeds Padlet publishes instead and shown
- * as this site's own cards.
+ * board is read and shown as this site's own cards instead.
  *
- * Two feeds, because neither is whole. The export feed gives each post's
- * outbound link (as its enclosure) and a stable numeric id; the full feed
- * gives the whole description and the attached picture or video. They are
- * joined by title and time posted, which matched every titled post on 25
- * October 2026. Neither feed says which column of the board a post is in,
- * so the grouping is this site's: seeded from the board's columns as they
- * were on 25 October and changed under Settings, Wellbeing board. A post
- * that arrives later lands in "More support" until it is given a group.
+ * Two sources. First the board's own data: the same public answer the
+ * board page loads in a visitor's browser, with every post's column, its
+ * place in the column, its link and Padlet's thumbnail for it. Padlet does
+ * not document it, so if it stops answering, or answers with something
+ * that is not a board, the two RSS feeds Padlet does publish are read
+ * instead. They carry no columns and almost no pictures, so then each post
+ * keeps the column and picture it had at the last good read, a post new
+ * since then shows under "More support", and the Health screen is amber.
+ *
+ * The groups are the board's own columns, in its order, each with the
+ * introduction its header post carries. Under Settings, Wellbeing board the
+ * team can rename a column, change its introduction or move one post to
+ * another column on this site; nothing else needs keeping up.
  *
  * Left out, and listed on the settings screen so nobody wonders where they
- * went:
- * - posts that link to Amazon (book recommendations with shopping tracking
- *   on the link: on this site they read as adverts);
- * - posts with no title (the board's column introductions, and two links
- *   posted without a title).
+ * went: posts that link to Amazon (book recommendations with shopping
+ * tracking on the link, which on this site read as adverts), and posts with
+ * neither a title nor a linked page to take one from (the column header
+ * posts, whose words become the column's introduction).
  *
- * A post's picture is copied to this site's uploads, as the jobs feed does
- * with logos: Padlet signs some upload links with a token that expires, and
- * a visitor's browser should not be calling Padlet to see our page. Most
- * posts have no picture, and the cards are designed for that.
+ * Pictures are copied to this site's uploads, as the jobs feed does with
+ * logos: a visitor's browser should not be calling Padlet to see our page,
+ * and some upload links carry a token that expires. The nightly run spends
+ * at most PICTURE_BUDGET seconds on new pictures and carries the rest over.
  *
  * Once a night, never on a page render, and the last good board is kept if
  * Padlet is down. Everything that comes back is untrusted: text is stripped
@@ -49,10 +52,16 @@ defined( 'ABSPATH' ) || exit;
  */
 final class Board {
 
-	/** The board, and its two feeds. */
-	public const BOARD_URL  = 'https://padlet.com/lhca1/3sjincg4tfx4hxlm';
-	public const EXPORT_URL = 'https://padlet.com/padlets/3sjincg4tfx4hxlm/exports/feed.xml';
-	public const FEED_URL   = 'https://padlet.com/padlets/3sjincg4tfx4hxlm/feed.xml';
+	/** The board, its data, and its two feeds. */
+	public const BOARD_URL    = 'https://padlet.com/lhca1/3sjincg4tfx4hxlm';
+	public const WISHES_URL   = 'https://padlet.com/api/10/wishes?wall_hashid=board_Y0KryDdYbjVlyPBb&page_start=';
+	public const SECTIONS_URL = 'https://padlet.com/api/10/wall_sections?wall_id=%d';
+	public const EXPORT_URL   = 'https://padlet.com/padlets/3sjincg4tfx4hxlm/exports/feed.xml';
+	public const FEED_URL     = 'https://padlet.com/padlets/3sjincg4tfx4hxlm/feed.xml';
+
+	/** Where a board came from. */
+	public const FROM_BOARD = 'board';
+	public const FROM_FEEDS = 'feeds';
 
 	/** The daily run, and the one-off first run on a fresh install. */
 	public const HOOK      = 'dgl_padlet_refresh';
@@ -61,7 +70,7 @@ final class Board {
 	/** The local hour the daily run is due: an hour after the jobs. */
 	public const HOUR = 3;
 
-	/** The last good board, how the last attempt went, and the grouping. */
+	/** The last good board, how the last attempt went, and the team's changes to the columns. */
 	public const OPTION        = 'dgl_padlet';
 	public const OPTION_LAST   = 'dgl_padlet_last';
 	public const OPTION_GROUPS = 'dgl_padlet_groups';
@@ -69,8 +78,9 @@ final class Board {
 	/** Support pages change slowly; a board this old is still shown, older is not. */
 	public const STALE_AFTER = 30 * DAY_IN_SECONDS;
 
-	/** The most posts kept. */
+	/** The most posts kept, and the most pages of the board's data read. */
 	public const MAX_ITEMS = 300;
+	public const MAX_PAGES = 10;
 
 	/** Seconds to wait for Padlet. */
 	public const TIMEOUT = 20;
@@ -79,7 +89,13 @@ final class Board {
 	public const PIC_DIR   = 'dgl-padlet';
 	public const PIC_WIDTH = 720;
 
-	/** The group a post is in until someone gives it one. */
+	/** Seconds the nightly run may spend on new pictures; what is left carries over to the next night. */
+	public const PICTURE_BUDGET = 15;
+
+	/** Seconds to wait for one picture. */
+	public const PAGE_TIMEOUT = 8;
+
+	/** The group for a post with no column. */
 	public const DEFAULT_GROUP = 'more';
 
 	/** Why a post is left out. */
@@ -96,47 +112,6 @@ final class Board {
 		'gif'  => 'image/gif',
 		'webp' => 'image/webp',
 	];
-
-	/**
-	 * The board's columns on 25 October 2026, in its order, with each
-	 * column's own introduction. Post id => group, below.
-	 *
-	 * @return array<int, array{id:string, name:string, intro:string}>
-	 */
-	public static function seed_groups(): array {
-		return [
-			[ 'id' => 'mental', 'name' => __( 'Mental health', 'dgl-platform' ), 'intro' => __( 'Mental health covers emotional, psychological and social wellbeing. These services and resources support and improve it.', 'dgl-platform' ) ],
-			[ 'id' => 'physical', 'name' => __( 'Physical wellbeing', 'dgl-platform' ), 'intro' => __( 'Staying well day to day, from sleep to exercise and nutrition.', 'dgl-platform' ) ],
-			[ 'id' => 'money', 'name' => __( 'Money and cost of living', 'dgl-platform' ), 'intro' => __( 'Help to feel more secure and in control of your finances, now and in the future.', 'dgl-platform' ) ],
-			[ 'id' => 'men', 'name' => __( "Men's health", 'dgl-platform' ), 'intro' => __( 'Advice for men, including support groups and podcasts.', 'dgl-platform' ) ],
-			[ 'id' => 'women', 'name' => __( "Women's health", 'dgl-platform' ), 'intro' => __( "Support for women's health and mental wellbeing, including support groups, podcasts and other resources.", 'dgl-platform' ) ],
-			[ 'id' => 'wider', 'name' => __( 'Wider support', 'dgl-platform' ), 'intro' => __( 'From food banks to vaccinations and volunteering.', 'dgl-platform' ) ],
-			[ 'id' => 'training', 'name' => __( 'Training and workshops', 'dgl-platform' ), 'intro' => __( 'Training and workshops from Leeds Health and Care Academy.', 'dgl-platform' ) ],
-		];
-	}
-
-	/** @return array<string, string> Post id => group id. */
-	public static function seed_assign(): array {
-		$groups = [
-			'mental'   => [ '2315237830', '2315243333', '2315245738', '2315247261', '2315254023', '2315261397', '2703908140', '2703912438', '2703939791' ],
-			'physical' => [ '2315262800', '2315412118', '2315417361', '2315479140', '2327359200', '2412102377', '2997525110' ],
-			'money'    => [ '2315258802', '2323919514', '2327355107', '2335604203', '2335636192', '2344834392', '2781466180', '2783139351', '2783140942', '2783142290', '2879019585', '2879020325' ],
-			'men'      => [ '2315418564', '2315420308', '2315422415', '2703953918' ],
-			'women'    => [ '2315255421', '2315424987', '2349032442', '2703921356', '2703925101', '2703942623', '2703945212', '2703948966', '2703950531', '2703951983' ],
-			'wider'    => [ '2315264150', '2315414269', '2315428518', '2374963534' ],
-			'training' => [ '2315265591', '2315271153', '2327422084', '2464651332', '3355800008', '3355802355', '3355804068' ],
-		];
-
-		$assign = [];
-
-		foreach ( $groups as $group => $keys ) {
-			foreach ( $keys as $key ) {
-				$assign[ $key ] = $group;
-			}
-		}
-
-		return $assign;
-	}
 
 	public static function init(): void {
 		add_action( self::HOOK, [ self::class, 'refresh' ], 10, 0 );
@@ -163,32 +138,37 @@ final class Board {
 	}
 
 	/**
-	 * Fetch both feeds and keep the board if it is good. Returns how it
-	 * went, which is also what the Health screen and `wp dgl padlet status`
-	 * read.
+	 * Read the board and keep it if it is good. Returns how it went, which
+	 * is also what the Health screen and `wp dgl padlet status` read.
 	 *
-	 * @return array{at:int, ok:bool, count:int, left_out:int, error:string}
+	 * @return array{at:int, ok:bool, count:int, left_out:int, error:string, source:string}
 	 */
-	public static function refresh(): array {
-		$export = self::get( self::EXPORT_URL );
-		$full   = self::get( self::FEED_URL );
-		$error  = '';
-		$board  = null;
+	public static function refresh( int $budget = self::PICTURE_BUDGET ): array {
+		$previous = get_option( self::OPTION, [] );
+		$previous = is_array( $previous ) ? $previous : [];
+		$board    = self::from_board( $previous );
+		$source   = self::FROM_BOARD;
+		$error    = '';
 
-		if ( ! is_string( $export ) ) {
-			$error = $export->get_error_message();
+		if ( is_wp_error( $board ) ) {
+			$error  = $board->get_error_message();
+			$board  = self::from_feeds( $previous );
+			$source = self::FROM_FEEDS;
+		}
+
+		if ( is_wp_error( $board ) ) {
+			$error = $board->get_error_message();
+			$board = null;
 		} else {
-			$posts = self::parse_export( $export );
-			$extra = is_string( $full ) ? self::parse_full( $full ) : [];
+			$items    = $board['items'];
+			$deadline = time() + max( 0, $budget );
+			$store    = static fn( array $with ): array => [ 'items' => $with ] + $board + [ 'source' => $source, 'fetched' => time() ];
 
-			if ( null === $posts ) {
-				$error = __( 'Padlet answered, but not with the board\'s feed.', 'dgl-platform' );
-			} else {
-				$board          = self::merge( $posts, $extra ?? [] );
-				$board['items'] = self::keep_pictures( $board['items'] );
-
-				update_option( self::OPTION, $board + [ 'fetched' => time() ], false );
-			}
+			// The board first, with the pictures already on this site, so a
+			// run cut short still leaves a whole board; then the new pictures,
+			// as many as the time allows.
+			update_option( self::OPTION, $store( self::keep_pictures( $items, 0, false ) ), false );
+			update_option( self::OPTION, $store( self::keep_pictures( $items, $deadline, true ) ), false );
 		}
 
 		$last = [
@@ -197,6 +177,7 @@ final class Board {
 			'count'    => null === $board ? 0 : count( $board['items'] ),
 			'left_out' => null === $board ? 0 : count( $board['left_out'] ),
 			'error'    => $error,
+			'source'   => null === $board ? '' : $source,
 		];
 
 		update_option( self::OPTION_LAST, $last, false );
@@ -205,17 +186,115 @@ final class Board {
 	}
 
 	/**
-	 * One GET, as a body or an error. Both addresses are constants here.
+	 * The board from its own data, or why not.
+	 *
+	 * @param array<string, mixed> $previous The last good board.
+	 * @return array{items: array<int, array<string, mixed>>, left_out: array<int, array<string, string>>, sections: array<int, array{id:string, name:string, intro:string}>}|\WP_Error
 	 */
-	private static function get( string $url ): string|\WP_Error {
-		$response = wp_remote_get(
-			$url,
-			[
-				'timeout'             => self::TIMEOUT,
-				'redirection'         => 3,
-				'limit_response_size' => 4 * MB_IN_BYTES,
-			]
-		);
+	private static function from_board( array $previous ): array|\WP_Error {
+		$rows = [];
+		$next = '';
+
+		for ( $page = 0; $page < self::MAX_PAGES; $page++ ) {
+			$body = self::get( self::WISHES_URL . rawurlencode( $next ) );
+
+			if ( ! is_string( $body ) ) {
+				return $body;
+			}
+
+			$data = self::json_rows( $body );
+
+			if ( null === $data ) {
+				return new \WP_Error( 'dgl_padlet_board', __( 'Padlet answered, but not with the board\'s posts.', 'dgl-platform' ) );
+			}
+
+			$rows = array_merge( $rows, $data );
+			$meta = json_decode( $body, true )['meta'] ?? [];
+			$next = is_array( $meta ) && is_scalar( $meta['next'] ?? null ) ? (string) $meta['next'] : '';
+
+			if ( '' === $next ) {
+				break;
+			}
+		}
+
+		if ( [] === $rows ) {
+			return new \WP_Error( 'dgl_padlet_board', __( 'Padlet answered with no posts at all.', 'dgl-platform' ) );
+		}
+
+		$wall    = (int) ( $rows[0]['attributes']['wall_id'] ?? 0 );
+		$answer  = $wall > 0 ? self::get( sprintf( self::SECTIONS_URL, $wall ) ) : '';
+		$columns = is_string( $answer ) ? self::json_rows( $answer ) : null;
+		$board   = self::parse_board( $rows, $columns ?? [] );
+
+		// Columns that did not come back tonight: the ones from the last good read.
+		if ( null === $columns && is_array( $previous['sections'] ?? null ) ) {
+			$board['sections'] = $previous['sections'];
+		}
+
+		return $board;
+	}
+
+	/**
+	 * The board from the two RSS feeds, each post keeping the column and
+	 * picture it had at the last good read, or why not.
+	 *
+	 * @param array<string, mixed> $previous The last good board.
+	 * @return array{items: array<int, array<string, mixed>>, left_out: array<int, array<string, string>>, sections: array<int, array{id:string, name:string, intro:string}>}|\WP_Error
+	 */
+	private static function from_feeds( array $previous ): array|\WP_Error {
+		$export = self::get( self::EXPORT_URL );
+
+		if ( ! is_string( $export ) ) {
+			return $export;
+		}
+
+		$posts = self::parse_export( $export );
+
+		if ( null === $posts ) {
+			return new \WP_Error( 'dgl_padlet_feed', __( 'Padlet answered, but not with the board\'s feed.', 'dgl-platform' ) );
+		}
+
+		$full  = self::get( self::FEED_URL );
+		$board = self::merge( $posts, is_string( $full ) ? ( self::parse_full( $full ) ?? [] ) : [] );
+		$known = [];
+
+		foreach ( is_array( $previous['items'] ?? null ) ? $previous['items'] : [] as $item ) {
+			if ( is_array( $item ) && isset( $item['key'] ) ) {
+				$known[ (string) $item['key'] ] = $item;
+			}
+		}
+
+		foreach ( $board['items'] as $i => $item ) {
+			$was = $known[ $item['key'] ] ?? [];
+
+			$board['items'][ $i ]['section'] = (string) ( $was['section'] ?? '' );
+			$board['items'][ $i ]['order']   = (int) ( $was['order'] ?? $item['at'] );
+
+			if ( '' !== (string) ( $was['picture'] ?? '' ) ) {
+				$board['items'][ $i ]['picture'] = (string) $was['picture'];
+			}
+		}
+
+		$board['sections'] = is_array( $previous['sections'] ?? null ) ? $previous['sections'] : [];
+
+		return $board;
+	}
+
+	/**
+	 * One GET, as a body or an error. Padlet's own addresses are constants
+	 * here and are fetched plainly; a picture a post points at is untrusted,
+	 * so it goes through WordPress's safe fetch, which refuses addresses on
+	 * a private network.
+	 */
+	private static function get( string $url, bool $untrusted = false ): string|\WP_Error {
+		$args = [
+			'timeout'             => $untrusted ? self::PAGE_TIMEOUT : self::TIMEOUT,
+			'redirection'         => $untrusted ? 4 : 3,
+			'limit_response_size' => 4 * MB_IN_BYTES,
+			'headers'             => [ 'Accept' => 'application/json, application/rss+xml, application/xml;q=0.9, image/*;q=0.8, */*;q=0.5' ],
+		];
+
+		$response = $untrusted ? wp_safe_remote_get( $url, $args ) : wp_remote_get( $url, $args );
 
 		if ( is_wp_error( $response ) ) {
 			return $response;
@@ -229,6 +308,135 @@ final class Board {
 		}
 
 		return (string) wp_remote_retrieve_body( $response );
+	}
+
+	/* ---- Reading the board's own data (pure) -------------------------------- */
+
+	/**
+	 * The rows of a JSON:API answer (`{"data": [...]}`), or null when it is
+	 * not one. Pure.
+	 *
+	 * @return array<int, array<string, mixed>>|null
+	 */
+	public static function json_rows( string $json ): ?array {
+		$data = json_decode( $json, true );
+
+		if ( ! is_array( $data ) || ! is_array( $data['data'] ?? null ) ) {
+			return null;
+		}
+
+		return array_values( array_filter( $data['data'], static fn( $row ): bool => is_array( $row ) && is_array( $row['attributes'] ?? null ) ) );
+	}
+
+	/**
+	 * The board from its own data: the posts worth showing, in their
+	 * columns; the posts left out, with why; and the columns, in the
+	 * board's order, each with the introduction its header post carries.
+	 * Pure.
+	 *
+	 * A post with no title takes its linked page's title. One with neither
+	 * is a column header: its words become the column's introduction, and
+	 * the post itself is left out. A post whose attachment is a picture is
+	 * shown with it and leads where its words point.
+	 *
+	 * @param array<int, array<string, mixed>> $wishes   The posts' rows.
+	 * @param array<int, array<string, mixed>> $sections The columns' rows.
+	 * @return array{items: array<int, array<string, mixed>>, left_out: array<int, array<string, string>>, sections: array<int, array{id:string, name:string, intro:string}>}
+	 */
+	public static function parse_board( array $wishes, array $sections ): array {
+		$columns = [];
+
+		foreach ( $sections as $row ) {
+			$a  = (array) ( $row['attributes'] ?? [] );
+			$id = (string) ( $a['id'] ?? $row['id'] ?? '' );
+
+			if ( ctype_digit( $id ) ) {
+				$columns[] = [ 'id' => 's' . $id, 'name' => self::text( (string) ( $a['title'] ?? '' ), 80 ), 'order' => (int) ( $a['sort_index'] ?? 0 ) ];
+			}
+		}
+
+		usort( $columns, static fn( array $x, array $y ): int => $x['order'] <=> $y['order'] );
+
+		$items    = [];
+		$left_out = [];
+		$intros   = [];
+		$seen     = [];
+
+		foreach ( array_slice( $wishes, 0, self::MAX_ITEMS ) as $row ) {
+			$a   = (array) ( $row['attributes'] ?? [] );
+			$key = (string) ( $a['id'] ?? $row['id'] ?? '' );
+
+			if ( ! ctype_digit( $key ) || false === ( $a['published'] ?? true ) || 'everyone' !== ( $a['visibility'] ?? 'everyone' ) || ! empty( $a['is_content_hidden'] ) ) {
+				continue;
+			}
+
+			$link_data  = is_array( $a['attachment_link'] ?? null ) ? $a['attachment_link'] : [];
+			$attachment = self::safe_url( (string) ( $a['attachment'] ?? '' ) );
+			$type       = strtolower( (string) ( $link_data['content_type'] ?? '' ) );
+			$category   = strtolower( (string) ( $link_data['content_category'] ?? '' ) );
+			$is_picture = 'photo' === $category || str_starts_with( $type, 'image/' ) || self::is_picture_url( $attachment );
+			$body       = (string) ( $a['body'] ?? '' );
+			$section    = ctype_digit( (string) ( $a['wall_section_id'] ?? '' ) ) ? 's' . $a['wall_section_id'] : '';
+			$post       = self::safe_url( (string) ( $a['permalink'] ?? '' ) );
+			$preview    = is_array( $link_data['preview_image'] ?? null ) ? self::safe_url( (string) ( $link_data['preview_image']['url'] ?? '' ) ) : '';
+			$link       = $is_picture ? self::first_link( $body ) : $attachment;
+			$link       = '' === $link ? $post : $link;
+			$title      = self::text( (string) ( $a['subject'] ?? '' ), 160 );
+			$text       = self::description( $body );
+
+			if ( '' === $title && ! $is_picture && '' !== $attachment ) {
+				$title = self::text( (string) ( $link_data['title'] ?? '' ), 160 );
+			}
+
+			if ( '' === $title ) {
+				if ( '' !== $section && '' !== $text && ! isset( $intros[ $section ] ) ) {
+					$intros[ $section ] = self::text( $text, 300 );
+				}
+
+				$left_out[] = [ 'key' => $key, 'title' => '', 'link' => $link, 'why' => self::LEFT_UNTITLED ];
+				continue;
+			}
+
+			if ( self::is_shop( $link ) || self::is_shop( $attachment ) || self::is_shop( self::first_link( $body ) ) ) {
+				$left_out[] = [ 'key' => $key, 'title' => $title, 'link' => $link, 'why' => self::LEFT_SHOP ];
+				continue;
+			}
+
+			// No words of its own: the linked page's own summary of itself.
+			if ( '' === $text && ! $is_picture ) {
+				$text = self::text( (string) ( $link_data['description'] ?? '' ), 220 );
+			}
+
+			$same = strtolower( $title ) . '|' . $link;
+
+			if ( isset( $seen[ $same ] ) ) {
+				continue;
+			}
+
+			$seen[ $same ] = true;
+			$created       = strtotime( (string) ( $a['created_at'] ?? '' ) );
+			$items[]       = [
+				'key'     => $key,
+				'title'   => $title,
+				'text'    => $text,
+				'link'    => $link,
+				'host'    => self::host_label( $link ),
+				'kind'    => 'video' === $category ? __( 'Video', 'dgl-platform' ) : self::kind( $link, $type ),
+				'picture' => '' !== $preview ? $preview : ( $is_picture ? $attachment : '' ),
+				'section' => $section,
+				'order'   => (int) ( $a['sort_index'] ?? 0 ),
+				'at'      => false === $created ? 0 : $created,
+			];
+		}
+
+		return [
+			'items'    => $items,
+			'left_out' => $left_out,
+			'sections' => array_map(
+				static fn( array $c ): array => [ 'id' => $c['id'], 'name' => $c['name'], 'intro' => $intros[ $c['id'] ] ?? '' ],
+				$columns
+			),
+		];
 	}
 
 	/* ---- Reading the feeds (pure) ----------------------------------------- */
@@ -385,7 +593,7 @@ final class Board {
 				'link'    => $link,
 				'host'    => self::host_label( $link ),
 				'kind'    => self::kind( $link, null === $full ? '' : $full['type'] ),
-				'picture' => self::safe_https( $picture ),
+				'picture' => self::safe_url( $picture ),
 				'at'      => $post['at'],
 			];
 		}
@@ -505,13 +713,6 @@ final class Board {
 		return preg_match( '/[\s"\'<>`]/', $url ) ? '' : $url;
 	}
 
-	/** A safe address that is also https, or ''. Pictures are fetched only over https. Pure. */
-	public static function safe_https( string $url ): string {
-		$url = self::safe_url( $url );
-
-		return str_starts_with( strtolower( $url ), 'https://' ) ? $url : '';
-	}
-
 	/**
 	 * Plain text, on one line, no longer than $max characters. Pure.
 	 */
@@ -586,34 +787,42 @@ final class Board {
 
 	/**
 	 * Copy each post's picture into uploads, unless it is there already, and
-	 * delete the copies no post uses any more.
+	 * (with $prune) delete the copies no post uses any more. A picture is
+	 * only fetched while there is time left before $deadline.
 	 *
 	 * @param array<int, array<string, mixed>> $items
 	 * @return array<int, array<string, mixed>>
 	 */
-	private static function keep_pictures( array $items ): array {
+	private static function keep_pictures( array $items, int $deadline, bool $prune ): array {
 		$dir  = self::pic_dir();
 		$kept = [];
 
-		foreach ( $items as $i => $item ) {
-			$src  = (string) ( $item['picture'] ?? '' );
-			$name = self::pic_name( $src );
-			$ok   = false;
-
-			if ( '' !== $name && '' !== $dir && wp_mkdir_p( $dir ) ) {
-				$ok = $kept[ $name ] ?? ( file_exists( $dir . '/' . $name ) || self::copy_picture( $src, $dir . '/' . $name ) );
-
-				$kept[ $name ] = $ok;
-			}
-
-			$items[ $i ]['picture_file'] = $ok ? $name : '';
+		if ( '' === $dir || ! wp_mkdir_p( $dir ) ) {
+			return array_map( static fn( array $item ): array => [ 'picture_file' => '' ] + $item, $items );
 		}
 
-		if ( '' !== $dir ) {
+		foreach ( $items as $i => $item ) {
+			$base = self::pic_base( (string) ( $item['picture'] ?? '' ) );
+			$name = '';
+
+			if ( '' !== $base ) {
+				$name = $kept[ $base ] ?? self::find_picture( $dir, $base );
+
+				if ( '' === $name && ! isset( $kept[ $base ] ) && time() < $deadline ) {
+					$name = self::copy_picture( (string) $item['picture'], $dir, $base );
+				}
+
+				$kept[ $base ] = $name;
+			}
+
+			$items[ $i ]['picture_file'] = $name;
+		}
+
+		if ( $prune ) {
 			foreach ( (array) glob( $dir . '/*' ) as $path ) {
 				$file = basename( (string) $path );
 
-				if ( preg_match( self::PIC_NAME, $file ) && empty( $kept[ $file ] ) ) {
+				if ( preg_match( self::PIC_NAME, $file ) && ! in_array( $file, $kept, true ) ) {
 					wp_delete_file( (string) $path );
 				}
 			}
@@ -622,23 +831,41 @@ final class Board {
 		return $items;
 	}
 
-	/** Fetch one picture, check it is the image its name says, and keep it no wider than PIC_WIDTH. */
-	private static function copy_picture( string $url, string $path ): bool {
-		$body = self::get( $url );
+	/** The copy of a picture already in the folder, or ''. */
+	private static function find_picture( string $dir, string $base ): string {
+		foreach ( array_keys( self::PIC_TYPES ) as $ext ) {
+			if ( file_exists( $dir . '/' . $base . '.' . $ext ) ) {
+				return $base . '.' . $ext;
+			}
+		}
+
+		return '';
+	}
+
+	/**
+	 * Fetch one picture, check it really is one of the image types we keep
+	 * (by its content, not its name: a preview picture's address often has
+	 * no extension), and keep it no wider than PIC_WIDTH. Returns the file's
+	 * name, or '' when it is not kept.
+	 */
+	private static function copy_picture( string $url, string $dir, string $base ): string {
+		$body = self::get( $url, true );
 
 		if ( ! is_string( $body ) || '' === $body ) {
-			return false;
+			return '';
 		}
 
 		$info = @getimagesizefromstring( $body ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- a non-image is an expected answer, not a warning.
-		$ext  = pathinfo( $path, PATHINFO_EXTENSION );
+		$ext  = is_array( $info ) ? array_search( (string) ( $info['mime'] ?? '' ), self::PIC_TYPES, true ) : false;
 
-		if ( ! is_array( $info ) || ( self::PIC_TYPES[ $ext ] ?? '' ) !== ( $info['mime'] ?? '' ) ) {
-			return false;
+		if ( false === $ext ) {
+			return '';
 		}
 
+		$path = $dir . '/' . $base . '.' . $ext;
+
 		if ( false === file_put_contents( $path, $body ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- our own uploads folder, written by cron.
-			return false;
+			return '';
 		}
 
 		$editor = wp_get_image_editor( $path );
@@ -647,24 +874,23 @@ final class Board {
 			$editor->save( $path );
 		}
 
-		return true;
+		return $base . '.' . $ext;
 	}
 
 	/**
-	 * The file a picture is kept as: a hash of its address without the
-	 * signature (a new token tomorrow is the same picture) and its type, or
-	 * '' for anything that is not an image address we keep. Pure.
+	 * What a picture is kept under: a hash of its address, or '' when it is
+	 * not one we fetch. Padlet signs its uploads with a token that changes,
+	 * so for Padlet the token is left out: a new token tomorrow is the same
+	 * picture, not a new copy. Pure.
 	 */
-	public static function pic_name( string $url ): string {
-		if ( '' === self::safe_https( $url ) ) {
+	public static function pic_base( string $url ): string {
+		if ( '' === self::safe_url( $url ) ) {
 			return '';
 		}
 
-		$ext = strtolower( pathinfo( (string) parse_url( $url, PHP_URL_PATH ), PATHINFO_EXTENSION ) );
-		$ext = 'jpeg' === $ext ? 'jpg' : $ext;
-		$at  = strtok( $url, '?#' );
+		$host = strtolower( (string) parse_url( $url, PHP_URL_HOST ) );
 
-		return isset( self::PIC_TYPES[ $ext ] ) ? md5( (string) $at ) . '.' . $ext : '';
+		return md5( str_ends_with( $host, 'padletusercontent.com' ) ? (string) strtok( $url, '?#' ) : $url );
 	}
 
 	private static function pic_dir(): string {
@@ -739,7 +965,7 @@ final class Board {
 	/**
 	 * How the last attempt went, or null before the first.
 	 *
-	 * @return array{at:int, ok:bool, count:int, left_out:int, error:string}|null
+	 * @return array{at:int, ok:bool, count:int, left_out:int, error:string, source:string}|null
 	 */
 	public static function last(): ?array {
 		$last = get_option( self::OPTION_LAST, false );
@@ -754,82 +980,106 @@ final class Board {
 			'count'    => (int) ( $last['count'] ?? 0 ),
 			'left_out' => (int) ( $last['left_out'] ?? 0 ),
 			'error'    => (string) ( $last['error'] ?? '' ),
+			'source'   => (string) ( $last['source'] ?? '' ),
 		];
 	}
 
-	/* ---- Groups ------------------------------------------------------------- */
+	/**
+	 * The board's columns as last read, in its order.
+	 *
+	 * @return array<int, array{id:string, name:string, intro:string}>
+	 */
+	public static function sections(): array {
+		$store = get_option( self::OPTION, [] );
+		$list  = is_array( $store ) && is_array( $store['sections'] ?? null ) ? $store['sections'] : [];
+
+		return array_values(
+			array_filter(
+				array_map(
+					static fn( $s ): ?array => is_array( $s ) && is_string( $s['id'] ?? null ) ? [ 'id' => $s['id'], 'name' => (string) ( $s['name'] ?? '' ), 'intro' => (string) ( $s['intro'] ?? '' ) ] : null,
+					$list
+				)
+			)
+		);
+	}
+
+	/** Where the stored board came from: the board's own data or the feeds. */
+	public static function source(): string {
+		$store = get_option( self::OPTION, [] );
+
+		return is_array( $store ) ? (string) ( $store['source'] ?? '' ) : '';
+	}
+
+	/* ---- The team's changes to the columns ---------------------------------- */
 
 	/**
-	 * The groups and which post is in which: what was saved, or the seed.
+	 * What the team changed under Settings, Wellbeing board: a column's
+	 * heading, a column's introduction, a post moved to another column.
 	 *
-	 * @return array{groups: array<int, array{id:string, name:string, intro:string}>, assign: array<string, string>}
+	 * @return array{names: array<string, string>, intros: array<string, string>, assign: array<string, string>}
 	 */
-	public static function grouping(): array {
-		$saved = get_option( self::OPTION_GROUPS, null );
+	public static function overrides(): array {
+		$saved = get_option( self::OPTION_GROUPS, [] );
 
-		if ( ! is_array( $saved ) || ! is_array( $saved['groups'] ?? null ) ) {
-			return [ 'groups' => self::seed_groups(), 'assign' => self::seed_assign() ];
-		}
-
-		return self::clean_grouping( $saved );
+		return self::clean_overrides( is_array( $saved ) ? $saved : [] );
 	}
 
 	/**
-	 * A grouping made safe to store and to draw: each group has an id made
-	 * of letters, numbers and dashes, a plain name and a plain introduction;
-	 * no two share an id, a group with no name is dropped, and a post is
-	 * only ever assigned to a group that exists. Pure.
+	 * Changes made safe to store and to draw: a heading or introduction is
+	 * plain text for a column id; a post is moved only by its numeric id,
+	 * and only to a column id or to More support. Whether the column still
+	 * exists is decided when the board is drawn, so a change is not lost
+	 * because a night's read was short. Pure.
 	 *
 	 * @param array<string, mixed> $raw
-	 * @return array{groups: array<int, array{id:string, name:string, intro:string}>, assign: array<string, string>}
+	 * @return array{names: array<string, string>, intros: array<string, string>, assign: array<string, string>}
 	 */
-	public static function clean_grouping( array $raw ): array {
-		$groups = [];
-		$ids    = [];
+	public static function clean_overrides( array $raw ): array {
+		$column = static fn( $id ): bool => is_string( $id ) && 1 === preg_match( '/^s\d{1,20}$/', $id );
+		$out    = [ 'names' => [], 'intros' => [], 'assign' => [] ];
 
-		foreach ( (array) ( $raw['groups'] ?? [] ) as $group ) {
-			if ( ! is_array( $group ) ) {
-				continue;
+		foreach ( [ 'names' => 80, 'intros' => 300 ] as $field => $max ) {
+			foreach ( (array) ( $raw[ $field ] ?? [] ) as $id => $value ) {
+				$value = self::text( (string) $value, $max );
+
+				if ( $column( (string) $id ) && '' !== $value ) {
+					$out[ $field ][ (string) $id ] = $value;
+				}
 			}
-
-			$name = self::text( (string) ( $group['name'] ?? '' ), 80 );
-			$id   = strtolower( (string) preg_replace( '/[^a-z0-9-]+/i', '-', (string) ( $group['id'] ?? '' ) ) );
-			$id   = trim( '' === trim( $id, '-' ) ? strtolower( (string) preg_replace( '/[^a-z0-9]+/i', '-', $name ) ) : $id, '-' );
-
-			if ( '' === $name || '' === $id || self::DEFAULT_GROUP === $id || isset( $ids[ $id ] ) ) {
-				continue;
-			}
-
-			$ids[ $id ] = true;
-			$groups[]   = [ 'id' => $id, 'name' => $name, 'intro' => self::text( (string) ( $group['intro'] ?? '' ), 300 ) ];
 		}
-
-		$assign = [];
 
 		foreach ( (array) ( $raw['assign'] ?? [] ) as $key => $group ) {
-			// "More support" by choice is kept, so the post is not shown as new.
-			if ( preg_match( '/^\d{1,20}$/', (string) $key ) && ( isset( $ids[ (string) $group ] ) || self::DEFAULT_GROUP === $group ) ) {
-				$assign[ (string) $key ] = (string) $group;
+			if ( preg_match( '/^\d{1,20}$/', (string) $key ) && ( $column( $group ) || self::DEFAULT_GROUP === $group ) ) {
+				$out['assign'][ (string) $key ] = (string) $group;
 			}
 		}
 
-		return [ 'groups' => $groups, 'assign' => $assign ];
+		return $out;
 	}
 
 	/**
-	 * The posts sorted into their groups, in the groups' order, each group's
-	 * posts by title, and the posts nobody has placed in "More support" at
-	 * the end. A group with no posts is left out. Pure.
+	 * The posts in their columns, in the board's order of columns and, in
+	 * each, the board's own order (newest at the top, as on Padlet), with
+	 * the team's changes applied and the posts with no column in More
+	 * support at the end. A column with no posts is left out. Pure.
 	 *
-	 * @param array<int, array<string, mixed>>                                                                   $items
-	 * @param array{groups: array<int, array{id:string, name:string, intro:string}>, assign: array<string, string>} $grouping
+	 * @param array<int, array<string, mixed>>                                                                         $items
+	 * @param array<int, array{id:string, name:string, intro:string}>                                                   $sections
+	 * @param array{names: array<string, string>, intros: array<string, string>, assign: array<string, string>} $overrides
 	 * @return array<int, array{id:string, name:string, intro:string, items: array<int, array<string, mixed>>}>
 	 */
-	public static function grouped( array $items, array $grouping ): array {
+	public static function grouped( array $items, array $sections, array $overrides = [ 'names' => [], 'intros' => [], 'assign' => [] ] ): array {
 		$groups = [];
 
-		foreach ( $grouping['groups'] as $group ) {
-			$groups[ $group['id'] ] = $group + [ 'items' => [] ];
+		foreach ( $sections as $section ) {
+			$id = (string) $section['id'];
+
+			$groups[ $id ] = [
+				'id'    => $id,
+				'name'  => $overrides['names'][ $id ] ?? ( '' !== $section['name'] ? $section['name'] : __( 'More support', 'dgl-platform' ) ),
+				'intro' => $overrides['intros'][ $id ] ?? $section['intro'],
+				'items' => [],
+			];
 		}
 
 		$groups[ self::DEFAULT_GROUP ] = [
@@ -840,13 +1090,16 @@ final class Board {
 		];
 
 		foreach ( $items as $item ) {
-			$group = $grouping['assign'][ (string) ( $item['key'] ?? '' ) ] ?? self::DEFAULT_GROUP;
+			$group = $overrides['assign'][ (string) ( $item['key'] ?? '' ) ] ?? (string) ( $item['section'] ?? '' );
 
 			$groups[ isset( $groups[ $group ] ) ? $group : self::DEFAULT_GROUP ]['items'][] = $item;
 		}
 
 		foreach ( $groups as $id => $group ) {
-			usort( $group['items'], static fn( array $a, array $b ): int => strnatcasecmp( (string) ( $a['title'] ?? '' ), (string) ( $b['title'] ?? '' ) ) );
+			usort(
+				$group['items'],
+				static fn( array $a, array $b ): int => [ (int) ( $b['order'] ?? 0 ), (string) ( $a['title'] ?? '' ) ] <=> [ (int) ( $a['order'] ?? 0 ), (string) ( $b['title'] ?? '' ) ]
+			);
 
 			$groups[ $id ] = $group;
 		}
@@ -861,16 +1114,17 @@ final class Board {
 
 	/**
 	 * How worried to be: as for the jobs, but the board is allowed to be a
-	 * few days old before it is amber. Pure.
+	 * few days old before it is amber, and it is amber too while it is read
+	 * from the feeds because the board's own data did not answer. Pure.
 	 *
-	 * @param array{at:int, ok:bool, count:int, left_out:int, error:string}|null $last
+	 * @param array{at:int, ok:bool, count:int, left_out:int, error:string, source:string}|null $last
 	 */
 	public static function verdict( ?array $last, int $fetched, int $now ): string {
 		if ( $fetched <= 0 || $now - $fetched > self::STALE_AFTER ) {
 			return null === $last ? self::WARN : self::BAD;
 		}
 
-		if ( null !== $last && ! $last['ok'] ) {
+		if ( null !== $last && ( ! $last['ok'] || self::FROM_FEEDS === ( $last['source'] ?? '' ) ) ) {
 			return self::WARN;
 		}
 

@@ -34,7 +34,8 @@ final class Command {
 	 * @param array<string, string> $assoc
 	 */
 	public function refresh( array $args, array $assoc ): void {
-		$last = Board::refresh();
+		// From the command line there is time to fetch every new picture.
+		$last = Board::refresh( 600 );
 
 		if ( ! $last['ok'] ) {
 			WP_CLI::error( sprintf( 'Fetch failed: %s The last good board is kept.', $last['error'] ) );
@@ -42,7 +43,7 @@ final class Command {
 
 		$pictures = count( array_filter( Board::items(), static fn( array $item ): bool => '' !== Board::picture_url( $item ) ) );
 
-		WP_CLI::success( sprintf( '%d post(s) shown, %d left out, %d with a picture copied to this site.', $last['count'], $last['left_out'], $pictures ) );
+		WP_CLI::success( sprintf( '%d post(s) shown, %d left out, %d with a picture copied to this site. Read from %s.', $last['count'], $last['left_out'], $pictures, Board::FROM_FEEDS === $last['source'] ? 'the RSS feeds, because the board\'s own data did not answer: ' . $last['error'] : 'the board\'s own data' ) );
 	}
 
 	/**
@@ -56,7 +57,6 @@ final class Command {
 		$fetched  = Board::fetched();
 		$last     = Board::last();
 		$next     = wp_next_scheduled( Board::HOOK );
-		$grouping = Board::grouping();
 
 		WP_CLI::log( sprintf( 'Last good board: %s, %d post(s) shown.', $fetched > 0 ? wp_date( 'j M Y H:i', $fetched ) : 'never', count( Board::items() ) ) );
 		WP_CLI::log(
@@ -65,8 +65,10 @@ final class Command {
 				: sprintf( 'Last attempt: %s, %s.', wp_date( 'j M Y H:i', $last['at'] ), $last['ok'] ? $last['count'] . ' shown, ' . $last['left_out'] . ' left out' : 'failed: ' . $last['error'] )
 		);
 
-		foreach ( Board::grouped( Board::items(), $grouping ) as $group ) {
-			WP_CLI::log( sprintf( '  %s: %d', $group['name'], count( $group['items'] ) ) );
+		WP_CLI::log( sprintf( 'Read from: %s.', Board::FROM_FEEDS === Board::source() ? 'the RSS feeds (the board\'s own data did not answer)' : 'the board\'s own data' ) );
+
+		foreach ( Board::grouped( Board::items(), Board::sections(), Board::overrides() ) as $group ) {
+			WP_CLI::log( sprintf( '  %s (%s): %d', $group['name'], $group['id'], count( $group['items'] ) ) );
 		}
 
 		foreach ( Board::left_out() as $post ) {

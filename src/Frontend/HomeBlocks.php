@@ -185,16 +185,16 @@ final class HomeBlocks {
 	}
 
 	/**
-	 * The health and wellbeing board from Padlet, in its groups. `group`
-	 * names one group by its id (Settings, Wellbeing board) to show only
-	 * that one; `link="no"` drops the link to the board itself.
+	 * The health and wellbeing board from Padlet, in its columns. `group`
+	 * names one column by its id (shown under Settings, Wellbeing board) to
+	 * show only that one; `link="no"` drops the link to the board itself.
 	 *
 	 * @param array<string, mixed> $atts
 	 */
 	private static function padlet( array $atts, string $id ): string {
 		$a      = self::atts( $atts, [ 'heading' => __( 'Health and wellbeing support', 'dgl-platform' ), 'link' => 'yes', 'group' => '' ] );
 		$only   = strtolower( trim( (string) $a['group'] ) );
-		$groups = \DGL\Padlet\Board::grouped( \DGL\Padlet\Board::items(), \DGL\Padlet\Board::grouping() );
+		$groups = \DGL\Padlet\Board::grouped( \DGL\Padlet\Board::items(), \DGL\Padlet\Board::sections(), \DGL\Padlet\Board::overrides() );
 
 		if ( '' !== $only ) {
 			$groups = array_values( array_filter( $groups, static fn( array $group ): bool => $only === $group['id'] ) );
