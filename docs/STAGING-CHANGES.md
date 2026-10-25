@@ -1611,3 +1611,22 @@ clean. They are the only DGLP content on staging.
   own; refuses a revision of another post; checks the stored text matches).
   Needed because the hosting console blocks `wp eval` and has no revision
   restore, and page content is over its 1000-character limit.
+- **0.52.0** (25 October 2026): the wellbeing board. `[dgl_padlet]`
+  shows Leeds Health and Care Academy's Padlet board (Health and
+  Wellbeing Support, padlet.com/lhca1/3sjincg4tfx4hxlm) as this site's own
+  cards, in groups, in place of Padlet's iframe. Read nightly at 03:00
+  from Padlet's two RSS feeds, which are joined by title and time posted
+  (by title alone when an edit changed the time); the last good board is
+  kept if Padlet is down, and one over 30 days old is withdrawn.
+  Left out: posts linking to Amazon (9 book recommendations on 25
+  October) and posts with no title (the board's 7 column introductions,
+  plus a Citizens Advice benefits link and a menopause training event
+  posted without one). A post's picture is copied into uploads
+  (`dgl-padlet/`, 720px wide), because Padlet signs some upload links with
+  an expiring token; on 25 October that was 1 picture of 10. The feeds
+  do not say which column a post is in, so the grouping is seeded from
+  the board's columns and edited under Settings, Wellbeing board, which
+  also lists what is left out and why and has a Fetch now button. New
+  posts show under More support until placed. `group="men"` shows one
+  group; `heading=""` and `link="no"` as for the other blocks.
+  `wp dgl padlet refresh|status`. Health screen row.
