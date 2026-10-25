@@ -1584,3 +1584,17 @@ clean. They are the only DGLP content on staging.
   228 more stories, 25 September 2025 to 9 September 2026, that the
   platform does not have; the same command with `--since=2025-09-25`
   brings them if wanted.
+- **0.51.1** (25 October 2026): from Jenny Bull's list of 25 October
+  ("Re: DGLP website tasks"). The topic feed's link reads "All news
+  relevant to topic: Children and Young People" (and "All events ..." /
+  "All training ..."), was "All news on ...". New
+  `wp dgl content replace <post-id> (--search=<text> | --from=<text>
+  --to=<text>) [--replace=] [--expect=1] [--apply]`: swaps exact text, or
+  a span from one marker to the first closing marker after it, inside one
+  post's content; refuses unless it occurs exactly the expected number of
+  times; dry run unless `--apply`. It exists because the hosting tools
+  cannot edit theme content blocks (the mega menu panels) or the
+  Additional CSS post, cannot match a backslash (block settings are full
+  of `-`), and a command line is capped at 1000 characters. It saves
+  with the content filters off (WP-CLI has no user, so they would strip
+  the blocks' SVG, styles and iframes) and checks the stored text matches.

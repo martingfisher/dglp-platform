@@ -281,7 +281,7 @@ final class Feed {
 			/* translators: %s: "news", "events" or "training". */
 			? sprintf( __( 'All %s', 'dgl-platform' ), $what )
 			/* translators: 1: "news", "events" or "training", 2: a topic name. */
-			: sprintf( __( 'All %1$s on %2$s', 'dgl-platform' ), $what, $topic_name );
+			: sprintf( __( 'All %1$s relevant to topic: %2$s', 'dgl-platform' ), $what, $topic_name );
 	}
 
 	/**

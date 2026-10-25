@@ -43,5 +43,6 @@ require __DIR__ . '/test-jobs.php';
 require __DIR__ . '/test-feed.php';
 require __DIR__ . '/test-datespan.php';
 require __DIR__ . '/test-listing.php';
+require __DIR__ . '/test-content-command.php';
 
 Harness::finish();

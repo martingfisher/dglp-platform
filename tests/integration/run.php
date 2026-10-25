@@ -5556,7 +5556,7 @@ $ok( str_contains( $tf_html, 'Feed story 5' ) && ! str_contains( $tf_html, 'Feed
 $ok( 4 === preg_match_all( '/<article/', explode( 'id="' . $tf_ids[1][1] . '"', $tf_html )[0] ), 'four cards by default' );
 $ok( 2 === preg_match_all( '/<article/', explode( 'dgl-feed--event', explode( 'id="' . $tf_ids[1][1] . '"', $tf_html )[1] )[0] ), 'count="2" shows two' );
 $ok( 1 === preg_match( '#<time datetime="2026-10-05">5 Oct 2026</time>#', $tf_html ), 'a story carries its posted date as a machine-readable time' );
-$ok( 1 === preg_match( '#href="[^"]*topic=children-and-young-people[^"]*">All news on Children and Young People</a>#', $tf_html ), 'the All link goes to that topic\'s list' );
+$ok( 1 === preg_match( '#href="[^"]*topic=children-and-young-people[^"]*">All news relevant to topic: Children and Young People</a>#', $tf_html ), 'the All link goes to that topic\'s list' );
 
 preg_match_all( '#<script type="application/ld\+json">(.*?)</script>#s', $tf_html, $tf_ld );
 $tf_graphs = array_map( static fn( string $j ): array => (array) json_decode( $j, true ), $tf_ld[1] );

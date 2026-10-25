@@ -118,6 +118,7 @@ final class Plugin {
 			ImportCommand::register();
 			\DGL\Topics\Command::register();
 			ProbeCommand::register();
+			\DGL\Tools\ContentCommand::register();
 			\DGL\Reports\Command::register();
 			\DGL\Joining\Command::register();
 			\DGL\Schema\LinksCommand::register();
