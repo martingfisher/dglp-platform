@@ -234,7 +234,7 @@ final class Settings {
 
 			<?php if ( [] !== $left_out ) : ?>
 				<h2><?php esc_html_e( 'Left out', 'dgl-platform' ); ?></h2>
-				<p><?php esc_html_e( 'These posts are on the Padlet board but not shown here. A column\'s header post is not a card: its words are the line under the column\'s heading.', 'dgl-platform' ); ?></p>
+				<p><?php esc_html_e( 'These posts are on the Padlet board but not shown here. A column\'s header post is not a card: its words are the line under the column\'s heading. A broken link can only be fixed on the board itself, by Leeds Health and Care Academy.', 'dgl-platform' ); ?></p>
 				<table class="widefat striped" style="max-width:1000px">
 					<thead><tr>
 						<th scope="col"><?php esc_html_e( 'Post', 'dgl-platform' ); ?></th>
@@ -247,7 +247,17 @@ final class Settings {
 									<?php echo esc_html( '' !== (string) ( $post['title'] ?? '' ) ? (string) $post['title'] : __( '(no title)', 'dgl-platform' ) ); ?>
 									<br><a href="<?php echo esc_url( (string) ( $post['link'] ?? '' ) ); ?>" target="_blank" rel="noopener"><?php echo esc_html( Board::host_label( (string) ( $post['link'] ?? '' ) ) ); ?></a>
 								</td>
-								<td><?php echo esc_html( Board::LEFT_SHOP === ( $post['why'] ?? '' ) ? __( 'Links to Amazon', 'dgl-platform' ) : __( 'A column header, or a post with no title', 'dgl-platform' ) ); ?></td>
+								<td>
+									<?php
+									echo esc_html(
+										match ( (string) ( $post['why'] ?? '' ) ) {
+											Board::LEFT_SHOP   => __( 'Links to Amazon', 'dgl-platform' ),
+											Board::LEFT_BROKEN => __( 'The page it links to has gone (not found twice running). It comes back by itself if the page returns.', 'dgl-platform' ),
+											default            => __( 'A column header, or a post with no title', 'dgl-platform' ),
+										}
+									);
+									?>
+								</td>
 							</tr>
 						<?php endforeach; ?>
 					</tbody>

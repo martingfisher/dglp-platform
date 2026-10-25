@@ -289,6 +289,41 @@ Harness::assert_same( 'more', end( $gr2 )['id'], 'More support is still last' );
 $gone = Board::grouped( $pb['items'], [ $cols[1] ], $ov );
 Harness::assert_true( in_array( 'Sneaky', array_column( end( $gone )['items'], 'title' ), true ), 'a post whose column has gone shows under More support' );
 
+Harness::group( 'Wellbeing board: links that have gone' );
+
+Harness::assert_same( 'unknown', Board::link_verdict( [ 404 ] ), 'one "not found" is not enough to hide a card' );
+Harness::assert_same( 'gone', Board::link_verdict( [ 404, 404 ] ), 'two in a row is' );
+Harness::assert_same( 'gone', Board::link_verdict( [ 200, 410, 404 ] ), '"gone" and "not found" both count, and only the last two answers matter' );
+Harness::assert_same( 'gone', Board::link_verdict( [ Board::NO_HOST, Board::NO_HOST ] ), 'a site whose name no longer resolves is gone' );
+Harness::assert_same( 'ok', Board::link_verdict( [ 404, 404, 200 ] ), 'a page that comes back is shown again' );
+Harness::assert_same( 'unknown', Board::link_verdict( [ 403, 403, 403 ] ), 'a site that refuses servers is never hidden' );
+Harness::assert_same( 'unknown', Board::link_verdict( [ 404, 429 ] ), 'nor one that says "too many requests"' );
+Harness::assert_same( 'unknown', Board::link_verdict( [ 500, 503 ] ), 'nor one with a server error' );
+Harness::assert_same( 'unknown', Board::link_verdict( [ Board::NO_ANSWER, Board::NO_ANSWER ] ), 'nor one that timed out' );
+Harness::assert_same( 'unknown', Board::link_verdict( [] ), 'a link never checked is not gone' );
+
+$lnow = 1_800_000_000;
+Harness::assert_true( Board::link_due( null, $lnow ), 'a link never checked is due' );
+Harness::assert_false( Board::link_due( [ 'answers' => [ 200 ], 'at' => $lnow - DAY_IN_SECONDS ], $lnow ), 'one that answered yesterday is not' );
+Harness::assert_true( Board::link_due( [ 'answers' => [ 200 ], 'at' => $lnow - 8 * DAY_IN_SECONDS ], $lnow ), 'one last checked over a week ago is' );
+Harness::assert_true( Board::link_due( [ 'answers' => [ 200, 404 ], 'at' => $lnow - 60 ], $lnow ), 'one that has just said "not found" once is checked again straight away, to confirm' );
+Harness::assert_false( Board::link_due( [ 'answers' => [ 404, 404 ], 'at' => $lnow - DAY_IN_SECONDS ], $lnow ), 'one already confirmed gone waits a week like the rest' );
+
+$wg_items = [
+	[ 'key' => '1', 'title' => 'Barca Leeds', 'link' => 'https://www.barca-leeds.org/men' ],
+	[ 'key' => '2', 'title' => 'Calm', 'link' => 'https://www.calm.com/' ],
+	[ 'key' => '3', 'title' => 'Bupa', 'link' => 'https://www.bupa.co.uk/hydration' ],
+];
+[ $wg_shown, $wg_gone ] = Board::without_gone(
+	$wg_items,
+	[
+		md5( 'https://www.barca-leeds.org/men' )   => [ 'answers' => [ 404, 404 ] ],
+		md5( 'https://www.bupa.co.uk/hydration' ) => [ 'answers' => [ 403, 403 ] ],
+	]
+);
+Harness::assert_same( [ 'Calm', 'Bupa' ], array_column( $wg_shown, 'title' ), 'only the card whose page has gone is left out' );
+Harness::assert_same( [ [ 'key' => '1', 'title' => 'Barca Leeds', 'link' => 'https://www.barca-leeds.org/men', 'why' => Board::LEFT_BROKEN ] ], $wg_gone, 'and it is listed with why' );
+
 Harness::group( 'Wellbeing board: stale and fresh' );
 
 $now = 1_800_000_000;

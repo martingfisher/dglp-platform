@@ -101,6 +101,21 @@ final class Board {
 	/** Why a post is left out. */
 	public const LEFT_SHOP     = 'shop';
 	public const LEFT_UNTITLED = 'untitled';
+	public const LEFT_BROKEN   = 'broken';
+
+	/**
+	 * What each card's link answered when it was last checked, by link, and
+	 * how often a link that answers is checked again. A link that has just
+	 * answered "gone" once is checked again on the next run, to confirm.
+	 */
+	public const OPTION_LINKS = 'dgl_padlet_links';
+	public const LINK_EVERY   = 7 * DAY_IN_SECONDS;
+
+	/** A link's answer when its site's name no longer resolves (or is not on the open internet). */
+	public const NO_HOST = -1;
+
+	/** A link's answer when there was none at all (a timeout, a dropped connection). */
+	public const NO_ANSWER = 0;
 
 	/** A picture file's name: a hash of where it came from, and its type. */
 	private const PIC_NAME = '/^[a-f0-9]{32}\.(jpg|png|gif|webp)$/';
@@ -162,13 +177,27 @@ final class Board {
 		} else {
 			$items    = $board['items'];
 			$deadline = time() + max( 0, $budget );
-			$store    = static fn( array $with ): array => [ 'items' => $with ] + $board + [ 'source' => $source, 'fetched' => time() ];
+			$links    = get_option( self::OPTION_LINKS, [] );
+			$links    = is_array( $links ) ? $links : [];
+			$store    = static function ( array $with, array $links ) use ( $board, $source ): array {
+				[ $shown, $gone ] = self::without_gone( $with, $links );
 
-			// The board first, with the pictures already on this site, so a
-			// run cut short still leaves a whole board; then the new pictures,
-			// as many as the time allows.
-			update_option( self::OPTION, $store( self::keep_pictures( $items, 0, false ) ), false );
-			update_option( self::OPTION, $store( self::keep_pictures( $items, $deadline, true ) ), false );
+				return [ 'items' => $shown, 'left_out' => array_merge( $board['left_out'], $gone ) ] + $board + [ 'source' => $source, 'fetched' => time() ];
+			};
+
+			// The board first, with the pictures already on this site and the
+			// links already known to be gone left out, so a run cut short
+			// still leaves a whole board; then the new pictures and the links
+			// due a check, as many as the time allows.
+			update_option( self::OPTION, $store( self::keep_pictures( $items, 0, false ), $links ), false );
+
+			$items = self::keep_pictures( $items, $deadline, true );
+			$links = self::check_links( $items, $links, $deadline );
+
+			update_option( self::OPTION_LINKS, $links, false );
+			update_option( self::OPTION, $store( $items, $links ), false );
+
+			$board = get_option( self::OPTION, $board );
 		}
 
 		$last = [
@@ -781,6 +810,140 @@ final class Board {
 
 	private static function child( DOMElement $item, string $name ): string {
 		return (string) self::child_element( $item, $name )?->textContent;
+	}
+
+	/* ---- Links that have gone ----------------------------------------------- */
+
+	/**
+	 * Whether a link is gone, from its last answers, oldest first. Gone is
+	 * only ever a clear answer, twice running: "not found" (404), "gone"
+	 * (410), or a site whose name no longer resolves. Anything else, a
+	 * refusal (401, 403), "too many requests" (429), a server error, a
+	 * timeout, leaves the card showing: many sites refuse a server they
+	 * would serve to a browser, and a bad night is not a dead page. Pure.
+	 *
+	 * @param int[] $answers
+	 */
+	public static function link_verdict( array $answers ): string {
+		$gone = static fn( int $code ): bool => in_array( $code, [ 404, 410, self::NO_HOST ], true );
+		$last = array_slice( array_map( 'intval', array_values( $answers ) ), -2 );
+
+		if ( 2 === count( $last ) && $gone( $last[0] ) && $gone( $last[1] ) ) {
+			return 'gone';
+		}
+
+		$latest = end( $last );
+
+		return false !== $latest && $latest >= 200 && $latest < 400 ? 'ok' : 'unknown';
+	}
+
+	/**
+	 * The cards still worth showing, and the ones whose link is gone, as
+	 * left-out rows. Pure.
+	 *
+	 * @param array<int, array<string, mixed>> $items
+	 * @param array<string, mixed>             $links
+	 * @return array{0: array<int, array<string, mixed>>, 1: array<int, array<string, string>>}
+	 */
+	public static function without_gone( array $items, array $links ): array {
+		$shown = [];
+		$gone  = [];
+
+		foreach ( $items as $item ) {
+			$known = $links[ md5( (string) ( $item['link'] ?? '' ) ) ] ?? null;
+
+			if ( is_array( $known ) && 'gone' === self::link_verdict( (array) ( $known['answers'] ?? [] ) ) ) {
+				$gone[] = [ 'key' => (string) $item['key'], 'title' => (string) $item['title'], 'link' => (string) $item['link'], 'why' => self::LEFT_BROKEN ];
+				continue;
+			}
+
+			$shown[] = $item;
+		}
+
+		return [ $shown, $gone ];
+	}
+
+	/**
+	 * Whether a link is due a check: never checked, last checked a week or
+	 * more ago, or just answered "gone" once and needs confirming. Pure.
+	 *
+	 * @param array<string, mixed>|null $known
+	 */
+	public static function link_due( ?array $known, int $now ): bool {
+		if ( null === $known ) {
+			return true;
+		}
+
+		$answers = array_map( 'intval', (array) ( $known['answers'] ?? [] ) );
+		$latest  = end( $answers );
+		$gone    = false !== $latest && in_array( $latest, [ 404, 410, self::NO_HOST ], true );
+
+		return ( $gone && 'gone' !== self::link_verdict( $answers ) ) || $now - (int) ( $known['at'] ?? 0 ) >= self::LINK_EVERY;
+	}
+
+	/**
+	 * Check the links that are due, oldest check first, while there is time
+	 * before $deadline, and forget the links no card uses any more.
+	 *
+	 * @param array<int, array<string, mixed>> $items
+	 * @param array<string, mixed>             $links
+	 * @return array<string, array{link:string, answers:int[], at:int}>
+	 */
+	private static function check_links( array $items, array $links, int $deadline ): array {
+		$kept = [];
+
+		foreach ( $items as $item ) {
+			$link = (string) ( $item['link'] ?? '' );
+
+			if ( '' !== $link ) {
+				$key          = md5( $link );
+				$known        = is_array( $links[ $key ] ?? null ) ? $links[ $key ] : null;
+				$kept[ $key ] = $known ?? [ 'link' => $link, 'answers' => [], 'at' => 0 ];
+			}
+		}
+
+		uasort( $kept, static fn( array $a, array $b ): int => (int) $a['at'] <=> (int) $b['at'] );
+
+		foreach ( $kept as $key => $known ) {
+			if ( time() >= $deadline ) {
+				break;
+			}
+
+			if ( ! self::link_due( [] === $known['answers'] ? null : $known, time() ) ) {
+				continue;
+			}
+
+			$answers      = array_slice( array_merge( array_map( 'intval', (array) $known['answers'] ), [ self::answer( (string) $known['link'] ) ] ), -3 );
+			$kept[ $key ] = [ 'link' => (string) $known['link'], 'answers' => $answers, 'at' => time() ];
+		}
+
+		return $kept;
+	}
+
+	/**
+	 * What one link answers: its HTTP status after redirects, NO_HOST when
+	 * its site's name does not resolve, NO_ANSWER when nothing came back.
+	 * Fetched through WordPress's safe fetch, which refuses private
+	 * addresses and only reads the first part of the page.
+	 */
+	private static function answer( string $url ): int {
+		$response = wp_safe_remote_get(
+			$url,
+			[
+				'timeout'             => self::PAGE_TIMEOUT,
+				'redirection'         => 5,
+				'limit_response_size' => 64 * KB_IN_BYTES,
+			]
+		);
+
+		if ( is_wp_error( $response ) ) {
+			$message = strtolower( $response->get_error_message() );
+
+			// The safe fetch says "a valid URL was not provided" when the name does not resolve.
+			return str_contains( $message, 'resolve host' ) || str_contains( $message, 'valid url was not provided' ) ? self::NO_HOST : self::NO_ANSWER;
+		}
+
+		return (int) wp_remote_retrieve_response_code( $response );
 	}
 
 	/* ---- Pictures --------------------------------------------------------- */

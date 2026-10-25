@@ -1648,3 +1648,13 @@ clean. They are the only DGLP content on staging.
   `group=` are shown there (e.g. `s137217582`, Men's Wellbeing). The nightly
   run spends at most 15 seconds on new pictures and carries the rest over;
   `wp dgl padlet refresh` fetches them all.
+- **0.54.0** (25 October 2026): a wellbeing card whose page has gone is
+  hidden. Each card's link is checked (safe fetch, first 64 KB) once a week,
+  oldest first, inside the nightly time limit; a card is hidden only after
+  two clear answers in a row of "not found" (404), "gone" (410) or a name
+  that no longer resolves, and comes back when the page answers again. A
+  refusal (401, 403), "too many requests", a server error or a timeout
+  never hides a card: in testing several healthy sites (Bupa, Energy Saving
+  Trust, Trash Nothing, Health Service Discounts) refused a server. A
+  "gone" answer is re-checked on the next run to confirm. Hidden cards are
+  listed under Left out on Settings, Wellbeing board.

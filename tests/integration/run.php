@@ -5822,6 +5822,7 @@ $group( 'Wellbeing board: read from Padlet, shown as cards' );
 delete_option( \DGL\Padlet\Board::OPTION );
 delete_option( \DGL\Padlet\Board::OPTION_LAST );
 delete_option( \DGL\Padlet\Board::OPTION_GROUPS );
+delete_option( \DGL\Padlet\Board::OPTION_LINKS );
 foreach ( (array) glob( wp_upload_dir( null, false )['basedir'] . '/dgl-padlet/*' ) as $pd_file ) {
 	wp_delete_file( (string) $pd_file );
 }
@@ -5862,9 +5863,18 @@ imagepng( $pd_img );
 $pd_png  = (string) ob_get_clean();
 $pd_mode = 'ok';
 $pd_urls = [];
-$pd_stub = static function ( $pre, $args, $url ) use ( &$pd_mode, &$pd_urls, $pd_board, $pd_cols, $pd_export, $pd_png ) {
+$pd_links = [];
+$pd_able  = 200;
+$pd_stub  = static function ( $pre, $args, $url ) use ( &$pd_mode, &$pd_urls, &$pd_links, &$pd_able, $pd_board, $pd_cols, $pd_export, $pd_png ) {
+	// The cards' own links: one gone, one refusing servers, the rest fine.
 	if ( ! str_contains( $url, 'padlet' ) ) {
-		return $pre;
+		$pd_links[] = $url;
+		$pd_code    = match ( true ) {
+			str_starts_with( $url, 'https://able-futures.co.uk/' ) => $pd_able,
+			str_starts_with( $url, 'https://andysmanclub.co.uk/' ) => 403,
+			default => 200,
+		};
+		return [ 'headers' => [], 'response' => [ 'code' => $pd_code, 'message' => '' ], 'body' => '<html></html>', 'cookies' => [] ];
 	}
 	$pd_urls[] = $url;
 	if ( 'down' === $pd_mode ) {
@@ -5936,6 +5946,25 @@ $pd_urls = [];
 $ok( [ \DGL\Padlet\Board::WISHES_URL, sprintf( \DGL\Padlet\Board::SECTIONS_URL, 174909383 ) ] === $pd_urls && 4 === count( \DGL\Padlet\Board::items() ), 'with no time left for pictures, the board is still saved whole and no picture is fetched' );
 \DGL\Padlet\Board::refresh( 60 );
 $ok( 4 === count( array_filter( \DGL\Padlet\Board::items(), static fn( array $i ): bool => '' !== \DGL\Padlet\Board::picture_url( $i ) ) ), 'and the next run with time to spare catches up' );
+
+$ok( in_array( 'https://able-futures.co.uk/', $pd_links, true ) && 4 === count( \DGL\Padlet\Board::items() ), 'each card\'s link is checked, and all four answer' );
+
+$pd_able  = 404;
+delete_option( \DGL\Padlet\Board::OPTION_LINKS );
+\DGL\Padlet\Board::refresh( 60 );
+$ok( 4 === count( \DGL\Padlet\Board::items() ), 'one "not found" does not hide the card' );
+\DGL\Padlet\Board::refresh( 60 );
+$pd_broken = array_column( array_filter( \DGL\Padlet\Board::left_out(), static fn( array $p ): bool => \DGL\Padlet\Board::LEFT_BROKEN === $p['why'] ), 'title' );
+$ok( [ 'Able Futures' ] === $pd_broken && 3 === count( \DGL\Padlet\Board::items() ) && ! str_contains( do_shortcode( '[dgl_padlet]' ), 'Able futures provides' ), 'the second "not found" in a row hides it, and lists it as broken' );
+$ok( 1 === count( array_filter( \DGL\Padlet\Board::items(), static fn( array $i ): bool => str_starts_with( $i['title'], 'Andy' ) ) ), 'a site that refuses servers (403) stays on the board' );
+$pd_able = 200;
+\DGL\Padlet\Board::refresh( 60 );
+$ok( 3 === count( \DGL\Padlet\Board::items() ), 'a link confirmed gone is not asked again the next night' );
+$pd_lk = get_option( \DGL\Padlet\Board::OPTION_LINKS );
+$pd_lk[ md5( 'https://able-futures.co.uk/' ) ]['at'] -= 8 * DAY_IN_SECONDS;
+update_option( \DGL\Padlet\Board::OPTION_LINKS, $pd_lk, false );
+\DGL\Padlet\Board::refresh( 60 );
+$ok( 4 === count( \DGL\Padlet\Board::items() ) && 4 === ( \DGL\Padlet\Board::last()['count'] ?? 0 ), 'a week on, the page answers again, and the card is back' );
 
 \DGL\Padlet\Board::unschedule();
 \DGL\Padlet\Board::schedule();
