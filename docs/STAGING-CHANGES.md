@@ -1658,3 +1658,41 @@ clean. They are the only DGLP content on staging.
   Trust, Trash Nothing, Health Service Discounts) refused a server. A
   "gone" answer is re-checked on the next run to confirm. Hidden cards are
   listed under Left out on Settings, Wellbeing board.
+
+### 25 October 2026, evening: production site changes (Jenny's list)
+
+Made with `wp dgl content replace` (exact match count, dry run first) or
+Wordify's `replace_in_post`; every page edit left a revision.
+
+- **Wellbeing board live:** `wp dgl padlet refresh` run twice on production
+  (the second confirms dead links). 48 cards in Padlet's 7 columns, 47 with
+  Padlet's thumbnail (Leeds Mind's only thumbnail is an SVG logo, which is
+  never copied). Hidden as gone (404/410 twice): Women's Wellbeing Club,
+  Compassion Circles, Barca Leeds, BAME Sisterhood, Blue Light Card (the
+  board links /index.php), Mentally Healthy Leeds, the Menopause video.
+- **Desktop mega panels** (ct_content_block 1367, 1292, 1299, 1348): six
+  items linked, block setting and saved link both: Trustee Recruitment
+  (/support/trustees/), Funding Support and Network (/support/funding/),
+  Search for Training (/training/), Workforce HR Network, Health and Care
+  Leaders Network, Volunteering Strategy. VAL Training, Age Friendly Leeds
+  and Third Sector Strategy stay unlinked (no page yet).
+- **Menu links fixed** in panels and mobile menu: How to start and run your
+  group was a 404 (now /support/governance-how-to-start-and-run-your-group/);
+  Advertise Volunteer Roles, Inclusive Volunteering and Local Care
+  Partnerships pointed at old addresses that only worked by redirect.
+- **Mobile menu 172:** the ten missing desktop items added (10420 to 10429),
+  all 54 items renumbered to the desktop order; the three without pages are
+  labels (`dgl-menu-label`, href `#`), muted and not tappable via Additional
+  CSS (post 11): `#offcanvas .dgl-menu-label>a{opacity:.65;cursor:default;pointer-events:none}`.
+- **Culturally Diverse Hub (7226):** the three recent projects (Police Race
+  Action Plan, Shifting Perspectives, Race Equality Progress Report) moved
+  onto the page as plain sections under "Recent projects", after the pink
+  band, with the "Visit recent activity" button removed. Page 7235 left
+  published for Jenny to draft or redirect.
+- **Synced patterns:** "Contact | Volunteering Team (phone and email)"
+  (wp_block 10433, 0113 244 6050 and volunteering@val.org.uk, copied from
+  Corporate Volunteering) now used on Corporate Volunteering (3863);
+  "Sign up | Network mailing lists" (wp_block 10434, VAL and Forum Central
+  buttons) ready to insert. Not swapped: Volunteer Centre Leeds (3825) shows
+  a different number (0734 032 3190); Leeds Skills Share (3874) hides the
+  phone; Contact (16) has no such block.
