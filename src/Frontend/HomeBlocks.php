@@ -32,6 +32,7 @@ defined( 'ABSPATH' ) || exit;
  *   [dgl_val_jobs layout="feed" count="6"]
  *   [dgl_val_jobs layout="feed" count="100"]   (the jobs page: every vacancy)
  *   [dgl_feed type="news" topic="children-and-young-people"]   (see Feed)
+ *   [dgl_padlet]   (the health and wellbeing board; group="mental" for one group)
  *
  * `heading=""` drops the heading so the page can supply its own;
  * `link="no"` drops the "All events" link. The stylesheet loads only on a
@@ -53,6 +54,7 @@ final class HomeBlocks {
 		'roundup'   => 'dgl_home_roundup',
 		'jobs'      => 'dgl_val_jobs',
 		'feed'      => Feed::TAG,
+		'padlet'    => 'dgl_padlet',
 	];
 
 	/** The most rows one list will show, whatever `count` says. */
@@ -174,9 +176,40 @@ final class HomeBlocks {
 			case 'feed':
 				// Feed gives each block its own id: a page carries several.
 				return Feed::render( $atts );
+
+			case 'padlet':
+				return self::padlet( $atts, $id );
 		}
 
 		return '';
+	}
+
+	/**
+	 * The health and wellbeing board from Padlet, in its columns. `group`
+	 * names one column by its id (shown under Settings, Wellbeing board) to
+	 * show only that one; `link="no"` drops the link to the board itself.
+	 *
+	 * @param array<string, mixed> $atts
+	 */
+	private static function padlet( array $atts, string $id ): string {
+		$a      = self::atts( $atts, [ 'heading' => __( 'Health and wellbeing support', 'dgl-platform' ), 'link' => 'yes', 'group' => '' ] );
+		$only   = strtolower( trim( (string) $a['group'] ) );
+		$groups = \DGL\Padlet\Board::grouped( \DGL\Padlet\Board::items(), \DGL\Padlet\Board::sections(), \DGL\Padlet\Board::overrides() );
+
+		if ( '' !== $only ) {
+			$groups = array_values( array_filter( $groups, static fn( array $group ): bool => $only === $group['id'] ) );
+		}
+
+		return View::render(
+			'public/home/padlet',
+			[
+				'groups'  => $groups,
+				'heading' => $a['heading'],
+				'all_url' => $a['link'] ? \DGL\Padlet\Board::BOARD_URL : '',
+				'fetched' => \DGL\Padlet\Board::fetched(),
+				'id'      => $id . ( '' !== $only ? '-' . sanitize_key( $only ) : '' ),
+			]
+		);
 	}
 
 	/** The jobs block's two layouts. */

@@ -1584,3 +1584,115 @@ clean. They are the only DGLP content on staging.
   228 more stories, 25 September 2025 to 9 September 2026, that the
   platform does not have; the same command with `--since=2025-09-25`
   brings them if wanted.
+- **0.51.1** (25 October 2026): from Jenny Bull's list of 25 October
+  ("Re: DGLP website tasks"). The topic feed's link reads "All news
+  relevant to topic: Children and Young People" (and "All events ..." /
+  "All training ..."), was "All news on ...". New
+  `wp dgl content replace <post-id> (--search=<text> | --from=<text>
+  --to=<text>) [--replace=] [--expect=1] [--apply]`: swaps exact text, or
+  a span from one marker to the first closing marker after it, inside one
+  post's content; refuses unless it occurs exactly the expected number of
+  times; dry run unless `--apply`. It exists because the hosting tools
+  cannot edit theme content blocks (the mega menu panels) or the
+  Additional CSS post, cannot match a backslash (block settings are full
+  of `\u002d`), and a command line is capped at 1000 characters. It saves
+  with the content filters off (WP-CLI has no user, so they would strip
+  the blocks' SVG, styles and iframes) and checks the stored text matches.
+- **0.51.2** (25 October 2026): every What's on block (the home events
+  rows and the topic feed set to events) keeps 3rem above and below,
+  was 16px / 24px. Where the block is the only thing in a Greenshift row
+  or a group, the page has already spaced it (the Culturally Diverse Hub's
+  Events row is 3rem, the home group 54px, which is 3rem at this site's
+  18px root), so there the block and its column add nothing and the
+  spacing never doubles. Checked on all 11 pages that carry one.
+- **0.51.3** (25 October 2026): `wp dgl content restore <post-id>
+  --revision=<id> [--apply]` puts a post's content back to one of its own
+  revisions (dry run unless `--apply`; the restore is a revision of its
+  own; refuses a revision of another post; checks the stored text matches).
+  Needed because the hosting console blocks `wp eval` and has no revision
+  restore, and page content is over its 1000-character limit.
+- **0.52.0** (25 October 2026): the wellbeing board. `[dgl_padlet]`
+  shows Leeds Health and Care Academy's Padlet board (Health and
+  Wellbeing Support, padlet.com/lhca1/3sjincg4tfx4hxlm) as this site's own
+  cards, in groups, in place of Padlet's iframe. Read nightly at 03:00
+  from Padlet's two RSS feeds, which are joined by title and time posted
+  (by title alone when an edit changed the time); the last good board is
+  kept if Padlet is down, and one over 30 days old is withdrawn.
+  Left out: posts linking to Amazon (9 book recommendations on 25
+  October) and posts with no title (the board's 7 column introductions,
+  plus a Citizens Advice benefits link and a menopause training event
+  posted without one). A post's picture is copied into uploads
+  (`dgl-padlet/`, 720px wide), because Padlet signs some upload links with
+  an expiring token; on 25 October that was 1 picture of 10. The feeds
+  do not say which column a post is in, so the grouping is seeded from
+  the board's columns and edited under Settings, Wellbeing board, which
+  also lists what is left out and why and has a Fetch now button. New
+  posts show under More support until placed. `group="men"` shows one
+  group; `heading=""` and `link="no"` as for the other blocks.
+  `wp dgl padlet refresh|status`. Health screen row.
+- **0.53.0** (25 October 2026): the wellbeing board now reads the board's
+  own data, the public answer Padlet's board page loads in a visitor's
+  browser (`/api/10/wishes` and `/api/10/wall_sections`). Padlet's RSS
+  feeds carry neither the columns nor the thumbnails; this does. Every card
+  now has Padlet's own thumbnail (55 of 55 on 25 October), the groups are
+  the board's 7 columns in its order with each column's header post as the
+  line under its heading, and a post with no words of its own shows its
+  linked page's summary. The two links posted without a title now take
+  their page's title (Citizens Advice "Benefits", "Menopause Awareness at
+  Work"), so 55 are shown and 16 left out (9 Amazon, 7 column headers).
+  Padlet does not document that data, so if it stops answering the RSS
+  feeds are read instead: posts keep their last known column and picture,
+  new ones show under More support, and Health goes amber. The seeded
+  grouping is gone; Settings, Wellbeing board now renames a column,
+  changes its line, or moves a post, on this site only. Column ids for
+  `group=` are shown there (e.g. `s137217582`, Men's Wellbeing). The nightly
+  run spends at most 15 seconds on new pictures and carries the rest over;
+  `wp dgl padlet refresh` fetches them all.
+- **0.54.0** (25 October 2026): a wellbeing card whose page has gone is
+  hidden. Each card's link is checked (safe fetch, first 64 KB) once a week,
+  oldest first, inside the nightly time limit; a card is hidden only after
+  two clear answers in a row of "not found" (404), "gone" (410) or a name
+  that no longer resolves, and comes back when the page answers again. A
+  refusal (401, 403), "too many requests", a server error or a timeout
+  never hides a card: in testing several healthy sites (Bupa, Energy Saving
+  Trust, Trash Nothing, Health Service Discounts) refused a server. A
+  "gone" answer is re-checked on the next run to confirm. Hidden cards are
+  listed under Left out on Settings, Wellbeing board.
+
+### 25 October 2026, evening: production site changes (Jenny's list)
+
+Made with `wp dgl content replace` (exact match count, dry run first) or
+Wordify's `replace_in_post`; every page edit left a revision.
+
+- **Wellbeing board live:** `wp dgl padlet refresh` run twice on production
+  (the second confirms dead links). 48 cards in Padlet's 7 columns, 47 with
+  Padlet's thumbnail (Leeds Mind's only thumbnail is an SVG logo, which is
+  never copied). Hidden as gone (404/410 twice): Women's Wellbeing Club,
+  Compassion Circles, Barca Leeds, BAME Sisterhood, Blue Light Card (the
+  board links /index.php), Mentally Healthy Leeds, the Menopause video.
+- **Desktop mega panels** (ct_content_block 1367, 1292, 1299, 1348): six
+  items linked, block setting and saved link both: Trustee Recruitment
+  (/support/trustees/), Funding Support and Network (/support/funding/),
+  Search for Training (/training/), Workforce HR Network, Health and Care
+  Leaders Network, Volunteering Strategy. VAL Training, Age Friendly Leeds
+  and Third Sector Strategy stay unlinked (no page yet).
+- **Menu links fixed** in panels and mobile menu: How to start and run your
+  group was a 404 (now /support/governance-how-to-start-and-run-your-group/);
+  Advertise Volunteer Roles, Inclusive Volunteering and Local Care
+  Partnerships pointed at old addresses that only worked by redirect.
+- **Mobile menu 172:** the ten missing desktop items added (10420 to 10429),
+  all 54 items renumbered to the desktop order; the three without pages are
+  labels (`dgl-menu-label`, href `#`), muted and not tappable via Additional
+  CSS (post 11): `#offcanvas .dgl-menu-label>a{opacity:.65;cursor:default;pointer-events:none}`.
+- **Culturally Diverse Hub (7226):** the three recent projects (Police Race
+  Action Plan, Shifting Perspectives, Race Equality Progress Report) moved
+  onto the page as plain sections under "Recent projects", after the pink
+  band, with the "Visit recent activity" button removed. Page 7235 left
+  published for Jenny to draft or redirect.
+- **Synced patterns:** "Contact | Volunteering Team (phone and email)"
+  (wp_block 10433, 0113 244 6050 and volunteering@val.org.uk, copied from
+  Corporate Volunteering) now used on Corporate Volunteering (3863);
+  "Sign up | Network mailing lists" (wp_block 10434, VAL and Forum Central
+  buttons) ready to insert. Not swapped: Volunteer Centre Leeds (3825) shows
+  a different number (0734 032 3190); Leeds Skills Share (3874) hides the
+  phone; Contact (16) has no such block.

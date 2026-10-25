@@ -292,6 +292,41 @@ final class Health {
 			'todo'   => $val_todo,
 		];
 
+		// ---- The wellbeing board from Padlet.
+		$pad_fetched = \DGL\Padlet\Board::fetched();
+		$pad_last    = \DGL\Padlet\Board::last();
+		$pad_next    = wp_next_scheduled( \DGL\Padlet\Board::HOOK );
+		$pad_status  = $pad_next ? \DGL\Padlet\Board::verdict( $pad_last, $pad_fetched, $now ) : self::BAD;
+
+		if ( ! $pad_next ) {
+			$pad_todo = __( 'Not scheduled. Reactivate the plugin.', 'dgl-platform' );
+		} elseif ( self::GOOD === $pad_status ) {
+			$pad_todo = '';
+		} elseif ( null === $pad_last ) {
+			$pad_todo = __( 'The first fetch is due within minutes of the plugin being updated. Use Settings, Wellbeing board, Fetch from Padlet now.', 'dgl-platform' );
+		} elseif ( self::BAD === $pad_status ) {
+			$pad_todo = __( 'The board is over a month old and is no longer shown. Fetch it from Settings, Wellbeing board and read the error; if Padlet has changed its feeds, the import needs updating.', 'dgl-platform' );
+		} elseif ( null !== $pad_last && $pad_last['ok'] && \DGL\Padlet\Board::FROM_FEEDS === $pad_last['source'] ) {
+			$pad_todo = __( 'Padlet\'s board data did not answer, so the board was read from its RSS feeds: posts keep their last known column and picture, and new posts show under More support. If this lasts more than a few days, Padlet has changed its board data and the import needs updating.', 'dgl-platform' );
+		} else {
+			$pad_todo = __( 'The last fetch failed, so the previous board is still showing. If it fails again tomorrow, fetch it from Settings, Wellbeing board and read the error.', 'dgl-platform' );
+		}
+
+		$rows[] = [
+			'status' => $pad_status,
+			'group'  => __( 'Listings', 'dgl-platform' ),
+			'what'   => __( 'Wellbeing board from Padlet', 'dgl-platform' ),
+			'value'  => sprintf(
+				/* translators: 1: when the board was fetched, 2: how many posts, 3: how the last attempt went, 4: next run. */
+				__( 'Fetched nightly from Leeds Health and Care Academy\'s Padlet board. Current board fetched %1$s, %2$d posts shown. Last attempt: %3$s. Next due %4$s.', 'dgl-platform' ),
+				$pad_fetched > 0 ? self::ago( $pad_fetched ) : __( 'never', 'dgl-platform' ),
+				count( \DGL\Padlet\Board::items( $now ) ),
+				null === $pad_last ? __( 'none yet', 'dgl-platform' ) : ( $pad_last['ok'] ? __( 'worked', 'dgl-platform' ) : $pad_last['error'] ),
+				$pad_next ? self::in( (int) $pad_next ) : __( 'never', 'dgl-platform' )
+			),
+			'todo'   => $pad_todo,
+		];
+
 		// ---- Page cache: cannot be read from here, so it is a reminder.
 		$rows[] = [
 			'status' => self::WARN,

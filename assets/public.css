@@ -2275,12 +2275,141 @@ html:not(.dgl-js) .dgl-dir__ddfind { display: none; }
 }
 
 /*
+ * Wellbeing board: [dgl_padlet]. Leeds Health and Care Academy's Padlet
+ * posts as this site's cards, in groups, with a row of links to jump to a
+ * group. Most posts have no picture, so the card is the words: a teal rail,
+ * the title, a few lines, and the site it leads to. The title's link covers
+ * the whole card, as on the jobs and the topic feed.
+ */
+.dgl-home-block--padlet { padding-block: 16px 24px; }
+
+.dgl-padlet__jump ul { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+
+.dgl-padlet__jump a {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	min-height: 44px;
+	padding: 8px 16px;
+	border: 1px solid var(--dgl-border-strong);
+	border-radius: 999px;
+	background: var(--dgl-white);
+	color: var(--dgl-navy);
+	font-size: 0.9em;
+	font-weight: 600;
+	line-height: 1.2;
+	text-decoration: none;
+}
+
+.dgl-padlet__jump a:hover,
+.dgl-padlet__jump a:focus-visible { background: var(--dgl-surface); text-decoration: underline; text-underline-offset: 3px; }
+
+.dgl-padlet__jump a:focus-visible { outline: 3px solid var(--dgl-focus); outline-offset: 2px; }
+
+.dgl-padlet__count { min-width: 1.7em; padding: 1px 6px; border-radius: 999px; background: var(--dgl-surface); color: var(--dgl-text-muted); font-size: 0.85em; text-align: center; }
+
+.dgl-padlet__group { padding-top: var(--dgl-gap-lg); scroll-margin-top: 110px; }
+
+.dgl-padlet__h {
+	margin: 0 0 6px;
+	padding-left: 12px;
+	border-left: 4px solid var(--dgl-teal);
+	color: var(--dgl-navy);
+	font-size: 1.3em;
+	font-weight: var(--dgl-weight-heading);
+	line-height: 1.25;
+}
+
+.dgl-padlet__intro { max-width: 70ch; margin: 0 0 16px; font-size: 0.95em; line-height: 1.5; color: var(--dgl-text-muted); }
+
+.dgl-padlet__list { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 290px), 1fr)); gap: var(--dgl-gap); margin: 0; padding: 0; list-style: none; }
+
+.dgl-padlet__item { display: flex; margin: 0; }
+
+.dgl-padlet__card {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	overflow: hidden;
+	border: 1px solid var(--dgl-border);
+	border-top: 4px solid var(--dgl-teal);
+	border-radius: 16px;
+	background: var(--dgl-white);
+	box-shadow: var(--dgl-shadow-rest);
+	transition: box-shadow var(--dgl-motion);
+}
+
+.dgl-padlet__card:hover,
+.dgl-padlet__card:focus-within { box-shadow: var(--dgl-shadow-raise); }
+
+.dgl-padlet__card:has(a:focus-visible) { outline: 3px solid var(--dgl-focus); outline-offset: 2px; }
+
+.dgl-padlet__pic { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; background: var(--dgl-surface); }
+
+.dgl-padlet__body { display: flex; flex: 1 1 auto; flex-direction: column; gap: 6px; min-width: 0; padding: 16px 18px; }
+
+.dgl-padlet__kind { align-self: flex-start; margin: 0; padding: 2px 10px; border-radius: 999px; background: var(--dgl-surface); color: var(--dgl-navy); font-size: 0.72em; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
+
+.dgl-padlet__title { margin: 0; font-size: 1.02em; font-weight: var(--dgl-weight-heading); line-height: 1.3; }
+
+.dgl-padlet__title a { color: var(--dgl-navy); text-decoration: none; }
+
+.dgl-padlet__title a::after { content: ""; position: absolute; inset: 0; border-radius: inherit; }
+
+.dgl-padlet__title a:focus { outline: none; }
+
+.dgl-padlet__card:hover .dgl-padlet__title a,
+.dgl-padlet__title a:focus-visible { text-decoration: underline; text-underline-offset: 3px; }
+
+.dgl-padlet__text {
+	display: -webkit-box;
+	margin: 0;
+	overflow: hidden;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 4;
+	font-size: 0.9em;
+	line-height: 1.5;
+	color: var(--dgl-text);
+}
+
+.dgl-padlet__host { display: flex; align-items: center; gap: 6px; margin: auto 0 0; padding-top: 8px; font-size: 0.82em; line-height: 1.4; color: var(--dgl-text-muted); overflow-wrap: anywhere; }
+
+.dgl-padlet__host svg { flex: none; }
+
+.dgl-padlet__source { margin: var(--dgl-gap-lg) 0 0; font-size: 0.82em; line-height: 1.5; color: var(--dgl-text-muted); }
+
+.dgl-padlet__source a { color: var(--dgl-link); }
+
+@media ( prefers-reduced-motion: reduce ) {
+	.dgl-padlet__card { transition: none; }
+}
+
+/*
  * Topic feed: [dgl_feed]. A picture over the words, four across, two in a
  * medium column, one in a narrow one. Answers to the column it sits in, like
  * the other blocks; the plain media queries are the fallback for a browser
  * without container queries. The title's link covers the whole card.
  */
 .dgl-home-block--feed { padding-block: 16px 24px; }
+
+/*
+ * What's on: every events block, the home rows and the topic feed alike,
+ * keeps 3rem above and below. A block that is the only thing in a row or a
+ * group sits in a section the page has already spaced (DGLP's rows use
+ * 3rem), so there the block and its column add nothing and the two never
+ * stack.
+ */
+.dgl-home-block--events,
+.dgl-home-block--feed:has(> .dgl-feed--event) { padding-block: 3rem; }
+
+.wp-block-group > .dgl-home-block--events:only-child,
+.wp-block-group > .dgl-home-block--feed:has(> .dgl-feed--event):only-child,
+[class*="gspb_row__col"] > .dgl-home-block--events:only-child,
+[class*="gspb_row__col"] > .dgl-home-block--feed:has(> .dgl-feed--event):only-child { padding-block: 0; }
+
+[class*="gspb_row__col"]:has(> .dgl-home-block--events:only-child),
+[class*="gspb_row__col"]:has(> .dgl-home-block--feed:only-child > .dgl-feed--event) { padding-block: 0; }
 
 .dgl-feed__list { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--dgl-gap-lg); margin: 0; padding: 0; list-style: none; }
 
