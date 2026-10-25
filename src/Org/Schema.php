@@ -86,15 +86,19 @@ final class Schema {
 				help: __( 'Choose Leeds-wide if you work across the city.', 'dgl-platform' ),
 			),
 
-			/* What you do. */
-			new Field( key: 'org_type', label: __( 'Type of organisation', 'dgl-platform' ), type: Field::CHOICES, step: 3, options: Options::org_type() ),
-			new Field( key: 'org_specialism', label: __( 'Areas of work', 'dgl-platform' ), type: Field::CHOICES, step: 3, options: Options::specialism() ),
+			/*
+			 * What you do. Services lead. The old "Areas of work" list
+			 * (org_specialism) is off the form since 0.51.0: the record stays
+			 * on organisations that had one, and nothing asks for or shows it.
+			 */
 			new Field( key: 'org_services', label: __( 'Services you provide', 'dgl-platform' ), type: Field::CHOICES, step: 3, options: Options::services() ),
 			new Field( key: 'org_delivery', label: __( 'How you deliver them', 'dgl-platform' ), type: Field::CHOICES, step: 3, options: Options::delivery() ),
 
 			/* Who you help. */
 			new Field( key: 'org_service_users', label: __( 'Who you work with', 'dgl-platform' ), type: Field::CHOICES, step: 4, options: Options::service_users() ),
 			new Field( key: 'org_accessibility', label: __( 'Accessibility at your premises', 'dgl-platform' ), type: Field::CHOICES, step: 4, options: Options::accessibility() ),
+			// Was "Type of organisation", up under What you do. These are Leeds schemes, and most organisations are in none.
+			new Field( key: 'org_type', label: __( 'Leeds schemes you\'re part of', 'dgl-platform' ), type: Field::CHOICES, step: 4, options: Options::org_type(), help: __( 'Tick any that apply. Leave it blank if none do.', 'dgl-platform' ) ),
 
 			/* Size and status. */
 			new Field( key: 'org_legal_status', label: __( 'Legal status', 'dgl-platform' ), type: Field::SELECT, step: 5, options: Options::legal() ),

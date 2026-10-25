@@ -626,6 +626,7 @@ final class Frontend {
 		return [
 			'id'   => $org_id,
 			'name' => $org_id > 0 ? (string) get_the_title( $org_id ) : '',
+			'logo' => $org_id > 0 ? (int) get_post_meta( $org_id, 'dgl_org_logo', true ) : 0,
 		];
 	}
 

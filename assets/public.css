@@ -220,6 +220,19 @@
 	color: var(--dgl-text);
 }
 
+.dgl-pub__orglogo {
+	margin: 0 0 10px;
+}
+
+.dgl-pub__orglogo img {
+	display: block;
+	width: auto;
+	max-width: 160px;
+	max-height: 90px;
+	height: auto;
+	border-radius: 6px;
+}
+
 .dgl-pub__back {
 	margin: var(--dgl-gap-lg) 0 0;
 	padding-top: var(--dgl-gap);

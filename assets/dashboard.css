@@ -2274,3 +2274,20 @@ body.dgl-body {
 	color: var(--dgl-text);
 	background: color-mix(in srgb, var(--dgl-ink) 10%, var(--dgl-white));
 }
+
+/* An organisation's details as a contributor sees them: readable, not editable. */
+.dgl-form__locked {
+	border: 0;
+	margin: 0;
+	padding: 0;
+	min-width: 0;
+}
+
+.dgl-form__locked :is(input, select, textarea, button):disabled {
+	opacity: 0.85;
+	cursor: not-allowed;
+}
+
+.dgl-field__static {
+	padding: 6px 0 10px;
+}

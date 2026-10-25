@@ -121,6 +121,91 @@ final class Command {
 		}
 	}
 
+	/**
+	 * Bring over stories the old site published since a day.
+	 *
+	 * Reads doinggoodleeds.org.uk's public REST API and brings each story
+	 * not already here across as a news item: same slug, dates, words and
+	 * picture, owned by --org unless an --owner pair claims it, with the old
+	 * address redirecting as the first import's do. A story already here,
+	 * by the old site's id, its old address or its slug, is left alone, so
+	 * asking twice is safe.
+	 *
+	 * ## OPTIONS
+	 *
+	 * --since=<day>
+	 * : Stories published on or after this day, as Y-m-d.
+	 *
+	 * --org=<id>
+	 * : The organisation that owns every story not claimed by --owner.
+	 *
+	 * [--owner=<pairs>]
+	 * : Old category slug to organisation id, comma separated.
+	 *
+	 * [--limit=<n>]
+	 * : Stop after bringing over this many.
+	 *
+	 * [--dry-run]
+	 * : Report what would come over and change nothing.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp dgl news fetch --since=2026-09-10 --org=8802 --dry-run
+	 *     wp dgl news fetch --since=2026-09-10 --org=8802
+	 *
+	 * @subcommand fetch
+	 */
+	public function fetch( array $args, array $assoc ): void {
+		$since       = trim( (string) ( $assoc['since'] ?? '' ) );
+		$default_org = (int) ( $assoc['org'] ?? 0 );
+		$dry_run     = isset( $assoc['dry-run'] );
+		$limit       = (int) ( $assoc['limit'] ?? 0 );
+		$owners      = self::owners( (string) ( $assoc['owner'] ?? '' ) );
+
+		if ( ! RemoteFetch::valid_since( $since ) ) {
+			WP_CLI::error( 'Give --since=<day> as Y-m-d, for example 2026-09-10.' );
+		}
+
+		if ( $default_org <= 0 || ! Org::exists( $default_org ) ) {
+			WP_CLI::error( 'Give --org=<id>: an organisation that exists.' );
+		}
+
+		foreach ( $owners as $slug => $org_id ) {
+			if ( ! Org::exists( $org_id ) ) {
+				WP_CLI::error( sprintf( 'Owner for %s: organisation %d does not exist.', $slug, $org_id ) );
+			}
+		}
+
+		$result = RemoteFetch::run( $since, $default_org, $owners, get_current_user_id(), $dry_run, $limit );
+
+		if ( is_wp_error( $result ) ) {
+			WP_CLI::error( $result->get_error_message() );
+		}
+
+		foreach ( $result['titles'] as $title ) {
+			WP_CLI::line( ( $dry_run ? '  would add  ' : '  added      ' ) . $title );
+		}
+
+		foreach ( $result['errors'] as $error ) {
+			WP_CLI::warning( $error );
+		}
+
+		WP_CLI::line( sprintf(
+			'%s %d since %s; %d already here; %d failed. Without a picture: %d. Without a topic: %d.',
+			$dry_run ? 'Would bring over' : 'Brought over',
+			$result['added'],
+			$since,
+			$result['skipped'],
+			$result['failed'],
+			$result['no_picture'],
+			$result['no_topic']
+		) );
+
+		if ( ! $dry_run && $result['added'] > 0 ) {
+			WP_CLI::success( sprintf( 'Done. They are owned by %s (#%d) and their old addresses redirect here.', get_the_title( $default_org ), $default_org ) );
+		}
+	}
+
 	/** "slug:id,slug:id" to [slug => id]. */
 	public static function owners( string $raw ): array {
 		$out = [];

@@ -41,7 +41,6 @@ $ward  = Options::wards()[ $meta( 'ward' ) ] ?? '';
 $address = array_filter( [ $meta( 'address_1' ), $meta( 'address_2' ), $meta( 'city' ), $meta( 'postcode' ) ] );
 
 $sections = [
-	__( 'Areas of work', 'dgl-platform' )          => $list( 'specialism', Options::specialism() ),
 	__( 'Services', 'dgl-platform' )               => $list( 'services', Options::services() ),
 	__( 'How they deliver them', 'dgl-platform' )  => $list( 'delivery', Options::delivery() ),
 	__( 'Who they work with', 'dgl-platform' )     => $list( 'service_users', Options::service_users() ),
@@ -52,7 +51,7 @@ $sections = array_filter( $sections );
 
 $facts = array_filter(
 	[
-		__( 'Type', 'dgl-platform' )         => implode( ', ', $list( 'type', Options::org_type() ) ),
+		__( 'Leeds schemes', 'dgl-platform' ) => implode( ', ', $list( 'type', Options::org_type() ) ),
 		__( 'Legal status', 'dgl-platform' ) => Options::legal()[ $meta( 'legal_status' ) ] ?? '',
 		__( 'Charity or company number', 'dgl-platform' ) => $meta( 'number' ),
 		__( 'Paid staff', 'dgl-platform' )   => Options::sizes()[ $meta( 'staff' ) ] ?? '',
@@ -149,26 +148,6 @@ foreach ( ItemsTable::for_org( $id, PostTypes::feed_keys(), [ Statuses::LIVE ], 
 						} )();
 						</script>
 					<?php endif; ?>
-				<?php endif; ?>
-
-				<?php
-				/*
-				 * Areas of work are the organisation's identity and stay as a
-				 * short row of tags under the description. Everything else is
-				 * a labelled list: the category on the left, the items as a
-				 * plain comma-separated line on the right. Forty chips at one
-				 * weight were a wall nobody could parse; forty words in six
-				 * lines read like a paragraph.
-				 */
-				$areas = $sections[ __( 'Areas of work', 'dgl-platform' ) ] ?? [];
-				unset( $sections[ __( 'Areas of work', 'dgl-platform' ) ] );
-				?>
-				<?php if ( [] !== $areas ) : ?>
-					<ul class="dgl-org__areas" aria-label="<?php esc_attr_e( 'Areas of work', 'dgl-platform' ); ?>">
-						<?php foreach ( $areas as $label ) : ?>
-							<li class="dgl-dir__tag"><?php echo esc_html( $label ); ?></li>
-						<?php endforeach; ?>
-					</ul>
 				<?php endif; ?>
 
 				<?php foreach ( $sections as $heading => $items ) : ?>

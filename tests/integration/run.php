@@ -5677,6 +5677,117 @@ update_option( 'dgl_feed_image_news', 0 );
 $ok( str_contains( \DGL\Frontend\Feed::picture( get_post( $sp_story ), 'news' ), 'dgl-card__img--none' ), 'with no stand-in chosen, either gets the plain tile' );
 delete_option( 'dgl_feed_image_news' );
 
+$group( 'Organisation form: services lead, Areas of work off the form, Leeds schemes under Who you help' );
+
+$of_keys  = array_map( static fn( $f ): string => $f->key, \DGL\Org\Schema::fields() );
+$of_by    = [];
+foreach ( \DGL\Org\Schema::fields() as $f ) {
+	$of_by[ $f->key ] = $f;
+}
+$of_step3 = array_values( array_filter( \DGL\Org\Schema::fields(), static fn( $f ): bool => 3 === $f->step ) );
+$ok( 'org_services' === ( $of_step3[0]->key ?? '' ), 'Services you provide is the first field under What you do' );
+$ok( ! in_array( 'org_specialism', $of_keys, true ), 'Areas of work is no longer on the form' );
+$ok( isset( $of_by['org_type'] ) && 4 === $of_by['org_type']->step && "Leeds schemes you're part of" === $of_by['org_type']->label, 'Type of organisation is now Leeds schemes you\'re part of, under Who you help' );
+$ok( array_search( 'org_type', $of_keys, true ) > array_search( 'org_accessibility', $of_keys, true ), 'and it comes after accessibility' );
+$of_steps = array_map( static fn( $f ): int => $f->step, \DGL\Org\Schema::fields() );
+$ok( ( static function ( array $s ): bool { $sorted = $s; sort( $sorted ); return $sorted === $s; } )( $of_steps ), 'fields stay grouped by section, so the headings land once each' );
+$of_src = (string) file_get_contents( dirname( ( new ReflectionClass( \DGL\News\RemoteFetch::class ) )->getFileName(), 3 ) . '/templates/public/single.php' );
+$ok( ! str_contains( $of_src, 'member of the Doing Good Leeds Partnership' ) && str_contains( $of_src, 'dgl-pub__orglogo' ), 'the Posted by card no longer claims membership and can show the logo' );
+$of_item = $make_item( $org_a, $alice, Statuses::LIVE );
+update_post_meta( $org_a, 'dgl_org_logo', 0 );
+$of_org = \DGL\Frontend\Frontend::organisation( get_post( $of_item ) );
+$ok( $org_a === $of_org['id'] && 0 === $of_org['logo'], 'the organisation on an item carries its logo id, 0 when there is none' );
+
+$group( 'Stories fetched from the old site since a day' );
+
+$rf_png    = (string) base64_decode( 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==' );
+$rf_record = static function ( int $id, string $slug, string $title, string $date, array $cats, bool $picture ): array {
+	$rec = [
+		'id'       => $id,
+		'date'     => $date . 'T09:30:00',
+		'date_gmt' => $date . 'T08:30:00',
+		'slug'     => $slug,
+		'link'     => 'https://doinggoodleeds.org.uk/news/' . $slug . '/',
+		'title'    => [ 'rendered' => $title ],
+		'content'  => [ 'rendered' => '<p>Words about ' . $title . '.</p><p>More words.</p>' ],
+		'excerpt'  => [ 'rendered' => '<p>Words about ' . $title . '. [&hellip;]</p>' ],
+		'categories' => [ 647 ],
+		'featured_media' => $picture ? 9000 + $id : 0,
+		'_embedded' => [
+			'wp:term' => [ array_map( static fn( string $c ): array => [ 'taxonomy' => 'category', 'slug' => $c, 'name' => ucfirst( $c ) ], $cats ) ],
+		],
+	];
+	if ( $picture ) {
+		$rec['_embedded']['wp:featuredmedia'] = [ [ 'source_url' => 'https://doinggoodleeds.org.uk/wp-content/uploads/2026/10/story-' . $id . '.png', 'alt_text' => 'Alt for ' . $title, 'title' => [ 'rendered' => 'Picture ' . $id ] ] ];
+	}
+	return $rec;
+};
+$rf_page1 = [
+	$rf_record( 112408, 'rf-middleton-chest', 'Middleton Pride of Place Community Chest grants up to &#163;2,000', '2026-09-10', [ 'news' ], true ),
+	$rf_record( 112423, 'rf-time-boost', 'TIME BOOST: because talking isn&#8217;t one-size-fits-all.', '2026-09-11', [ 'news', 'mental-health' ], false ),
+];
+$rf_urls = [];
+$rf_stub = static function ( $pre, $args, $url ) use ( &$rf_urls, $rf_page1, $rf_png ) {
+	$rf_urls[] = $url;
+	if ( str_contains( $url, '/wp-content/uploads/' ) ) {
+		if ( ! empty( $args['stream'] ) && ! empty( $args['filename'] ) ) {
+			file_put_contents( $args['filename'], $rf_png );
+		}
+		return [ 'headers' => [ 'content-type' => 'image/png' ], 'response' => [ 'code' => 200, 'message' => 'OK' ], 'body' => $rf_png, 'cookies' => [], 'filename' => $args['filename'] ?? null ];
+	}
+	parse_str( (string) wp_parse_url( $url, PHP_URL_QUERY ), $q );
+	if ( (int) ( $q['page'] ?? 1 ) > 1 ) {
+		return [ 'headers' => [], 'response' => [ 'code' => 400, 'message' => 'Bad Request' ], 'body' => wp_json_encode( [ 'code' => 'rest_post_invalid_page_number', 'message' => 'The page number requested is larger than the number of pages available.' ] ), 'cookies' => [] ];
+	}
+	return [ 'headers' => [], 'response' => [ 'code' => 200, 'message' => 'OK' ], 'body' => wp_json_encode( $rf_page1 ), 'cookies' => [] ];
+};
+add_filter( 'pre_http_request', $rf_stub, 10, 3 );
+
+$ok( ! \DGL\News\RemoteFetch::valid_since( '10/09/2026' ) && \DGL\News\RemoteFetch::valid_since( '2026-09-10' ), 'the day must be Y-m-d' );
+$ok( str_contains( \DGL\News\RemoteFetch::page_url( '2026-09-10', 2 ), 'after=2026-09-10T00%3A00%3A00' ) && str_contains( \DGL\News\RemoteFetch::page_url( '2026-09-10', 2 ), 'page=2' ) && str_contains( \DGL\News\RemoteFetch::page_url( '2026-09-10', 2 ), '_embed=' ), 'a page address asks for stories after the day, with the picture and terms embedded' );
+$rf_p1 = \DGL\News\RemoteFetch::page( '2026-09-10', 1 );
+$rf_p2 = \DGL\News\RemoteFetch::page( '2026-09-10', 2 );
+$ok( is_array( $rf_p1 ) && 2 === count( $rf_p1 ) && [] === $rf_p2, 'a page of stories comes back as a list, and the page past the end as an empty one' );
+$rf_ex = \DGL\News\RemoteFetch::excerpt( $rf_page1[1] );
+$ok( [ 'news', 'mental-health' ] === \DGL\News\RemoteFetch::categories( $rf_page1[1] ) && str_starts_with( $rf_ex, 'Words about TIME BOOST: because talking isn’t' ) && str_ends_with( $rf_ex, '…' ) && ! str_contains( $rf_ex, '[' ), 'categories come from the embedded terms and the excerpt loses its bracketed tail' );
+$ok( 0 === \DGL\News\RemoteFetch::existing( $rf_page1[0] ), 'a story not yet here is not found' );
+
+$rf_dry = \DGL\News\RemoteFetch::run( '2026-09-10', $org_a, [], $mod, true );
+$ok( is_array( $rf_dry ) && 2 === $rf_dry['added'] && 0 === $rf_dry['skipped'] && 1 === $rf_dry['no_picture'] && 1 === $rf_dry['no_topic'] && 0 === \DGL\News\RemoteFetch::existing( $rf_page1[0] ), 'a dry run counts what would come over and writes nothing' );
+
+$rf_before = count( $rf_urls );
+$rf_run    = \DGL\News\RemoteFetch::run( '2026-09-10', $org_a, [], $mod );
+$ok( is_array( $rf_run ) && 2 === $rf_run['added'] && 0 === $rf_run['failed'] && [] === $rf_run['errors'], 'two stories come over (' . ( is_array( $rf_run ) ? implode( '; ', $rf_run['errors'] ) : $rf_run->get_error_message() ) . ')' );
+$rf_a = \DGL\News\RemoteFetch::existing( $rf_page1[0] );
+$rf_b = \DGL\News\RemoteFetch::existing( $rf_page1[1] );
+$ok( $rf_a > 0 && $rf_b > 0 && PostTypes::NEWS === get_post_type( $rf_a ) && Statuses::LIVE === get_post_status( $rf_a ), 'each is a live news item now' );
+$ok( 'Middleton Pride of Place Community Chest grants up to £2,000' === get_the_title( $rf_a ) && 'rf-middleton-chest' === get_post( $rf_a )->post_name && '2026-09-10 09:30:00' === get_post( $rf_a )->post_date, 'with the old title, slug and date' );
+$ok( '112408' === (string) get_post_meta( $rf_a, \DGL\News\RemoteFetch::META_REMOTE_ID, true ) && '1' === (string) get_post_meta( $rf_a, \DGL\News\LegacyImport::META_FROM, true ) && 'https://doinggoodleeds.org.uk/news/rf-middleton-chest/' === (string) get_post_meta( $rf_a, \DGL\News\LegacyImport::META_URL, true ) && $org_a === (int) get_post_meta( $rf_a, Meta::ITEM_ORG, true ), 'it remembers the old id and address, and belongs to the organisation given' );
+$rf_pic = (int) get_post_meta( $rf_a, 'dgl_image', true );
+$ok( $rf_pic > 0 && 'attachment' === get_post_type( $rf_pic ) && $rf_a === (int) get_post( $rf_pic )->post_parent && 'Alt for Middleton Pride of Place Community Chest grants up to &#163;2,000' === (string) get_post_meta( $rf_pic, '_wp_attachment_image_alt', true ) && file_exists( (string) get_attached_file( $rf_pic ) ), 'the picture is copied into the library, attached, with its alt text (id ' . $rf_pic . ', parent ' . ( $rf_pic > 0 ? (int) get_post( $rf_pic )->post_parent : 0 ) . ', alt "' . ( $rf_pic > 0 ? (string) get_post_meta( $rf_pic, '_wp_attachment_image_alt', true ) : '' ) . '")' );
+$rf_cats = explode( ',', (string) get_post_meta( $rf_b, \DGL\News\LegacyImport::META_CATEGORIES, true ) );
+sort( $rf_cats );
+$ok( 0 === (int) get_post_meta( $rf_b, 'dgl_image', true ) && [ 'mental-health', 'news' ] === $rf_cats, 'a story without a picture still comes over, and the old categories are recorded' );
+$ok( str_starts_with( (string) get_post_meta( $rf_b, 'dgl_summary', true ), 'Words about TIME BOOST' ), 'the summary is the old excerpt' );
+$ok( 1 === count( array_filter( $rf_urls, static fn( string $u ): bool => str_contains( $u, 'story-112408.png' ) ) ), 'the picture was fetched once' );
+
+$rf_again = \DGL\News\RemoteFetch::run( '2026-09-10', $org_a, [], $mod );
+$ok( is_array( $rf_again ) && 0 === $rf_again['added'] && 2 === $rf_again['skipped'] && $rf_a === \DGL\News\RemoteFetch::existing( $rf_page1[0] ), 'asking again brings nothing over twice' );
+$ok( 1 === count( array_filter( $rf_urls, static fn( string $u ): bool => str_contains( $u, 'story-112408.png' ) ) ), 'and does not fetch the picture again' );
+
+$rf_err = \DGL\News\RemoteFetch::run( 'yesterday', $org_a, [], $mod );
+$ok( is_wp_error( $rf_err ) && 'dgl_fetch_since' === $rf_err->get_error_code(), 'a day that is not Y-m-d is refused' );
+
+remove_filter( 'pre_http_request', $rf_stub, 10 );
+foreach ( [ $rf_a, $rf_b ] as $rf_id ) {
+	if ( $rf_id > 0 ) {
+		if ( $rf_pic > 0 && $rf_id === $rf_a ) {
+			wp_delete_attachment( $rf_pic, true );
+		}
+		wp_delete_post( $rf_id, true );
+	}
+}
+
 /* ----------------------------------------------------------------- report */
 
 echo "\n" . str_repeat( '-', 60 ) . "\n";

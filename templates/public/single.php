@@ -169,11 +169,17 @@ $show_crumbs = (bool) apply_filters( 'dgl_public_breadcrumb', false, $type );
 				<?php endif; ?>
 
 				<?php if ( '' !== $org['name'] ) : ?>
-					<div class="dgl-pub__card">
+					<div class="dgl-pub__card dgl-pub__card--org">
 						<h2 class="dgl-pub__card-title"><?php esc_html_e( 'Posted by', 'dgl-platform' ); ?></h2>
-						<p class="dgl-pub__orgname"><?php echo esc_html( $org['name'] ); ?></p>
-						<p class="dgl-pub__note">
-							<?php esc_html_e( 'A member of the Doing Good Leeds Partnership.', 'dgl-platform' ); ?>
+						<?php if ( (int) $org['logo'] > 0 ) : ?>
+							<div class="dgl-pub__orglogo"><?php echo wp_get_attachment_image( (int) $org['logo'], 'medium', false, [ 'alt' => '', 'loading' => 'lazy' ] ); ?></div>
+						<?php endif; ?>
+						<p class="dgl-pub__orgname">
+							<?php if ( \DGL\Org\Directory::is_listed( (int) $org['id'] ) ) : ?>
+								<a href="<?php echo esc_url( \DGL\Org\DirectoryQuery::url( (int) $org['id'] ) ); ?>"><?php echo esc_html( $org['name'] ); ?></a>
+							<?php else : ?>
+								<?php echo esc_html( $org['name'] ); ?>
+							<?php endif; ?>
 						</p>
 					</div>
 				<?php endif; ?>
