@@ -2282,6 +2282,24 @@ html:not(.dgl-js) .dgl-dir__ddfind { display: none; }
  */
 .dgl-home-block--feed { padding-block: 16px 24px; }
 
+/*
+ * What's on: every events block, the home rows and the topic feed alike,
+ * keeps 3rem above and below. A block that is the only thing in a row or a
+ * group sits in a section the page has already spaced (DGLP's rows use
+ * 3rem), so there the block and its column add nothing and the two never
+ * stack.
+ */
+.dgl-home-block--events,
+.dgl-home-block--feed:has(> .dgl-feed--event) { padding-block: 3rem; }
+
+.wp-block-group > .dgl-home-block--events:only-child,
+.wp-block-group > .dgl-home-block--feed:has(> .dgl-feed--event):only-child,
+[class*="gspb_row__col"] > .dgl-home-block--events:only-child,
+[class*="gspb_row__col"] > .dgl-home-block--feed:has(> .dgl-feed--event):only-child { padding-block: 0; }
+
+[class*="gspb_row__col"]:has(> .dgl-home-block--events:only-child),
+[class*="gspb_row__col"]:has(> .dgl-home-block--feed:only-child > .dgl-feed--event) { padding-block: 0; }
+
 .dgl-feed__list { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--dgl-gap-lg); margin: 0; padding: 0; list-style: none; }
 
 .dgl-feed__item { display: flex; margin: 0; }

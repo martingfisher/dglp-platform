@@ -1595,6 +1595,13 @@ clean. They are the only DGLP content on staging.
   times; dry run unless `--apply`. It exists because the hosting tools
   cannot edit theme content blocks (the mega menu panels) or the
   Additional CSS post, cannot match a backslash (block settings are full
-  of `-`), and a command line is capped at 1000 characters. It saves
+  of `\u002d`), and a command line is capped at 1000 characters. It saves
   with the content filters off (WP-CLI has no user, so they would strip
   the blocks' SVG, styles and iframes) and checks the stored text matches.
+- **0.51.2** (25 October 2026): every What's on block (the home events
+  rows and the topic feed set to events) keeps 3rem above and below,
+  was 16px / 24px. Where the block is the only thing in a Greenshift row
+  or a group, the page has already spaced it (the Culturally Diverse Hub's
+  Events row is 3rem, the home group 54px, which is 3rem at this site's
+  18px root), so there the block and its column add nothing and the
+  spacing never doubles. Checked on all 11 pages that carry one.
