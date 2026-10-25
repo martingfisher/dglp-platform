@@ -1559,3 +1559,28 @@ clean. They are the only DGLP content on staging.
   changed by WP-CLI does not rebuild it. Setting `blocksy_db_versions`
   one version lower and loading a page makes the theme fire
   `blocksy:dynamic-css:refresh-caches` and restore the version.
+- **0.51.0 deployed** (25 October 2026, production): Jenny Bull's amends of
+  25 October. Organisation details form: "Services you provide" leads
+  What you do; "Areas of work" is off the form (the record stays on
+  organisations that had one; the directory card, the organisation page
+  and the form no longer show it); "Type of organisation" is now "Leeds
+  schemes you're part of", under Who you help after accessibility, with
+  "Tick any that apply. Leave it blank if none do." A contributor (not an
+  owner) now sees the details in a disabled form with a note to ask an
+  owner or the DGL team: before, the fields were live and there was no
+  Save, which read as broken (Jenny was on her contributor test account,
+  jennybullworks@gmail.com). Item pages: the "Posted by" card shows the
+  organisation's logo when it has one, links the name to its directory
+  page when it is listed, and no longer says "A member of the Doing Good
+  Leeds Partnership"; the organisation page's fallback description says
+  "on the Doing Good Leeds platform" instead. Events list intro set (a
+  setting, not code): "What's happening across Leeds' VCSE sector. Posted
+  by and for the community." New `wp dgl news fetch --since=<day>
+  --org=<id> [--owner=] [--limit=] [--dry-run]` reads the old site's
+  public REST API and brings over stories not already here (by the old
+  id, old address or slug), picture and all, through the same
+  LegacyImport path as the first import. Run on production for Jenny's
+  range, 10 September 2026 onwards. NOTE for the client: the old site has
+  228 more stories, 25 September 2025 to 9 September 2026, that the
+  platform does not have; the same command with `--since=2025-09-25`
+  brings them if wanted.

@@ -532,7 +532,7 @@ final class Seo {
 			'title'       => self::plain( wp_get_document_title() ),
 			'description' => '' !== $desc ? $desc : sprintf(
 				/* translators: %s: organisation. */
-				__( '%s, a member of the Doing Good Leeds Partnership.', 'dgl-platform' ),
+				__( '%s, on the Doing Good Leeds platform.', 'dgl-platform' ),
 				$name
 			),
 			'url'         => $url,

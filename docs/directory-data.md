@@ -23,8 +23,8 @@ five sections. An owner edits them; the review team sees them in wp-admin.
 | Where | Town or city | City | text |
 | Where | Postcode | Postal Code | postcode |
 | Where | Ward | Ward Organisation is based in | one of 33 wards or Leeds-wide |
-| What you do | Type of organisation | Organisation Type | several of 5 |
-| What you do | Areas of work | FC specialism | several of 9 |
+| Who you help | Leeds schemes you're part of (was "Type of organisation", under What you do, until 0.51.0) | Organisation Type | several of 5 |
+| Not on the form since 0.51.0 (the record stays, nothing shows it) | Areas of work | FC specialism | several of 9 |
 | What you do | Services you provide | General Service Provision | several of 52 |
 | What you do | How you deliver them | General Service Delivery Type | several of 8 |
 | Who you help | Who you work with | General Service Users | several of 46 |

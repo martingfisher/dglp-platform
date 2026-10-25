@@ -89,7 +89,7 @@ $is_owner = $user instanceof UserContext && $user->is_org_owner();
 
 		<?php if ( ! $is_owner ) : ?>
 			<p class="dgl-help">
-				<?php esc_html_e( 'Only an owner can change these. You can still submit content for the organisation.', 'dgl-platform' ); ?>
+				<?php esc_html_e( 'Only an owner can change these. You can still submit content for the organisation. If something here needs changing, ask an owner of your organisation, or the DGL team.', 'dgl-platform' ); ?>
 			</p>
 		<?php endif; ?>
 
@@ -106,11 +106,22 @@ $is_owner = $user instanceof UserContext && $user->is_org_owner();
 		<?php endif; ?>
 
 		<?php $section_shown = 0; ?>
+		<?php if ( ! $is_owner ) : ?>
+			<?php // A contributor reads these. A form that cannot be saved reads as broken; a disabled one reads as what it is. ?>
+			<fieldset class="dgl-form__locked" disabled>
+		<?php endif; ?>
 		<?php foreach ( $data['fields'] as $field ) : ?>
 			<?php if ( $field->step !== $section_shown && isset( $data['sections'][ $field->step ] ) ) : ?>
 				<?php $section_shown = $field->step; ?>
 				<h2 class="dgl-section__title dgl-section__title--form"><?php echo esc_html( $data['sections'][ $field->step ] ); ?></h2>
 			<?php endif; ?>
+			<?php if ( ! $is_owner && \DGL\Schema\Field::RICHTEXT === $field->type ) : ?>
+				<?php // The editor control ignores a disabled fieldset, so the words are shown as words. ?>
+				<div class="dgl-field-row">
+					<span class="dgl-label"><?php echo esc_html( $field->label ); ?></span>
+					<div class="dgl-field__static"><?php echo wp_kses_post( (string) ( $data['values'][ $field->key ] ?? '' ) ); ?></div>
+				</div>
+			<?php else : ?>
 			<?php
 			echo FieldRenderer::render( // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped by the renderer.
 				$field,
@@ -118,6 +129,7 @@ $is_owner = $user instanceof UserContext && $user->is_org_owner();
 				(string) ( $errors[ $field->key ] ?? '' )
 			);
 			?>
+			<?php endif; ?>
 			<?php if ( Schema::needs_approval( $field->key ) ) : ?>
 				<p class="dgl-help dgl-help--gated"><?php esc_html_e( 'Changing this goes to the review team first.', 'dgl-platform' ); ?></p>
 			<?php endif; ?>
@@ -125,6 +137,9 @@ $is_owner = $user instanceof UserContext && $user->is_org_owner();
 				<p class="dgl-help"><?php esc_html_e( 'This may have been cut short in the transfer. Please write your organisation\'s overview in your own words: what you do, who for, and where.', 'dgl-platform' ); ?></p>
 			<?php endif; ?>
 		<?php endforeach; ?>
+		<?php if ( ! $is_owner ) : ?>
+			</fieldset>
+		<?php endif; ?>
 
 		<?php if ( $is_owner ) : ?>
 			<div class="dgl-form__actions">

@@ -1,6 +1,6 @@
 <?php
 /**
- * One organisation card: logo or initial, name, where, blurb, areas of work.
+ * One organisation card: logo or initial, name, where, blurb.
  *
  * Used by the directory and by search results. Expects `$data['org_id']`.
  *
@@ -20,7 +20,6 @@ $logo_id = (int) get_post_meta( $org_id, 'dgl_org_logo', true );
 $blurb   = (string) get_post_meta( $org_id, 'dgl_org_description', true );
 $ward    = Options::wards()[ (string) get_post_meta( $org_id, 'dgl_org_ward', true ) ] ?? '';
 $city    = (string) get_post_meta( $org_id, 'dgl_org_city', true );
-$areas   = array_intersect_key( Options::specialism(), array_flip( (array) get_post_meta( $org_id, 'dgl_org_specialism', true ) ) );
 // The ward, else the town. Forum Central's City column holds street lines in places, so anything with a digit or a comma is not a town.
 $where   = '' !== $ward ? $ward : ( 1 === preg_match( '/^[^\d,]+$/', $city ) ? $city : '' );
 ?>
@@ -40,16 +39,6 @@ $where   = '' !== $ward ? $ward : ( 1 === preg_match( '/^[^\d,]+$/', $city ) ? $
 			<?php endif; ?>
 			<?php if ( '' !== $blurb ) : ?>
 				<span class="dgl-dir__blurb"><?php echo esc_html( wp_trim_words( $blurb, 24, '…' ) ); ?></span>
-			<?php endif; ?>
-			<?php if ( [] !== $areas ) : ?>
-				<span class="dgl-dir__tags">
-					<?php foreach ( array_slice( $areas, 0, 3 ) as $label ) : ?>
-						<span class="dgl-dir__tag"><?php echo esc_html( $label ); ?></span>
-					<?php endforeach; ?>
-					<?php if ( count( $areas ) > 3 ) : ?>
-						<span class="dgl-dir__tag dgl-dir__tag--more">+<?php echo esc_html( (string) ( count( $areas ) - 3 ) ); ?></span>
-					<?php endif; ?>
-				</span>
 			<?php endif; ?>
 		</span>
 	</a>

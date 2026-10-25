@@ -390,3 +390,28 @@ consent records at registration (consent is recorded for the digest only).
 Everything else in the earlier version of this list has since been built:
 the privacy exporter and eraser, the public templates, removing a colleague,
 and email on an organisation-change decision.
+
+## After 0.51.0: stories from the old site
+
+The old site at doinggoodleeds.org.uk is still being written to. Its
+stories come over when asked, never on a schedule:
+
+```
+wp dgl news fetch --since=2026-09-10 --org=8802 --dry-run
+wp dgl news fetch --since=2026-09-10 --org=8802
+```
+
+`--since` is a day, `Y-m-d`; `--org` owns every story an `--owner` pair
+does not claim (the pairs work as for `wp dgl news import`). Each story is
+written as a post of the old kind and converted by the same code as the
+first import, so it gets the same meta, audit row and redirect from its
+old address. A story already here, by the old site's id
+(`dgl_legacy_remote_id`), its old address (`dgl_legacy_url`) or its slug,
+is skipped, so running it again is safe. Pictures are copied into the
+media library; pictures inside the story's words still point at the old
+site. The old site's categories are now only `news`, `blog` and
+`good-news`, none of which maps to a topic, so fetched stories arrive
+without topics: `wp dgl news suggest-topics --first` reports what their
+words suggest, and `--apply --actor=<id>` sets them.
+
+On the Wordify console `wp dgl` needs safe mode off.

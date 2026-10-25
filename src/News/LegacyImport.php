@@ -158,7 +158,9 @@ final class LegacyImport {
 			'org'        => self::owner_for( $categories, $default_org, $owners ),
 			'summary'    => self::summary_for( $post ),
 			'image'      => (int) get_post_thumbnail_id( $post_id ),
-			'old_url'    => (string) get_permalink( $post_id ),
+			// A story fetched from the old site arrives with its address on it; one
+			// converted in place on a copy of the old database has only its permalink.
+			'old_url'    => '' !== trim( (string) get_post_meta( $post_id, self::META_URL, true ) ) ? trim( (string) get_post_meta( $post_id, self::META_URL, true ) ) : (string) get_permalink( $post_id ),
 		];
 	}
 
