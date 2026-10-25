@@ -134,6 +134,78 @@ final class ContentCommand {
 	}
 
 	/**
+	 * Put a post's content back to one of its own revisions.
+	 *
+	 * Dry run unless --apply is given. The restore is itself saved as a new
+	 * revision, so it can be undone the same way.
+	 *
+	 * ## OPTIONS
+	 *
+	 * <post-id>
+	 * : The post or page.
+	 *
+	 * --revision=<id>
+	 * : The revision to go back to. Must belong to this post.
+	 *
+	 * [--apply]
+	 * : Write the change. Without it nothing is saved.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp dgl content restore 7226 --revision=10394
+	 *
+	 * @when after_wp_load
+	 *
+	 * @param string[]              $args
+	 * @param array<string, string> $assoc
+	 */
+	public function restore( array $args, array $assoc ): void {
+		$post        = get_post( (int) ( $args[0] ?? 0 ) );
+		$revision_id = (int) ( $assoc['revision'] ?? 0 );
+		$revision    = wp_get_post_revision( $revision_id );
+
+		if ( ! $post instanceof \WP_Post ) {
+			WP_CLI::error( 'No such post.' );
+		}
+
+		if ( ! $revision instanceof \WP_Post || (int) $revision->post_parent !== $post->ID ) {
+			WP_CLI::error( 'No such revision of this post.' );
+		}
+
+		$now  = (string) $post->post_content;
+		$then = (string) $revision->post_content;
+
+		WP_CLI::log( sprintf( '%s %d (%s): content now %d characters; revision %d from %s GMT by user %d has %d.', $post->post_type, $post->ID, $post->post_title, strlen( $now ), $revision->ID, $revision->post_date_gmt, (int) $revision->post_author, strlen( $then ) ) );
+
+		if ( $now === $then ) {
+			WP_CLI::success( 'Already the same. Nothing to do.' );
+			return;
+		}
+
+		if ( ! isset( $assoc['apply'] ) ) {
+			WP_CLI::success( 'Dry run. Nothing was written. Add --apply to save.' );
+			return;
+		}
+
+		// As in replace(): WP-CLI has no user, so the filters would strip markup.
+		kses_remove_filters();
+
+		$saved = wp_restore_post_revision( $revision->ID, [ 'post_content' ] );
+
+		if ( ! $saved || is_wp_error( $saved ) ) {
+			WP_CLI::error( is_wp_error( $saved ) ? $saved->get_error_message() : 'The restore was not saved.' );
+		}
+
+		clean_post_cache( $post->ID );
+
+		if ( (string) get_post_field( 'post_content', $post->ID, 'raw' ) !== $then ) {
+			WP_CLI::error( 'Saved, but the stored content differs from the revision. Check the post and its revisions.' );
+		}
+
+		WP_CLI::success( sprintf( 'Restored revision %d. Length %d to %d.', $revision->ID, strlen( $now ), strlen( $then ) ) );
+	}
+
+	/**
 	 * What a replacement would do, without touching anything.
 	 *
 	 * @return array{count:int, expect:int, result:string, context:string[], error:string}

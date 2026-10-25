@@ -1605,3 +1605,9 @@ clean. They are the only DGLP content on staging.
   Events row is 3rem, the home group 54px, which is 3rem at this site's
   18px root), so there the block and its column add nothing and the
   spacing never doubles. Checked on all 11 pages that carry one.
+- **0.51.3** (25 October 2026): `wp dgl content restore <post-id>
+  --revision=<id> [--apply]` puts a post's content back to one of its own
+  revisions (dry run unless `--apply`; the restore is a revision of its
+  own; refuses a revision of another post; checks the stored text matches).
+  Needed because the hosting console blocks `wp eval` and has no revision
+  restore, and page content is over its 1000-character limit.

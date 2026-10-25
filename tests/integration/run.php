@@ -5788,6 +5788,35 @@ foreach ( [ $rf_a, $rf_b ] as $rf_id ) {
 	}
 }
 
+$group( 'Content restore: back to one of the post\'s own revisions' );
+
+$cr_post = wp_insert_post( [ 'post_type' => 'page', 'post_status' => 'publish', 'post_title' => 'Restore test', 'post_content' => 'start' ] );
+kses_remove_filters();
+$cr_b = '<!-- wp:html --><svg><path d="M0 0"/></svg><iframe src="https://example.org/"></iframe> {"c":"var(\\u002d\\u002dwp)"}<!-- /wp:html -->';
+wp_update_post( [ 'ID' => $cr_post, 'post_content' => wp_slash( $cr_b ) ] );
+wp_update_post( [ 'ID' => $cr_post, 'post_content' => 'version C' ] );
+kses_init_filters();
+$cr_rev = 0;
+foreach ( wp_get_post_revisions( $cr_post ) as $cr_r ) {
+	if ( $cr_r->post_content === $cr_b ) {
+		$cr_rev = $cr_r->ID;
+	}
+}
+$ok( $cr_rev > 0, 'the revision holding version B exists, backslashes and all' );
+
+ob_start();
+( new \DGL\Tools\ContentCommand() )->restore( [ (string) $cr_post ], [ 'revision' => (string) $cr_rev ] );
+ob_end_clean();
+$ok( 'version C' === get_post_field( 'post_content', $cr_post, 'raw' ), 'without --apply nothing changes' );
+
+$cr_before = count( wp_get_post_revisions( $cr_post ) );
+ob_start();
+( new \DGL\Tools\ContentCommand() )->restore( [ (string) $cr_post ], [ 'revision' => (string) $cr_rev, 'apply' => true ] );
+ob_end_clean();
+$ok( get_post_field( 'post_content', $cr_post, 'raw' ) === $cr_b, 'with --apply the content is the revision exactly: SVG, iframe and backslashes kept' );
+$ok( count( wp_get_post_revisions( $cr_post ) ) === $cr_before + 1, 'the restore is saved as a revision of its own' );
+wp_delete_post( $cr_post, true );
+
 /* ----------------------------------------------------------------- report */
 
 echo "\n" . str_repeat( '-', 60 ) . "\n";
