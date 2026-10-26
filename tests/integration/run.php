@@ -5873,6 +5873,34 @@ delete_option( \DGL\Tools\MediaLocaliser::OPTION_MAP );
 wp_delete_post( $ml_page, true );
 wp_delete_post( $ml_news, true );
 
+$group( 'Content tidy: pasted styling taken out of stories' );
+
+$pt_words = '<span style="font-weight: 400;">Forum Central strives for healthier lives.</span>' . "\n\n" . '<span class="TextRun SCXW1 BCX8" data-contrast="auto">Word <b>bold</b> text</span>' . "\n&nbsp;";
+$pt_news  = $make_item( $org_a, $alice, Statuses::LIVE );
+set_post_type( $pt_news, PostTypes::NEWS );
+kses_remove_filters();
+wp_update_post( [ 'ID' => $pt_news, 'post_content' => wp_slash( $pt_words ) ] );
+kses_init_filters();
+$pt_page = wp_insert_post( [ 'post_type' => 'page', 'post_status' => 'publish', 'post_title' => 'Designed page', 'post_content' => '<p><span style="color:#d6262a">Designed</span></p>' ] );
+$pt_revs = count( wp_get_post_revisions( $pt_news ) );
+
+ob_start();
+( new \DGL\Tools\ContentCommand() )->tidy( [], [ 'post' => (string) $pt_news ] );
+ob_end_clean();
+clean_post_cache( $pt_news );
+$ok( $pt_words === (string) get_post_field( 'post_content', $pt_news, 'raw' ), 'a dry run changes nothing' );
+
+ob_start();
+( new \DGL\Tools\ContentCommand() )->tidy( [], [ 'apply' => '1', 'actor' => (string) $mod ] );
+ob_end_clean();
+clean_post_cache( $pt_news );
+clean_post_cache( $pt_page );
+$ok( 'Forum Central strives for healthier lives.' . "\n\n" . 'Word <strong>bold</strong> text' === (string) get_post_field( 'post_content', $pt_news, 'raw' ), 'the story keeps its words and bold, and loses the paste\'s spans, classes and spacer' );
+$ok( count( wp_get_post_revisions( $pt_news ) ) > $pt_revs, 'the version before is kept as a revision' );
+$ok( '<p><span style="color:#d6262a">Designed</span></p>' === (string) get_post_field( 'post_content', $pt_page, 'raw' ), 'a page is left alone' );
+wp_delete_post( $pt_page, true );
+wp_delete_post( $pt_news, true );
+
 $group( 'Content restore: back to one of the post\'s own revisions' );
 
 $cr_post = wp_insert_post( [ 'post_type' => 'page', 'post_status' => 'publish', 'post_title' => 'Restore test', 'post_content' => 'start' ] );

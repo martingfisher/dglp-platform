@@ -44,7 +44,7 @@ final class ExternalMedia {
 	public static function find( string $html, array $own_hosts ): array {
 		$plain = str_replace( '\\/', '/', $html );
 
-		if ( ! preg_match_all( '~https?://([a-z0-9.-]+)(/[^\s"\'<>()\\\\,]*)~i', $plain, $m, PREG_SET_ORDER | PREG_OFFSET_CAPTURE ) ) {
+		if ( ! preg_match_all( '~https?://([a-z0-9.-]+)(/[^\s"\'<>()\\\\,|]*)~i', $plain, $m, PREG_SET_ORDER | PREG_OFFSET_CAPTURE ) ) {
 			return [];
 		}
 
