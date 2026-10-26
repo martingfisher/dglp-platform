@@ -415,3 +415,22 @@ without topics: `wp dgl news suggest-topics --first` reports what their
 words suggest, and `--apply --actor=<id>` sets them.
 
 On the Wordify console `wp dgl` needs safe mode off.
+
+## After 0.57.0
+
+- The member area (`/dashboard/`, including sign-in, join, invitation and
+  unsubscribe) now says `noindex, nofollow` in the page, in an
+  `X-Robots-Tag` header, and as a `Disallow` in the virtual robots.txt. If a
+  physical robots.txt exists on the host, WordPress does not build one: add
+  `Disallow: /dashboard/` and the sitemap line by hand.
+- A sitemap for the routes no SEO plugin lists (directory, each listed
+  organisation, calendar, listing pages and spaces) is at `/dgl-sitemap.xml`.
+  The version bump flushes rewrites; if it answers 404, Settings >
+  Permalinks > Save. Check: `curl -I https://<site>/dgl-sitemap.xml` is 200
+  with `application/xml`, and robots.txt carries a `Sitemap:` line for it.
+  Submit it once in Google Search Console.
+- Events and training only describe an offer when there is a price: free is
+  0, paid or donation reads the first £ amount in "Cost detail". With no
+  amount there is no offer, because Google rejects one without a price.
+  Put the amount in Cost detail ("£12 per person").
+- Meta descriptions are cut at a word to 160 characters.

@@ -376,7 +376,7 @@ final class Seo {
 		$org    = Frontend::organisation( $post );
 		$title  = self::plain( (string) get_the_title( $post ) );
 		$url    = (string) get_permalink( $post );
-		$desc   = self::plain( Cards::summary( $post, 30 ) );
+		$desc   = self::clip( self::plain( Cards::summary( $post, 30 ) ) );
 		$image  = self::image_for_post( $post );
 		$is_doc = PostTypes::NEWS === $type;
 
@@ -494,7 +494,7 @@ final class Seo {
 		$values = Profile::values( $id );
 		$name   = self::plain( (string) get_the_title( $org ) );
 		$url    = self::org_url( $id );
-		$desc   = self::plain( (string) wp_trim_words( wp_strip_all_tags( (string) ( $values['org_description'] ?? '' ) ), 30, '…' ) );
+		$desc   = self::clip( self::plain( (string) wp_trim_words( wp_strip_all_tags( (string) ( $values['org_description'] ?? '' ) ), 30, '…' ) ) );
 		$image  = self::logo_of( $id ) ?? self::card( 'org-' . $id, $name, self::plain( (string) ( $values['org_city'] ?? '' ) ), __( 'Member organisation', 'dgl-platform' ) );
 
 		$entity = [
@@ -789,7 +789,7 @@ final class Seo {
 			$parts['location'] = 1 === count( $locations ) ? $locations[0] : $locations;
 		}
 
-		$offer = self::offer( (string) Frontend::value( $post, 'cost' ), Frontend::booking_url( $post ), (string) get_permalink( $post ) );
+		$offer = self::offer( (string) Frontend::value( $post, 'cost' ), (string) Frontend::value( $post, 'cost_detail' ), Frontend::booking_url( $post ), (string) get_permalink( $post ) );
 
 		if ( null !== $offer ) {
 			$parts['offers'] = $offer;
@@ -807,7 +807,7 @@ final class Seo {
 		$by       = '' !== $provider ? [ '@type' => 'Organization', 'name' => self::plain( $provider ) ] : $organiser;
 		$start    = (string) Frontend::value( $post, 'start_date' );
 		$delivery = (string) Frontend::value( $post, 'delivery' );
-		$offer    = self::offer( (string) Frontend::value( $post, 'cost' ), Frontend::booking_url( $post ), (string) get_permalink( $post ) );
+		$offer    = self::offer( (string) Frontend::value( $post, 'cost' ), (string) Frontend::value( $post, 'cost_detail' ), Frontend::booking_url( $post ), (string) get_permalink( $post ) );
 
 		// Dated training is an event you attend; undated is a course you can take.
 		if ( '' === $start ) {
@@ -963,25 +963,59 @@ final class Seo {
 	}
 
 	/**
+	 * An offer Google will accept: one with a price. Free is 0; paid or by
+	 * donation needs an amount in pounds, read from the cost detail ("£12 per
+	 * person"). With none, no offer is described rather than an invalid one.
+	 * Pure.
+	 *
 	 * @return array<string, mixed>|null
 	 */
-	private static function offer( string $cost, string $booking_url, string $page_url ): ?array {
-		if ( '' === $cost ) {
+	public static function offer( string $cost, string $detail, string $booking_url, string $page_url ): ?array {
+		$price = 'free' === $cost ? '0' : self::price_from( $detail );
+
+		if ( null === $price ) {
 			return null;
 		}
 
-		$offer = [
+		return [
 			'@type'         => 'Offer',
 			'url'           => '' !== $booking_url ? $booking_url : $page_url,
+			'price'         => $price,
 			'priceCurrency' => 'GBP',
-			'availability'  => 'https://schema.org/InStock',
 		];
+	}
 
-		if ( 'free' === $cost ) {
-			$offer['price'] = '0';
+	/**
+	 * The first amount in pounds in some text, as a plain number string, or
+	 * null. "£1,250.50 a day" is "1250.50". Pure.
+	 */
+	public static function price_from( string $text ): ?string {
+		if ( ! preg_match( '/£\s*(\d{1,3}(?:,\d{3})+|\d+)(\.\d{1,2})?/u', $text, $m ) ) {
+			return null;
 		}
 
-		return $offer;
+		return str_replace( ',', '', $m[1] ) . ( $m[2] ?? '' );
+	}
+
+	/**
+	 * Text cut to a description's length at a word, with an ellipsis when it
+	 * was cut. Pure.
+	 */
+	public static function clip( string $text, int $max = 160 ): string {
+		$text = trim( $text );
+
+		if ( mb_strlen( $text ) <= $max ) {
+			return $text;
+		}
+
+		$cut   = mb_substr( rtrim( $text, '…' ), 0, $max - 1 );
+		$space = mb_strrpos( $cut, ' ' );
+
+		if ( false !== $space && $space > (int) ( $max / 2 ) ) {
+			$cut = mb_substr( $cut, 0, $space );
+		}
+
+		return rtrim( $cut, " ,;:.-–—" ) . '…';
 	}
 
 	/** A wall-clock stamp in the site's timezone as ISO 8601 with offset, or ''. */
