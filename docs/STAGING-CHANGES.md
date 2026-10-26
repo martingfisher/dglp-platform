@@ -1751,3 +1751,19 @@ Wordify's `replace_in_post`; every page edit left a revision.
   move-legacy --fetched`. The member dashboard's "New submission" button,
   which only jumped to the links below it, is gone. The menu change she
   asked for is left with Manuel.
+
+## 27 October 2026: main and production brought back together
+
+- **What happened.** Two sessions worked in parallel on 26 October. One
+  shipped 0.56.3 (a fetched story's main picture no longer shows twice:
+  `ExternalMedia::drop_image`, `wp dgl media dedupe`) straight to production
+  from a branch whose pull request had already been merged, so the fix never
+  reached main. The other merged 0.57.0 (member area kept out of search,
+  `/dgl-sitemap.xml` for the plugin's own routes, offer prices, description
+  length) but did not deploy it. Main sat at 0.57.0 without the picture fix;
+  production sat at 0.56.3 without the SEO work.
+- **0.57.1 deployed.** Main plus the 0.56.3 commit, nothing else. Unit 2656
+  passed; integration 1654 passed. Production now matches main.
+- **Rule, saved to memory:** a branch whose pull request has merged is
+  finished. Further work starts a new branch from main, and nothing is
+  installed on production that is not on main.

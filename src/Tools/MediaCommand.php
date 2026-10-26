@@ -268,4 +268,65 @@ final class MediaCommand {
 			[] === $missing ? '.' : ' (ids ' . implode( ',', array_slice( array_keys( $missing ), 0, 60 ) ) . ( count( $missing ) > 60 ? ', ...' : '' ) . ').'
 		) );
 	}
+	/**
+	 * Take an item's main picture out of its words when it is there too, so
+	 * it shows once (the item page shows the main picture at the top). Every
+	 * listing type is looked at. Dry run unless --apply.
+	 *
+	 * ## OPTIONS
+	 *
+	 * [--apply]
+	 * : Take the copies out.
+	 *
+	 * [--post=<id>]
+	 * : Only this item.
+	 *
+	 * [--actor=<id>]
+	 * : User to record the change against. Default 0.
+	 *
+	 * @when after_wp_load
+	 */
+	public function dedupe( array $args, array $assoc ): void {
+		$apply = isset( $assoc['apply'] );
+		$actor = (int) ( $assoc['actor'] ?? 0 );
+		$only  = (int) ( $assoc['post'] ?? 0 );
+		$rows  = [];
+
+		$ids = get_posts(
+			[
+				'post_type'        => \DGL\PostTypes::submittable(),
+				'post_status'      => array_values( array_diff( array_keys( get_post_stati() ), [ 'trash', 'auto-draft', 'inherit' ] ) ),
+				'posts_per_page'   => -1,
+				'fields'           => 'ids',
+				'include'          => $only > 0 ? [ $only ] : [],
+				'meta_key'         => 'dgl_image', // phpcs:ignore WordPress.DB.SlowDBQuery
+				'suppress_filters' => true,
+			]
+		);
+
+		foreach ( $ids as $id ) {
+			$post = get_post( (int) $id );
+
+			if ( ! $post instanceof \WP_Post || false === stripos( (string) $post->post_content, '<img' ) ) {
+				continue;
+			}
+
+			$result = MediaLocaliser::dedupe_post( $post, $apply, $actor );
+
+			if ( '' !== $result['error'] ) {
+				WP_CLI::warning( sprintf( 'Post %d not saved: %s', (int) $id, $result['error'] ) );
+				continue;
+			}
+
+			if ( $result['removed'] > 0 ) {
+				$rows[] = [ 'post' => (int) $id, 'title' => mb_substr( (string) $post->post_title, 0, 70 ), 'copies' => $result['removed'] ];
+			}
+		}
+
+		if ( [] !== $rows ) {
+			\WP_CLI\Utils\format_items( 'table', $rows, [ 'post', 'title', 'copies' ] );
+		}
+
+		WP_CLI::success( sprintf( '%s: %d item(s) showed their main picture twice.', $apply ? 'Applied' : 'Dry run, nothing written', count( $rows ) ) );
+	}
 }

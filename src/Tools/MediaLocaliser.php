@@ -366,6 +366,14 @@ final class MediaLocaliser {
 		if ( $out['featured'] > 0 ) {
 			set_post_thumbnail( (int) $post->ID, $out['featured'] );
 			update_post_meta( (int) $post->ID, 'dgl_image', $out['featured'] );
+
+			// The item page shows the main picture at the top, so the copy in
+			// the words would show it twice.
+			$fresh = get_post( (int) $post->ID );
+
+			if ( $fresh instanceof WP_Post ) {
+				self::dedupe_post( $fresh, true, $actor );
+			}
 		}
 
 		$changes = [];
@@ -472,5 +480,57 @@ final class MediaLocaliser {
 
 			++$page;
 		} while ( 200 === count( $batch ) );
+	}
+	/**
+	 * The paths an attachment's file is served at: the file itself and, for a
+	 * large picture WordPress scaled down, the original it kept.
+	 *
+	 * @return string[]
+	 */
+	public static function paths_of( int $id ): array {
+		$base  = '/wp-content/uploads/';
+		$file  = (string) get_post_meta( $id, '_wp_attached_file', true );
+		$paths = '' !== $file ? [ $base . ltrim( $file, '/' ) ] : [];
+		$meta  = wp_get_attachment_metadata( $id );
+
+		if ( is_array( $meta ) && '' !== (string) ( $meta['original_image'] ?? '' ) && '' !== $file ) {
+			$paths[] = $base . ltrim( dirname( $file ) . '/' . $meta['original_image'], './' );
+		}
+
+		return array_values( array_unique( $paths ) );
+	}
+
+	/**
+	 * Take a story's main picture out of its words when it is there too, so
+	 * it shows once. Each change is a revision and an audit row.
+	 *
+	 * @return array{removed: int, error: string}
+	 */
+	public static function dedupe_post( WP_Post $post, bool $apply, int $actor = 0 ): array {
+		$picture = (int) get_post_meta( (int) $post->ID, 'dgl_image', true );
+
+		if ( $picture <= 0 ) {
+			return [ 'removed' => 0, 'error' => '' ];
+		}
+
+		$result = ExternalMedia::drop_image( (string) $post->post_content, $picture, self::paths_of( $picture ) );
+
+		if ( 0 === $result['removed'] || ! $apply ) {
+			return [ 'removed' => $result['removed'], 'error' => '' ];
+		}
+
+		kses_remove_filters();
+		$saved = wp_update_post( [ 'ID' => (int) $post->ID, 'post_content' => wp_slash( $result['html'] ) ], true );
+		kses_init_filters();
+
+		if ( is_wp_error( $saved ) ) {
+			return [ 'removed' => 0, 'error' => $saved->get_error_message() ];
+		}
+
+		clean_post_cache( (int) $post->ID );
+
+		Log::record( 'media_deduped', 'item', (int) $post->ID, Org::for_item( (int) $post->ID ), sprintf( 'The main picture was also in the words; %d copy taken out. The previous version is a revision.', $result['removed'] ), [], $actor );
+
+		return [ 'removed' => $result['removed'], 'error' => '' ];
 	}
 }
