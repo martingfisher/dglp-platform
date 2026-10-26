@@ -68,3 +68,25 @@ Harness::assert_true( str_contains( $filled, '<img alt="A &quot;quoted&quot; wor
 
 Harness::assert_same( 'https://x.test/wp-content/uploads/p.png', ExternalMedia::first_picture( '<a href="https://x.test/wp-content/uploads/f.pdf">f</a><img src="https://x.test/wp-content/uploads/p.png">', [ 'y.test' ] ), 'the first picture shown is a news item\'s fallback picture' );
 Harness::assert_same( '', ExternalMedia::first_picture( '<a href="https://x.test/wp-content/uploads/p.png">p</a>', [ 'y.test' ] ), 'a linked picture is not one the item shows' );
+
+Harness::group( 'External media: a picture that is also the main picture' );
+
+$dup_paths = [ '/wp-content/uploads/2026/10/market.jpg' ];
+
+$d = ExternalMedia::drop_image( "<p>Words before.</p>\n\n<p><img class=\"alignnone wp-image-501\" src=\"https://site.test/wp-content/uploads/2026/10/market.jpg\" alt=\"Market\" width=\"509\" /></p>\n<p>Young Marketeers Leeds Market Day 2026</p>", 501, $dup_paths );
+Harness::assert_same( "<p>Words before.</p>\n\n<p>Young Marketeers Leeds Market Day 2026</p>", $d['html'], 'the picture and the paragraph that held only it go; the words stay' );
+Harness::assert_same( 1, $d['removed'], 'and it is counted' );
+
+$d = ExternalMedia::drop_image( 'Intro.<a href="https://site.test/wp-content/uploads/2026/10/market.jpg"><img src="https://cdn.test/wp-content/uploads/2026/10/market-300x219.jpg" alt=""></a> More.', 0, $dup_paths );
+Harness::assert_same( 'Intro. More.', $d['html'], 'a smaller size on the CDN, inside a link that held only it, is the same picture' );
+
+$d = ExternalMedia::drop_image( '<!-- wp:image {"id":501} --><figure class="wp-block-image"><img src="x.jpg" class="wp-image-501"/><figcaption>Caption</figcaption></figure><!-- /wp:image --><p>Text</p>', 501, [] );
+Harness::assert_same( '<p>Text</p>', $d['html'], 'an image block goes whole, caption and all' );
+
+$d = ExternalMedia::drop_image( '[caption id="attachment_501" width="300"]<img class="wp-image-501" src="x.jpg" /> A caption[/caption]Text after', 501, [] );
+Harness::assert_same( 'Text after', $d['html'], 'a [caption] shortcode goes whole' );
+
+$keep = '<p><img class="wp-image-77" src="https://site.test/wp-content/uploads/2026/10/other.jpg" alt="Other"></p><p><a href="/x">A link <img src="https://site.test/wp-content/uploads/2026/10/market.jpg"> with words</a></p>';
+$d    = ExternalMedia::drop_image( $keep, 501, $dup_paths );
+Harness::assert_true( str_contains( $d['html'], 'other.jpg' ) && str_contains( $d['html'], '<a href="/x">A link ' ) && str_contains( $d['html'], ' with words</a>' ) && ! str_contains( $d['html'], 'market.jpg' ), 'other pictures stay, and a link with words keeps its words when its picture goes' );
+Harness::assert_same( [ 'html' => '<p>Nothing here</p>', 'removed' => 0 ], ExternalMedia::drop_image( '<p>Nothing here</p>', 501, $dup_paths ), 'words without the picture are returned as they were' );

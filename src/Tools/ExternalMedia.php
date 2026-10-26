@@ -240,6 +240,72 @@ final class ExternalMedia {
 	}
 
 	/**
+	 * Take out every img that shows a given attachment: tagged wp-image-<id>,
+	 * or with an address whose path (any WordPress size of it) is one of the
+	 * attachment's own. Whatever only held it goes too: a link round it, a
+	 * paragraph left with nothing else, its figure (caption and all), its
+	 * [caption] shortcode and an image block left empty. For a story whose
+	 * main picture also sits in its words, so it showed twice.
+	 *
+	 * @param string[] $paths The attachment's file paths, e.g. /wp-content/uploads/2026/10/photo.jpg.
+	 * @return array{html: string, removed: int}
+	 */
+	public static function drop_image( string $html, int $id, array $paths ): array {
+		$mark    = "\x00dgl-dropped\x00";
+		$removed = 0;
+		$paths   = array_map( 'strtolower', $paths );
+
+		$out = (string) preg_replace_callback(
+			'~(<a\b[^>]*>\s*)?(<img\b[^>]*>)(\s*</a>)?~i',
+			static function ( array $m ) use ( $id, $paths, $mark, &$removed ): string {
+				$tag     = $m[2];
+				$tagged  = $id > 0 && 1 === preg_match( '~\bwp-image-' . $id . '\b~', $tag );
+				$by_path = false;
+
+				if ( preg_match( '~\bsrc\s*=\s*(["\'])(.*?)\1~i', $tag, $s ) ) {
+					$path    = strtolower( self::path( self::full_size( $s[2] ) ) );
+					$by_path = '' !== $path && in_array( $path, $paths, true );
+				}
+
+				if ( ! $tagged && ! $by_path ) {
+					return $m[0];
+				}
+
+				++$removed;
+				$open  = $m[1] ?? '';
+				$close = $m[3] ?? '';
+
+				// A link that held only this picture goes with it; one that also
+				// held other things keeps its own ends.
+				if ( '' !== $open && '' !== $close ) {
+					return $mark;
+				}
+
+				return $open . $mark . $close;
+			},
+			$html
+		);
+
+		if ( 0 === $removed ) {
+			return [ 'html' => $html, 'removed' => 0 ];
+		}
+
+		$q = preg_quote( $mark, '~' );
+
+		// The containers that held only the picture.
+		$out = (string) preg_replace( '~\[caption\b[^\]]*\][^\[]*?' . $q . '.*?\[/caption\]~is', $mark, $out );
+		$out = (string) preg_replace( '~<figure\b[^>]*>(?:(?!</figure>).)*?' . $q . '.*?</figure>~is', $mark, $out );
+		$out = (string) preg_replace( '~<p\b[^>]*>(?:\s|&nbsp;|<br\s*/?>)*' . $q . '(?:\s|&nbsp;|<br\s*/?>)*</p>~i', $mark, $out );
+		$out = (string) preg_replace( '~<!--\s*wp:image\b[^>]*?-->\s*' . $q . '\s*<!--\s*/wp:image\s*-->~i', '', $out );
+		// On its own line it leaves one line ending; mid-line, nothing, since
+		// a stray line break in classic content shows as a <br>.
+		$out = (string) preg_replace( '~\n' . $q . '\n~', "\n", $out );
+		$out = str_replace( $mark, '', $out );
+
+		return [ 'html' => trim( (string) preg_replace( "~\n{3,}~", "\n\n", $out ) ), 'removed' => $removed ];
+	}
+
+	/**
 	 * The first picture the content shows from another site, or ''. For a
 	 * news item that has none of its own.
 	 *

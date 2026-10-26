@@ -5849,11 +5849,27 @@ $ml_report = (int) ( $ml_map['https://forumcentral.org.uk/wp-content/uploads/202
 $ml_hero   = (int) ( $ml_map['https://cdn-doinggood.b-cdn.net/wp-content/uploads/2024/05/ml-hero.png'] ?? 0 );
 $ok( $ml_market > 0 && $ml_parcel > 0 && $ml_report > 0 && $ml_hero > 0 && 'attachment' === get_post_type( $ml_report ) && 'application/pdf' === get_post_mime_type( $ml_report ), 'each file is in the library, the PDF as a PDF' );
 $ok( $ml_news === (int) get_post( $ml_market )->post_parent && 'https://doinggoodleeds.org.uk/wp-content/uploads/2026/10/ml-market.png' === (string) get_post_meta( $ml_market, \DGL\Tools\MediaLocaliser::META_SOURCE, true ) && file_exists( (string) get_attached_file( $ml_market ) ), 'attached to the item, with where it came from' );
-$ok( str_contains( $ml_now, 'wp-image-' . $ml_market ) && ! str_contains( $ml_now, 'wp-image-112662' ) && ! str_contains( $ml_now, 'srcset=' ) && str_contains( $ml_now, (string) wp_get_attachment_url( $ml_market ) ), 'the img shows the copy, tagged with it, without the old sizes list' );
+$ok( str_contains( $ml_now, 'wp-image-' . $ml_parcel ) && ! str_contains( $ml_now, 'wp-image-555' ) && ! str_contains( $ml_now, 'wp-image-112662' ) && ! str_contains( $ml_now, 'srcset=' ) && str_contains( $ml_now, (string) wp_get_attachment_url( $ml_parcel ) ), 'the img shows the copy, tagged with it, without the old sizes list' );
 $ok( str_contains( $ml_now, str_replace( '/', '\/', (string) wp_get_attachment_url( $ml_hero ) ) ), 'the block setting points at its copy, still escaped' );
 $ok( 'Children at the market' === (string) get_post_meta( $ml_market, '_wp_attachment_image_alt', true ), 'a copy takes the alt text its tag had' );
 $ok( 'Volunteers sorting food parcels' === (string) get_post_meta( $ml_parcel, '_wp_attachment_image_alt', true ) && str_contains( $ml_now, 'alt="Volunteers sorting food parcels"' ), 'with none in the tag, it takes the old library\'s alt text, and the tag is filled in' );
 $ok( $ml_market === (int) get_post_meta( $ml_news, 'dgl_image', true ) && $ml_market === (int) get_post_thumbnail_id( $ml_news ), 'a news item without a picture takes the first one in its words' );
+clean_post_cache( $ml_news );
+$ml_after = (string) get_post_field( 'post_content', $ml_news, 'raw' );
+$ok( ! str_contains( $ml_after, 'wp-image-' . $ml_market ) && str_contains( $ml_after, 'wp-image-' . $ml_parcel ), 'and its copy in the words goes, so it shows once; the other pictures stay' );
+$ml_twice = $make_item( $org_a, $alice, Statuses::LIVE );
+set_post_type( $ml_twice, PostTypes::NEWS );
+update_post_meta( $ml_twice, 'dgl_image', $ml_parcel );
+kses_remove_filters();
+wp_update_post( [ 'ID' => $ml_twice, 'post_content' => wp_slash( '<p>Story.</p><p><img class="wp-image-' . $ml_parcel . '" src="' . esc_url( (string) wp_get_attachment_url( $ml_parcel ) ) . '" alt="" /></p>' ) ] );
+kses_init_filters();
+$ml_dry = \DGL\Tools\MediaLocaliser::dedupe_post( get_post( $ml_twice ), false );
+clean_post_cache( $ml_twice );
+$ok( 1 === $ml_dry['removed'] && str_contains( (string) get_post_field( 'post_content', $ml_twice, 'raw' ), 'wp-image-' . $ml_parcel ), 'a dry run finds the copy and leaves it' );
+$ml_dd = \DGL\Tools\MediaLocaliser::dedupe_post( get_post( $ml_twice ), true, $mod );
+clean_post_cache( $ml_twice );
+$ok( 1 === $ml_dd['removed'] && '<p>Story.</p>' === (string) get_post_field( 'post_content', $ml_twice, 'raw' ), 'applied, the story keeps its words and loses the second copy' );
+wp_delete_post( $ml_twice, true );
 
 $ml_again = \DGL\Tools\MediaLocaliser::attachment_for( 'https://doinggoodleeds.org.uk/wp-content/uploads/2026/10/ml-market-768x560.png', $ml_news, true );
 $ok( is_array( $ml_again ) && $ml_market === $ml_again['id'] && 'copied before' === $ml_again['how'], 'another size of a file copied before is the same copy, not a second one' );
