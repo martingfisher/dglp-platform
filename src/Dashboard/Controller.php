@@ -313,7 +313,7 @@ final class Controller {
 				// reads as a decision that did not happen.
 				'decided' => isset( $_GET['decided'] ) ? sanitize_key( wp_unslash( $_GET['decided'] ) ) : '', // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 				'user'  => $user,
-				'items' => array_map( static fn( int $id ): array => self::row( $id, true ), $ids ),
+				'items' => array_values( array_filter( array_map( static fn( int $id ): array => self::row( $id, true ), $ids ) ) ),
 				// Organisations asking to change their name or logo. Same queue,
 				// same people, so the same screen.
 				'org_changes' => self::org_change_rows(),
@@ -958,7 +958,7 @@ final class Controller {
 			'review-decided',
 			[
 				'user'    => $user,
-				'items'   => array_map( static fn( int $id ): array => self::row( $id, true ), ItemsTable::decided( $filter, 50, $paging['offset'] ) ),
+				'items'   => array_values( array_filter( array_map( static fn( int $id ): array => self::row( $id, true ), ItemsTable::decided( $filter, 50, $paging['offset'] ) ) ) ),
 				'counts'  => $counts,
 				'active'  => $status,
 			] + $paging,

@@ -5788,6 +5788,132 @@ foreach ( [ $rf_a, $rf_b ] as $rf_id ) {
 	}
 }
 
+$group( 'Files from other sites: copied here, words pointed at the copies' );
+
+$ml_png  = (string) base64_decode( 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==' );
+$ml_pdf  = "%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF\n";
+$ml_urls = [];
+$ml_stub = static function ( $pre, $args, $url ) use ( &$ml_urls, $ml_png, $ml_pdf ) {
+	$ml_urls[] = $url;
+	if ( str_contains( $url, '/wp-json/wp/v2/media/555' ) ) {
+		return [ 'headers' => [], 'response' => [ 'code' => 200, 'message' => 'OK' ], 'body' => wp_json_encode( [ 'alt_text' => 'Volunteers sorting food parcels', 'source_url' => 'https://doinggoodleeds.org.uk/wp-content/uploads/2026/10/ml-parcels.png' ] ), 'cookies' => [] ];
+	}
+	if ( str_contains( $url, 'ml-missing' ) ) {
+		return [ 'headers' => [], 'response' => [ 'code' => 404, 'message' => 'Not Found' ], 'body' => '', 'cookies' => [] ];
+	}
+	if ( str_contains( $url, '/wp-content/uploads/' ) || str_ends_with( $url, '.pdf' ) ) {
+		$pdf  = str_ends_with( $url, '.pdf' );
+		$body = $pdf ? $ml_pdf : $ml_png;
+		if ( ! empty( $args['stream'] ) && ! empty( $args['filename'] ) ) {
+			file_put_contents( $args['filename'], $body );
+		}
+		return [ 'headers' => [ 'content-type' => $pdf ? 'application/pdf' : 'image/png' ], 'response' => [ 'code' => 200, 'message' => 'OK' ], 'body' => $body, 'cookies' => [], 'filename' => $args['filename'] ?? null ];
+	}
+	return $pre;
+};
+add_filter( 'pre_http_request', $ml_stub, 10, 3 );
+
+$ml_words = '<p><img class="alignnone wp-image-112662" src="https://doinggoodleeds.org.uk/wp-content/uploads/2026/10/ml-market-300x219.png" alt="Children at the market" srcset="https://doinggoodleeds.org.uk/wp-content/uploads/2026/10/ml-market-300x219.png 300w, https://doinggoodleeds.org.uk/wp-content/uploads/2026/10/ml-market-1024x747.png 1024w" sizes="(max-width: 509px) 100vw, 509px" width="509" height="372" /></p>'
+	. '<p><img class="wp-image-555" src="https://doinggoodleeds.org.uk/wp-content/uploads/2026/10/ml-parcels-300x200.png" alt="" /></p>'
+	. '<p>Read <a href="https://forumcentral.org.uk/wp-content/uploads/2025/03/ml-report.pdf">the report</a> and <a href="https://www.england.nhs.uk/ml-plan.pdf">the plan</a>.</p>'
+	. '<p><img src="https://doinggoodleeds.org.uk/wp-content/uploads/2026/10/ml-missing.png" alt="Gone" /></p>'
+	. '<!-- wp:greenshift-blocks/image {"url":"https:\/\/cdn-doinggood.b-cdn.net\/wp-content\/uploads\/2024\/05\/ml-hero.png"} /-->';
+
+$ml_news = $make_item( $org_a, $alice, Statuses::LIVE );
+set_post_type( $ml_news, PostTypes::NEWS );
+kses_remove_filters();
+wp_update_post( [ 'ID' => $ml_news, 'post_content' => wp_slash( $ml_words ) ] );
+kses_init_filters();
+delete_post_meta( $ml_news, 'dgl_image' );
+$ml_post = get_post( $ml_news );
+$ml_refs = \DGL\Tools\ExternalMedia::find( (string) $ml_post->post_content, \DGL\Tools\MediaLocaliser::own_hosts() );
+$ok( 7 === count( $ml_refs ), 'every file from another site is found: two sizes, a second picture, two PDFs, a missing one and a block picture (' . count( $ml_refs ) . ')' );
+
+$ml_dry = \DGL\Tools\MediaLocaliser::localise_post( $ml_post, $ml_refs, false, true );
+clean_post_cache( $ml_news );
+$ok( ! $ml_dry['changed'] && $ml_words === (string) get_post_field( 'post_content', $ml_news, 'raw' ) && [] === array_filter( $ml_urls, static fn( string $u ): bool => str_contains( $u, '/wp-content/uploads/' ) ), 'a dry run fetches and writes nothing' );
+
+$ml_run = \DGL\Tools\MediaLocaliser::localise_post( $ml_post, $ml_refs, true, true, $mod );
+clean_post_cache( $ml_news );
+$ml_now = (string) get_post_field( 'post_content', $ml_news, 'raw' );
+$ok( $ml_run['changed'] && '' === $ml_run['error'], 'the words are rewritten (' . $ml_run['error'] . ')' );
+$ok( ! str_contains( $ml_now, 'doinggoodleeds.org.uk/wp-content/uploads/2026/10/ml-market' ) && ! str_contains( $ml_now, 'cdn-doinggood' ) && ! str_contains( $ml_now, 'forumcentral.org.uk' ) && ! str_contains( $ml_now, 'ml-parcels-300x200' ), 'nothing in them loads from the old sites any more' );
+$ok( str_contains( $ml_now, 'https://www.england.nhs.uk/ml-plan.pdf' ), 'a link to another organisation\'s document is left as it is' );
+$ok( str_contains( $ml_now, 'ml-missing.png' ) && 1 === count( array_filter( $ml_run['files'], static fn( array $f ): bool => str_starts_with( $f['how'], 'FAILED' ) ) ), 'a file the old site no longer has is reported and its address kept' );
+$ok( 1 === count( array_filter( $ml_urls, static fn( string $u ): bool => str_ends_with( $u, '/ml-market.png' ) ) ) && [] === array_filter( $ml_urls, static fn( string $u ): bool => str_contains( $u, 'ml-market-1024x747' ) ), 'both sizes come from one full-size copy, fetched once' );
+
+$ml_map    = (array) get_option( \DGL\Tools\MediaLocaliser::OPTION_MAP, [] );
+$ml_market = (int) ( $ml_map['https://doinggoodleeds.org.uk/wp-content/uploads/2026/10/ml-market.png'] ?? 0 );
+$ml_parcel = (int) ( $ml_map['https://doinggoodleeds.org.uk/wp-content/uploads/2026/10/ml-parcels.png'] ?? 0 );
+$ml_report = (int) ( $ml_map['https://forumcentral.org.uk/wp-content/uploads/2025/03/ml-report.pdf'] ?? 0 );
+$ml_hero   = (int) ( $ml_map['https://cdn-doinggood.b-cdn.net/wp-content/uploads/2024/05/ml-hero.png'] ?? 0 );
+$ok( $ml_market > 0 && $ml_parcel > 0 && $ml_report > 0 && $ml_hero > 0 && 'attachment' === get_post_type( $ml_report ) && 'application/pdf' === get_post_mime_type( $ml_report ), 'each file is in the library, the PDF as a PDF' );
+$ok( $ml_news === (int) get_post( $ml_market )->post_parent && 'https://doinggoodleeds.org.uk/wp-content/uploads/2026/10/ml-market.png' === (string) get_post_meta( $ml_market, \DGL\Tools\MediaLocaliser::META_SOURCE, true ) && file_exists( (string) get_attached_file( $ml_market ) ), 'attached to the item, with where it came from' );
+$ok( str_contains( $ml_now, 'wp-image-' . $ml_market ) && ! str_contains( $ml_now, 'wp-image-112662' ) && ! str_contains( $ml_now, 'srcset=' ) && str_contains( $ml_now, (string) wp_get_attachment_url( $ml_market ) ), 'the img shows the copy, tagged with it, without the old sizes list' );
+$ok( str_contains( $ml_now, str_replace( '/', '\/', (string) wp_get_attachment_url( $ml_hero ) ) ), 'the block setting points at its copy, still escaped' );
+$ok( 'Children at the market' === (string) get_post_meta( $ml_market, '_wp_attachment_image_alt', true ), 'a copy takes the alt text its tag had' );
+$ok( 'Volunteers sorting food parcels' === (string) get_post_meta( $ml_parcel, '_wp_attachment_image_alt', true ) && str_contains( $ml_now, 'alt="Volunteers sorting food parcels"' ), 'with none in the tag, it takes the old library\'s alt text, and the tag is filled in' );
+$ok( $ml_market === (int) get_post_meta( $ml_news, 'dgl_image', true ) && $ml_market === (int) get_post_thumbnail_id( $ml_news ), 'a news item without a picture takes the first one in its words' );
+
+$ml_again = \DGL\Tools\MediaLocaliser::attachment_for( 'https://doinggoodleeds.org.uk/wp-content/uploads/2026/10/ml-market-768x560.png', $ml_news, true );
+$ok( is_array( $ml_again ) && $ml_market === $ml_again['id'] && 'copied before' === $ml_again['how'], 'another size of a file copied before is the same copy, not a second one' );
+
+$ml_page = wp_insert_post( [ 'post_type' => 'page', 'post_status' => 'publish', 'post_title' => 'Alt fill', 'post_content' => '<p><img class="wp-image-' . $ml_parcel . '" src="' . esc_url( (string) wp_get_attachment_url( $ml_parcel ) ) . '" alt="" /></p>' ] );
+$ml_fill = \DGL\Tools\MediaLocaliser::fill_alts( get_post( $ml_page ), true );
+clean_post_cache( $ml_page );
+$ok( 1 === $ml_fill['filled'] && str_contains( (string) get_post_field( 'post_content', $ml_page, 'raw' ), 'alt="Volunteers sorting food parcels"' ), 'a picture from the library shown with empty alt text takes the library\'s alt text' );
+
+remove_filter( 'pre_http_request', $ml_stub, 10 );
+foreach ( [ $ml_market, $ml_parcel, $ml_report, $ml_hero ] as $ml_id ) {
+	if ( $ml_id > 0 ) {
+		wp_delete_attachment( $ml_id, true );
+	}
+}
+delete_option( \DGL\Tools\MediaLocaliser::OPTION_MAP );
+wp_delete_post( $ml_page, true );
+wp_delete_post( $ml_news, true );
+
+$group( 'Content tidy: pasted styling taken out of stories' );
+
+$pt_words = '<span style="font-weight: 400;">Forum Central strives for healthier lives.</span>' . "\n\n" . '<span class="TextRun SCXW1 BCX8" data-contrast="auto">Word <b>bold</b> text</span>' . "\n&nbsp;";
+$pt_news  = $make_item( $org_a, $alice, Statuses::LIVE );
+set_post_type( $pt_news, PostTypes::NEWS );
+kses_remove_filters();
+wp_update_post( [ 'ID' => $pt_news, 'post_content' => wp_slash( $pt_words ) ] );
+kses_init_filters();
+$pt_page = wp_insert_post( [ 'post_type' => 'page', 'post_status' => 'publish', 'post_title' => 'Designed page', 'post_content' => '<p><span style="color:#d6262a">Designed</span></p>' ] );
+$pt_revs = count( wp_get_post_revisions( $pt_news ) );
+
+ob_start();
+( new \DGL\Tools\ContentCommand() )->tidy( [], [ 'post' => (string) $pt_news ] );
+ob_end_clean();
+clean_post_cache( $pt_news );
+$ok( $pt_words === (string) get_post_field( 'post_content', $pt_news, 'raw' ), 'a dry run changes nothing' );
+
+ob_start();
+( new \DGL\Tools\ContentCommand() )->tidy( [], [ 'apply' => '1', 'actor' => (string) $mod ] );
+ob_end_clean();
+clean_post_cache( $pt_news );
+clean_post_cache( $pt_page );
+$ok( 'Forum Central strives for healthier lives.' . "\n\n" . 'Word <strong>bold</strong> text' === (string) get_post_field( 'post_content', $pt_news, 'raw' ), 'the story keeps its words and bold, and loses the paste\'s spans, classes and spacer' );
+$ok( count( wp_get_post_revisions( $pt_news ) ) > $pt_revs, 'the version before is kept as a revision' );
+$ok( '<p><span style="color:#d6262a">Designed</span></p>' === (string) get_post_field( 'post_content', $pt_page, 'raw' ), 'a page is left alone' );
+wp_delete_post( $pt_page, true );
+wp_delete_post( $pt_news, true );
+
+$group( 'Index: rows for posts that are gone' );
+
+global $wpdb;
+$or_ghost = 999999;
+$wpdb->insert( \DGL\Index\ItemsTable::name(), [ 'post_id' => $or_ghost, 'post_type' => PostTypes::EVENT, 'status' => Statuses::PENDING, 'org_id' => $org_a, 'submitted_at' => gmdate( 'Y-m-d H:i:s', 1 ) ] );
+$ok( in_array( $or_ghost, \DGL\Index\ItemsTable::queue( null, 500 ), true ), 'a row left behind by a post deleted without its hooks sits in the queue' );
+$or_bad  = \DGL\Dashboard\View::render( 'dashboard/list-table', [ 'items' => [ [] ], 'action' => 'Review' ] );
+$ok( str_contains( $or_bad, 'Something went wrong' ), 'an empty row (a post that is gone) is what broke the list' );
+$or_html = \DGL\Dashboard\View::render( 'dashboard/list-table', [ 'items' => array_values( array_filter( [ [] ] ) ), 'action' => 'Review' ] );
+$ok( ! str_contains( $or_html, 'Something went wrong' ), 'the list renders once empty rows are left out' );
+$ok( 1 <= \DGL\Index\ItemsTable::prune_orphans() && ! in_array( $or_ghost, \DGL\Index\ItemsTable::queue( null, 500 ), true ), 'pruning removes it' );
+$ok( 0 === \DGL\Index\ItemsTable::prune_orphans(), 'and a second prune finds nothing' );
+
 $group( 'Content restore: back to one of the post\'s own revisions' );
 
 $cr_post = wp_insert_post( [ 'post_type' => 'page', 'post_status' => 'publish', 'post_title' => 'Restore test', 'post_content' => 'start' ] );

@@ -36,6 +36,8 @@ require __DIR__ . '/test-uploads.php';
 require __DIR__ . '/test-joining.php';
 require __DIR__ . '/test-duplicates.php';
 require __DIR__ . '/test-deadlinks.php';
+require __DIR__ . '/test-external-media.php';
+require __DIR__ . '/test-paste-tidy.php';
 require __DIR__ . '/test-topics.php';
 require __DIR__ . '/test-spaces.php';
 require __DIR__ . '/test-security.php';

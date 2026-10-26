@@ -494,7 +494,7 @@
 
 .dgl-hero__lead:hover .dgl-hero__more { background: var(--dgl-page); }
 
-.dgl-hero__lead:focus-within { outline: 3px solid var(--dgl-focus); outline-offset: 2px; }
+.dgl-hero__lead:has(a:focus-visible) { outline: 3px solid var(--dgl-focus); outline-offset: 2px; }
 
 .dgl-hero__side {
 	display: grid;
@@ -662,10 +662,18 @@
 .dgl-card__title a::after { content: ""; position: absolute; inset: 0; border-radius: var(--dgl-radius-card); }
 
 .dgl-card__title a:hover,
-.dgl-card__title a:focus { text-decoration: underline; text-underline-offset: 3px; }
+.dgl-card__title a:focus-visible { text-decoration: underline; text-underline-offset: 3px; }
 
-.dgl-card:focus-within,
-.dgl-hero__item:focus-within { outline: 3px solid var(--dgl-focus); outline-offset: 2px; border-radius: var(--dgl-radius-card); }
+/* Hover and keyboard focus tint the card; a click leaves no frame. The tint
+   is a shadow, so the card does not move. Keyboard users also get the title
+   underline above. */
+.dgl-card:hover,
+.dgl-card:has(.dgl-card__title a:focus-visible),
+.dgl-hero__item:has(.dgl-card__title a:focus-visible) {
+	background: color-mix(in srgb, var(--dgl-navy) 5%, transparent);
+	box-shadow: 0 0 0 12px color-mix(in srgb, var(--dgl-navy) 5%, transparent);
+	border-radius: 12px;
+}
 
 .dgl-card:hover .dgl-card__img { filter: brightness(0.94); }
 

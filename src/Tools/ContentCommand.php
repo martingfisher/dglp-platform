@@ -9,6 +9,9 @@ declare( strict_types=1 );
 
 namespace DGL\Tools;
 
+use DGL\Audit\Log;
+use DGL\Org\Org;
+use DGL\PostTypes;
 use WP_CLI;
 
 defined( 'ABSPATH' ) || exit;
@@ -307,5 +310,138 @@ final class ContentCommand {
 		$out['result'] = $result;
 
 		return $out;
+	}
+	/**
+	 * Take the styling a paste from Word, Google Docs or the old theme left
+	 * in stories, events, training, volunteering and old posts.
+	 *
+	 * Unwraps pasted spans and font tags, turns b and i into strong and em,
+	 * keeps bold and italic a span's style gave, keeps text alignment and the
+	 * site's own classes, drops pasted fonts, sizes, colours, spacing, Word's
+	 * classes and data attributes, and removes empty spacer paragraphs.
+	 * Pages and anything built with page-builder blocks are left alone.
+	 * Each change is saved as a new revision, so it can be undone with
+	 * `wp dgl content restore`. Dry run unless --apply.
+	 *
+	 * ## OPTIONS
+	 *
+	 * [--apply]
+	 * : Save the tidied words.
+	 *
+	 * [--post=<id>]
+	 * : Only this post. With it, the dry run prints the words before and after.
+	 *
+	 * [--limit=<n>]
+	 * : Stop after this many changed posts.
+	 *
+	 * [--actor=<id>]
+	 * : User to record the change against. Default 0.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp dgl content tidy
+	 *     wp dgl content tidy --post=6918
+	 *     wp dgl content tidy --apply --limit=50 --actor=1
+	 *
+	 * @when after_wp_load
+	 *
+	 * @param string[]              $args
+	 * @param array<string, string> $assoc
+	 */
+	public function tidy( array $args, array $assoc ): void {
+		$apply  = isset( $assoc['apply'] );
+		$only   = (int) ( $assoc['post'] ?? 0 );
+		$limit  = (int) ( $assoc['limit'] ?? 0 );
+		$actor  = (int) ( $assoc['actor'] ?? 0 );
+		$types  = [ PostTypes::NEWS, PostTypes::EVENT, PostTypes::TRAINING, PostTypes::VOLUNTEERING, 'post' ];
+		$status = array_values( array_diff( array_keys( get_post_stati() ), [ 'trash', 'auto-draft', 'inherit' ] ) );
+		$rows   = [];
+		$sum    = [ 'spans' => 0, 'styles' => 0, 'attributes' => 0, 'bold_italic' => 0, 'spacers' => 0 ];
+		$posts  = 0;
+		$page   = 1;
+
+		do {
+			$batch = get_posts( [ 'post_type' => $types, 'post_status' => $status, 'posts_per_page' => 200, 'paged' => $page, 'orderby' => 'ID', 'order' => 'ASC', 'include' => $only > 0 ? [ $only ] : [], 'suppress_filters' => true ] );
+
+			foreach ( $batch as $post ) {
+				$before = (string) $post->post_content;
+
+				if ( ! PasteTidy::needs_tidy( $before ) || str_contains( $before, 'wp:greenshift' ) || str_contains( $before, 'gspb_' ) ) {
+					continue;
+				}
+
+				$result = PasteTidy::tidy( $before );
+
+				if ( $result['html'] === rtrim( $before ) ) {
+					continue;
+				}
+
+				if ( $limit > 0 && $posts >= $limit ) {
+					break 2;
+				}
+
+				++$posts;
+
+				foreach ( $result['changes'] as $k => $n ) {
+					$sum[ $k ] += $n;
+				}
+
+				$rows[] = [
+					'post'    => (int) $post->ID,
+					'type'    => (string) $post->post_type,
+					'title'   => mb_substr( (string) $post->post_title, 0, 50 ),
+					'spans'   => $result['changes']['spans'],
+					'styles'  => $result['changes']['styles'],
+					'attrs'   => $result['changes']['attributes'],
+					'b/i'     => $result['changes']['bold_italic'],
+					'spacers' => $result['changes']['spacers'],
+					'length'  => strlen( $before ) . ' to ' . strlen( $result['html'] ),
+				];
+
+				if ( $only > 0 && ! $apply ) {
+					WP_CLI::line( "--- before\n" . $before . "\n--- after\n" . $result['html'] . "\n---" );
+				}
+
+				if ( ! $apply ) {
+					continue;
+				}
+
+				kses_remove_filters();
+				$saved = wp_update_post( [ 'ID' => (int) $post->ID, 'post_content' => wp_slash( $result['html'] ) ], true );
+				kses_init_filters();
+
+				if ( is_wp_error( $saved ) ) {
+					WP_CLI::warning( sprintf( 'Post %d not saved: %s', (int) $post->ID, $saved->get_error_message() ) );
+					continue;
+				}
+
+				clean_post_cache( (int) $post->ID );
+
+				if ( (string) get_post_field( 'post_content', (int) $post->ID, 'raw' ) !== $result['html'] ) {
+					WP_CLI::warning( sprintf( 'Post %d: saved, but the stored words differ from what was sent.', (int) $post->ID ) );
+				}
+
+				$submittable = PostTypes::is_submittable( (string) $post->post_type );
+
+				Log::record( 'content_tidied', $submittable ? 'item' : 'page', (int) $post->ID, $submittable ? Org::for_item( (int) $post->ID ) : 0, 'Pasted styling taken out of the words; the previous version is a revision.', [ 'changes' => [ '', wp_json_encode( $result['changes'] ) ] ], $actor );
+			}
+
+			++$page;
+		} while ( 200 === count( $batch ) && 0 === $only );
+
+		if ( [] !== $rows ) {
+			\WP_CLI\Utils\format_items( 'table', $rows, [ 'post', 'type', 'title', 'spans', 'styles', 'attrs', 'b/i', 'spacers', 'length' ] );
+		}
+
+		WP_CLI::success( sprintf(
+			'%s: %d post(s). Spans unwrapped %d, styles taken off %d, paste attributes %d, bold/italic kept as strong/em %d, spacer lines %d.',
+			$apply ? 'Applied' : 'Dry run, nothing written',
+			$posts,
+			$sum['spans'],
+			$sum['styles'],
+			$sum['attributes'],
+			$sum['bold_italic'],
+			$sum['spacers']
+		) );
 	}
 }

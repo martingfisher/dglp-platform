@@ -1696,3 +1696,58 @@ Wordify's `replace_in_post`; every page edit left a revision.
   buttons) ready to insert. Not swapped: Volunteer Centre Leeds (3825) shows
   a different number (0734 032 3190); Leeds Skills Share (3874) hides the
   phone; Contact (16) has no such block.
+
+## 26 October 2026: files from the old sites, pasted styling, Jenny's queue error
+
+- **0.55.0 to 0.55.1 deployed: every file now lives here.** The news fetch had
+  copied a story's featured picture but left every picture and document in
+  its words loading from doinggoodleeds.org.uk (being switched off), and the
+  earlier import had left Forum Central and old-CDN files the same way.
+  `wp dgl media audit` found 154 references to the old sites (doinggoodleeds.org.uk
+  90, cdn-doinggood.b-cdn.net 29, forumcentral.org.uk 35) in 104 posts, plus
+  third-party pictures. `wp dgl media localise --apply --feature-news` (run in
+  batches of 10) copied each file into the library once, full size, with
+  `dgl_media_source` recording where it came from, and rewrote every
+  reference (the escaped form in block settings too; img tags retagged with
+  the new attachment, old srcset dropped). Seven fetched stories with no
+  featured picture took the first picture in their words. Left, and why:
+  six TSL newsletter `.html` files on page 7839 (WordPress refuses HTML
+  uploads) and one Trello attachment on 6647 (needs a Trello login), both
+  for Martin to decide; 67 links to other organisations' own documents
+  (NHS, WYCAS and others), which are ordinary links and are listed, not
+  copied. The news fetch now copies a new story's files as it arrives.
+  Hard rule saved to memory: imports always bring their assets.
+- **0.55.1:** clicking a news or event card no longer draws a 3px navy frame;
+  hover and keyboard focus tint the card instead.
+- **0.56.0 to 0.56.1 deployed: pasted styling taken out.** `wp dgl content tidy`
+  (stories, events, training, volunteering and old posts only; pages and
+  page-builder content untouched) unwrapped the spans and fonts that Word
+  Online, Google Docs and the old Avada theme left, kept bold and italic as
+  strong and em, kept alignment, and removed spacer lines. 318 posts on the
+  dry run; applied in batches of 40 until a run found none. Each change is
+  a revision and a `content_tidied` audit row (undo with `wp dgl content
+  restore`). 0.56.1 fixed a bare tag gaining a space on every pass.
+- **Alt text:** `wp dgl media alts --apply` gave 105 pictures in 60 posts the
+  alt text their library entry already had. 33 pictures shown in posts had
+  none anywhere; AltText.ai generated nothing (likely out of credits until
+  next month; 750 credits a month), so a Haiku agent wrote them from the
+  pictures. Martin's rule for the rest of the library: only images attached
+  to a post and uploaded in the last 18 months (from 26 April 2025): 187,
+  done the same way. Unattached and older images are left.
+- **TSL newsletters (draft page 7839, "TSL's recent activity"):** the six
+  `.html` newsletters were printed to PDF from their Mailchimp pages (every
+  picture loaded), imported (attachments 10990 to 10995) and the page's
+  links pointed at them. The old addresses survive only in an earlier
+  revision.
+- **Trello image removed** from 6647 (24 June | Age Friendly Grant Funding);
+  it needed a Trello login to show.
+- **0.56.2 deployed: Jenny's 26 October email.** The review queue and
+  Approved lists showed "Something went wrong" (`dashboard/list-table`): the
+  index held rows for an event and a space whose posts were gone, and their
+  empty rows broke the template. Empty rows are now left out, and `wp dgl
+  reindex` removes rows for posts that no longer exist (2 removed; `wp dgl
+  index status` now in step, 596 items). The 42 fetched stories moved from
+  Forum Central to Doing Good Leeds Partnership (10445) with `wp dgl news
+  move-legacy --fetched`. The member dashboard's "New submission" button,
+  which only jumped to the links below it, is gone. The menu change she
+  asked for is left with Manuel.

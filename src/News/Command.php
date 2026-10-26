@@ -206,6 +206,31 @@ final class Command {
 		}
 	}
 
+	/**
+	 * Give fetched stories that have no picture their old featured picture.
+	 *
+	 * Reads each one again from the old site by its id. A copy that failed
+	 * when the story was fetched is tried again. Dry run unless --apply.
+	 * Pictures inside a story's words are `wp dgl media localise
+	 * --feature-news`.
+	 *
+	 * ## OPTIONS
+	 *
+	 * [--apply]
+	 * : Copy the pictures in.
+	 *
+	 * @subcommand pictures
+	 */
+	public function pictures( array $args, array $assoc ): void {
+		$rows = RemoteFetch::backfill_pictures( isset( $assoc['apply'] ) );
+
+		if ( [] !== $rows ) {
+			\WP_CLI\Utils\format_items( 'table', $rows, [ 'id', 'title', 'result' ] );
+		}
+
+		WP_CLI::success( sprintf( '%d fetched stories without a picture looked at.', count( $rows ) ) );
+	}
+
 	/** "slug:id,slug:id" to [slug => id]. */
 	public static function owners( string $raw ): array {
 		$out = [];
@@ -436,9 +461,12 @@ final class Command {
 	 *
 	 * ## OPTIONS
 	 *
-	 * --only=<slugs>
+	 * [--only=<slugs>]
 	 * : Old category slugs, comma separated. A story qualifies when every old
 	 *   category it had is in this list. Example: news,blog
+	 *
+	 * [--fetched]
+	 * : Instead of --only: every story brought over by `wp dgl news fetch`.
 	 *
 	 * --to=<org-id>
 	 * : The organisation that should own them.
@@ -452,6 +480,7 @@ final class Command {
 	 * ## EXAMPLES
 	 *
 	 *     wp dgl news move-legacy --only=news,blog --to=8803 --actor=1 --dry-run
+	 *     wp dgl news move-legacy --fetched --to=10445 --actor=1 --dry-run
 	 *
 	 * @subcommand move-legacy
 	 */
@@ -461,8 +490,10 @@ final class Command {
 		$actor   = (int) ( $assoc['actor'] ?? 0 );
 		$dry_run = isset( $assoc['dry-run'] );
 
-		if ( [] === $only ) {
-			WP_CLI::error( 'Give --only=<slugs>.' );
+		$fetched = isset( $assoc['fetched'] );
+
+		if ( [] === $only && ! $fetched ) {
+			WP_CLI::error( 'Give --only=<slugs> or --fetched.' );
 		}
 
 		if ( $to <= 0 || ! Org::is_approved( $to ) ) {
@@ -473,7 +504,21 @@ final class Command {
 			WP_CLI::error( 'Give --actor=<user-id>.' );
 		}
 
-		$ids = LegacyImport::converted_only( $only );
+		$ids = $fetched
+			? array_map(
+				'intval',
+				get_posts(
+					[
+						'post_type'        => \DGL\PostTypes::NEWS,
+						'post_status'      => 'any',
+						'posts_per_page'   => -1,
+						'fields'           => 'ids',
+						'meta_key'         => RemoteFetch::META_REMOTE_ID, // phpcs:ignore WordPress.DB.SlowDBQuery
+						'suppress_filters' => true,
+					]
+				)
+			)
+			: LegacyImport::converted_only( $only );
 
 		if ( [] === $ids ) {
 			WP_CLI::success( 'Nothing qualifies. Nothing to do.' );
