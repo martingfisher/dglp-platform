@@ -46,10 +46,7 @@ $tiles = [
 		</p>
 	</div>
 
-	<?php /* Straight to the forms, per the wireframe. An anchor, so it works with no JavaScript. */ ?>
-	<?php if ( null !== $org ) : ?>
-		<a class="dgl-button" href="#dgl-submit-heading"><?php esc_html_e( 'New submission', 'dgl-platform' ); ?></a>
-	<?php endif; ?>
+	<?php /* No "New submission" button: the links to each form are just below, and a jump to them looked like a button that did nothing. */ ?>
 </header>
 
 <?php

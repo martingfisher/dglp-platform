@@ -137,6 +137,21 @@ final class ItemsTable {
 	}
 
 	/**
+	 * Remove rows whose post no longer exists. A post deleted without
+	 * WordPress's hooks (straight from the database, or while the plugin was
+	 * off) leaves its row behind, and the review screens then meet an item
+	 * that is not there. Returns how many rows went.
+	 */
+	public static function prune_orphans(): int {
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$gone = (int) $wpdb->query( 'DELETE FROM ' . self::name() . " WHERE post_id NOT IN (SELECT ID FROM {$wpdb->posts})" );
+
+		return max( 0, $gone );
+	}
+
+	/**
 	 * SQL excluding pending edits.
 	 *
 	 * Edits live in this table so the moderation queue can be one indexed

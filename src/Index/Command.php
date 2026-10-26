@@ -66,7 +66,10 @@ final class Command {
 		WP_CLI::log( sprintf( 'Items stamped: %d', $stamped ) );
 
 		$done   = Sync::rebuild_all();
+		$pruned = ItemsTable::prune_orphans();
 		$after  = self::count();
+
+		WP_CLI::log( sprintf( 'Rows for posts that no longer exist, removed: %d', $pruned ) );
 
 		WP_CLI::log( sprintf( 'Rows before: %d', $before ) );
 		WP_CLI::log( sprintf( 'Rows after:  %d', $after ) );

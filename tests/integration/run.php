@@ -5901,6 +5901,19 @@ $ok( '<p><span style="color:#d6262a">Designed</span></p>' === (string) get_post_
 wp_delete_post( $pt_page, true );
 wp_delete_post( $pt_news, true );
 
+$group( 'Index: rows for posts that are gone' );
+
+global $wpdb;
+$or_ghost = 999999;
+$wpdb->insert( \DGL\Index\ItemsTable::name(), [ 'post_id' => $or_ghost, 'post_type' => PostTypes::EVENT, 'status' => Statuses::PENDING, 'org_id' => $org_a, 'submitted_at' => gmdate( 'Y-m-d H:i:s', 1 ) ] );
+$ok( in_array( $or_ghost, \DGL\Index\ItemsTable::queue( null, 500 ), true ), 'a row left behind by a post deleted without its hooks sits in the queue' );
+$or_bad  = \DGL\Dashboard\View::render( 'dashboard/list-table', [ 'items' => [ [] ], 'action' => 'Review' ] );
+$ok( str_contains( $or_bad, 'Something went wrong' ), 'an empty row (a post that is gone) is what broke the list' );
+$or_html = \DGL\Dashboard\View::render( 'dashboard/list-table', [ 'items' => array_values( array_filter( [ [] ] ) ), 'action' => 'Review' ] );
+$ok( ! str_contains( $or_html, 'Something went wrong' ), 'the list renders once empty rows are left out' );
+$ok( 1 <= \DGL\Index\ItemsTable::prune_orphans() && ! in_array( $or_ghost, \DGL\Index\ItemsTable::queue( null, 500 ), true ), 'pruning removes it' );
+$ok( 0 === \DGL\Index\ItemsTable::prune_orphans(), 'and a second prune finds nothing' );
+
 $group( 'Content restore: back to one of the post\'s own revisions' );
 
 $cr_post = wp_insert_post( [ 'post_type' => 'page', 'post_status' => 'publish', 'post_title' => 'Restore test', 'post_content' => 'start' ] );
