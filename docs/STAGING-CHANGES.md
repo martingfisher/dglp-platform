@@ -1728,9 +1728,19 @@ Wordify's `replace_in_post`; every page edit left a revision.
   a revision and a `content_tidied` audit row (undo with `wp dgl content
   restore`). 0.56.1 fixed a bare tag gaining a space on every pass.
 - **Alt text:** `wp dgl media alts --apply` gave 105 pictures in 60 posts the
-  alt text their library entry already had. 33 pictures had none anywhere;
-  AltText.ai generated nothing (likely out of credits until next month), so
-  they were written by hand from the pictures.
+  alt text their library entry already had. 33 pictures shown in posts had
+  none anywhere; AltText.ai generated nothing (likely out of credits until
+  next month; 750 credits a month), so a Haiku agent wrote them from the
+  pictures. Martin's rule for the rest of the library: only images attached
+  to a post and uploaded in the last 18 months (from 26 April 2025): 187,
+  done the same way. Unattached and older images are left.
+- **TSL newsletters (draft page 7839, "TSL's recent activity"):** the six
+  `.html` newsletters were printed to PDF from their Mailchimp pages (every
+  picture loaded), imported (attachments 10990 to 10995) and the page's
+  links pointed at them. The old addresses survive only in an earlier
+  revision.
+- **Trello image removed** from 6647 (24 June | Age Friendly Grant Funding);
+  it needed a Trello login to show.
 - **0.56.2 deployed: Jenny's 26 October email.** The review queue and
   Approved lists showed "Something went wrong" (`dashboard/list-table`): the
   index held rows for an event and a space whose posts were gone, and their
