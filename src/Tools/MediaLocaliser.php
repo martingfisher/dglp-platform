@@ -53,9 +53,14 @@ final class MediaLocaliser {
 		'forumcentral.wordifysites.com' => 'forumcentral.org.uk',
 	];
 
-	/** The post types whose words are walked: everything with content except revisions and the library itself. */
+	/**
+	 * The post types whose words are walked: everything with content except
+	 * revisions, the library itself, and the font and global style settings,
+	 * whose only outside addresses are the font picker's preview images on
+	 * WordPress.org: never shown to visitors, and stored as settings, not words.
+	 */
 	public static function types(): array {
-		return array_values( array_diff( get_post_types( [], 'names' ), [ 'revision', 'attachment', 'nav_menu_item', 'customize_changeset', 'oembed_cache', 'user_request', 'wp_navigation' ] ) );
+		return array_values( array_diff( get_post_types( [], 'names' ), [ 'revision', 'attachment', 'nav_menu_item', 'customize_changeset', 'oembed_cache', 'user_request', 'wp_navigation', 'wp_font_family', 'wp_font_face', 'wp_global_styles' ] ) );
 	}
 
 	/** Hosts that are this site: the home address, the uploads address and its CDN. */
