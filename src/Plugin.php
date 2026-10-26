@@ -86,6 +86,7 @@ final class Plugin {
 		\DGL\Dashboard\UploadEndpoint::init();
 		\DGL\Joining\MatchEndpoint::init();
 		Frontend::init();
+		\DGL\Frontend\Crawl::init();
 		\DGL\Frontend\Finder::init();
 		\DGL\News\LegacyRedirect::init();
 		\DGL\Frontend\PageRedirects::init();
