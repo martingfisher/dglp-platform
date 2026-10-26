@@ -206,6 +206,31 @@ final class Command {
 		}
 	}
 
+	/**
+	 * Give fetched stories that have no picture their old featured picture.
+	 *
+	 * Reads each one again from the old site by its id. A copy that failed
+	 * when the story was fetched is tried again. Dry run unless --apply.
+	 * Pictures inside a story's words are `wp dgl media localise
+	 * --feature-news`.
+	 *
+	 * ## OPTIONS
+	 *
+	 * [--apply]
+	 * : Copy the pictures in.
+	 *
+	 * @subcommand pictures
+	 */
+	public function pictures( array $args, array $assoc ): void {
+		$rows = RemoteFetch::backfill_pictures( isset( $assoc['apply'] ) );
+
+		if ( [] !== $rows ) {
+			\WP_CLI\Utils\format_items( 'table', $rows, [ 'id', 'title', 'result' ] );
+		}
+
+		WP_CLI::success( sprintf( '%d fetched stories without a picture looked at.', count( $rows ) ) );
+	}
+
 	/** "slug:id,slug:id" to [slug => id]. */
 	public static function owners( string $raw ): array {
 		$out = [];

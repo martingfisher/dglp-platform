@@ -334,6 +334,25 @@ final class RemoteFetch {
 					continue;
 				}
 
+				// The pictures and documents in the words come too: the old
+				// site is being switched off, so nothing may load from it.
+				$converted = get_post( $post_id );
+
+				if ( $converted instanceof \WP_Post ) {
+					$own   = \DGL\Tools\MediaLocaliser::own_hosts();
+					$local = \DGL\Tools\MediaLocaliser::localise_post( $converted, \DGL\Tools\ExternalMedia::find( (string) $converted->post_content, $own ), true, $plan['image'] <= 0, $actor_id );
+
+					if ( $local['featured'] > 0 ) {
+						$plan['image'] = $local['featured'];
+					}
+
+					foreach ( $local['files'] as $file ) {
+						if ( str_starts_with( $file['how'], 'FAILED' ) ) {
+							$out['errors'][] = sprintf( '%s: %s %s', $title, $file['url'], $file['how'] );
+						}
+					}
+				}
+
 				++$out['added'];
 				$out['titles'][] = $title;
 
@@ -349,6 +368,61 @@ final class RemoteFetch {
 			if ( count( $records ) < self::PAGE_SIZE ) {
 				break;
 			}
+		}
+
+		return $out;
+	}
+	/**
+	 * Fetched stories here with no picture: each is read again from the old
+	 * site by its id and given its featured picture, copied in. A story the
+	 * old site never gave a picture is reported as such.
+	 *
+	 * @return array<int, array{id:int, title:string, result:string}>
+	 */
+	public static function backfill_pictures( bool $apply ): array {
+		$ids = get_posts(
+			[
+				'post_type'        => PostTypes::NEWS,
+				'post_status'      => 'any',
+				'posts_per_page'   => -1,
+				'fields'           => 'ids',
+				'meta_key'         => self::META_REMOTE_ID, // phpcs:ignore WordPress.DB.SlowDBQuery
+				'suppress_filters' => true,
+			]
+		);
+		$out = [];
+
+		foreach ( $ids as $id ) {
+			$id = (int) $id;
+
+			if ( (int) get_post_meta( $id, 'dgl_image', true ) > 0 ) {
+				continue;
+			}
+
+			$remote   = (int) get_post_meta( $id, self::META_REMOTE_ID, true );
+			$response = wp_remote_get( self::POSTS_URL . '/' . $remote . '?_embed=wp:featuredmedia', [ 'timeout' => 30, 'user-agent' => 'DGL platform (news fetch)' ] );
+			$record   = is_wp_error( $response ) ? null : json_decode( (string) wp_remote_retrieve_body( $response ), true );
+			$row      = [ 'id' => $id, 'title' => mb_substr( get_the_title( $id ), 0, 60 ), 'result' => '' ];
+
+			if ( ! is_array( $record ) || 200 !== (int) wp_remote_retrieve_response_code( $response ) ) {
+				$row['result'] = 'old site did not answer';
+			} elseif ( '' === (string) ( $record['_embedded']['wp:featuredmedia'][0]['source_url'] ?? '' ) ) {
+				$row['result'] = 'no featured picture on the old site';
+			} elseif ( ! $apply ) {
+				$row['result'] = 'would copy ' . (string) $record['_embedded']['wp:featuredmedia'][0]['source_url'];
+			} else {
+				$picture = self::picture( $record, $id );
+
+				if ( $picture > 0 ) {
+					set_post_thumbnail( $id, $picture );
+					update_post_meta( $id, 'dgl_image', $picture );
+					$row['result'] = 'copied, attachment ' . $picture;
+				} else {
+					$row['result'] = 'FAILED to copy ' . (string) $record['_embedded']['wp:featuredmedia'][0]['source_url'];
+				}
+			}
+
+			$out[] = $row;
 		}
 
 		return $out;

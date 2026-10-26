@@ -125,6 +125,7 @@ final class Plugin {
 			\DGL\Joining\Command::register();
 			\DGL\Schema\LinksCommand::register();
 			\DGL\Tools\LinksCommand::register();
+			\DGL\Tools\MediaCommand::register();
 			\DGL\News\Command::register();
 			\DGL\Demo\Command::register();
 			\DGL\Spaces\Command::register();
