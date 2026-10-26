@@ -179,7 +179,8 @@ final class PasteTidy {
 	/** The attributes a block-level or other tag keeps. */
 	private static function attributes( string $name, string $attrs, array &$changes ): string {
 		if ( ! preg_match_all( '~([a-z_:][a-z0-9_:.-]*)(?:\s*=\s*("[^"]*"|\'[^\']*\'|[^\s"\'>]+))?~i', $attrs, $m, PREG_SET_ORDER ) ) {
-			return $attrs;
+			// Only whitespace: none. Kept, it would grow by a space each pass.
+			return '' === trim( $attrs ) ? '' : $attrs;
 		}
 
 		$kept = '';

@@ -34,3 +34,10 @@ Harness::assert_same( "<p>One</p>\n\n\n<p>Two</p>", $sp['html'], 'empty spacer p
 Harness::assert_same( 2, $sp['changes']['spacers'], 'and are counted' );
 
 Harness::assert_true( PasteTidy::needs_tidy( '<span style="font-weight: 400;">x</span>' ) && ! PasteTidy::needs_tidy( '<p>Plain <strong>words</strong> and <a href="x">a link</a>.</p>' ), 'a paste is recognised and clean words are not' );
+
+Harness::group( 'Paste tidy: a second pass changes nothing' );
+
+$twice_in = '<p>Line one<br />Line two<br/>three<hr /></p>' . "\n" . '<span style="font-weight: 400;">Word</span> <b>bold</b>' . "\n&nbsp;\n" . '<li style="font-weight: 400;" aria-level="1"><span class="NormalTextRun">x</span></li>';
+$once     = PasteTidy::tidy( $twice_in )['html'];
+Harness::assert_same( $once, PasteTidy::tidy( $once )['html'], 'tidying tidied words gives the same words' );
+Harness::assert_true( str_contains( $once, '<br />Line two<br />three' ), 'a bare tag keeps a single space before its slash' );
