@@ -177,8 +177,9 @@ final class Content {
 						[ 'ul', [
 							__( 'Owners can do everything, including editing the organisation and inviting people. Contributors submit and edit listings. An owner can make a colleague an owner or a contributor, or remove them; they are told by email. You cannot change or remove yourself.', 'dgl-platform' ),
 							__( 'To invite a colleague, use the Members tab. They get an email with a link that sets up their account.', 'dgl-platform' ),
+							__( 'Only an owner can change the Organisation tab. A contributor sees it greyed out, with no Save button: ask an owner at your organisation, or the DGL team.', 'dgl-platform' ),
 							__( 'Changes to your organisation\'s name or logo are checked by the team before they show on listings. Everything else on the Organisation tab takes effect straight away.', 'dgl-platform' ),
-							__( '"Show us in the directory" puts your organisation in the public directory. Any member can switch it, and it takes effect at once.', 'dgl-platform' ),
+							__( '"Show us in the directory" puts your organisation in the public directory. An owner switches it, and it takes effect at once. Your logo shows in the directory and in the "Posted by" box on everything you publish.', 'dgl-platform' ),
 						] ],
 					],
 				],
@@ -202,6 +203,7 @@ final class Content {
 				[ 'q' => __( 'My link was refused because it starts with http://.', 'dgl-platform' ), 'a' => __( 'The site only links to pages served over https, the padlock in the browser. Type the address as https://... instead; most sites work that way already. If yours does not, leave the link out for now and ask the DGL team, who can help you secure your hosting.', 'dgl-platform' ) ],
 				[ 'q' => __( 'What size and shape should the picture be?', 'dgl-platform' ), 'a' => __( 'Any photo from a phone is fine. It is shrunk in your browser before it is sent. Landscape works best on the list pages. Describe it in a few words when asked.', 'dgl-platform' ) ],
 				[ 'q' => __( 'How do I change our organisation\'s name or logo?', 'dgl-platform' ), 'a' => __( 'On the Organisation tab, if you are an owner. The change is checked by the team before it shows, so the listings keep the old details until then.', 'dgl-platform' ) ],
+				[ 'q' => __( 'The Organisation tab is greyed out and has no Save button.', 'dgl-platform' ), 'a' => __( 'You are a contributor. Only owners change the organisation\'s details. The Members tab shows who your owners are; one of them can make the change, or make you an owner.', 'dgl-platform' ) ],
 				[ 'q' => __( 'How do I close my account?', 'dgl-platform' ), 'a' => __( 'Email the DGL team. They close it and tell you what happens to anything you have published, which stays with your organisation.', 'dgl-platform' ) ],
 			],
 		];
@@ -298,6 +300,7 @@ final class Content {
 					'id'      => 'organisations',
 					'heading' => __( 'The Organisations screen in wp-admin', 'dgl-platform' ),
 					'blocks'  => [
+						[ 'p', __( 'Add news and events through the user area, signed in as the organisation posting them, not through wp-admin. Something added in wp-admin stays a draft: saving there only saves the fields and never changes the review status, so it does not enter the queue and cannot reach the site. If one has been made that way, the team can attach it to the right organisation, after which it appears as a draft in that organisation\'s dashboard for them to submit.', 'dgl-platform' ) ],
 						[ 'p', __( 'Each organisation has a box with two settings, and shows its trust setting with a link to change it in the user area.', 'dgl-platform' ) ],
 						[ 'ul', [
 							__( 'Verification. Pending means nobody at the organisation can submit yet. Approved means they can. Suspended stops submitting and editing but leaves their live listings up. Verifying from the review queue sets this to Approved for you.', 'dgl-platform' ),
@@ -325,6 +328,15 @@ final class Content {
 					'heading' => __( 'What members are emailed', 'dgl-platform' ),
 					'blocks'  => [
 						[ 'p', __( 'Every decision sends one email to the member: approved, sent back with your note, refused with your reason, organisation change accepted or refused, organisation verified or refused, removed from an organisation, role changed. The review team is emailed when an organisation change is waiting. Digests go out daily, weekly or monthly to members who asked for them, and never when there is nothing new.', 'dgl-platform' ) ],
+					],
+				],
+				[
+					'id'      => 'tools',
+					'heading' => __( 'Other screens and tools', 'dgl-platform' ),
+					'blocks'  => [
+						[ 'p', __( 'Wellbeing board: in wp-admin under Settings, "Wellbeing board" controls the cards on the Workforce Wellbeing page, which come from the Padlet board every night. You can rename a column, change its intro, move a post to another column, see what has been left out and why, and fetch from Padlet straight away.', 'dgl-platform' ) ],
+						[ 'p', __( 'Stories from the old site: the DGL team can bring over everything published on doinggoodleeds.org.uk since a given day, with the original dates, pictures and old addresses redirecting here, and can move those stories to another organisation. They arrive without topics, so add topics in review or from wp-admin. Ask Martin; it is a command, not a screen.', 'dgl-platform' ) ],
+						[ 'p', __( 'Going live with search engines: in wp-admin under Settings, Reading, untick "Discourage search engines from indexing this site". The member area stays out of search whatever that box says, and the platform then names its own sitemap of the directory, calendar and listing pages in robots.txt.', 'dgl-platform' ) ],
 					],
 				],
 				[
