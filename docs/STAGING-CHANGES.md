@@ -1809,3 +1809,8 @@ Wordify's `replace_in_post`; every page edit left a revision.
   column, next to the search disc, instead of spreading across it and
   leaving a gap before the disc (`finder.css`, overriding the theme's
   stretched-menu rules on the middle row only).
+- **0.57.8 deployed:** 0.57.7 did not move the menu because the theme's
+  middle row is a 1fr / auto / 1fr grid: the menu column was only as wide
+  as the menu, and the gap was the end column's spare width. The row is now
+  auto / 1fr / auto on the middle row, so the menu column takes the width
+  and the menu sits at its right edge beside the disc.

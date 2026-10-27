@@ -310,3 +310,9 @@ body.dgl-finder-open { overflow: hidden; }
 #header [data-row="middle"] [data-column="middle"] .menu-container[data-stretch] { width: auto; }
 #header [data-row="middle"] [data-column="middle"] .menu-container[data-stretch] > .menu { flex: 0 1 auto; justify-content: flex-end; }
 #header [data-row="middle"] [data-column="end"] .dgl-finder-disc { margin-left: 12px; }
+
+/* The theme lays the middle row out as 1fr / auto / 1fr, which centres the
+   menu column and leaves the end column's spare width as a gap before the
+   disc. Logo and disc take only what they need; the menu column takes the
+   rest, and the menu sits at its right edge (rules above). */
+#header [data-row="middle"][data-column-set="3"] > div { grid-template-columns: auto 1fr auto; }
