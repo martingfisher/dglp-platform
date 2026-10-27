@@ -377,9 +377,10 @@ with one of those ticked (`[dgl_home_directory chips="6"]`, or name the
 keys: `chips="age_older_people,circ_carers"`). The 146 that gave
 Forum Central permission to publish were switched on at the start; the
 rest appear when a member of that organisation presses "Show us in the
-directory" on the Organisation tab. Any approved member can switch it on
-or off, it takes effect at once, and pending or suspended organisations
-never show whatever the switch says.
+directory" on the Organisation tab. An owner switches it on or off (the
+Organisation tab is read-only for contributors), it takes effect at once,
+and pending or suspended organisations never show whatever the switch
+says.
 
 ## How people join
 
@@ -523,3 +524,59 @@ is never replaced. The box is not compulsory: a member can leave it and the
 picture keeps AltText.ai's words. The review screen's checks still flag a
 picture with no words at all. Without JavaScript the file goes up with the
 step as before and the box is filled when the step reloads.
+
+## Adding things from wp-admin
+
+Don't. Add news and events through the user area, signed in as the
+organisation posting them. Something added under News or Events in
+wp-admin stays a draft: saving there only saves the fields and never
+changes the review status (the Publish box says so), so it never enters
+the queue and cannot reach the site. If one has been made that way, set
+its organisation (`dgl_org` on the post) to the right organisation and run
+`wp dgl reindex`; it then appears as a draft in that organisation's
+dashboard, where they can submit it as normal.
+
+Two organisations the team use themselves: Forum Central, and Doing Good
+Leeds Partnership (signed in as hello@doinggoodleeds.org.uk), which owns
+the stories brought over from the old site and anything neutral.
+
+## Other screens
+
+**Wellbeing board** (wp-admin, Settings, Wellbeing board): the cards on the
+Workforce Wellbeing page come from the Padlet board every night. Rename a
+column, change its intro, move a post to another column, see what is left
+out and why, fetch from Padlet now. Cards whose page has gone are hidden
+until it comes back.
+
+**Going live with search engines** (wp-admin, Settings, Reading): untick
+"Discourage search engines from indexing this site". The member area is
+`noindex` whatever that box says. Once it is unticked the platform adds its
+own sitemap, `/dgl-sitemap.xml` (directory, organisation pages, calendar
+and listing pages, which no SEO plugin lists), and a `Disallow` for the
+member area to robots.txt. Submit the sitemap once in Search Console.
+
+## Command-line tools
+
+Run through the host's console or WP-CLI; each one has `wp help dgl ...`.
+Every one that changes content keeps a revision and writes an audit row,
+and runs as a dry run unless told to apply.
+
+- `wp dgl news fetch --since=<day> --org=<id> [--owner=] [--limit=] [--dry-run]`:
+  bring over stories published on the old site since a day. Safe to run
+  twice; a story already here is skipped.
+- `wp dgl news move-legacy --to=<org-id> --actor=<user-id> [--fetched] [--only=]`:
+  move imported or fetched stories to another organisation.
+- `wp dgl news suggest-topics [--apply] [--first]`: suggest topics for
+  stories that have none.
+- `wp dgl media audit [--detail]`, `wp dgl media localise [--apply] [--feature-news]`:
+  find and copy in files still loading from the old sites.
+- `wp dgl media dedupe [--apply]`: a story whose main picture also sits in
+  its words shows it once.
+- `wp dgl media alts [--apply]`: give pictures the alt text their library
+  entry has.
+- `wp dgl content tidy [--apply] [--post=]`: take pasted Word, Google Docs
+  and old-theme styling out of stories. `wp dgl content restore <post-id>
+  --revision=<id> --apply` puts a revision back. `wp dgl content replace
+  <post-id> --from= --to= --apply` changes exact text.
+- `wp dgl index status` and `wp dgl reindex`: the listings index. Reindex
+  also removes rows for posts that no longer exist.

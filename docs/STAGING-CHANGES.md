@@ -1767,3 +1767,15 @@ Wordify's `replace_in_post`; every page edit left a revision.
 - **Rule, saved to memory:** a branch whose pull request has merged is
   finished. Further work starts a new branch from main, and nothing is
   installed on production that is not on main.
+- **0.57.2 deployed: help brought up to date.** Member help now says only an
+  owner can change the Organisation tab (a contributor sees it greyed out),
+  that an owner switches the directory on, and that the logo shows in the
+  directory and the "Posted by" box; one new question covers the greyed-out
+  tab. Team help gains: add listings through the user area, not wp-admin
+  (a wp-admin draft never enters the queue); the Wellbeing board settings
+  screen; stories from the old site; unticking "Discourage search engines"
+  at go-live. The team guide gets the same, a correction ("any approved
+  member" could never switch the directory; owners do) and a list of the
+  command-line tools added since 0.51.0. Jenny's Doing Good Leeds
+  Partnership organisation (10445) now carries the site roundel (7156) as
+  its logo and is in the directory, both set directly.
