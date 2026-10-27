@@ -302,3 +302,11 @@ body.dgl-finder-open { overflow: hidden; }
 
 .dgl-finder-disc { display: flex; align-items: center; }
 .dgl-finder-disc .dgl-finder-trigger { padding: 0; min-width: 44px; }
+
+/* The main menu sits in the header's centre column, stretched across it, so
+   a gap opened between the last item and the search disc in the end column.
+   The menu now hugs the right of its column, next to the disc. */
+#header [data-row="middle"] [data-column="middle"] > [data-items] { justify-content: flex-end; }
+#header [data-row="middle"] [data-column="middle"] .menu-container[data-stretch] { width: auto; }
+#header [data-row="middle"] [data-column="middle"] .menu-container[data-stretch] > .menu { flex: 0 1 auto; justify-content: flex-end; }
+#header [data-row="middle"] [data-column="end"] .dgl-finder-disc { margin-left: 12px; }

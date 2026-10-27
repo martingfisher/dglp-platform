@@ -1805,3 +1805,7 @@ Wordify's `replace_in_post`; every page edit left a revision.
   element is the magnifier in a navy disc (the same button the phone drawer
   has), not a bar. The bar's styles are gone; the element keeps the theme's
   `search-input` id so the layout and Customizer are untouched.
+- **0.57.7 deployed:** the main menu hugs the right of the header's centre
+  column, next to the search disc, instead of spreading across it and
+  leaving a gap before the disc (`finder.css`, overriding the theme's
+  stretched-menu rules on the middle row only).
