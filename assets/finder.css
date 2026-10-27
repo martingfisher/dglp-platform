@@ -348,3 +348,43 @@ body.dgl-finder-open { overflow: hidden; }
 }
 
 .dgl-finder-bar__go:focus-visible { outline: 2px solid var(--dgl-focus); outline-offset: 2px; }
+
+/* The theme's Search Box stylesheet still loads for this element id and paints
+   the form, field and button. These win over it. */
+.dgl-finder-bar .dgl-finder-bar__form,
+.dgl-finder-bar .dgl-finder-bar__form:hover {
+	border: 2px solid var(--dgl-navy, #2d3b6b) !important;
+	border-radius: 999px !important;
+	background: var(--dgl-white, #fff) !important;
+	box-shadow: none !important;
+	outline: 0;
+}
+
+.dgl-finder-bar .dgl-finder-bar__form:focus-within { outline: 2px solid var(--dgl-focus) !important; outline-offset: 2px; }
+
+.dgl-finder-bar input.dgl-finder-bar__input,
+.dgl-finder-bar input.dgl-finder-bar__input:focus {
+	height: auto !important;
+	min-height: 0 !important;
+	padding: 0 !important;
+	border: 0 !important;
+	border-radius: 0 !important;
+	background: none !important;
+	box-shadow: none !important;
+	outline: 0 !important;
+	color: var(--dgl-ink, #1f2937) !important;
+}
+
+.dgl-finder-bar .dgl-finder-bar__go,
+.dgl-finder-bar .dgl-finder-bar__go:hover {
+	width: 32px !important;
+	height: 32px !important;
+	padding: 0 !important;
+	border: 0 !important;
+	border-radius: 50% !important;
+	background: var(--dgl-navy, #2d3b6b) !important;
+	color: var(--dgl-white, #fff) !important;
+	box-shadow: none !important;
+}
+
+.dgl-finder-bar .dgl-finder-bar__go .dgl-finder-icon { width: 16px; height: 16px; }

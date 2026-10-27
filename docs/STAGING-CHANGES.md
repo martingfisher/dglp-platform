@@ -1797,3 +1797,7 @@ Wordify's `replace_in_post`; every page edit left a revision.
   what renders is a bar that looks like the theme's box and opens the
   dialog on press. Without JavaScript it is a plain search form.
   `templates/blocksy/search-input/{config,options,view}.php`, `finder.css`.
+- **0.57.5 deployed:** the theme's Search Box stylesheet still loads for the
+  element id and painted a teal inner ring and a square button inside the
+  bar. `finder.css` now overrides it: one 2px navy edge, a plain field, the
+  magnifier in a navy disc.
