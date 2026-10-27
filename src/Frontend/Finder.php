@@ -15,15 +15,21 @@ use WP_Term;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Three small hooks make one feature. The theme's own search box (a
- * Blocksy Pro "Search Input" element in the top row) is dropped from the
- * header layout as it is read, so nothing stored changes and switching the
- * plugin off brings it straight back. A button with a magnifier joins the
- * end of the Main Menu for the phone drawer (it joined the Top Bar menu too,
- * where the box was, until DGLP asked for it to go). Pressing it opens a dialog in the middle of the
- * screen: one box, a row of kinds to search (all, events, news, training,
- * spaces to hire, organisations) and Search. The dialog is the ordinary
- * search form, so it lands on the same results page as before.
+ * Two small hooks make one feature. A button with a magnifier joins the
+ * end of the Main Menu for the phone drawer (it joined the Top Bar menu too
+ * until DGLP asked for it to go, 19 October 2026). Pressing it opens a
+ * dialog in the middle of the screen: one box, a row of kinds to search
+ * (all, events, news, training, spaces to hire, organisations) and Search.
+ * The dialog is the ordinary search form, so it lands on the same results
+ * page as the theme's own search box.
+ *
+ * From 0.42.0 to 0.57.2 the theme's search box (the Blocksy Pro "Search
+ * Box" element) was also dropped from the header layout as it was read,
+ * because the magnifier stood in for it. Once the magnifier left the top
+ * bar that left the desktop header with no search at all, and the box the
+ * team placed in the new header on 26 October 2026 never showed. The box
+ * is now left where the header layout puts it; {@see strip()} stays for
+ * anything that still wants a layout without it.
  */
 final class Finder {
 
@@ -39,7 +45,6 @@ final class Finder {
 	public const DIALOG_ID = 'dgl-finder';
 
 	public static function init(): void {
-		add_filter( 'theme_mod_header_placements', [ self::class, 'without_search_box' ] );
 		add_filter( 'wp_nav_menu_items', [ self::class, 'menu_items' ], 20, 2 );
 		add_action( 'wp_footer', [ self::class, 'overlay' ] );
 	}

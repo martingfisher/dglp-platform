@@ -4998,7 +4998,7 @@ foreach ( $fx_menus as $fx_id ) {
 
 set_theme_mod( 'header_placements', [ 'sections' => [ [ 'items' => [ [ 'id' => 'search-input' ] ], 'desktop' => [ [ 'placements' => [ [ 'id' => 'end', 'items' => [ 'search-input', 'menu-secondary', 'account' ] ] ] ] ] ] ] ] );
 $fx_layout = get_theme_mod( 'header_placements' );
-$ok( [ 'menu-secondary', 'account' ] === $fx_layout['sections'][0]['desktop'][0]['placements'][0]['items'] && 'search-input' === $fx_layout['sections'][0]['items'][0]['id'], 'the header layout is read without the theme search box, its settings kept' );
+$ok( [ 'search-input', 'menu-secondary', 'account' ] === $fx_layout['sections'][0]['desktop'][0]['placements'][0]['items'], 'the header layout is read as stored: the theme search box stays where the team put it (0.57.3)' );
 remove_theme_mod( 'header_placements' );
 
 ob_start();

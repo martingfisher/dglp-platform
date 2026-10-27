@@ -1779,3 +1779,11 @@ Wordify's `replace_in_post`; every page edit left a revision.
   command-line tools added since 0.51.0. Jenny's Doing Good Leeds
   Partnership organisation (10445) now carries the site roundel (7156) as
   its logo and is in the directory, both set directly.
+- **0.57.3 deployed: the header search box shows again.** The new header
+  (26 October) put the theme's Search Box in the middle row, but it never
+  appeared: since 0.42.0 the plugin dropped that element from the header
+  layout as it was read, because its magnifier stood in for it, and 0.48.1
+  took the magnifier off the top bar, leaving desktop with no search at
+  all. The filter is gone; the box renders where the layout puts it and
+  lands on the plugin's results page as before. The magnifier stays in the
+  phone drawer. `Finder::strip()` remains, unused.
