@@ -29,7 +29,8 @@ defined( 'ABSPATH' ) || exit;
  * bar that left the desktop header with no search at all, and the box the
  * team placed in the new header on 26 October 2026 never showed. The box
  * is now left where the header layout puts it, and from 0.57.4 the element
- * itself is this plugin's: a bar that opens the dialog ({@see own_search_item()}).
+ * itself is this plugin's: the magnifier disc that opens the dialog
+ * ({@see own_search_item()}).
  * {@see strip()} stays for anything that still wants a layout without it.
  */
 final class Finder {

@@ -6127,7 +6127,7 @@ ob_start();
 $attr = [ 'data-id' => 'search-input' ];
 include \DGL\PLUGIN_DIR . 'templates/blocksy/search-input/view.php';
 $fb_html = (string) ob_get_clean();
-$ok( str_contains( $fb_html, 'data-dgl-finder-open' ) && str_contains( $fb_html, 'name="s"' ) && str_contains( $fb_html, 'data-id="search-input"' ) && str_contains( $fb_html, 'aria-controls="dgl-finder"' ), 'the bar is a plain search form whose field and button open the dialog' );
+$ok( str_contains( $fb_html, 'data-dgl-finder-open' ) && str_contains( $fb_html, 'dgl-finder-trigger__ring' ) && str_contains( $fb_html, 'data-id="search-input"' ) && str_contains( $fb_html, 'aria-controls="dgl-finder"' ) && ! str_contains( $fb_html, '<form' ), 'the element is the magnifier disc that opens the dialog, not a form' );
 
 /* ----------------------------------------------------------------- report */
 

@@ -1801,3 +1801,7 @@ Wordify's `replace_in_post`; every page edit left a revision.
   element id and painted a teal inner ring and a square button inside the
   bar. `finder.css` now overrides it: one 2px navy edge, a plain field, the
   magnifier in a navy disc.
+- **0.57.6 deployed: just the disc.** Martin's call: the header search
+  element is the magnifier in a navy disc (the same button the phone drawer
+  has), not a bar. The bar's styles are gone; the element keeps the theme's
+  `search-input` id so the layout and Customizer are untouched.
