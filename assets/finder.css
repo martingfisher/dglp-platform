@@ -297,3 +297,54 @@ body.dgl-finder-open { overflow: hidden; }
 
 .menu-item .gspb_iconsList__item:has(> .gspb_iconsList__link):hover .gspb_iconsList__item__text,
 .menu-item .gspb_container:has(> .gspb-containerlink):hover .gspb_heading { text-decoration: underline; }
+
+/* ---- The bar in the header (the theme's Search Box, rendered by this plugin) ---- */
+
+.dgl-finder-bar { display: flex; align-items: center; }
+
+.dgl-finder-bar__form {
+	display: flex;
+	align-items: center;
+	width: min(100%, 300px);
+	min-height: 44px;
+	padding: 0 12px 0 16px;
+	background: var(--dgl-white, #fff);
+	border: 2px solid var(--dgl-navy, #1f2a5a);
+	border-radius: 999px;
+	box-sizing: border-box;
+	cursor: pointer;
+}
+
+.dgl-finder-bar__form:focus-within { outline: 2px solid var(--dgl-focus); outline-offset: 2px; }
+
+.dgl-finder-bar__input {
+	flex: 1 1 auto;
+	min-width: 0;
+	font: inherit;
+	font-size: 16px;
+	color: inherit;
+	background: none;
+	border: 0;
+	padding: 0;
+	cursor: pointer;
+}
+
+.dgl-finder-bar__input:focus { outline: 0; }
+.dgl-finder-bar__input::placeholder { color: var(--dgl-muted, #6b7280); opacity: 1; }
+.dgl-finder-bar__input::-webkit-search-cancel-button { display: none; }
+
+.dgl-finder-bar__go {
+	flex: none;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	padding: 0;
+	color: var(--dgl-navy);
+	background: none;
+	border: 0;
+	cursor: pointer;
+}
+
+.dgl-finder-bar__go:focus-visible { outline: 2px solid var(--dgl-focus); outline-offset: 2px; }

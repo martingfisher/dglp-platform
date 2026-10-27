@@ -1787,3 +1787,13 @@ Wordify's `replace_in_post`; every page edit left a revision.
   all. The filter is gone; the box renders where the layout puts it and
   lands on the plugin's results page as before. The magnifier stays in the
   phone drawer. `Finder::strip()` remains, unused.
+- **0.57.4 deployed: the header search bar opens the site search dialog.**
+  0.57.3 brought the theme's Search Box back, but that is a plain form: one
+  word, no kinds. Martin wanted the pop-out (All, Events, News, Training,
+  Spaces to hire, Organisations) back in the header. The plugin now
+  registers its own `search-input` header element in place of the Blocksy
+  Pro one (`blocksy:header:items-root-paths`, `Finder::own_search_item()`),
+  so the layout and Customizer keep the element where the team put it, and
+  what renders is a bar that looks like the theme's box and opens the
+  dialog on press. Without JavaScript it is a plain search form.
+  `templates/blocksy/search-input/{config,options,view}.php`, `finder.css`.

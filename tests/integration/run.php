@@ -6115,6 +6115,20 @@ $ok( false !== wp_next_scheduled( \DGL\Padlet\Board::HOOK ), 'the nightly fetch 
 remove_filter( 'pre_http_request', $pd_stub, 10 );
 delete_option( \DGL\Padlet\Board::OPTION_GROUPS );
 
+
+$group( 'Finder: the header Search Box is this plugin\'s bar' );
+$fb_paths = apply_filters( 'blocksy:header:items-root-paths', [ '/pro/items/search-input', '/theme/header/logo' ] );
+$ok( is_array( $fb_paths ) && str_ends_with( (string) $fb_paths[0], 'templates/blocksy/search-input' ) && '/theme/header/logo' === $fb_paths[1], 'the theme is handed this plugin\'s element in place of the Pro one' );
+$ok( is_readable( \DGL\PLUGIN_DIR . 'templates/blocksy/search-input/view.php' ) && is_readable( \DGL\PLUGIN_DIR . 'templates/blocksy/search-input/config.php' ), 'and its files exist' );
+if ( ! function_exists( 'blocksy_attr_to_html' ) ) {
+	function blocksy_attr_to_html( array $attr ): string { $o = ''; foreach ( $attr as $k => $v ) { $o .= ' ' . $k . '="' . esc_attr( (string) $v ) . '"'; } return trim( $o ); }
+}
+ob_start();
+$attr = [ 'data-id' => 'search-input' ];
+include \DGL\PLUGIN_DIR . 'templates/blocksy/search-input/view.php';
+$fb_html = (string) ob_get_clean();
+$ok( str_contains( $fb_html, 'data-dgl-finder-open' ) && str_contains( $fb_html, 'name="s"' ) && str_contains( $fb_html, 'data-id="search-input"' ) && str_contains( $fb_html, 'aria-controls="dgl-finder"' ), 'the bar is a plain search form whose field and button open the dialog' );
+
 /* ----------------------------------------------------------------- report */
 
 echo "\n" . str_repeat( '-', 60 ) . "\n";
