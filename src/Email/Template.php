@@ -283,7 +283,10 @@ final class Template {
 	 *
 	 * Fixed width and height as attributes as well as in the style, because
 	 * Outlook reads only the attributes. The alt text is what a client that
-	 * blocks images shows in its place. The address has to be http or https:
+	 * blocks images shows in its place. The box is tinted with the pale surface
+	 * colour, not the rule colour: a client that blocks images shows the tint,
+	 * and a strong colour there looks like a designed block, not a missing
+	 * picture. The address has to be http or https:
 	 * anything else is dropped rather than put in a src.
 	 *
 	 * @param array<string, mixed>  $item
@@ -299,7 +302,7 @@ final class Template {
 
 		$url = (string) ( $item['url'] ?? '' );
 		$pic = '<img src="' . $src . '" width="' . $size . '" height="' . $size . '" alt="' . esc_attr( (string) ( $image['alt'] ?? '' ) ) . '"'
-			. ' style="display:block;width:' . $size . 'px;height:' . $size . 'px;border:0;border-radius:8px;background:' . $c['rule'] . ';">';
+			. ' style="display:block;width:' . $size . 'px;height:' . $size . 'px;border:0;border-radius:8px;background:' . $c['surface'] . ';">';
 
 		return '' !== $url ? '<a href="' . esc_url( $url ) . '" style="text-decoration:none;">' . $pic . '</a>' : $pic;
 	}
