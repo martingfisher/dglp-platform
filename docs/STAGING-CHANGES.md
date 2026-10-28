@@ -1866,7 +1866,7 @@ Wordify's `replace_in_post`; every page edit left a revision.
   with pictures is Tue 3 Nov 08:00 GMT. The Bunny Optimizer was switched on
   by Martin at about 11:06 the same day; it does not touch the thumbnails
   (a thumbnail fetched through the Bunny address was byte-identical in size to
-  the original). Not verified: rendering in Outlook and Gmail. Seen and not
-  explained: `digest status` listed the next scheduled run as 11:09 UTC when
-  it was already 11:20, so check that the server cron really fires before the
-  3 Nov run (see the cron note above).
+  the original). Not verified: rendering in Outlook and Gmail. Checked: `digest
+  status` listed the next run as 11:09 UTC at 11:20; Wordify shows system cron
+  on with a 15 minute interval, so a digest due at 08:00 goes out by about
+  08:15, which is normal.
