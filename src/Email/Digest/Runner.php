@@ -172,7 +172,8 @@ final class Runner {
 			site_name: (string) get_bloginfo( 'name' ),
 			unsubscribe_url: self::unsubscribe_url( $subscription->unsubscribe_token ),
 			preferences_url: \DGL\Dashboard\Router::url( 'profile', 'email' ),
-			browse_url: home_url( '/' )
+			browse_url: home_url( '/' ),
+			filtered: $subscription->narrows( PostTypes::feed_keys() )
 		);
 
 		if ( $dry_run ) {
@@ -324,7 +325,7 @@ final class Runner {
 				'title'   => (string) get_the_title( $post ),
 				'meta'    => implode( ' · ', $parts ),
 				'url'     => (string) ( get_permalink( $post ) ?: '' ),
-				'summary' => self::summary( (int) $post->ID ),
+				'summary' => self::summary( $post ),
 				'image'   => Thumb::for_post( $post ),
 				'section' =>(string) ( $definitions[ $type ]['plural'] ?? '' ),
 				'date'    => null === $date ? null : [ 'month' => $date['month'], 'day' => $date['day'], 'iso' => $date['iso'] ],
@@ -341,13 +342,15 @@ final class Runner {
 	/**
 	 * The one or two sentences the member wrote for listings and emails.
 	 *
+	 * Read through the field registry, so it follows the field's real meta key
+	 * (`dgl_summary`). It was read under the bare name `summary` until 0.58.4,
+	 * which no item has, so no digest ever carried one.
+	 *
 	 * Falls back to nothing rather than to the body. The body is rich text and
 	 * an arbitrary slice of it ends mid-sentence, mid-tag, or on a heading.
 	 */
-	private static function summary( int $post_id ): string {
-		$summary = trim( (string) get_post_meta( $post_id, 'summary', true ) );
-
-		return '' !== $summary ? $summary : '';
+	private static function summary( WP_Post $post ): string {
+		return trim( (string) \DGL\Frontend\Frontend::value( $post, 'summary' ) );
 	}
 
 	public static function unsubscribe_url( string $token ): string {

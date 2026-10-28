@@ -207,3 +207,34 @@ $image_field = DGL\Schema\FieldRegistry::find( DGL\PostTypes::NEWS, 'image' );
 Harness::assert_true( null !== $image_field, 'news has an image field' );
 Harness::assert_true( str_contains( (string) ( $image_field->help ?? '' ), 'keep the main subject in the centre' ), 'its help tells members to keep the subject in the centre' );
 Harness::assert_true( str_contains( (string) ( $image_field->help ?? '' ), 'At least 1200 pixels wide' ), 'and still states the size rule' );
+
+Harness::group( 'The line under the heading says what was added, and when it has been narrowed' );
+
+$d = DGL\Email\Digest\Frequency::DAILY;
+$w = DGL\Email\Digest\Frequency::WEEKLY;
+$m = DGL\Email\Digest\Frequency::MONTHLY;
+
+Harness::assert_same( "Here is what's been added to the DGL Platform in the last week.", DGL\Email\Digest\Copy::intro( $w, false ), 'a weekly digest says what was added in the last week' );
+Harness::assert_same( "Here is what's been added to the DGL Platform in the last day.", DGL\Email\Digest\Copy::intro( $d, false ), 'a daily one says the last day' );
+Harness::assert_same( "Here is what's been added to the DGL Platform in the last month.", DGL\Email\Digest\Copy::intro( $m, false ), 'and a monthly one the last month' );
+Harness::assert_same( "Here is what's been added to the DGL Platform in the last week that matches your choices.", DGL\Email\Digest\Copy::intro( $w, true ), 'a narrowed digest says it matches the subscriber\'s choices, so it does not read as everything' );
+Harness::assert_true( str_ends_with( DGL\Email\Digest\Copy::intro( $m, true ), 'last month that matches your choices.' ), 'whatever the cadence' );
+Harness::assert_false( str_contains( DGL\Email\Digest\Copy::intro( $w, false ), 'matches' ), 'and an unnarrowed one does not claim it' );
+
+$digest_for = static fn( string $freq, bool $filtered ): DGL\Email\Message => DGL\Email\Digest\Copy::digest( [ $row ], $freq, 'Site', 'https://example.test/u/', 'https://example.test/p/', '', $filtered );
+Harness::assert_same( 'Your weekly round-up', $digest_for( $w, false )->heading, 'the heading is the weekly round-up' );
+Harness::assert_same( 'Your daily round-up', $digest_for( $d, false )->heading, 'and changes to daily when the subscriber picks daily' );
+Harness::assert_same( 'Your monthly round-up', $digest_for( $m, false )->heading, 'and to monthly' );
+Harness::assert_same( [ DGL\Email\Digest\Copy::intro( $w, true ) ], $digest_for( $w, true )->paragraphs, 'the line in the email is the one built from the cadence and the filter' );
+Harness::assert_true( str_contains( DGL\Email\Template::render( $digest_for( $w, false ) ), 'in the last week.' ), 'and it reaches the rendered email' );
+
+Harness::group( 'A digest is narrowed by topics or by asking for only some kinds of item' );
+
+$all = [ PostTypes::EVENT, PostTypes::NEWS, PostTypes::TRAINING, PostTypes::VOLUNTEERING, PostTypes::GRANT ];
+
+Harness::assert_false( $sub( [ 'types' => $all, 'topic_ids' => [] ] )->narrows( $all ), 'every kind and every topic is not narrowed' );
+Harness::assert_true( $sub( [ 'types' => $all, 'topic_ids' => [ 4 ] ] )->narrows( $all ), 'choosing a topic narrows it' );
+Harness::assert_true( $sub( [ 'types' => [ PostTypes::EVENT ], 'topic_ids' => [] ] )->narrows( $all ), 'so does asking for only events' );
+Harness::assert_true( $sub( [ 'types' => [ PostTypes::EVENT, PostTypes::NEWS, PostTypes::TRAINING ], 'topic_ids' => [] ] )->narrows( $all ), 'or for three of the five kinds' );
+Harness::assert_false( $sub( [ 'types' => $all, 'topic_ids' => [], 'include_own_org' => false, 'org_id' => 5 ] )->narrows( $all ), 'leaving out their own organisation is a courtesy, not a choice, so it does not count' );
+Harness::assert_false( $sub( [ 'types' => array_reverse( $all ) ] )->narrows( $all ), 'the order they are stored in does not matter' );
