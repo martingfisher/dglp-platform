@@ -1814,7 +1814,7 @@ Wordify's `replace_in_post`; every page edit left a revision.
   as the menu, and the gap was the end column's spare width. The row is now
   auto / 1fr / auto on the middle row, so the menu column takes the width
   and the menu sits at its right edge beside the disc.
-- **0.58.0 (not deployed): a small square picture on digest rows.** Alex Cant
+- **0.58.0 deployed (as 0.58.2): a small square picture on digest rows.** Alex Cant
   (Voluntary Action Leeds) asked for pictures in the weekly round-up so it
   reads less like a list; Jenny Bull agreed on 28 October. Each row whose item
   has its own picture now shows a 96px square on the right, cut from the
@@ -1826,14 +1826,27 @@ Wordify's `replace_in_post`; every page edit left a revision.
   digests are unchanged. Unit suite 2677 passed (17 new). The crop itself
   (`Thumb::url`) runs WordPress's image editor and is not covered by the unit
   suite; check it on staging with `wp dgl digest preview <user>`.
-- **0.58.1 (not deployed): an event's picture sits under its date.** Martin
+- **0.58.1 deployed (as 0.58.2): an event's picture sits under its date.** Martin
   asked for it on mobile, where a picture on the right left the text in a
   narrow middle column. On an event the picture is now in the left column
   under the date box, the same 56px width, so the text takes the rest of the
   row. News rows, which have no date box, keep the 96px picture on the right.
   Unit suite 2687 passed (10 new).
-- **0.58.2 (not deployed): the event date box and its picture are 80px.** At
+- **0.58.2 deployed to production, 28 October: the event date box and its picture are 80px.** At
   56px the picture under the date was too small to read as a picture. Both
   are now 80px wide, drawn from one constant (`Thumb::SHOWN_UNDER_DATE`) so
   the date box and the picture cannot drift apart. The text column on a
   375px phone is still about 190px.
+  Merged as `dd55ae5` (PR 26) and installed from the commit-pinned zip with
+  `wp plugin install ... --force`. `wp plugin list` reads 0.58.2, active, no
+  update pending. There was no staging site: the old staging address and ID
+  no longer exist in Wordify, so this went straight to production, after
+  merge, as the rule above requires. `wp dgl digest status`: sending on,
+  nothing due; the first weekly slot with pictures is Tue 3 Nov 08:00 GMT, to
+  10 weekly and 1 monthly subscriber. A test digest (`wp dgl digest send
+  martin@resultsyoucanmeasure.com --again`, 7 items) was handed to WordPress
+  on 28 October; that moved the test account's last-sent date to now. **Not
+  verified from here:** that the cropped files were written under
+  `uploads/dgl-email-thumbs/` (the crop returns nothing on failure rather
+  than an error) and how the email renders in Outlook and Gmail. Both are
+  settled by looking at that test email.
