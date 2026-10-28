@@ -171,3 +171,22 @@ Harness::assert_same( 2 * DGL\Email\Digest\Thumb::SHOWN, DGL\Email\Digest\Thumb:
 
 $text = ( new DGL\Email\Message( key: 'digest', audience: 'subscriber', subject: 'S', items: [ $row + [ 'image' => [ 'url' => 'https://example.test/a.jpg', 'alt' => 'x' ] ] ] ) )->to_text();
 Harness::assert_false( str_contains( $text, 'a.jpg' ), 'the plain-text version does not mention the picture' );
+
+Harness::group( 'An event keeps its picture under the date, the same width' );
+
+$event = [ 'title' => 'Community lunch', 'meta' => 'Thu', 'url' => 'https://example.test/e/1', 'summary' => 'Free.', 'section' => 'Events', 'date' => [ 'month' => 'Nov', 'day' => '5', 'iso' => '2026-11-05' ] ];
+$under = DGL\Email\Digest\Thumb::SHOWN_UNDER_DATE;
+$ev    = $digest_html( [ $event + [ 'image' => [ 'url' => 'https://example.test/a.jpg', 'alt' => 'The hall' ] ] ] );
+
+Harness::assert_same( 1, substr_count( $ev, '<img' ), 'an event with a picture shows one' );
+Harness::assert_true( str_contains( $ev, 'width="' . $under . '" height="' . $under . '"' ), 'at the date box width, so the two line up' );
+Harness::assert_false( str_contains( $ev, 'width="' . DGL\Email\Digest\Thumb::SHOWN . '" height="' ), 'and not at the larger size used beside news' );
+Harness::assert_true( strpos( $ev, 'Nov' ) < strpos( $ev, '<img' ) && strpos( $ev, '<img' ) < strpos( $ev, 'Community lunch' ), 'it comes after the date and before the title, in the left column' );
+Harness::assert_false( str_contains( $ev, 'align="right"' ), 'an event has no right-hand picture cell, so the text keeps the width' );
+Harness::assert_true( str_contains( $ev, '<a href="https://example.test/e/1" style="text-decoration:none;"><img' ), 'the event picture links to the event' );
+Harness::assert_false( str_contains( $digest_html( [ $event + [ 'image' => null ] ] ), '<img' ), 'an event with no picture shows the date alone' );
+Harness::assert_true( str_contains( $digest_html( [ $event + [ 'image' => null ] ] ), 'Nov' ), 'and still shows the date' );
+
+$both = $digest_html( [ $event + [ 'image' => [ 'url' => 'https://example.test/a.jpg', 'alt' => '' ] ], $row + [ 'image' => [ 'url' => 'https://example.test/b.jpg', 'alt' => '' ] ] ] );
+Harness::assert_same( 2, substr_count( $both, '<img' ), 'events and news can share a digest' );
+Harness::assert_same( 1, substr_count( $both, 'align="right"' ), 'only the news row has a right-hand picture' );

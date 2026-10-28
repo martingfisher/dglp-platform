@@ -1826,3 +1826,9 @@ Wordify's `replace_in_post`; every page edit left a revision.
   digests are unchanged. Unit suite 2677 passed (17 new). The crop itself
   (`Thumb::url`) runs WordPress's image editor and is not covered by the unit
   suite; check it on staging with `wp dgl digest preview <user>`.
+- **0.58.1 (not deployed): an event's picture sits under its date.** Martin
+  asked for it on mobile, where a picture on the right left the text in a
+  narrow middle column. On an event the picture is now in the left column
+  under the date box, the same 56px width, so the text takes the rest of the
+  row. News rows, which have no date box, keep the 96px picture on the right.
+  Unit suite 2687 passed (10 new).

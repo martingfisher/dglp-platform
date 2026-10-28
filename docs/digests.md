@@ -75,8 +75,10 @@ Staging is a clone of production, so that is every staging site.
 
 ## Pictures
 
-A row whose item has its own picture shows it as a small square on the right.
-The square is a real file, cut from the upload at 192px and shown at 96px,
+A row whose item has its own picture shows it as a small square. On an event it
+sits in the left column under the date box, the same 56px width, so the text
+keeps the rest of the row on a phone. On news it sits on the right at 96px.
+The square is a real file, cut from the upload at 192px,
 because email clients ignore `object-fit` and would squash a wide picture.
 `Digest\Thumb` makes it once, in `uploads/dgl-email-thumbs/`, named by
 attachment and edit time so a replaced picture gets a new file.

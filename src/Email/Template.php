@@ -225,13 +225,22 @@ final class Template {
 			 * bordered cell. Tables and inline styles only, because this is
 			 * email. It is repeated in the text under the title for anyone
 			 * whose client drops the styling.
+			 *
+			 * An event's picture sits in the same left column, under the
+			 * leaf and the same width, so the text beside them keeps the rest
+			 * of the row. Every other row has no leaf, so its picture goes on
+			 * the right, below.
 			 */
+			$under = null !== $date ? self::picture( $item, \DGL\Email\Digest\Thumb::SHOWN_UNDER_DATE, $c ) : '';
+
 			if ( null !== $date ) {
 				$out .= '<td width="58" valign="top" style="padding:0 14px 0 0;">'
 					. '<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="56" style="border:1px solid ' . $c['rule'] . ';border-radius:10px;background:' . $c['white'] . ';">'
 					. '<tr><td align="center" style="padding:7px 2px 2px;font-family:' . self::FONT . ';font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;line-height:1;color:' . $c['link'] . ';">' . esc_html( (string) $date['month'] ) . '</td></tr>'
 					. '<tr><td align="center" style="padding:0 2px 7px;font-family:' . self::FONT . ';font-size:22px;font-weight:700;line-height:1;color:' . $c['ink'] . ';">' . esc_html( (string) $date['day'] ) . '</td></tr>'
-					. '</table></td>';
+					. '</table>'
+					. ( '' !== $under ? '<div style="margin:8px 0 0;">' . $under . '</div>' : '' )
+					. '</td>';
 			}
 
 			$out .= '<td valign="top">';
@@ -255,30 +264,43 @@ final class Template {
 
 			$out .= '</td>';
 
-			/*
-			 * The item's own picture, cropped square and shown small, on the
-			 * right so it does not sit beside the calendar leaf. Fixed width
-			 * and height attributes as well as style, because Outlook reads
-			 * only the attributes. The alt text is what a client that blocks
-			 * images shows in its place.
-			 */
-			$image = $item['image'] ?? null;
-			$src   = is_array( $image ) ? esc_url( (string) ( $image['url'] ?? '' ) ) : '';
+			// No leaf, so no column to share: the picture goes on the right.
+			$beside = null === $date ? self::picture( $item, \DGL\Email\Digest\Thumb::SHOWN, $c ) : '';
 
-			if ( '' !== $src ) {
-				$size = \DGL\Email\Digest\Thumb::SHOWN;
-				$pic  = '<img src="' . $src . '" width="' . $size . '" height="' . $size . '" alt="' . esc_attr( (string) ( $image['alt'] ?? '' ) ) . '"'
-					. ' style="display:block;width:' . $size . 'px;height:' . $size . 'px;border:0;border-radius:8px;background:' . $c['rule'] . ';">';
-
-				$out .= '<td width="' . ( $size + 16 ) . '" valign="top" align="right" style="padding:0 0 0 16px;">'
-					. ( '' !== $url ? '<a href="' . esc_url( $url ) . '" style="text-decoration:none;">' . $pic . '</a>' : $pic )
-					. '</td>';
+			if ( '' !== $beside ) {
+				$out .= '<td width="' . ( \DGL\Email\Digest\Thumb::SHOWN + 16 ) . '" valign="top" align="right" style="padding:0 0 0 16px;">' . $beside . '</td>';
 			}
 
 			$out .= '</tr></table></td></tr>';
 		}
 
 		return $out . '</table>';
+	}
+
+	/**
+	 * An item's picture as a linked square, or '' when it has none.
+	 *
+	 * Fixed width and height as attributes as well as in the style, because
+	 * Outlook reads only the attributes. The alt text is what a client that
+	 * blocks images shows in its place. The address has to be http or https:
+	 * anything else is dropped rather than put in a src.
+	 *
+	 * @param array<string, mixed>  $item
+	 * @param array<string, string> $c
+	 */
+	private static function picture( array $item, int $size, array $c ): string {
+		$image = $item['image'] ?? null;
+		$src   = is_array( $image ) ? esc_url( (string) ( $image['url'] ?? '' ) ) : '';
+
+		if ( '' === $src ) {
+			return '';
+		}
+
+		$url = (string) ( $item['url'] ?? '' );
+		$pic = '<img src="' . $src . '" width="' . $size . '" height="' . $size . '" alt="' . esc_attr( (string) ( $image['alt'] ?? '' ) ) . '"'
+			. ' style="display:block;width:' . $size . 'px;height:' . $size . 'px;border:0;border-radius:8px;background:' . $c['rule'] . ';">';
+
+		return '' !== $url ? '<a href="' . esc_url( $url ) . '" style="text-decoration:none;">' . $pic . '</a>' : $pic;
 	}
 
 	/**
