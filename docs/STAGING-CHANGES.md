@@ -1858,3 +1858,15 @@ Wordify's `replace_in_post`; every page edit left a revision.
   square, so keep the main subject in the centre. The square shape stays, as
   Martin decided, after the crop was seen cutting the words off a wide banner.
   Unit suite 2693 passed (6 new). Deployed to production the same day, below.
+  **0.58.3 deployed to production, 28 October, 11:20 UTC.** Merged as
+  `b3411c9` (PR 28), installed from the commit-pinned zip with `wp plugin
+  install ... --force`. `wp plugin list` reads 0.58.3, active, no update
+  pending; the public site's stylesheet version stamp matches the install
+  minute. `wp dgl digest status`: sending on, nothing due; first weekly slot
+  with pictures is Tue 3 Nov 08:00 GMT. The Bunny Optimizer was switched on
+  by Martin at about 11:06 the same day; it does not touch the thumbnails
+  (a thumbnail fetched through the Bunny address was byte-identical in size to
+  the original). Not verified: rendering in Outlook and Gmail. Seen and not
+  explained: `digest status` listed the next scheduled run as 11:09 UTC when
+  it was already 11:20, so check that the server cron really fires before the
+  3 Nov run (see the cron note above).
