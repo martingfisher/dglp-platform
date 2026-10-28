@@ -42,7 +42,8 @@ final class Copy {
 		string $site_name,
 		string $unsubscribe_url,
 		string $preferences_url,
-		string $browse_url = ''
+		string $browse_url = '',
+		bool $filtered = false
 	): Message {
 		$count = count( $items );
 		$site  = '' !== trim( $site_name ) ? $site_name : __( 'the partnership', 'dgl-platform' );
@@ -77,13 +78,7 @@ final class Copy {
 				Frequency::MONTHLY => __( 'Your monthly round-up', 'dgl-platform' ),
 				default            => __( 'Your weekly round-up', 'dgl-platform' ),
 			},
-			paragraphs: [
-				match ( $frequency ) {
-					Frequency::DAILY   => __( 'Here is what member organisations posted yesterday.', 'dgl-platform' ),
-					Frequency::MONTHLY => __( 'Here is what member organisations posted last month.', 'dgl-platform' ),
-					default            => __( 'Here is what member organisations posted in the last week.', 'dgl-platform' ),
-				},
-			],
+			paragraphs: [ self::intro( $frequency, $filtered ) ],
 			cta_label: '' !== $browse_url ? __( 'See everything', 'dgl-platform' ) : '',
 			cta_url: $browse_url,
 			footnotes: [
@@ -105,6 +100,24 @@ final class Copy {
 			],
 			items: $items
 		);
+	}
+
+	/**
+	 * The line under the heading.
+	 *
+	 * It says what the digest holds: what has been added in the period, not
+	 * what is coming up. When the subscriber has chosen topics or kinds of
+	 * item it says so, because a list that has been narrowed should not read as
+	 * everything that was added.
+	 */
+	public static function intro( string $frequency, bool $filtered ): string {
+		$line = match ( $frequency ) {
+			Frequency::DAILY   => __( "Here is what's been added to the DGL Platform in the last day", 'dgl-platform' ),
+			Frequency::MONTHLY => __( "Here is what's been added to the DGL Platform in the last month", 'dgl-platform' ),
+			default            => __( "Here is what's been added to the DGL Platform in the last week", 'dgl-platform' ),
+		};
+
+		return $line . ( $filtered ? __( ' that matches your choices.', 'dgl-platform' ) : '.' );
 	}
 
 	/**

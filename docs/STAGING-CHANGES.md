@@ -1883,3 +1883,17 @@ Wordify's `replace_in_post`; every page edit left a revision.
     fundraising graphic attached (attachment 10365). Flagged to Martin; not
     changed.
   - **Not verified:** how the digest renders in Outlook and Gmail.
+- **0.58.4 (not yet deployed): the digest's own words, and summaries at last.**
+  Jenny Bull, 28 October. (1) The line under the heading is now "Here is
+  what's been added to the DGL Platform in the last week." (last day, last
+  month for the other cadences). When the subscriber has chosen topics or only
+  some kinds of item it ends "that matches your choices.", because a narrowed
+  list should not read as everything. Jenny floated dropping the line instead;
+  this keeps her sentence and the honesty. (2) **Bug:** the summary line under
+  each row was read from the meta key `summary`, but the field stores
+  `dgl_summary`, so no digest ever carried one even though the text is on the
+  stories. It now goes through the field registry. (3) Answered, no change: a
+  digest holds what was added since the subscriber's last digest, not what is
+  coming up; the heading already changes with the cadence. Unit suite 2710
+  passed (17 new). Not covered by unit tests: `Runner::summary` itself reads
+  WordPress; check the next test digest shows summaries.

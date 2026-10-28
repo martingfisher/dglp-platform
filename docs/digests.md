@@ -43,6 +43,24 @@ one index per cadence and stops.
 not fire it, and a digest nobody receives looks exactly like a digest nobody
 wanted.
 
+## What goes in it
+
+What was **added**, not what is coming up. An item is in a digest when it was
+approved after the subscriber's last digest, whatever its own date. An event
+approved this week for next month is in this week's digest; one that has
+already expired is not. The newest 25 are used. Inside the email, events are
+listed soonest first, then news, then training.
+
+Subscribers can narrow it by choosing topics or only some kinds of item (events,
+news, training and so on). A narrowed digest says so: "Here is what's been added
+to the DGL Platform in the last week that matches your choices." An unnarrowed
+one leaves that off. Daily and monthly say "last day" and "last month", and the
+heading changes with them (Your daily, weekly or monthly round-up). Leaving out
+a member's own organisation is not counted as narrowing.
+
+Each row carries the member's summary. It was read under the wrong field name
+until 0.58.4, so no digest ever showed one.
+
 ## An empty digest is never sent
 
 If nothing matches, no email goes out **and the last-sent stamp is not moved**.

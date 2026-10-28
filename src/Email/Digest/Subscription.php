@@ -64,6 +64,18 @@ final readonly class Subscription {
 	}
 
 	/**
+	 * Whether this digest is narrower than everything added: the subscriber
+	 * chose some topics, or asked for only some of the kinds of item. Their own
+	 * organisation's items being left out is not counted. That is a courtesy,
+	 * not a choice, and counting it would put the clause on nearly every digest.
+	 *
+	 * @param string[] $all_types Every kind of item a digest can carry.
+	 */
+	public function narrows( array $all_types ): bool {
+		return [] !== $this->topic_ids || [] !== array_diff( $all_types, $this->types );
+	}
+
+	/**
 	 * Whether this subscription can be sent at all, before matching content.
 	 */
 	public function is_sendable(): bool {
