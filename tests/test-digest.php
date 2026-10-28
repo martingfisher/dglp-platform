@@ -133,3 +133,60 @@ Harness::assert_same( 'Tue 2026-09-29 08:00 BST', $fmt( Frequency::next_due_at( 
 Harness::assert_true( Frequency::is_due( Frequency::DAILY, '2026-09-10 07:00:00', null, $at( '2026-09-14 09:00:00' ), $tz ), 'a daily subscriber three days late is owed today s' );
 Harness::assert_true( Frequency::is_due( Frequency::MONTHLY, '2026-08-01 07:00:00', null, $at( '2026-09-01 07:30:00' ), $tz ), 'a monthly one is owed on the first' );
 Harness::assert_false( Frequency::is_due( Frequency::MONTHLY, '2026-09-01 07:00:00', null, $at( '2026-09-20 07:00:00' ), $tz ), 'and not mid month' );
+
+Harness::group( 'A row can carry a small square picture' );
+
+$digest_html = static fn( array $items ): string => DGL\Email\Template::render(
+	new DGL\Email\Message( key: 'digest', audience: 'subscriber', subject: 'S', items: $items )
+);
+
+$row = [ 'title' => 'Tree planting in Armley Park', 'meta' => 'News', 'url' => 'https://example.test/news/trees/', 'summary' => 'Join us.', 'section' => 'News', 'date' => null ];
+
+$plain = $digest_html( [ $row ] );
+Harness::assert_false( str_contains( $plain, '<img' ), 'a row with no picture has no image tag, and no empty box' );
+Harness::assert_false( str_contains( $digest_html( [ $row + [ 'image' => null ] ] ), '<img' ), 'a null picture is the same as none' );
+Harness::assert_false( str_contains( $digest_html( [ $row + [ 'image' => [ 'url' => '', 'alt' => 'x' ] ] ] ), '<img' ), 'a picture with no address is dropped' );
+Harness::assert_false( str_contains( $digest_html( [ $row + [ 'image' => [ 'url' => 'javascript:alert(1)', 'alt' => 'x' ] ] ] ), '<img' ), 'an address that is not http or https is dropped' );
+
+$pic = $digest_html( [ $row + [ 'image' => [ 'url' => 'https://example.test/up/dgl-email-thumbs/7-1-192.jpg', 'alt' => 'Volunteers planting a tree "today" & <b>more</b>' ] ] ] );
+$size = DGL\Email\Digest\Thumb::SHOWN;
+
+Harness::assert_true( str_contains( $pic, 'src="https://example.test/up/dgl-email-thumbs/7-1-192.jpg"' ), 'a row with a picture shows it' );
+Harness::assert_true( str_contains( $pic, 'width="' . $size . '" height="' . $size . '"' ), 'with width and height as attributes, which is all Outlook reads' );
+Harness::assert_true( str_contains( $pic, 'width:' . $size . 'px;height:' . $size . 'px' ), 'and in the style, for every other client' );
+Harness::assert_true( str_contains( $pic, 'alt="Volunteers planting a tree &quot;today&quot; &amp; &lt;b&gt;more&lt;/b&gt;"' ), 'the alt text is escaped, so a member cannot break out of the attribute' );
+Harness::assert_true( str_contains( $pic, '<a href="https://example.test/news/trees/" style="text-decoration:none;"><img' ), 'the picture links to the same page as the title' );
+Harness::assert_same( 1, substr_count( $pic, '<img' ), 'one picture per row' );
+Harness::assert_true( str_contains( $digest_html( [ $row + [ 'image' => [ 'url' => 'https://example.test/a.jpg', 'alt' => '' ] ] ] ), 'alt=""' ), 'no description gives an empty alt, not a missing one' );
+
+$no_link = $digest_html( [ [ 'url' => '' ] + $row + [ 'image' => [ 'url' => 'https://example.test/a.jpg', 'alt' => '' ] ] ] );
+Harness::assert_true( str_contains( $no_link, '<img' ) && ! str_contains( $no_link, '<a href=""' ), 'a row with no address still shows its picture, unlinked' );
+
+$mixed = $digest_html( [ $row + [ 'image' => [ 'url' => 'https://example.test/a.jpg', 'alt' => '' ] ], [ 'title' => 'No picture here' ] + $row ] );
+Harness::assert_same( 1, substr_count( $mixed, '<img' ), 'in a list, only the rows that have a picture show one' );
+
+Harness::assert_same( '7-1793181557-192.jpg', DGL\Email\Digest\Thumb::file_name( 7, 1793181557 ), 'the crop is named by attachment, edit time and size' );
+Harness::assert_true( DGL\Email\Digest\Thumb::file_name( 7, 100 ) !== DGL\Email\Digest\Thumb::file_name( 7, 200 ), 'so a replaced picture gets a new file rather than the stale one' );
+Harness::assert_same( 2 * DGL\Email\Digest\Thumb::SHOWN, DGL\Email\Digest\Thumb::CUT, 'cut at twice the size shown, so it stays sharp on a phone' );
+
+$text = ( new DGL\Email\Message( key: 'digest', audience: 'subscriber', subject: 'S', items: [ $row + [ 'image' => [ 'url' => 'https://example.test/a.jpg', 'alt' => 'x' ] ] ] ) )->to_text();
+Harness::assert_false( str_contains( $text, 'a.jpg' ), 'the plain-text version does not mention the picture' );
+
+Harness::group( 'An event keeps its picture under the date, the same width' );
+
+$event = [ 'title' => 'Community lunch', 'meta' => 'Thu', 'url' => 'https://example.test/e/1', 'summary' => 'Free.', 'section' => 'Events', 'date' => [ 'month' => 'Nov', 'day' => '5', 'iso' => '2026-11-05' ] ];
+$under = DGL\Email\Digest\Thumb::SHOWN_UNDER_DATE;
+$ev    = $digest_html( [ $event + [ 'image' => [ 'url' => 'https://example.test/a.jpg', 'alt' => 'The hall' ] ] ] );
+
+Harness::assert_same( 1, substr_count( $ev, '<img' ), 'an event with a picture shows one' );
+Harness::assert_true( str_contains( $ev, 'width="' . $under . '" height="' . $under . '"' ), 'at the date box width, so the two line up' );
+Harness::assert_false( str_contains( $ev, 'width="' . DGL\Email\Digest\Thumb::SHOWN . '" height="' ), 'and not at the larger size used beside news' );
+Harness::assert_true( strpos( $ev, 'Nov' ) < strpos( $ev, '<img' ) && strpos( $ev, '<img' ) < strpos( $ev, 'Community lunch' ), 'it comes after the date and before the title, in the left column' );
+Harness::assert_false( str_contains( $ev, 'align="right"' ), 'an event has no right-hand picture cell, so the text keeps the width' );
+Harness::assert_true( str_contains( $ev, '<a href="https://example.test/e/1" style="text-decoration:none;"><img' ), 'the event picture links to the event' );
+Harness::assert_false( str_contains( $digest_html( [ $event + [ 'image' => null ] ] ), '<img' ), 'an event with no picture shows the date alone' );
+Harness::assert_true( str_contains( $digest_html( [ $event + [ 'image' => null ] ] ), 'Nov' ), 'and still shows the date' );
+
+$both = $digest_html( [ $event + [ 'image' => [ 'url' => 'https://example.test/a.jpg', 'alt' => '' ] ], $row + [ 'image' => [ 'url' => 'https://example.test/b.jpg', 'alt' => '' ] ] ] );
+Harness::assert_same( 2, substr_count( $both, '<img' ), 'events and news can share a digest' );
+Harness::assert_same( 1, substr_count( $both, 'align="right"' ), 'only the news row has a right-hand picture' );

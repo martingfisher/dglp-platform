@@ -1814,3 +1814,26 @@ Wordify's `replace_in_post`; every page edit left a revision.
   as the menu, and the gap was the end column's spare width. The row is now
   auto / 1fr / auto on the middle row, so the menu column takes the width
   and the menu sits at its right edge beside the disc.
+- **0.58.0 (not deployed): a small square picture on digest rows.** Alex Cant
+  (Voluntary Action Leeds) asked for pictures in the weekly round-up so it
+  reads less like a list; Jenny Bull agreed on 28 October. Each row whose item
+  has its own picture now shows a 96px square on the right, cut from the
+  member's upload (192px file, centre crop, `uploads/dgl-email-thumbs/`, made
+  once per picture and edit time). Items with no picture of their own show
+  none, not the site stand-in. The alt text is the member's own description,
+  else the one stored on the file, so a client that blocks images shows words.
+  The upload field is unchanged: any ratio, 1200px wide or more. Plain-text
+  digests are unchanged. Unit suite 2677 passed (17 new). The crop itself
+  (`Thumb::url`) runs WordPress's image editor and is not covered by the unit
+  suite; check it on staging with `wp dgl digest preview <user>`.
+- **0.58.1 (not deployed): an event's picture sits under its date.** Martin
+  asked for it on mobile, where a picture on the right left the text in a
+  narrow middle column. On an event the picture is now in the left column
+  under the date box, the same 56px width, so the text takes the rest of the
+  row. News rows, which have no date box, keep the 96px picture on the right.
+  Unit suite 2687 passed (10 new).
+- **0.58.2 (not deployed): the event date box and its picture are 80px.** At
+  56px the picture under the date was too small to read as a picture. Both
+  are now 80px wide, drawn from one constant (`Thumb::SHOWN_UNDER_DATE`) so
+  the date box and the picture cannot drift apart. The text column on a
+  375px phone is still about 190px.

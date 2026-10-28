@@ -91,6 +91,11 @@ the only way to find out whether SMTP2GO, SPF and DKIM actually work.
 `<style>` blocks on forwarded mail. This is the only approach that renders the
 same everywhere. No web fonts, no background images, no SVG, no `var()`.
 
+**Pictures are cropped files, not CSS.** A digest row's picture is a real
+square (80px under an event's date, 96px beside news; cut at 192px), with width and height as attributes as well as in
+the style, because Outlook reads only the attributes and no client honours
+`object-fit`. See `docs/digests.md`.
+
 **Raster logo only.** `Logo::email_url()` walks the configured logos and takes
 the first PNG, JPEG or GIF. Gmail drops SVG, so an SVG logo is an invisible one.
 
