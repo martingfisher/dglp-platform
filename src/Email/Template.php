@@ -253,7 +253,29 @@ final class Template {
 					. esc_html( $summary ) . '</div>';
 			}
 
-			$out .= '</td></tr></table></td></tr>';
+			$out .= '</td>';
+
+			/*
+			 * The item's own picture, cropped square and shown small, on the
+			 * right so it does not sit beside the calendar leaf. Fixed width
+			 * and height attributes as well as style, because Outlook reads
+			 * only the attributes. The alt text is what a client that blocks
+			 * images shows in its place.
+			 */
+			$image = $item['image'] ?? null;
+			$src   = is_array( $image ) ? esc_url( (string) ( $image['url'] ?? '' ) ) : '';
+
+			if ( '' !== $src ) {
+				$size = \DGL\Email\Digest\Thumb::SHOWN;
+				$pic  = '<img src="' . $src . '" width="' . $size . '" height="' . $size . '" alt="' . esc_attr( (string) ( $image['alt'] ?? '' ) ) . '"'
+					. ' style="display:block;width:' . $size . 'px;height:' . $size . 'px;border:0;border-radius:8px;background:' . $c['rule'] . ';">';
+
+				$out .= '<td width="' . ( $size + 16 ) . '" valign="top" align="right" style="padding:0 0 0 16px;">'
+					. ( '' !== $url ? '<a href="' . esc_url( $url ) . '" style="text-decoration:none;">' . $pic . '</a>' : $pic )
+					. '</td>';
+			}
+
+			$out .= '</tr></table></td></tr>';
 		}
 
 		return $out . '</table>';

@@ -268,7 +268,7 @@ final class Runner {
 	 * The rows as the email renders them.
 	 *
 	 * @param int[] $ids
-	 * @return array<int, array{title:string, meta:string, url:string, summary:string}>
+	 * @return array<int, array{title:string, meta:string, url:string, summary:string, image:array{url:string, alt:string}|null}>
 	 */
 	public static function rows( array $ids ): array {
 		$definitions = PostTypes::definitions();
@@ -325,7 +325,8 @@ final class Runner {
 				'meta'    => implode( ' · ', $parts ),
 				'url'     => (string) ( get_permalink( $post ) ?: '' ),
 				'summary' => self::summary( (int) $post->ID ),
-				'section' => (string) ( $definitions[ $type ]['plural'] ?? '' ),
+				'image'   => Thumb::for_post( $post ),
+				'section' =>(string) ( $definitions[ $type ]['plural'] ?? '' ),
 				'date'    => null === $date ? null : [ 'month' => $date['month'], 'day' => $date['day'], 'iso' => $date['iso'] ],
 				'sort'    => ( $order[ $type ] ?? 9 ) . '|' . ( null === $date ? '' : $date['iso'] ),
 			];

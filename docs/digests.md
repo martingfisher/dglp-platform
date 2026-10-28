@@ -73,6 +73,21 @@ wp dgl digest run --frequency=weekly  # send, for real
 `--dry-run` first on any site with real member addresses in its user table.
 Staging is a clone of production, so that is every staging site.
 
+## Pictures
+
+A row whose item has its own picture shows it as a small square on the right.
+The square is a real file, cut from the upload at 192px and shown at 96px,
+because email clients ignore `object-fit` and would squash a wide picture.
+`Digest\Thumb` makes it once, in `uploads/dgl-email-thumbs/`, named by
+attachment and edit time so a replaced picture gets a new file.
+
+An item with no picture of its own shows none. The site's stand-in picture is
+not used: a column of identical grey boxes tells a reader less than no box. The
+alt text is the member's own description of the picture, else the one stored on
+the file, so a client that blocks images still shows words. Members upload any
+ratio; nothing about the upload field changes. The plain-text digest has no
+pictures.
+
 ## What is not built
 
 - No per-organisation digest, and no "someone posted in your topic" alert.

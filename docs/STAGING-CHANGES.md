@@ -1814,3 +1814,15 @@ Wordify's `replace_in_post`; every page edit left a revision.
   as the menu, and the gap was the end column's spare width. The row is now
   auto / 1fr / auto on the middle row, so the menu column takes the width
   and the menu sits at its right edge beside the disc.
+- **0.58.0 (not deployed): a small square picture on digest rows.** Alex Cant
+  (Voluntary Action Leeds) asked for pictures in the weekly round-up so it
+  reads less like a list; Jenny Bull agreed on 28 October. Each row whose item
+  has its own picture now shows a 96px square on the right, cut from the
+  member's upload (192px file, centre crop, `uploads/dgl-email-thumbs/`, made
+  once per picture and edit time). Items with no picture of their own show
+  none, not the site stand-in. The alt text is the member's own description,
+  else the one stored on the file, so a client that blocks images shows words.
+  The upload field is unchanged: any ratio, 1200px wide or more. Plain-text
+  digests are unchanged. Unit suite 2677 passed (17 new). The crop itself
+  (`Thumb::url`) runs WordPress's image editor and is not covered by the unit
+  suite; check it on staging with `wp dgl digest preview <user>`.
