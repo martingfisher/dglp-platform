@@ -190,3 +190,20 @@ Harness::assert_true( str_contains( $digest_html( [ $event + [ 'image' => null ]
 $both = $digest_html( [ $event + [ 'image' => [ 'url' => 'https://example.test/a.jpg', 'alt' => '' ] ], $row + [ 'image' => [ 'url' => 'https://example.test/b.jpg', 'alt' => '' ] ] ] );
 Harness::assert_same( 2, substr_count( $both, '<img' ), 'events and news can share a digest' );
 Harness::assert_same( 1, substr_count( $both, 'align="right"' ), 'only the news row has a right-hand picture' );
+
+Harness::group( 'A picture a client blocks does not look like a designed block' );
+
+$blocked = $digest_html( [ $row + [ 'image' => [ 'url' => 'https://example.test/a.jpg', 'alt' => '' ] ], $event + [ 'image' => null ] ] );
+preg_match( '/<img[^>]*style="[^"]*background:(#[0-9a-fA-F]{3,8})/', $blocked, $img_bg );
+preg_match( '/border:1px solid (#[0-9a-fA-F]{3,8})/', $blocked, $leaf_rule );
+
+Harness::assert_true( isset( $img_bg[1] ), 'the picture box has a fallback colour' );
+Harness::assert_true( isset( $leaf_rule[1] ), 'and the date box has its rule colour to compare against' );
+Harness::assert_true( ( $img_bg[1] ?? 'a' ) !== ( $leaf_rule[1] ?? 'b' ), 'the fallback is not the strong rule colour that looked like a designed block' );
+
+Harness::group( 'The upload help says what the email does with the picture' );
+
+$image_field = DGL\Schema\FieldRegistry::find( DGL\PostTypes::NEWS, 'image' );
+Harness::assert_true( null !== $image_field, 'news has an image field' );
+Harness::assert_true( str_contains( (string) ( $image_field->help ?? '' ), 'keep the main subject in the centre' ), 'its help tells members to keep the subject in the centre' );
+Harness::assert_true( str_contains( (string) ( $image_field->help ?? '' ), 'At least 1200 pixels wide' ), 'and still states the size rule' );

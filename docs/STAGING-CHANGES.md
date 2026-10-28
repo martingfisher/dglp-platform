@@ -1850,3 +1850,11 @@ Wordify's `replace_in_post`; every page edit left a revision.
   `uploads/dgl-email-thumbs/` (the crop returns nothing on failure rather
   than an error) and how the email renders in Outlook and Gmail. Both are
   settled by looking at that test email.
+- **0.58.3: a blocked picture reads as empty, and the upload help says what the
+  email does.** The thumbnail box was tinted with the strong rule colour, so a
+  client that blocked images showed a solid teal square that looked like a
+  design choice (seen 28 October). It is now the pale surface colour. The image
+  field's help gains a line: emails show the middle of the picture as a small
+  square, so keep the main subject in the centre. The square shape stays, as
+  Martin decided, after the crop was seen cutting the words off a wide banner.
+  Unit suite 2693 passed (6 new). Deployed to production the same day, below.

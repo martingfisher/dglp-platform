@@ -87,8 +87,11 @@ An item with no picture of its own shows none. The site's stand-in picture is
 not used: a column of identical grey boxes tells a reader less than no box. The
 alt text is the member's own description of the picture, else the one stored on
 the file, so a client that blocks images still shows words. Members upload any
-ratio; nothing about the upload field changes. The plain-text digest has no
-pictures.
+ratio; nothing about the upload field changes. The picture box is tinted with the pale surface
+colour, so a client that blocks images shows empty space and the alt text, not a
+solid block that looks designed. The image field's help tells members the email
+shows the middle of the picture as a square, so a text banner should keep its
+words in the centre. The plain-text digest has no pictures.
 
 ## What is not built
 
