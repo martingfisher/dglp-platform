@@ -1832,3 +1832,8 @@ Wordify's `replace_in_post`; every page edit left a revision.
   under the date box, the same 56px width, so the text takes the rest of the
   row. News rows, which have no date box, keep the 96px picture on the right.
   Unit suite 2687 passed (10 new).
+- **0.58.2 (not deployed): the event date box and its picture are 80px.** At
+  56px the picture under the date was too small to read as a picture. Both
+  are now 80px wide, drawn from one constant (`Thumb::SHOWN_UNDER_DATE`) so
+  the date box and the picture cannot drift apart. The text column on a
+  375px phone is still about 190px.

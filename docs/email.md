@@ -92,7 +92,7 @@ the only way to find out whether SMTP2GO, SPF and DKIM actually work.
 same everywhere. No web fonts, no background images, no SVG, no `var()`.
 
 **Pictures are cropped files, not CSS.** A digest row's picture is a real
-square (56px under an event's date, 96px beside news; cut at 192px), with width and height as attributes as well as in
+square (80px under an event's date, 96px beside news; cut at 192px), with width and height as attributes as well as in
 the style, because Outlook reads only the attributes and no client honours
 `object-fit`. See `docs/digests.md`.
 

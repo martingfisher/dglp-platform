@@ -31,8 +31,8 @@ final class Thumb {
 	/** Pixels the picture is shown at beside a row's text. The email template uses the same figure. */
 	public const SHOWN = 96;
 
-	/** Pixels it is shown at under an event's date: the width of the date box. */
-	public const SHOWN_UNDER_DATE = 56;
+	/** Pixels it is shown at under an event's date. The date box is drawn at the same width. */
+	public const SHOWN_UNDER_DATE = 80;
 
 	/** Pixels the file is cut at: twice the largest size shown, for high-density screens. */
 	public const CUT = 192;

@@ -234,8 +234,9 @@ final class Template {
 			$under = null !== $date ? self::picture( $item, \DGL\Email\Digest\Thumb::SHOWN_UNDER_DATE, $c ) : '';
 
 			if ( null !== $date ) {
-				$out .= '<td width="58" valign="top" style="padding:0 14px 0 0;">'
-					. '<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="56" style="border:1px solid ' . $c['rule'] . ';border-radius:10px;background:' . $c['white'] . ';">'
+				$leaf = \DGL\Email\Digest\Thumb::SHOWN_UNDER_DATE;
+				$out .= '<td width="' . ( $leaf + 2 ) . '" valign="top" style="padding:0 14px 0 0;">'
+					. '<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="' . $leaf . '" style="border:1px solid ' . $c['rule'] . ';border-radius:10px;background:' . $c['white'] . ';">'
 					. '<tr><td align="center" style="padding:7px 2px 2px;font-family:' . self::FONT . ';font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;line-height:1;color:' . $c['link'] . ';">' . esc_html( (string) $date['month'] ) . '</td></tr>'
 					. '<tr><td align="center" style="padding:0 2px 7px;font-family:' . self::FONT . ';font-size:22px;font-weight:700;line-height:1;color:' . $c['ink'] . ';">' . esc_html( (string) $date['day'] ) . '</td></tr>'
 					. '</table>'
