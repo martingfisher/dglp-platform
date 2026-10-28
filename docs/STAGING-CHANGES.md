@@ -1858,3 +1858,28 @@ Wordify's `replace_in_post`; every page edit left a revision.
   square, so keep the main subject in the centre. The square shape stays, as
   Martin decided, after the crop was seen cutting the words off a wide banner.
   Unit suite 2693 passed (6 new). Deployed to production the same day, below.
+  **0.58.3 deployed to production, 28 October, 11:20 UTC.** Merged as
+  `b3411c9` (PR 28) and installed from the commit-pinned zip with `wp plugin
+  install ... --force`. `wp plugin list` reads 0.58.3, active, no update
+  pending; the public site's stylesheet version stamp matches the install
+  minute. `wp dgl digest status`: sending on, nothing due; the first weekly
+  slot with pictures is Tue 3 Nov 08:00 GMT. System cron is on at a 15 minute
+  interval, so that digest goes out by about 08:15; a next-run time a few
+  minutes in the past on `digest status` is normal.
+  - **Seen working.** Martin viewed a test digest in his mail client: the
+    square pictures load and crop as designed, events show the picture under
+    the date box, stories with no picture show none, and a story with a
+    picture set but none to show reads as pale empty space, not teal.
+    Test digests (`wp dgl digest send <user> --again`) went to the test
+    subscriber twice, to Jenny Bull (25 items) and to Alex Cant at her
+    subscribed address alex@thehighriseproject.co.uk (7 items). Each moved
+    that person's last-sent date to now, so their next digest carries only
+    items posted after 28 October.
+  - **Bunny.** Martin switched the CDN Optimizer on at about 11:06. It does not
+    touch the thumbnails: the emails use the site's own address, and a
+    thumbnail fetched through the Bunny address was the same size as the
+    original.
+  - **Content, not code.** The "Mission Christmas" story has a Smarta Energy
+    fundraising graphic attached (attachment 10365). Flagged to Martin; not
+    changed.
+  - **Not verified:** how the digest renders in Outlook and Gmail.
