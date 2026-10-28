@@ -59,3 +59,12 @@ Harness::assert_same( 6, substr_count( $chips, '<input type="radio" name="type"'
 Harness::assert_same( 1, substr_count( $chips, ' checked' ), 'one is checked' );
 Harness::assert_same( true, str_contains( $chips, 'id="k-news" value="news" checked' ), 'the chosen one' );
 Harness::assert_same( true, str_contains( $chips, 'id="k-all" value=""' ), 'and "All" posts an empty type, which the results page reads as everything' );
+
+Harness::group( 'Finder: the theme\'s Search Box element is swapped for this plugin\'s bar' );
+
+$own   = '/plugin/templates/blocksy/search-input';
+$paths = [ '/theme/inc/panel-builder/header/logo', '/pro/premium-header/items/search-input', '/theme/inc/panel-builder/header/menu' ];
+Harness::assert_same( [ '/theme/inc/panel-builder/header/logo', $own, '/theme/inc/panel-builder/header/menu' ], Finder::replace_item( $paths, 'search-input', $own ), 'the Pro directory is replaced in place, the rest keep their order' );
+Harness::assert_same( [ '/theme/inc/panel-builder/header/logo', $own ], Finder::replace_item( [ '/theme/inc/panel-builder/header/logo' ], 'search-input', $own ), 'with no such directory (Pro off) ours is added' );
+Harness::assert_same( [ $own ], Finder::replace_item( [ '/a/search-input/', '/b/search-input' ], 'search-input', $own ), 'two copies become one' );
+Harness::assert_same( 'nope', Finder::own_search_item( 'nope' ), 'anything but a list passes through' );

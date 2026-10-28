@@ -297,3 +297,22 @@ body.dgl-finder-open { overflow: hidden; }
 
 .menu-item .gspb_iconsList__item:has(> .gspb_iconsList__link):hover .gspb_iconsList__item__text,
 .menu-item .gspb_container:has(> .gspb-containerlink):hover .gspb_heading { text-decoration: underline; }
+
+/* ---- The search element in the header: the disc, nothing else ---- */
+
+.dgl-finder-disc { display: flex; align-items: center; }
+.dgl-finder-disc .dgl-finder-trigger { padding: 0; min-width: 44px; }
+
+/* The main menu sits in the header's centre column, stretched across it, so
+   a gap opened between the last item and the search disc in the end column.
+   The menu now hugs the right of its column, next to the disc. */
+#header [data-row="middle"] [data-column="middle"] > [data-items] { justify-content: flex-end; }
+#header [data-row="middle"] [data-column="middle"] .menu-container[data-stretch] { width: auto; }
+#header [data-row="middle"] [data-column="middle"] .menu-container[data-stretch] > .menu { flex: 0 1 auto; justify-content: flex-end; }
+#header [data-row="middle"] [data-column="end"] .dgl-finder-disc { margin-left: 12px; }
+
+/* The theme lays the middle row out as 1fr / auto / 1fr, which centres the
+   menu column and leaves the end column's spare width as a gap before the
+   disc. Logo and disc take only what they need; the menu column takes the
+   rest, and the menu sits at its right edge (rules above). */
+#header [data-row="middle"][data-column-set="3"] > div { grid-template-columns: auto 1fr auto; }

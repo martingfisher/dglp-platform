@@ -15,15 +15,23 @@ use WP_Term;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Three small hooks make one feature. The theme's own search box (a
- * Blocksy Pro "Search Input" element in the top row) is dropped from the
- * header layout as it is read, so nothing stored changes and switching the
- * plugin off brings it straight back. A button with a magnifier joins the
- * end of the Main Menu for the phone drawer (it joined the Top Bar menu too,
- * where the box was, until DGLP asked for it to go). Pressing it opens a dialog in the middle of the
- * screen: one box, a row of kinds to search (all, events, news, training,
- * spaces to hire, organisations) and Search. The dialog is the ordinary
- * search form, so it lands on the same results page as before.
+ * Two small hooks make one feature. A button with a magnifier joins the
+ * end of the Main Menu for the phone drawer (it joined the Top Bar menu too
+ * until DGLP asked for it to go, 19 October 2026). Pressing it opens a
+ * dialog in the middle of the screen: one box, a row of kinds to search
+ * (all, events, news, training, spaces to hire, organisations) and Search.
+ * The dialog is the ordinary search form, so it lands on the same results
+ * page as the theme's own search box.
+ *
+ * From 0.42.0 to 0.57.2 the theme's search box (the Blocksy Pro "Search
+ * Box" element) was also dropped from the header layout as it was read,
+ * because the magnifier stood in for it. Once the magnifier left the top
+ * bar that left the desktop header with no search at all, and the box the
+ * team placed in the new header on 26 October 2026 never showed. The box
+ * is now left where the header layout puts it, and from 0.57.4 the element
+ * itself is this plugin's: the magnifier disc that opens the dialog
+ * ({@see own_search_item()}).
+ * {@see strip()} stays for anything that still wants a layout without it.
  */
 final class Finder {
 
@@ -38,10 +46,57 @@ final class Finder {
 
 	public const DIALOG_ID = 'dgl-finder';
 
+	/** The header element id the theme gives its search box. */
+	public const SEARCH_ITEM_DIR = 'templates/blocksy/search-input';
+
 	public static function init(): void {
-		add_filter( 'theme_mod_header_placements', [ self::class, 'without_search_box' ] );
+		add_filter( 'blocksy:header:items-root-paths', [ self::class, 'own_search_item' ] );
 		add_filter( 'wp_nav_menu_items', [ self::class, 'menu_items' ], 20, 2 );
 		add_action( 'wp_footer', [ self::class, 'overlay' ] );
+	}
+
+	/**
+	 * The theme's list of header element directories, with this plugin's
+	 * search bar in place of the Blocksy Pro "Search Box". Same id, so the
+	 * header layout and the Customizer keep working; what renders is the bar
+	 * that opens the site search dialog. If the theme offers no such element
+	 * (Pro off), ours is added, so the layout can still place it.
+	 *
+	 * @param mixed $paths Directory paths, one per element.
+	 * @return mixed
+	 */
+	public static function own_search_item( mixed $paths ): mixed {
+		return is_array( $paths ) ? self::replace_item( $paths, self::SEARCH_ELEMENT, \DGL\PLUGIN_DIR . self::SEARCH_ITEM_DIR ) : $paths;
+	}
+
+	/**
+	 * Swap the directory whose name is $element for $own, or add $own when
+	 * there is none. Pure.
+	 *
+	 * @param string[] $paths
+	 * @return string[]
+	 */
+	public static function replace_item( array $paths, string $element, string $own ): array {
+		$out   = [];
+		$found = false;
+
+		foreach ( $paths as $path ) {
+			if ( is_string( $path ) && basename( rtrim( $path, '/\\' ) ) === $element ) {
+				if ( ! $found ) {
+					$out[] = $own;
+					$found = true;
+				}
+				continue;
+			}
+
+			$out[] = $path;
+		}
+
+		if ( ! $found ) {
+			$out[] = $own;
+		}
+
+		return $out;
 	}
 
 	/**

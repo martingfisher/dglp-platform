@@ -1779,3 +1779,38 @@ Wordify's `replace_in_post`; every page edit left a revision.
   command-line tools added since 0.51.0. Jenny's Doing Good Leeds
   Partnership organisation (10445) now carries the site roundel (7156) as
   its logo and is in the directory, both set directly.
+- **0.57.3 deployed: the header search box shows again.** The new header
+  (26 October) put the theme's Search Box in the middle row, but it never
+  appeared: since 0.42.0 the plugin dropped that element from the header
+  layout as it was read, because its magnifier stood in for it, and 0.48.1
+  took the magnifier off the top bar, leaving desktop with no search at
+  all. The filter is gone; the box renders where the layout puts it and
+  lands on the plugin's results page as before. The magnifier stays in the
+  phone drawer. `Finder::strip()` remains, unused.
+- **0.57.4 deployed: the header search bar opens the site search dialog.**
+  0.57.3 brought the theme's Search Box back, but that is a plain form: one
+  word, no kinds. Martin wanted the pop-out (All, Events, News, Training,
+  Spaces to hire, Organisations) back in the header. The plugin now
+  registers its own `search-input` header element in place of the Blocksy
+  Pro one (`blocksy:header:items-root-paths`, `Finder::own_search_item()`),
+  so the layout and Customizer keep the element where the team put it, and
+  what renders is a bar that looks like the theme's box and opens the
+  dialog on press. Without JavaScript it is a plain search form.
+  `templates/blocksy/search-input/{config,options,view}.php`, `finder.css`.
+- **0.57.5 deployed:** the theme's Search Box stylesheet still loads for the
+  element id and painted a teal inner ring and a square button inside the
+  bar. `finder.css` now overrides it: one 2px navy edge, a plain field, the
+  magnifier in a navy disc.
+- **0.57.6 deployed: just the disc.** Martin's call: the header search
+  element is the magnifier in a navy disc (the same button the phone drawer
+  has), not a bar. The bar's styles are gone; the element keeps the theme's
+  `search-input` id so the layout and Customizer are untouched.
+- **0.57.7 deployed:** the main menu hugs the right of the header's centre
+  column, next to the search disc, instead of spreading across it and
+  leaving a gap before the disc (`finder.css`, overriding the theme's
+  stretched-menu rules on the middle row only).
+- **0.57.8 deployed:** 0.57.7 did not move the menu because the theme's
+  middle row is a 1fr / auto / 1fr grid: the menu column was only as wide
+  as the menu, and the gap was the end column's spare width. The row is now
+  auto / 1fr / auto on the middle row, so the menu column takes the width
+  and the menu sits at its right edge beside the disc.

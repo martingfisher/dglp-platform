@@ -4998,7 +4998,7 @@ foreach ( $fx_menus as $fx_id ) {
 
 set_theme_mod( 'header_placements', [ 'sections' => [ [ 'items' => [ [ 'id' => 'search-input' ] ], 'desktop' => [ [ 'placements' => [ [ 'id' => 'end', 'items' => [ 'search-input', 'menu-secondary', 'account' ] ] ] ] ] ] ] ] );
 $fx_layout = get_theme_mod( 'header_placements' );
-$ok( [ 'menu-secondary', 'account' ] === $fx_layout['sections'][0]['desktop'][0]['placements'][0]['items'] && 'search-input' === $fx_layout['sections'][0]['items'][0]['id'], 'the header layout is read without the theme search box, its settings kept' );
+$ok( [ 'search-input', 'menu-secondary', 'account' ] === $fx_layout['sections'][0]['desktop'][0]['placements'][0]['items'], 'the header layout is read as stored: the theme search box stays where the team put it (0.57.3)' );
 remove_theme_mod( 'header_placements' );
 
 ob_start();
@@ -6114,6 +6114,20 @@ $ok( false !== wp_next_scheduled( \DGL\Padlet\Board::HOOK ), 'the nightly fetch 
 
 remove_filter( 'pre_http_request', $pd_stub, 10 );
 delete_option( \DGL\Padlet\Board::OPTION_GROUPS );
+
+
+$group( 'Finder: the header Search Box is this plugin\'s bar' );
+$fb_paths = apply_filters( 'blocksy:header:items-root-paths', [ '/pro/items/search-input', '/theme/header/logo' ] );
+$ok( is_array( $fb_paths ) && str_ends_with( (string) $fb_paths[0], 'templates/blocksy/search-input' ) && '/theme/header/logo' === $fb_paths[1], 'the theme is handed this plugin\'s element in place of the Pro one' );
+$ok( is_readable( \DGL\PLUGIN_DIR . 'templates/blocksy/search-input/view.php' ) && is_readable( \DGL\PLUGIN_DIR . 'templates/blocksy/search-input/config.php' ), 'and its files exist' );
+if ( ! function_exists( 'blocksy_attr_to_html' ) ) {
+	function blocksy_attr_to_html( array $attr ): string { $o = ''; foreach ( $attr as $k => $v ) { $o .= ' ' . $k . '="' . esc_attr( (string) $v ) . '"'; } return trim( $o ); }
+}
+ob_start();
+$attr = [ 'data-id' => 'search-input' ];
+include \DGL\PLUGIN_DIR . 'templates/blocksy/search-input/view.php';
+$fb_html = (string) ob_get_clean();
+$ok( str_contains( $fb_html, 'data-dgl-finder-open' ) && str_contains( $fb_html, 'dgl-finder-trigger__ring' ) && str_contains( $fb_html, 'data-id="search-input"' ) && str_contains( $fb_html, 'aria-controls="dgl-finder"' ) && ! str_contains( $fb_html, '<form' ), 'the element is the magnifier disc that opens the dialog, not a form' );
 
 /* ----------------------------------------------------------------- report */
 
