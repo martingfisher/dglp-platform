@@ -57,9 +57,12 @@ went stale when the domain changed.)
 
 A subscriber's own organisation is included by default since 0.58.5. It used to be
 left out, which meant two people at the same organisation could get different
-digests with no hint why. Subscribers who set up before 0.58.5 keep what they had;
-`wp dgl digest subscribe <user> --own-org` changes one. The preferences screen
-still has the tick box.
+digests with no hint why. Subscribers who set up before 0.58.5 were switched over
+on 12 November with `wp dgl digest own-org --apply --actor=<id>`, which changes only
+that setting and leaves types, topics, cadence and consent as they were (and anybody
+who had unsubscribed alone). Do not use `wp dgl digest subscribe <user> --own-org` for
+this: it rebuilds the whole row from defaults. The preferences screen still has the
+tick box.
 
 Subscribers can narrow it by choosing topics or only some kinds of item (events,
 news, training and so on). A narrowed digest says so: "Here is what's been added
