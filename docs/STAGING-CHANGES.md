@@ -1919,7 +1919,7 @@ Wordify's `replace_in_post`; every page edit left a revision.
   Title, currently `DGL.org.uk`. Martin agreed to change it to
   `doinggoodleeds.org.uk` at the switchover on Sunday 15 November. Not done.
   Manuel's items (Contact us page, colour glitches) are not in this release.
-- **0.58.6 (not yet deployed): `wp dgl digest own-org`.** Martin asked on 12
+- **0.58.6 deployed to production, 12 November: `wp dgl digest own-org`.** Martin asked on 12
   November to switch existing subscribers to include their own organisation
   (new ones have since 0.58.5). `wp dgl digest subscribe <user> --own-org`
   cannot do that safely: it rebuilds the row from defaults and would reset
@@ -1928,3 +1928,36 @@ Wordify's `replace_in_post`; every page edit left a revision.
   dry run unless `--apply --actor=<id>`. Unit suite unchanged (2731); a new
   integration test checks that types, topics, cadence, consent, link and last
   send survive the flip. Not run (needs WordPress).
+  **Deployed and run:** merged as `8966686` (PR 34), installed from the
+  commit-pinned zip; `wp plugin list` reads 0.58.6, active. `wp dgl digest
+  own-org` dry run listed 22 subscribers; `--apply --actor=1` changed 21 (one
+  row, user 15, belongs to an account that no longer exists and has no email;
+  left). A second dry run lists only that row. Jenny's two accounts keep their
+  types, cadence and last-sent dates. Her `forumcentral.org.uk` account has no
+  organisation linked; her `hotmail.co.uk` one has, which fits the missing
+  Forum Central training (not proven: the earlier digest cannot be rebuilt).
+
+### 12 November 2026: stories from the old site, cleaned, with topics
+
+- **Fetched** the 10 stories the old site published between 28 October and 12
+  November (`wp dgl news fetch --since=2026-10-23 --org=10445`, ids 11359 to
+  11398). The call timed out at Wordify's 60 seconds but finished on the
+  server: a dry run afterwards showed all 13 since 23 October present.
+  Nothing runs this on a schedule. After Sunday 15 November the old site is
+  behind a login and the command cannot read it, so run it again on 14 or 15
+  November.
+- **Tidied** the 8 that needed it (`wp dgl content tidy --apply --post=`, one at
+  a time, so three older member items it also found were left alone). No
+  `mso-` or `xmlns` markup in any news story; `MsoNormal` remains in two older
+  ones (5537, 6289). `wp dgl media dedupe --apply` removed a doubled main
+  picture on 11392; `wp dgl media alts --apply` gave 3 pictures in one post
+  their library alt text. No files needed copying.
+- **Topics** set by hand with `wp dgl news set-topics`, audit row each, on
+  those 10 only. `suggest-topics --apply` was not used: it cannot be limited
+  to new stories and would also have set topics on 42 older ones. The
+  keyword suggestions were changed where they looked wrong (the Poppy Run was
+  "Children and Young People", now Health and Social Care and Wellbeing).
+  11392 (Christmas Appeal) is a low-confidence "Wellbeing".
+- **No picture:** 11359, 11379, 11381 and 11386 have none (the old site had
+  none) and show the plain placeholder tile; no News stand-in picture is set.
+  For the team to add.
