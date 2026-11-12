@@ -1928,3 +1928,17 @@ Wordify's `replace_in_post`; every page edit left a revision.
   dry run unless `--apply --actor=<id>`. Unit suite unchanged (2731); a new
   integration test checks that types, topics, cadence, consent, link and last
   send survive the flip. Not run (needs WordPress).
+- **0.58.7 (not yet deployed): a deleted account takes its digest row with it.**
+  Martin asked on 12 November how a digest row could have no email (user 15).
+  The table stores no email; it is read from the account, so a row with a blank
+  one has no account behind it, and the sender already skips such rows. Cause:
+  nothing removed the row when an administrator deleted an account in wp-admin.
+  The privacy eraser already did, for an erasure request (Claude first said it
+  did not; that was wrong). Now `deleted_user` calls `Store::forget()`, and `wp
+  dgl digest tidy [--apply --actor=<id>]` removes rows left by earlier
+  deletions (dry run by default; audit row each). Not touched, on purpose: the
+  join-request table (`dgl_signups`) keeps each request's email and reason after
+  its account is deleted, possibly as a record of the approval; Martin to
+  decide. Audit rows keep the actor's id by design. Unit suite 2731; a new
+  integration test (delete an account, row gone; a planted orphan is found and
+  removed) not run, as it needs WordPress.

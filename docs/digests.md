@@ -74,6 +74,16 @@ a member's own organisation is not counted as narrowing.
 Each row carries the member's summary. It was read under the wrong field name
 until 0.58.4, so no digest ever showed one.
 
+## When an account is deleted
+
+A digest row holds no email. The address is read from the account, so a row whose
+account has gone can never be sent anything. Since 0.58.7 deleting an account in
+wp-admin removes its row (`deleted_user`); the privacy eraser already did. Rows left
+by deletions before that are removed with `wp dgl digest tidy --apply --actor=<id>`
+(a dry run without `--apply`). An *unsubscribe* is different and keeps its row: it is
+the record that somebody opted out, and without it a later approval could sign them
+up again.
+
 ## An empty digest is never sent
 
 If nothing matches, no email goes out **and the last-sent stamp is not moved**.
