@@ -30,3 +30,23 @@ Harness::assert_same( '', ListingIntro::excerpt( '' ), 'nothing in, nothing out'
 $long = ListingIntro::excerpt( '<p>' . str_repeat( 'word ', 80 ) . '</p>' );
 Harness::assert_true( mb_strlen( $long ) <= ListingIntro::DESCRIPTION_MAX, 'a long intro is cut to the description length' );
 Harness::assert_true( str_ends_with( $long, '…' ) && ! str_contains( $long, 'wor…' ), 'at a whole word, with an ellipsis' );
+
+Harness::group( 'News, events and training invite members to add their own' );
+
+$signin = 'https://example.test/dashboard/';
+
+foreach ( [ PostTypes::NEWS, PostTypes::EVENT, PostTypes::TRAINING ] as $kind ) {
+	$html = ListingIntro::default_intro_html( $kind, $signin );
+
+	Harness::assert_true( str_contains( $html, '<a href="' . $signin . '">Sign in to add your own</a>' ), $kind . ' ends with a link to sign in and add your own' );
+	Harness::assert_true( str_starts_with( $html, '<p>' ) && str_ends_with( $html, '.</p>' ), $kind . ' is one paragraph, with the full stop outside the link' );
+	Harness::assert_true( str_ends_with( ListingIntro::default_intro( $kind ), 'Sign in to add your own.' ), $kind . ' has the same words as plain text for the settings screen' );
+}
+
+Harness::assert_true( str_contains( ListingIntro::default_intro_html( PostTypes::NEWS, $signin ), 'Catch up on the latest news from and for the third sector in Leeds. Have news to share?' ), 'news says what the page is, then asks' );
+Harness::assert_true( str_contains( ListingIntro::default_intro_html( PostTypes::EVENT, $signin ), esc_html( "Find out what's happening across the third sector in Leeds. Have an event to promote?" ) ), 'events does too, with its apostrophe escaped in the HTML' );
+Harness::assert_true( str_starts_with( ListingIntro::default_intro( PostTypes::EVENT ), "Find out what's happening across the third sector in Leeds." ), 'and as plain text it reads as written' );
+Harness::assert_true( str_contains( ListingIntro::default_intro_html( PostTypes::TRAINING, $signin ), 'Find training for the third sector in Leeds. Have training to promote?' ), 'and training' );
+Harness::assert_same( '<p>Posted by organisations in the Doing Good Leeds Partnership.</p>', ListingIntro::default_intro_html( PostTypes::GRANT, $signin ), 'a listing that does not invite keeps the standard line' );
+Harness::assert_false( str_contains( ListingIntro::default_intro_html( PostTypes::GRANT, $signin ), '<a ' ), 'with no link' );
+Harness::assert_false( str_contains( ListingIntro::default_intro_html( PostTypes::NEWS, 'javascript:alert(1)' ), 'javascript:' ), 'an address that is not http or https never reaches the link' );

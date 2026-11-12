@@ -781,6 +781,14 @@ body.dgl-body {
 	cursor: pointer;
 }
 
+.dgl-signin__note {
+	margin: 12px 0 var(--dgl-gap);
+	padding: 10px 14px;
+	border-radius: var(--dgl-radius-field);
+	background: var(--dgl-surface);
+	font-size: 0.95em;
+}
+
 .dgl-signin__foot { margin-top: var(--dgl-gap); font-size: 0.82em; }
 
 /* ---- Narrow screens ------------------------------------------------------ */

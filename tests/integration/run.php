@@ -2052,7 +2052,7 @@ $group( 'Digests: approval subscribes, an unsubscribe sticks, backfill fills the
 $wpdb->query( 'DELETE FROM ' . DigestStore::name() . ' WHERE user_id IN (' . (int) $alice . ',' . (int) $aaron . ',' . (int) $bella . ')' );
 $ok( DigestStore::subscribe_default( $alice, 'approval' ), 'an approved member with no row is subscribed' );
 $alice_sub = DigestStore::for_user( $alice );
-$ok( null !== $alice_sub && $alice_sub->has_consent() && Frequency::WEEKLY === $alice_sub->frequency && [] === array_diff( PostTypes::feed_keys(), $alice_sub->types ) && ! $alice_sub->include_own_org, 'to the weekly round-up of every feed type, own organisation left out' );
+$ok( null !== $alice_sub && $alice_sub->has_consent() && Frequency::WEEKLY === $alice_sub->frequency && [] === array_diff( PostTypes::feed_keys(), $alice_sub->types ) && $alice_sub->include_own_org, 'to the weekly round-up of every feed type, own organisation included (the default since 0.58.5)' );
 $alice_row = $wpdb->get_row( $wpdb->prepare( 'SELECT consent_source FROM ' . DigestStore::name() . ' WHERE user_id = %d', $alice ), ARRAY_A );
 $ok( 'approval' === ( $alice_row['consent_source'] ?? '' ), 'and the consent record says approval' );
 $ok( ! DigestStore::subscribe_default( $alice, 'approval' ), 'a second approval changes nothing' );
