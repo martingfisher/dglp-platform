@@ -312,6 +312,46 @@ final class Store {
 	}
 
 	/**
+	 * Subscribers who have agreed to digests and whose own organisation is
+	 * left out of theirs. Somebody who has unsubscribed is not listed: that
+	 * is their record, and nothing here should touch it.
+	 *
+	 * @return int[] User IDs, lowest first.
+	 */
+	public static function without_own_org(): array {
+		global $wpdb;
+
+		$table = self::name();
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- the table name is ours.
+		$ids = $wpdb->get_col( "SELECT user_id FROM {$table} WHERE include_own_org = 0 AND consent_at IS NOT NULL ORDER BY user_id ASC" );
+
+		return array_map( 'intval', (array) $ids );
+	}
+
+	/**
+	 * Change only whether somebody's own organisation is in their digest.
+	 * Types, topics, cadence, consent and the last send are left exactly as
+	 * they were, which {@see self::save()} cannot promise: it rebuilds the row.
+	 */
+	public static function set_own_org( int $user_id, bool $include ): bool {
+		global $wpdb;
+
+		if ( $user_id <= 0 || null === self::for_user( $user_id ) ) {
+			return false;
+		}
+
+		return false !== $wpdb->update(
+			self::name(),
+			[
+				'include_own_org' => $include ? 1 : 0,
+				'updated_at'      => self::now(),
+			],
+			[ 'user_id' => $user_id ]
+		);
+	}
+
+	/**
 	 * Approved member accounts that have never had a digest row.
 	 *
 	 * @return int[]

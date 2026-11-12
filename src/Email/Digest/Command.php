@@ -359,6 +359,92 @@ final class Command {
 	}
 
 	/**
+	 * Include everyone's own organisation in their digest, and change nothing else.
+	 *
+	 * Since 0.58.5 a new subscription includes the subscriber's own
+	 * organisation. This does the same for subscriptions made before, so two
+	 * people at one organisation do not get different digests with no hint
+	 * why. Types, topics, cadence, consent and the last send are untouched.
+	 * Anybody who has unsubscribed is left alone. A dry run unless --apply.
+	 *
+	 * ## OPTIONS
+	 *
+	 * [--apply]
+	 * : Make the change. Without it, only list who would change.
+	 *
+	 * [--actor=<user-id>]
+	 * : The moderator or administrator doing it; the audit rows carry them. Required with --apply.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp dgl digest own-org
+	 *     wp dgl digest own-org --apply --actor=1
+	 *
+	 * @subcommand own-org
+	 * @when after_wp_load
+	 *
+	 * @param string[]              $args
+	 * @param array<string, string> $assoc
+	 */
+	public function own_org( array $args, array $assoc ): void {
+		$apply = isset( $assoc['apply'] );
+		$actor = (int) ( $assoc['actor'] ?? 0 );
+
+		if ( $apply && ( $actor <= 0 || ! get_userdata( $actor ) ) ) {
+			WP_CLI::error( 'Give --actor=<user-id> with --apply.' );
+		}
+
+		$ids = Store::without_own_org();
+
+		if ( [] === $ids ) {
+			WP_CLI::success( 'Everyone who gets digests already has their own organisation included. Nothing to change.' );
+			return;
+		}
+
+		$rows = [];
+
+		foreach ( $ids as $id ) {
+			$sub    = Store::for_user( $id );
+			$rows[] = [
+				'user'      => $id,
+				'email'     => (string) ( $sub?->email ?? '' ),
+				'cadence'   => null === $sub ? '' : Frequency::label( $sub->frequency ),
+				'has_org'   => null !== $sub && $sub->org_id > 0 ? 'yes' : 'no',
+			];
+		}
+
+		WP_CLI\Utils\format_items( 'table', $rows, [ 'user', 'email', 'cadence', 'has_org' ] );
+
+		if ( ! $apply ) {
+			WP_CLI::success( sprintf( 'Dry run, nothing written: %d subscriber(s) would now include their own organisation.', count( $ids ) ) );
+			return;
+		}
+
+		$done = 0;
+
+		foreach ( $ids as $id ) {
+			if ( ! Store::set_own_org( $id, true ) ) {
+				WP_CLI::warning( sprintf( 'Could not change user %d.', $id ) );
+				continue;
+			}
+
+			\DGL\Audit\Log::record(
+				'digest_own_org_set',
+				'user',
+				$id,
+				0,
+				__( 'Digest now includes their own organisation.', 'dgl-platform' ),
+				[ 'before' => 'left out', 'after' => 'included' ],
+				$actor
+			);
+
+			++$done;
+		}
+
+		WP_CLI::success( sprintf( 'Applied: %d of %d subscriber(s) now include their own organisation. Nothing else on their subscriptions changed.', $done, count( $ids ) ) );
+	}
+
+	/**
 	 * Subscribe every approved member who has no subscription row yet.
 	 *
 	 * The default: every content type, every topic, once a week, own

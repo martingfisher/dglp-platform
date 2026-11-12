@@ -1919,3 +1919,12 @@ Wordify's `replace_in_post`; every page edit left a revision.
   Title, currently `DGL.org.uk`. Martin agreed to change it to
   `doinggoodleeds.org.uk` at the switchover on Sunday 15 November. Not done.
   Manuel's items (Contact us page, colour glitches) are not in this release.
+- **0.58.6 (not yet deployed): `wp dgl digest own-org`.** Martin asked on 12
+  November to switch existing subscribers to include their own organisation
+  (new ones have since 0.58.5). `wp dgl digest subscribe <user> --own-org`
+  cannot do that safely: it rebuilds the row from defaults and would reset
+  types, topics and cadence. The new command flips only `include_own_org`,
+  skips anybody who has unsubscribed, writes an audit row per person, and is a
+  dry run unless `--apply --actor=<id>`. Unit suite unchanged (2731); a new
+  integration test checks that types, topics, cadence, consent, link and last
+  send survive the flip. Not run (needs WordPress).

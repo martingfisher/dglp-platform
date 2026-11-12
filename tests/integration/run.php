@@ -2058,6 +2058,20 @@ $ok( 'approval' === ( $alice_row['consent_source'] ?? '' ), 'and the consent rec
 $ok( ! DigestStore::subscribe_default( $alice, 'approval' ), 'a second approval changes nothing' );
 DigestStore::unsubscribe( $alice );
 $ok( ! DigestStore::subscribe_default( $alice, 'approval' ) && ! DigestStore::for_user( $alice )->has_consent(), 'an unsubscribed member is never re-subscribed by an approval' );
+
+$group( 'Digests: flipping own organisation changes that and nothing else' );
+
+DigestStore::save( $aaron, [ PostTypes::EVENT ], [ 7 ], Frequency::MONTHLY, false );
+$aaron_before = DigestStore::for_user( $aaron );
+$ok( in_array( $aaron, DigestStore::without_own_org(), true ), 'a subscriber whose own organisation is left out is listed' );
+$ok( ! in_array( $alice, DigestStore::without_own_org(), true ), 'an unsubscribed member is not listed' );
+$ok( DigestStore::set_own_org( $aaron, true ), 'the flip is saved' );
+$aaron_after = DigestStore::for_user( $aaron );
+$ok( null !== $aaron_after && $aaron_after->include_own_org, 'their own organisation is now included' );
+$ok( $aaron_after->types === $aaron_before->types && $aaron_after->topic_ids === $aaron_before->topic_ids && $aaron_after->frequency === $aaron_before->frequency, 'and their types, topics and cadence are exactly as they were' );
+$ok( $aaron_after->consent_at === $aaron_before->consent_at && $aaron_after->unsubscribe_token === $aaron_before->unsubscribe_token && $aaron_after->last_sent_at === $aaron_before->last_sent_at, 'with the same consent record, link and last send' );
+$ok( ! in_array( $aaron, DigestStore::without_own_org(), true ), 'and they are no longer listed' );
+$ok( ! DigestStore::set_own_org( 99999999, true ), 'a user with no subscription is refused' );
 $gap = DigestStore::approved_without_row();
 $ok( in_array( $aaron, $gap, true ) && in_array( $bella, $gap, true ) && ! in_array( $alice, $gap, true ), 'approved members without a row are the backfill list' );
 foreach ( $gap as $gap_id ) {
