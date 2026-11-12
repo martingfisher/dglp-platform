@@ -352,6 +352,44 @@ final class Store {
 	}
 
 	/**
+	 * Remove somebody's digest row because their account has gone.
+	 *
+	 * Not an unsubscribe: that keeps the row, as the record that they opted
+	 * out, so a later approval cannot sign them up again. Here there is nobody
+	 * left to sign up, and a consent date and an unsubscribe link kept for an
+	 * account that no longer exists record nothing anybody can answer for.
+	 * Hooked to `deleted_user`, which WordPress fires after an administrator
+	 * deletes the account.
+	 */
+	public static function forget( int $user_id ): bool {
+		global $wpdb;
+
+		if ( $user_id <= 0 || ! self::exists() ) {
+			return false;
+		}
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		return false !== $wpdb->delete( self::name(), [ 'user_id' => $user_id ], [ '%d' ] );
+	}
+
+	/**
+	 * Rows whose account no longer exists: left by accounts deleted before
+	 * {@see self::forget()} was hooked up.
+	 *
+	 * @return int[] User IDs, lowest first.
+	 */
+	public static function orphans(): array {
+		global $wpdb;
+
+		$table = self::name();
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- the table names are ours and core's.
+		$ids = $wpdb->get_col( "SELECT s.user_id FROM {$table} s LEFT JOIN {$wpdb->users} u ON u.ID = s.user_id WHERE u.ID IS NULL ORDER BY s.user_id ASC" );
+
+		return array_map( 'intval', (array) $ids );
+	}
+
+	/**
 	 * Approved member accounts that have never had a digest row.
 	 *
 	 * @return int[]

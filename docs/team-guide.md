@@ -567,6 +567,8 @@ and runs as a dry run unless told to apply.
 - `wp dgl digest own-org [--apply --actor=<id>]`: include every subscriber's own
   organisation in their digest, changing nothing else about their subscription.
   A dry run unless `--apply`.
+- `wp dgl digest tidy [--apply --actor=<id>]`: remove digest rows whose account
+  no longer exists. A dry run unless `--apply`.
 - `wp dgl news move-legacy --to=<org-id> --actor=<user-id> [--fetched] [--only=]`:
   move imported or fetched stories to another organisation.
 - `wp dgl news suggest-topics [--apply] [--first]`: suggest topics for

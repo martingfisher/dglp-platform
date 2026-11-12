@@ -2072,6 +2072,20 @@ $ok( $aaron_after->types === $aaron_before->types && $aaron_after->topic_ids ===
 $ok( $aaron_after->consent_at === $aaron_before->consent_at && $aaron_after->unsubscribe_token === $aaron_before->unsubscribe_token && $aaron_after->last_sent_at === $aaron_before->last_sent_at, 'with the same consent record, link and last send' );
 $ok( ! in_array( $aaron, DigestStore::without_own_org(), true ), 'and they are no longer listed' );
 $ok( ! DigestStore::set_own_org( 99999999, true ), 'a user with no subscription is refused' );
+
+$group( 'Digests: a deleted account takes its digest row with it' );
+
+require_once ABSPATH . 'wp-admin/includes/user.php';
+$gone = $make_member( 'dgl_gone', $org_a, 'contributor' );
+DigestStore::save( $gone, [ PostTypes::EVENT ], [], Frequency::WEEKLY, true );
+$ok( null !== DigestStore::for_user( $gone ), 'a subscriber has a row' );
+wp_delete_user( $gone );
+$gone_rows = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM ' . DigestStore::name() . ' WHERE user_id = %d', $gone ) );
+$ok( 0 === $gone_rows, 'deleting the account removes the row' );
+$ok( ! in_array( $gone, DigestStore::orphans(), true ), 'so it does not become an orphan' );
+$wpdb->insert( DigestStore::name(), [ 'user_id' => 99999998, 'types' => '[]', 'topic_ids' => '[]', 'frequency' => 'weekly', 'unsubscribe_token' => 'orphan-test-token-0000000000000000000000000000', 'updated_at' => '2026-01-01 00:00:00' ] );
+$ok( in_array( 99999998, DigestStore::orphans(), true ), 'a row with no account is found as an orphan' );
+$ok( DigestStore::forget( 99999998 ) && ! in_array( 99999998, DigestStore::orphans(), true ), 'and removed' );
 $gap = DigestStore::approved_without_row();
 $ok( in_array( $aaron, $gap, true ) && in_array( $bella, $gap, true ) && ! in_array( $alice, $gap, true ), 'approved members without a row are the backfill list' );
 foreach ( $gap as $gap_id ) {
