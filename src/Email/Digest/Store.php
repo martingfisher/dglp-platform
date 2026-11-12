@@ -308,7 +308,7 @@ final class Store {
 
 		$types = array_values( \DGL\PostTypes::feed_keys() );
 
-		return [] !== $types && self::save( $user_id, $types, [], Frequency::WEEKLY, false, $source );
+		return [] !== $types && self::save( $user_id, $types, [], Frequency::WEEKLY, true, $source );
 	}
 
 	/**

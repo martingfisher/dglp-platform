@@ -78,8 +78,54 @@ final class ListingIntro {
 		return self::resolve( (string) get_option( self::option( 'title', $type ), '' ), Frontend::type_label( $type, true ) );
 	}
 
-	public static function default_intro(): string {
-		return __( 'Posted by organisations in the Doing Good Leeds Partnership.', 'dgl-platform' );
+	/**
+	 * The two sentences that open a listing page which invites members to add
+	 * their own: what the page is, then the question. Null for the rest. Pure.
+	 *
+	 * @return array{0:string, 1:string}|null
+	 */
+	private static function invitation( string $type ): ?array {
+		return match ( $type ) {
+			PostTypes::NEWS     => [
+				__( 'Catch up on the latest news from and for the third sector in Leeds.', 'dgl-platform' ),
+				__( 'Have news to share?', 'dgl-platform' ),
+			],
+			PostTypes::EVENT    => [
+				__( "Find out what's happening across the third sector in Leeds.", 'dgl-platform' ),
+				__( 'Have an event to promote?', 'dgl-platform' ),
+			],
+			PostTypes::TRAINING => [
+				__( 'Find training for the third sector in Leeds.', 'dgl-platform' ),
+				__( 'Have training to promote?', 'dgl-platform' ),
+			],
+			default             => null,
+		};
+	}
+
+	/** The standard intro as plain text, for the settings screen. Pure. */
+	public static function default_intro( string $type = '' ): string {
+		$invite = self::invitation( $type );
+
+		return null === $invite
+			? __( 'Posted by organisations in the Doing Good Leeds Partnership.', 'dgl-platform' )
+			: $invite[0] . ' ' . $invite[1] . ' ' . __( 'Sign in to add your own.', 'dgl-platform' );
+	}
+
+	/**
+	 * The standard intro as HTML. News, events and training end with a link to
+	 * sign in and add your own, so a visitor who has something to share is
+	 * told where to go. Pure: the address is passed in, so it follows
+	 * whichever domain the site is on.
+	 */
+	public static function default_intro_html( string $type, string $signin_url ): string {
+		$invite = self::invitation( $type );
+
+		if ( null === $invite ) {
+			return '<p>' . esc_html( self::default_intro() ) . '</p>';
+		}
+
+		return '<p>' . esc_html( $invite[0] . ' ' . $invite[1] ) . ' '
+			. '<a href="' . esc_url( $signin_url ) . '">' . esc_html( __( 'Sign in to add your own', 'dgl-platform' ) ) . '</a>.</p>';
 	}
 
 	/** The custom intro as HTML, or '' when there is none. */
@@ -93,7 +139,7 @@ final class ListingIntro {
 	public static function intro_html( string $type ): string {
 		$custom = self::custom_intro( $type );
 
-		return '' !== $custom ? $custom : '<p>' . esc_html( self::default_intro() ) . '</p>';
+		return '' !== $custom ? $custom : self::default_intro_html( $type, \DGL\Dashboard\Router::url() );
 	}
 
 	/** The meta description when the team wrote an intro; '' to use the standard. */
@@ -171,7 +217,7 @@ final class ListingIntro {
 									]
 								);
 								?>
-								<p class="description"><?php echo esc_html( sprintf( /* translators: %s: the standard intro line. */ __( 'Standard wording: "%s"', 'dgl-platform' ), self::default_intro() ) ); ?></p>
+								<p class="description"><?php echo esc_html( sprintf( /* translators: %s: the standard intro line. */ __( 'Standard wording: "%s"', 'dgl-platform' ), self::default_intro( $type ) ) ); ?></p>
 							</td>
 						</tr>
 					</table>

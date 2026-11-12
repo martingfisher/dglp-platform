@@ -1897,3 +1897,25 @@ Wordify's `replace_in_post`; every page edit left a revision.
   coming up; the heading already changes with the cadence. Unit suite 2710
   passed (17 new). Not covered by unit tests: `Runner::summary` itself reads
   WordPress; check the next test digest shows summaries.
+- **0.58.5 (not yet deployed): Jenny Bull's amends of 12 November.** From her
+  "DGL website amends" document; Martin approved on 12 November.
+  (1) **Sign-in note**: "Note: Logins from our previous site won't work.
+  Please create a new account." under the Sign in heading, linked to the join
+  page by the site's own address. (2) **Digest subject**: "Your weekly round-up:
+  8 new things added", no site name. (3) **Listing intros**: News, Events and
+  Training open with Jenny's wording and end "Sign in to add your own", linked
+  to the member area by the site's own address (training wording suggested by
+  Claude and approved by Martin). Built in as defaults; the live Events page
+  has a custom intro set in Settings, Listing pages, which has to be replaced
+  by hand (`wp option update dgl_listing_intro_dgl_event` or the screen).
+  (4) **Own organisation included by default** in new digest subscriptions and
+  on the preferences form. Cause of her "different numbers in two digests":
+  one of her accounts was linked to Forum Central, which is excluded from
+  the owner's own digest, and the missing item was a Forum Central training.
+  Not confirmed on her second account (the lookup by address failed); existing
+  subscribers keep their setting. Integration test updated to the new default
+  and not run (needs WordPress). Unit suite 2731 passed (21 new).
+  **Site Title:** the old name in other emails comes from the WordPress Site
+  Title, currently `DGL.org.uk`. Martin agreed to change it to
+  `doinggoodleeds.org.uk` at the switchover on Sunday 15 November. Not done.
+  Manuel's items (Contact us page, colour glitches) are not in this release.

@@ -51,6 +51,16 @@ approved this week for next month is in this week's digest; one that has
 already expired is not. The newest 25 are used. Inside the email, events are
 listed soonest first, then news, then training.
 
+The subject names the count and says things were *added*, with no site name:
+"Your weekly round-up: 8 new things added". (It used to end "from DGL.org.uk", which
+went stale when the domain changed.)
+
+A subscriber's own organisation is included by default since 0.58.5. It used to be
+left out, which meant two people at the same organisation could get different
+digests with no hint why. Subscribers who set up before 0.58.5 keep what they had;
+`wp dgl digest subscribe <user> --own-org` changes one. The preferences screen
+still has the tick box.
+
 Subscribers can narrow it by choosing topics or only some kinds of item (events,
 news, training and so on). A narrowed digest says so: "Here is what's been added
 to the DGL Platform in the last week that matches your choices." An unnarrowed

@@ -238,3 +238,19 @@ Harness::assert_true( $sub( [ 'types' => [ PostTypes::EVENT ], 'topic_ids' => []
 Harness::assert_true( $sub( [ 'types' => [ PostTypes::EVENT, PostTypes::NEWS, PostTypes::TRAINING ], 'topic_ids' => [] ] )->narrows( $all ), 'or for three of the five kinds' );
 Harness::assert_false( $sub( [ 'types' => $all, 'topic_ids' => [], 'include_own_org' => false, 'org_id' => 5 ] )->narrows( $all ), 'leaving out their own organisation is a courtesy, not a choice, so it does not count' );
 Harness::assert_false( $sub( [ 'types' => array_reverse( $all ) ] )->narrows( $all ), 'the order they are stored in does not matter' );
+
+Harness::group( 'The subject says what was added, and no longer names the site' );
+
+$subject_for = static fn( int $n, string $freq ): string => DGL\Email\Digest\Copy::digest(
+	array_fill( 0, $n, $row ),
+	$freq,
+	'DGL.org.uk',
+	'https://example.test/u/',
+	'https://example.test/p/'
+)->subject;
+
+Harness::assert_same( 'Your weekly round-up: 8 new things added', $subject_for( 8, DGL\Email\Digest\Frequency::WEEKLY ), 'a weekly digest names the count and says things were added' );
+Harness::assert_same( 'Your weekly round-up: 1 new thing added', $subject_for( 1, DGL\Email\Digest\Frequency::WEEKLY ), 'one is singular' );
+Harness::assert_same( 'Your daily round-up: 3 new things added', $subject_for( 3, DGL\Email\Digest\Frequency::DAILY ), 'and the period follows the cadence' );
+Harness::assert_same( 'Your monthly round-up: 25 new things added', $subject_for( 25, DGL\Email\Digest\Frequency::MONTHLY ), 'whatever it is' );
+Harness::assert_false( str_contains( $subject_for( 8, DGL\Email\Digest\Frequency::WEEKLY ), 'DGL.org.uk' ), 'the site name is not in the subject, so a change of domain cannot leave an old address there' );

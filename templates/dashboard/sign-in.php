@@ -33,6 +33,21 @@ if ( '' === $message && '' !== $prefill ) {
 		<?php endif; ?>
 		<p class="dgl-page-head__lede"><?php esc_html_e( 'Sign in to the user area.', 'dgl-platform' ); ?></p>
 
+		<?php /* Accounts from the old site were not carried across; say so before somebody tries one. The address follows whichever domain the site is on. */ ?>
+		<p class="dgl-signin__note">
+			<?php esc_html_e( "Note: Logins from our previous site won't work.", 'dgl-platform' ); ?>
+			<?php
+			echo wp_kses(
+				sprintf(
+					/* translators: %s: address of the join page. */
+					__( 'Please <a href="%s">create a new account</a>.', 'dgl-platform' ),
+					esc_url( \DGL\Dashboard\Router::url( 'join' ) )
+				),
+				[ 'a' => [ 'href' => [] ] ]
+			);
+			?>
+		</p>
+
 		<?php
 		wp_login_form(
 			[

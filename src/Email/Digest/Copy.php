@@ -55,11 +55,10 @@ final class Copy {
 		};
 
 		$subject = sprintf(
-			/* translators: 1: daily, weekly or monthly, 2: number of items, 3: site name. */
-			_n( 'Your %1$s round-up: %2$d new thing from %3$s', 'Your %1$s round-up: %2$d new things from %3$s', $count, 'dgl-platform' ),
+			/* translators: 1: daily, weekly or monthly, 2: number of items. */
+			_n( 'Your %1$s round-up: %2$d new thing added', 'Your %1$s round-up: %2$d new things added', $count, 'dgl-platform' ),
 			$period,
-			$count,
-			$site
+			$count
 		);
 
 		$cadence = match ( $frequency ) {

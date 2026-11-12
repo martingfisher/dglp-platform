@@ -2686,7 +2686,7 @@ final class Controller {
 			'types'      => $subscription?->types ?? [],
 			'topic_ids'  => $subscription?->topic_ids ?? [],
 			'frequency'  => $subscription?->frequency ?? Frequency::WEEKLY,
-			'own_org'    => (bool) ( $subscription?->include_own_org ?? false ),
+			'own_org'    => (bool) ( $subscription?->include_own_org ?? true ),
 			'consent_at' => $subscription?->consent_at,
 			'last_sent'  => $subscription?->last_sent_at,
 			'all_topics' => is_array( $topics ) ? $topics : [],
