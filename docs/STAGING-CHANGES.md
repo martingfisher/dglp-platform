@@ -1897,7 +1897,7 @@ Wordify's `replace_in_post`; every page edit left a revision.
   coming up; the heading already changes with the cadence. Unit suite 2710
   passed (17 new). Not covered by unit tests: `Runner::summary` itself reads
   WordPress; check the next test digest shows summaries.
-- **0.58.5 (not yet deployed): Jenny Bull's amends of 12 November.** From her
+- **0.58.5 deployed to production, 12 November, 16:33 UTC: Jenny Bull's amends.** From her
   "DGL website amends" document; Martin approved on 12 November.
   (1) **Sign-in note**: "Note: Logins from our previous site won't work.
   Please create a new account." under the Sign in heading, linked to the join
@@ -1919,3 +1919,13 @@ Wordify's `replace_in_post`; every page edit left a revision.
   Title, currently `DGL.org.uk`. Martin agreed to change it to
   `doinggoodleeds.org.uk` at the switchover on Sunday 15 November. Not done.
   Manuel's items (Contact us page, colour glitches) are not in this release.
+  **Deployed:** merged as `a6a1637` (PR 32), installed from the commit-pinned
+  zip. `wp plugin list` reads 0.58.5, active, no update pending. The live
+  Events intro (a custom option) was replaced with Jenny's wording and a
+  site-relative `/dashboard/` link. Seen on the live site: the News, Events and
+  Training pages show the new intros; the sign-in page shows the note with a
+  link to `/dashboard/join/`; the served stylesheet has the note without an
+  accent line (Martin asked for it off: "we don't use those"). Not verified:
+  the new digest subject (needs the next digest or a test send), and the
+  second Forum Central account. Not done: the Site Title change (15 November)
+  and switching existing subscribers to include their own organisation.
