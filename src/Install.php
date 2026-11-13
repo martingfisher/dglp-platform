@@ -67,6 +67,7 @@ final class Install {
 		wp_clear_scheduled_hook( Plugin::EXPIRY_HOOK );
 		wp_clear_scheduled_hook( Plugin::DIGEST_HOOK );
 		\DGL\Jobs\ValJobs::unschedule();
+		\DGL\Training\ValTraining::unschedule();
 		\DGL\Padlet\Board::unschedule();
 		flush_rewrite_rules();
 	}
@@ -152,6 +153,7 @@ final class Install {
 		self::schedule_expiry();
 		self::schedule_digests();
 		\DGL\Jobs\ValJobs::schedule();
+		\DGL\Training\ValTraining::schedule();
 		\DGL\Padlet\Board::schedule();
 	}
 

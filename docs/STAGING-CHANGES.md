@@ -1942,3 +1942,23 @@ Wordify's `replace_in_post`; every page edit left a revision.
   decide. Audit rows keep the actor's id by design. Unit suite 2731; a new
   integration test (delete an account, row gone; a planted orphan is found and
   removed) not run, as it needs WordPress.
+- **0.59.0 (not yet deployed): VAL's training courses are pulled in.** Andrina
+  Dawson asked on 12 November for VAL's training page to come through "like we
+  do with jobs". VAL has no feed and its REST API is closed (401), so
+  `val.org.uk/training/` is read as served: 19 courses, 22 dated sessions on 13
+  November. Unlike jobs, each course becomes a real Training item owned by
+  Voluntary Action Leeds, live at once, so it shows in the Training list, its
+  filters and the digests. One item per course, starting on its next session.
+  Nightly (03:00), and `wp dgl training pull [--dry-run] [--org] [--actor]`,
+  `wp dgl training status`. VAL is the source for dates, price, venue and
+  booking link, refreshed nightly; the words are written once, so a team edit is
+  never overwritten. A course already added by hand with the same title is
+  adopted, not copied (the platform has "Meet the Funder"). A course gone from
+  VAL's page is expired at the next sweep; a page that fails or has under 5
+  courses changes nothing. The listing leaves the venue off some courses (
+  Professional Boundaries), so the course page is read for it. Assumption to
+  watch: a course with no venue anywhere (Meet the Funder, Conflicts of
+  Interest) is treated as online. No pictures on VAL's course pages, so none
+  here. Unit suite 2809 (78 new); the importer's WordPress side is not covered
+  by it, and is checked on the live site with a dry run first.
+
