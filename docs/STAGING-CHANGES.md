@@ -2036,5 +2036,11 @@ Wordify's `replace_in_post`; every page edit left a revision.
   canonical, no `og:` or `twitter:` tags and no JSON-LD, with the header still
   sent; `/news/`, `/directory/` and a WordPress page are unchanged. Not
   checked locally: the title in the browser tab, because the test theme
-  prints no title tag in the member-area shell. Unit suite 2826; integration
-  suite as 0.59.2.
+  prints no title tag in the member-area shell. Also in 0.59.3: the home
+  page's directory search box showed two teal lines when focused, the theme's
+  1px focus border and its 3px ring 2px further out. The ring now sits flush
+  against the border, so it is one 4px teal line. Measured on the live page
+  at 390px and 1280px with the rule applied in the browser. The dark-text fix
+  from 0.59.2 was confirmed live at both widths after that release went out:
+  white field, text `rgb(30, 50, 50)`, focused and not. Unit suite 2826;
+  integration suite as 0.59.2.
