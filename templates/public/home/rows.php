@@ -58,7 +58,8 @@ $empty       = (string) ( $data['empty'] ?? __( 'Nothing is listed at the moment
 				// Funding: who offers it and how much, and the closing leaf on the right.
 				$is_fund = PostTypes::GRANT === $item->post_type;
 				if ( $is_fund ) {
-					$line = implode( ' · ', array_slice( Cards::meta( $item ), 0, 2 ) );
+					// The closing date is on the leaf, so the line is who offers it and how much.
+					$line = implode( ' · ', Cards::fund_meta( (string) Frontend::value( $item, 'funder' ), Frontend::value( $item, 'amount_min' ), Frontend::value( $item, 'amount_max' ), '', false ) );
 				} else {
 					$org   = Frontend::organisation( $item )['name'];
 					$where = Frontend::where( $item );
