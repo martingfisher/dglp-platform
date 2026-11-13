@@ -2140,3 +2140,11 @@ Wordify's `replace_in_post`; every page edit left a revision.
   imported fund sends no email to the organisation that owns it. Details in
   `docs/funding.md`. Unit suite 2899; integration suite 1695 passing, with the
   same three failures as `main` before this change.
+- **13 November, evening, live site (no code change).** The domain switch is
+  live: `partnership.doinggoodleeds.org.uk` answers 301 to
+  `doinggoodleeds.org.uk`. Breadcrumb bar colour made the same at every width;
+  Blocksy phone H1 36px; Workforce HR Network page (2233) published so its
+  menu links stop giving 404; Rank Math schema and meta box turned off for
+  the four platform post types. Details and checks in
+  `docs/mobile-audit-2026-11-13.md`.
+
