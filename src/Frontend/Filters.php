@@ -98,7 +98,11 @@ final class Filters {
 			$org = 0;
 		}
 
-		return [ 'topic' => $topic, 'when' => $when, 'org' => $org ];
+		// Funding has its own filters; only the ones set are carried, so an
+		// unfiltered list still reads as unfiltered everywhere.
+		$fund = PostTypes::GRANT === $post_type ? array_filter( \DGL\Funding\Facets::from_request( $request ) ) : [];
+
+		return [ 'topic' => $topic, 'when' => $when, 'org' => $org, 'fund' => $fund ];
 	}
 
 	/**
@@ -174,6 +178,21 @@ final class Filters {
 			);
 		}
 
+		if ( [] !== ( $args['fund'] ?? [] ) ) {
+			$fit   = 'mine' === ( $args['fund']['fit'] ?? '' ) ? \DGL\Funding\Facets::fit_for_user( get_current_user_id() ) : null;
+			$funds = \DGL\Funding\Facets::meta_query( $args['fund'], wp_date( 'Y-m-d' ), $fit );
+
+			if ( [] !== $funds ) {
+				$existing = $query->get( 'meta_query' );
+				$query->set(
+					'meta_query',
+					is_array( $existing ) && [] !== $existing
+						? [ 'relation' => 'AND', 'dgl_fund' => $funds, $existing ]
+						: [ 'dgl_fund' => $funds ]
+				);
+			}
+		}
+
 		if ( '' === $args['when'] ) {
 			return;
 		}
@@ -207,7 +226,10 @@ final class Filters {
 	 */
 	public static function url( string $base, array $args ): string {
 		$query = array_filter(
-			[ self::PARAM_TOPIC => $args['topic'], self::PARAM_WHEN => $args['when'], self::PARAM_ORG => ( $args['org'] ?? 0 ) > 0 ? (string) (int) $args['org'] : '' ],
+			array_merge(
+				[ self::PARAM_TOPIC => $args['topic'], self::PARAM_WHEN => $args['when'], self::PARAM_ORG => ( $args['org'] ?? 0 ) > 0 ? (string) (int) $args['org'] : '' ],
+				array_map( 'strval', (array) ( $args['fund'] ?? [] ) )
+			),
 			static fn( string $v ): bool => '' !== $v
 		);
 
@@ -216,6 +238,6 @@ final class Filters {
 
 	/** @param array{topic: string, when: string} $args */
 	public static function is_active( array $args ): bool {
-		return '' !== $args['topic'] || '' !== $args['when'] || ( $args['org'] ?? 0 ) > 0;
+		return '' !== $args['topic'] || '' !== $args['when'] || ( $args['org'] ?? 0 ) > 0 || [] !== ( $args['fund'] ?? [] );
 	}
 }

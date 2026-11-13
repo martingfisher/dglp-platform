@@ -1,0 +1,116 @@
+{
+	"_about": "The categories a funding opportunity is filed under. One file, read by the plugin (src/Funding/Vocab.php) and by the weekly import Worker (workers/funding), so the two can never drift apart. Keys are stored data and published filter URLs: add new ones freely, but never rename or remove one without a migration. Labels can change.",
+	"fund_type": {
+		"grant": "Grant",
+		"loan": "Loan or social investment",
+		"award": "Award or prize",
+		"in_kind": "Donated goods, space or services",
+		"match_funding": "Match funding or crowdfunding top-up",
+		"contract": "Contract or tender"
+	},
+	"applicants": {
+		"registered_charity": "Registered charities",
+		"cio": "Charitable incorporated organisations (CIOs)",
+		"cic": "Community interest companies (CICs)",
+		"community_benefit_society": "Community benefit societies and co-operatives",
+		"social_enterprise": "Social enterprises",
+		"unconstituted_group": "Unconstituted community groups",
+		"constituted_group": "Constituted community groups",
+		"faith_group": "Faith groups and places of worship",
+		"school": "Schools, nurseries and PTAs",
+		"parish_council": "Parish and town councils",
+		"individual": "Individuals"
+	},
+	"costs": {
+		"project": "Project costs",
+		"core": "Core and running costs",
+		"staff": "Staff and salaries",
+		"capital": "Buildings and capital works",
+		"equipment": "Equipment",
+		"start_up": "Starting a new group",
+		"development": "Training and organisational development",
+		"emergency": "Emergency or crisis support",
+		"campaigning": "Campaigning, research and influencing",
+		"events": "Events and activities"
+	},
+	"beneficiaries": {
+		"children_young_people": "Children and young people",
+		"older_people": "Older people",
+		"disabled_people": "Disabled people",
+		"learning_disability": "People with a learning disability",
+		"mental_health": "Mental health",
+		"health_conditions": "People with long-term health conditions",
+		"culturally_diverse": "Culturally diverse communities",
+		"faith_communities": "Faith communities",
+		"lgbtqia": "LGBTQIA+ people",
+		"women_girls": "Women and girls",
+		"men_boys": "Men and boys",
+		"low_income": "People on low incomes and deprived areas",
+		"refugees_migrants": "Refugees, asylum seekers and migrants",
+		"homelessness": "People experiencing homelessness",
+		"carers": "Carers",
+		"veterans": "Veterans and armed forces families",
+		"criminal_justice": "People in or leaving prison",
+		"addiction": "People affected by drugs or alcohol",
+		"abuse_survivors": "Survivors of abuse and domestic violence",
+		"families": "Families and parents"
+	},
+	"area": {
+		"leeds": "Leeds only",
+		"west_yorkshire": "West Yorkshire",
+		"yorkshire": "Yorkshire and the North",
+		"england": "England",
+		"uk": "Anywhere in the UK"
+	},
+	"amount": {
+		"up_to_1k": {"label": "Up to £1,000", "min": 0, "max": 1000},
+		"1k_10k": {"label": "£1,000 to £10,000", "min": 1000, "max": 10000},
+		"10k_50k": {"label": "£10,000 to £50,000", "min": 10000, "max": 50000},
+		"50k_plus": {"label": "Over £50,000", "min": 50000, "max": null}
+	},
+	"closing": {
+		"2_weeks": "Closing in the next 2 weeks",
+		"month": "Closing in the next month",
+		"rolling": "Open all year (rolling)"
+	},
+	"topics_excluded": ["featured", "reps", "doing-good-leeds-partnership", "third-sector-leeds", "have-your-say", "local-place-based"],
+	"from_org": {
+		"_about": "An organisation's directory profile, mapped to the funding it can apply for and the people it works with. Drives 'Funding that fits my organisation'. Left side: keys in src/Org/Options.php.",
+		"legal": {
+			"registered_charity": ["registered_charity"],
+			"cio_charitable_incorporated_organisation": ["cio", "registered_charity"],
+			"cic_community_interest_company": ["cic", "social_enterprise"],
+			"community_benefit_society": ["community_benefit_society", "social_enterprise"],
+			"mutual_society": ["community_benefit_society"],
+			"trust_foundation": ["registered_charity"],
+			"private_limited_company_by_guarantee_without_share_capital": ["social_enterprise"],
+			"unconstituted_unincorporated_other": ["unconstituted_group"]
+		},
+		"service_users_prefix": {
+			"age_children_under_18": "children_young_people",
+			"age_young_people_16_25": "children_young_people",
+			"age_older_people": "older_people",
+			"gender_women_girls": "women_girls",
+			"gender_men_boys": "men_boys",
+			"gender_people_from_the_lgbtqia_community": "lgbtqia",
+			"people_from_culturally_diverse_communities": "culturally_diverse",
+			"cdc_": "culturally_diverse",
+			"people_of_faith": "faith_communities",
+			"access_a_learning_disability": "learning_disability",
+			"access_": "disabled_people",
+			"dementia": "health_conditions",
+			"long_term_chronic_health_conditions": "health_conditions",
+			"mh_": "mental_health",
+			"circ_carers": "carers",
+			"circ_deprived_communities_low_income_unemployed": "low_income",
+			"circ_people_living_in_poverty": "low_income",
+			"circ_families_parents_single_parents": "families",
+			"circ_people_in_or_leaving_prison": "criminal_justice",
+			"circ_people_experiencing_homelessness": "homelessness",
+			"circ_people_who_suffer_from_abuse_and_or_domestic_violence": "abuse_survivors",
+			"circ_people_with_drug_and_or_alcohol_addiction_dependency": "addiction",
+			"circ_refugees_asylum_seekers_and_migrants": "refugees_migrants",
+			"circ_veterans": "veterans"
+		}
+	}
+}

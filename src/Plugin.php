@@ -111,6 +111,7 @@ final class Plugin {
 		\DGL\Training\ValTraining::init();
 		\DGL\Padlet\Board::init();
 		\DGL\Padlet\Settings::init();
+		\DGL\Funding\Import::init();
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			MailCommand::register();
@@ -134,6 +135,7 @@ final class Plugin {
 			\DGL\Jobs\Command::register();
 			\DGL\Training\Command::register();
 			\DGL\Padlet\Command::register();
+			\DGL\Funding\Command::register();
 		}
 
 		\DGL\Admin\Health::watch();

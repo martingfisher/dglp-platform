@@ -54,6 +54,18 @@ final class Cards {
 			return array_values( array_filter( [ $org, self::posted( $post ), self::reading_time( $post ) ] ) );
 		}
 
+		// Funding: who offers it, how much, and when it closes. The organisation
+		// that posted it is no help when the weekly import posted it.
+		if ( PostTypes::GRANT === $type ) {
+			return self::fund_meta(
+				(string) Frontend::value( $post, 'funder' ),
+				Frontend::value( $post, 'amount_min' ),
+				Frontend::value( $post, 'amount_max' ),
+				(string) Frontend::value( $post, 'deadline' ),
+				(bool) Frontend::value( $post, 'rolling_deadline' )
+			);
+		}
+
 		// A venue: where it is and who runs it. When it was posted is no help.
 		if ( PostTypes::VENUE === $type ) {
 			$ward = \DGL\Schema\Types\Venue::wards()[ (string) Frontend::value( $post, 'ward' ) ] ?? '';
@@ -97,6 +109,37 @@ final class Cards {
 		}
 
 		return array_values( array_filter( $parts ) );
+	}
+
+	/**
+	 * A fund's meta line: funder, "£300 to £20,000", "Closes 12 Dec 2026" or
+	 * "Open all year". Pure, so it is tested.
+	 *
+	 * @param mixed $min
+	 * @param mixed $max
+	 * @return string[]
+	 */
+	public static function fund_meta( string $funder, $min, $max, string $deadline, bool $rolling ): array {
+		$pounds = static fn( $v ): string => '£' . number_format( (float) $v );
+		$min    = is_numeric( $min ) && (float) $min > 0 ? $min : null;
+		$max    = is_numeric( $max ) && (float) $max > 0 ? $max : null;
+		$amount = match ( true ) {
+			null !== $min && null !== $max && (float) $min !== (float) $max => sprintf( /* translators: 1, 2: amounts. */ __( '%1$s to %2$s', 'dgl-platform' ), $pounds( $min ), $pounds( $max ) ),
+			null !== $max => sprintf( /* translators: %s: an amount. */ __( 'Up to %s', 'dgl-platform' ), $pounds( $max ) ),
+			null !== $min => sprintf( /* translators: %s: an amount. */ __( 'From %s', 'dgl-platform' ), $pounds( $min ) ),
+			default       => '',
+		};
+
+		$closes = '';
+
+		if ( $rolling ) {
+			$closes = __( 'Open all year', 'dgl-platform' );
+		} elseif ( preg_match( '/^\d{4}-\d{2}-\d{2}$/', $deadline ) ) {
+			/* translators: %s: a date like "12 Dec 2026". */
+			$closes = sprintf( __( 'Closes %s', 'dgl-platform' ), date( 'j M Y', (int) strtotime( $deadline . ' 12:00:00' ) ) ); // phpcs:ignore WordPress.DateTime.RestrictedFunctions.date_date -- a calendar date with no time zone.
+		}
+
+		return array_values( array_filter( [ $funder, $amount, $closes ] ) );
 	}
 
 	/** The day it was published, as people write it. */

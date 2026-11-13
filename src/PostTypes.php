@@ -143,12 +143,12 @@ final class PostTypes {
 				 * one — but that is DGLP's call to make, not a rename to slip
 				 * in from a design artefact nobody signed off.
 				 *
-				 * It is on the open questions list. Changing it is this one
-				 * line: the post type key and the /grants/ slug are separate
+				 * Settled 13 November 2026: "Grants and Funding" (Martin, for
+				 * DGLP). Changing it again is this one line: the post type key and the /grants/ slug are separate
 				 * from the label, so no data moves and no URL breaks.
 				 */
-				'singular' => __( 'Grant', 'dgl-platform' ),
-				'plural'   => __( 'Grants', 'dgl-platform' ),
+				'singular' => __( 'Funding opportunity', 'dgl-platform' ),
+				'plural'   => __( 'Grants and Funding', 'dgl-platform' ),
 				'slug'     => 'grants',
 				'kind'     => self::KIND_LISTING,
 			],
@@ -164,8 +164,8 @@ final class PostTypes {
 	/**
 	 * Types switched off for this release.
 	 *
-	 * Hidden, not removed. DGLP have said volunteering and grants are not in
-	 * this version and may come back, so the schemas, the labels, the slugs and
+	 * Hidden, not removed. DGLP have said volunteering is not in this version
+	 * and may come back, so the schemas, the labels, the slugs and
 	 * every line of code that handles them stay exactly where they are. Turning
 	 * one back on is deleting a string from this array.
 	 *
@@ -183,7 +183,8 @@ final class PostTypes {
 		 *
 		 * @param string[] $disabled Post type keys.
 		 */
-		return (array) apply_filters( 'dgl_disabled_types', [ self::GRANT, self::VOLUNTEERING ] );
+		// Grants came back on 13 November 2026, filled weekly by the funding import (docs/funding.md).
+		return (array) apply_filters( 'dgl_disabled_types', [ self::VOLUNTEERING ] );
 	}
 
 	public static function is_enabled( string $post_type ): bool {
