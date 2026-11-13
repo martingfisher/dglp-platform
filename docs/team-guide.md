@@ -320,6 +320,8 @@ those change on their own and are overwritten every night. The words
 is made, so you can edit them and the edit stays. A course VAL takes off its
 page comes off ours at the next hourly expiry. `wp dgl training pull --dry-run`
 shows what would change; `wp dgl training status` says how the last night went.
+If a night fails, the site administrator address gets an email saying so, once; the
+courses already on the site stay as they were.
 
 ## Listing pages: title and introduction
 

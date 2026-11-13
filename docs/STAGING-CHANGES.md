@@ -1961,4 +1961,20 @@ Wordify's `replace_in_post`; every page edit left a revision.
   Interest) is treated as online. No pictures on VAL's course pages, so none
   here. Unit suite 2809 (78 new); the importer's WordPress side is not covered
   by it, and is checked on the live site with a dry run first.
+- **0.59.1 (not yet deployed): VAL training, first live run fixed up and made
+  safe.** The first real run (13 November, 18 new items) showed three poor
+  summaries: a bare heading ("Learning Outcomes"), a one-line tag-line (Lone
+  Working) and the venue line (Professional Boundaries). A summary is now the
+  first block of words of 60 characters or more that is not a heading or the
+  venue line, including words sitting outside a paragraph tag. Martin asked
+  whether it needs to run slowly and whether he is told when it fails. Slowly:
+  yes, a one-second pause before every course page after the first. A burst of
+  19 page fetches from this session's address had 3 refused; the same pages
+  fetched two seconds apart all answered. A normal night is one listing fetch
+  plus a page only for a course whose venue the listing omits. Failure: a night
+  that fails, or cannot read some course pages, emails the site administrator
+  address (`admin_email`) once, and not again until a night has worked. The
+  courses already on the site are untouched. Not covered: WordPress's own
+  cron not running at all, which no code inside the plugin can report; `wp dgl
+  training status` shows the last run. Unit suite 2819.
 
