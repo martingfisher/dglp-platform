@@ -209,7 +209,14 @@ Tidied afterwards, on Martin's go-ahead:
 - **Partner buttons:** a text element reading "Our partners' websites" sits
   above Forum Central, VAL and LOPF.
 
+- **Close icon:** the panel's close "x" was white on the pale teal panel.
+  It is now black (`menu_close_button_color` on the off-canvas element).
+- **Partner button widths:** the three buttons had side padding of 20px,
+  55px and 60px, which is why their widths bore no relation to their text.
+  On tablet and phone the padding is now 24.5px, 64px and 61px, which makes
+  all three 160px wide. Desktop padding is unchanged.
+
 Not changed:
 
-- The three partner buttons are still different widths and colours.
+- The three partner buttons are still different colours.
 - "Sign in" is a text link 23px high, a small target next to 42px buttons.
