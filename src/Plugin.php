@@ -108,6 +108,7 @@ final class Plugin {
 		Invites::init();
 		Privacy::init();
 		\DGL\Jobs\ValJobs::init();
+		\DGL\Training\ValTraining::init();
 		\DGL\Padlet\Board::init();
 		\DGL\Padlet\Settings::init();
 
@@ -131,6 +132,7 @@ final class Plugin {
 			\DGL\Demo\Command::register();
 			\DGL\Spaces\Command::register();
 			\DGL\Jobs\Command::register();
+			\DGL\Training\Command::register();
 			\DGL\Padlet\Command::register();
 		}
 
