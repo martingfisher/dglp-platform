@@ -45,3 +45,20 @@ npx wrangler@4 deploy
 
 Do not set `ANTHROPIC_BASE_URL` for this Worker: the SDK client pins `https://api.anthropic.com`.
 If `vocab.json` or the topic list in `src/Topics/Topics.php` changes, redeploy (topics are copied into `src/vocab.ts`).
+
+## Funds written up by hand (`manual.json`)
+
+Some funders' sites refuse automated reading. Arts Council England's site
+(artscouncil.org.uk) answers every scripted request, TinyFish's included, with a
+Cloudflare challenge, and getting past that would mean evading their bot
+protection, which we do not do. Its open funds are written up by hand in
+`manual.json` instead, in exactly the shape the model produces.
+
+Each manual source has a `check_by` date. Every full run sends it until that
+date, then stops. The site then takes those funds down by their own deadlines,
+and a rolling fund comes down within six weeks, so a write-up nobody re-checks
+cannot linger. To keep one listed: check the facts against the funder, edit them,
+move `check_by` on, deploy.
+
+The cleaner long-term fix is to ask Arts Council England to allow the
+`dgl-funding` Worker through their bot protection, or to tell us of a feed.
