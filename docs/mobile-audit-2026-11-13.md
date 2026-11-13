@@ -110,3 +110,68 @@ settings for them.
 | `/volunteering/volunteer-managers-network/` | 5f1ec11 75px, 44b5e4e 60px | button 8ed9b61, button bfa55b3 | Managers, Network, Volunteer |
 | `/networks-and-forums/age-friendly-leeds/` | 687d941 40px, 44b5e4e 60px | - | - |
 | `/resources/state-of-the-leeds-third-sector/` | 687d941 75px | - | - |
+
+## Fixes applied (13 November, afternoon)
+
+All on the live site, through Blocksy's Customizer and the block editor. No
+CSS was added anywhere. Checked afterwards at 390px on all 32 addresses above:
+no Greenshift block runs off the screen, body text is 18px, and every page
+title is 40px except the three listed under "Left alone".
+
+**Blocksy type scale, phone step added (desktop and tablet unchanged):**
+H1 75px to 40px, H2 50px to 32px, H3 34px to 26px, H4 22px to 20px, body 20px
+to 18px.
+
+Writing these with WP-CLI (`wp option patch update theme_mods_blocksy-child`)
+stores them but does not rebuild Blocksy's stylesheet
+(`uploads/blocksy/css/global.css`). The sizes only appeared once the
+Customizer was published. Change Blocksy settings in the Customizer, or
+publish it afterwards.
+
+**Home page (9548):**
+
+- Support grid `0f35bab`: its five children now have phone positions, column
+  1 to 2, rows 1 to 5 in page order. Nothing is cut off.
+- Tablet and phone colours cleared on rows `57257a1` and `5c6a02b`, the five
+  tiles, four buttons and accordion `96df6b3`. The desktop colour now applies
+  at every width.
+- Font sizes removed from 12 headings. The seven section headings (Support,
+  Representation, Volunteering, Networks and Forums, Sector News, Leeds VCSE
+  Directory, FAQs) now take Blocksy's H2: 32px on a phone, and **50px on
+  desktop where they were 63px**. The four tile headings were H2 at 34px;
+  they are now H3, which is 34px on desktop as before and 26px on a phone.
+
+**The other 30 pages** (`/resources/state-of-the-sector/` is the same page as
+`/resources/state-of-the-leeds-third-sector/`): font sizes removed from every
+Greenshift heading that set one, and every tablet or phone colour that
+differed from desktop cleared, including blocks the table above does not
+list. Each page was saved in the editor so Greenshift rebuilt its CSS.
+
+Desktop sizes that changed as a result, because the block had its own desktop
+size that was not Blocksy's:
+
+| Heading | Was | Now | Pages |
+|---|---|---|---|
+| Page title (H1) | 60px | 75px | governance, safeguarding, culturally-diverse-hub, physical-sensory-impairment, young-lives-leeds |
+| Page title (H1) | 65px | 75px | leeds-volunteering-strategy |
+| H2 `b5c6be0` | 65px | 50px | corporate-volunteering-social-value, volunteer-centre-leeds, learning-disability, young-lives-leeds, trustee-recruitment |
+| H2 `b79fa63`, `00bc497` | 65 to 70px | 50px | safeguarding, young-lives-leeds |
+| H2 `44b5e4e`, `bca498d` | 60px | 50px | culturally-diverse-hub, health-and-care-leaders, mental-health-network, physical-sensory-impairment, about-2, volunteer-managers-network, age-friendly-leeds |
+
+The 75px titles were checked at 1280px wide on seven pages: none overflows.
+If 50px is too small for the section headings on desktop, raise Blocksy's H2
+desktop size in the Customizer; that changes all of them at once.
+
+**Left alone:**
+
+- The home page hero title (`753d478`, 45px on a phone) and its subtitle: the
+  agreed one-off.
+- The page titles on `/become-a-trustee/` and
+  `/volunteering/advertise-volunteer-roles/` are still 42.9px on a phone. The
+  size does not come from the block's font size setting; not traced.
+- Font sizes on buttons (20px) and icon lists (24px). They are not headings
+  and do not change by screen size.
+- Items 4, 5 and 6 above: palette colours 17 to 24, row `a60de25`, and the
+  content tidy-ups.
+
+Every page has a WordPress revision from before these edits.
