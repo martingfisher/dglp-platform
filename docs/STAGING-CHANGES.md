@@ -1883,7 +1883,7 @@ Wordify's `replace_in_post`; every page edit left a revision.
     fundraising graphic attached (attachment 10365). Flagged to Martin; not
     changed.
   - **Not verified:** how the digest renders in Outlook and Gmail.
-- **0.58.4 (not yet deployed): the digest's own words, and summaries at last.**
+- **0.58.4 (deployed since; production runs 0.59.5 on 13 November): the digest's own words, and summaries at last.**
   Jenny Bull, 28 October. (1) The line under the heading is now "Here is
   what's been added to the DGL Platform in the last week." (last day, last
   month for the other cadences). When the subscriber has chosen topics or only
@@ -1992,7 +1992,7 @@ Wordify's `replace_in_post`; every page edit left a revision.
 - **No picture:** 11359, 11379, 11381 and 11386 have none (the old site had
   none) and show the plain placeholder tile; no News stand-in picture is set.
   For the team to add.
-- **0.59.0 (not yet deployed): VAL's training courses are pulled in.** Andrina
+- **0.59.0 (deployed since; production runs 0.59.5 on 13 November): VAL's training courses are pulled in.** Andrina
   Dawson asked on 12 November for VAL's training page to come through "like we
   do with jobs". VAL has no feed and its REST API is closed (401), so
   `val.org.uk/training/` is read as served: 19 courses, 22 dated sessions on 13
@@ -2011,7 +2011,7 @@ Wordify's `replace_in_post`; every page edit left a revision.
   Interest) is treated as online. No pictures on VAL's course pages, so none
   here. Unit suite 2809 (78 new); the importer's WordPress side is not covered
   by it, and is checked on the live site with a dry run first.
-- **0.59.1 (not yet deployed): VAL training, first live run fixed up and made
+- **0.59.1 (deployed since; production runs 0.59.5 on 13 November): VAL training, first live run fixed up and made
   safe.** The first real run (13 November, 18 new items) showed three poor
   summaries: a bare heading ("Learning Outcomes"), a one-line tag-line (Lone
   Working) and the venue line (Professional Boundaries). A summary is now the
