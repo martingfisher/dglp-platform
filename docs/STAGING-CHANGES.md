@@ -1929,3 +1929,149 @@ Wordify's `replace_in_post`; every page edit left a revision.
   the new digest subject (needs the next digest or a test send), and the
   second Forum Central account. Not done: the Site Title change (15 November)
   and switching existing subscribers to include their own organisation.
+- **0.58.6 (not yet deployed): `wp dgl digest own-org`.** Martin asked on 12
+  November to switch existing subscribers to include their own organisation
+  (new ones have since 0.58.5). `wp dgl digest subscribe <user> --own-org`
+  cannot do that safely: it rebuilds the row from defaults and would reset
+  types, topics and cadence. The new command flips only `include_own_org`,
+  skips anybody who has unsubscribed, writes an audit row per person, and is a
+  dry run unless `--apply --actor=<id>`. Unit suite unchanged (2731); a new
+  integration test checks that types, topics, cadence, consent, link and last
+  send survive the flip. Not run (needs WordPress).
+- **0.58.7 (not yet deployed): a deleted account takes its digest row with it.**
+  Martin asked on 12 November how a digest row could have no email (user 15).
+  The table stores no email; it is read from the account, so a row with a blank
+  one has no account behind it, and the sender already skips such rows. Cause:
+  nothing removed the row when an administrator deleted an account in wp-admin.
+  The privacy eraser already did, for an erasure request (Claude first said it
+  did not; that was wrong). Now `deleted_user` calls `Store::forget()`, and `wp
+  dgl digest tidy [--apply --actor=<id>]` removes rows left by earlier
+  deletions (dry run by default; audit row each). Not touched, on purpose: the
+  join-request table (`dgl_signups`) keeps each request's email and reason after
+  its account is deleted, possibly as a record of the approval; Martin to
+  decide. Audit rows keep the actor's id by design. Unit suite 2731; a new
+  integration test (delete an account, row gone; a planted orphan is found and
+  removed) not run, as it needs WordPress.
+- **0.59.0 (not yet deployed): VAL's training courses are pulled in.** Andrina
+  Dawson asked on 12 November for VAL's training page to come through "like we
+  do with jobs". VAL has no feed and its REST API is closed (401), so
+  `val.org.uk/training/` is read as served: 19 courses, 22 dated sessions on 13
+  November. Unlike jobs, each course becomes a real Training item owned by
+  Voluntary Action Leeds, live at once, so it shows in the Training list, its
+  filters and the digests. One item per course, starting on its next session.
+  Nightly (03:00), and `wp dgl training pull [--dry-run] [--org] [--actor]`,
+  `wp dgl training status`. VAL is the source for dates, price, venue and
+  booking link, refreshed nightly; the words are written once, so a team edit is
+  never overwritten. A course already added by hand with the same title is
+  adopted, not copied (the platform has "Meet the Funder"). A course gone from
+  VAL's page is expired at the next sweep; a page that fails or has under 5
+  courses changes nothing. The listing leaves the venue off some courses (
+  Professional Boundaries), so the course page is read for it. Assumption to
+  watch: a course with no venue anywhere (Meet the Funder, Conflicts of
+  Interest) is treated as online. No pictures on VAL's course pages, so none
+  here. Unit suite 2809 (78 new); the importer's WordPress side is not covered
+  by it, and is checked on the live site with a dry run first.
+- **0.59.1 (not yet deployed): VAL training, first live run fixed up and made
+  safe.** The first real run (13 November, 18 new items) showed three poor
+  summaries: a bare heading ("Learning Outcomes"), a one-line tag-line (Lone
+  Working) and the venue line (Professional Boundaries). A summary is now the
+  first block of words of 60 characters or more that is not a heading or the
+  venue line, including words sitting outside a paragraph tag. Martin asked
+  whether it needs to run slowly and whether he is told when it fails. Slowly:
+  yes, a one-second pause before every course page after the first. A burst of
+  19 page fetches from this session's address had 3 refused; the same pages
+  fetched two seconds apart all answered. A normal night is one listing fetch
+  plus a page only for a course whose venue the listing omits. Failure: a night
+  that fails, or cannot read some course pages, emails the site administrator
+  address (`admin_email`) once, and not again until a night has worked. The
+  courses already on the site are untouched. Not covered: WordPress's own
+  cron not running at all, which no code inside the plugin can report; `wp dgl
+  training status` shows the last run. Unit suite 2819.
+- **13 November, live site by hand (no code change).** After 0.59.0 and 0.59.1
+  went live: (1) the first real `wp dgl training pull --actor=1` created 18
+  Training items for Voluntary Action Leeds and adopted the hand-added "Meet the
+  Funder"; a dry run straight after showed 19 unchanged. (2) Three summaries
+  from that first run were poor and were corrected by hand with `wp post meta
+  update` (summary and who-for): Designated Safeguarding Lead (11445),
+  Professional Boundaries (11451) and Lone Working (11457; who-for was already
+  right). 0.59.1 fixes the cause for new courses. (3) The home page (page 9548)
+  gained two sections after "What's on", each with the same 40px spacer: `[dgl_feed
+  type="training"]` (Training and learning, four courses) and `[dgl_val_jobs
+  layout="feed" count="6"]` (Jobs in the sector). Each edit is one page revision
+  and can be restored from the page's history. Caches cleared (object, SmartCache,
+  CDN). Open: VAL's pages have no pictures, so its courses show the navy
+  "TRAINING" tile; Martin is deciding between one default training picture
+  (Settings, Topic feed pictures), VAL's logo on the 18, or a picture per topic.
+
+- **0.59.2, 13 November.** Two fixes. **(1) Rank Math no longer takes the
+  platform's pages down.** When Rank Math's setup was completed on the live
+  site, every page the plugin owns (`/news/`, `/events/`, `/training/`,
+  `/directory/`, `/spaces/` and their items) answered HTTP 500 until Rank Math
+  was deactivated a few minutes later. Cause, reproduced on a local WordPress
+  with Rank Math 1.0.x and the trace read: `Seo::page()` describes the page,
+  describing it calls `wp_get_document_title()`, Rank Math answers that and
+  asks `rank_math/frontend/title`, the plugin's bridge answers by calling
+  `Seo::page()`, which had not finished, so it described the page again, until
+  PHP ran out of memory. `Seo::page()` now refuses to be entered twice, and
+  the title is read with Rank Math's own title hooks lifted for that one call,
+  so the plugin's titles (the directory's included) are the ones that reach
+  the page. Also fixed: with Rank Math printing schema, the plugin's schema
+  went out twice, once inside Rank Math's graph and once in its own block; it
+  now goes out once. Checked locally with Rank Math on: the five lists and a
+  WordPress page answer 200 with one description, one canonical, one
+  `og:title` and one JSON-LD block each. Not checked: Rank Math Pro, which is
+  not installable locally, and single news, event and organisation pages with
+  real content. **(2) The home page's directory search box.** The theme
+  clears a focused field's background and turns its text black, so on the
+  navy "Find an organisation" band anyone typing saw black on navy, at every
+  screen width. The field now stays white with the plugin's own text colour
+  while focused. Measured on the live page before (background transparent,
+  text black) and with the new rule applied in the browser (white, text
+  `rgb(30, 50, 50)`). Unit suite 2826; integration suite 1670 passing, with
+  three failures that also fail on 0.59.1 on the same local set-up and are
+  not about this change. The integration suite has a new check that imitates
+  an SEO plugin asking for the title from inside its own title filter.
+- **0.59.3, 13 November.** The member area keeps its own head when Rank Math
+  is on. With 0.59.2 live and Rank Math switched on, the lists and item pages
+  were right, but `/dashboard/` and `/dashboard/join/` came out with Rank
+  Math's `index, follow`, the news list's canonical address and title, and
+  sharing tags. Rank Math takes WordPress's own robots tag away, so the
+  plugin's `wp_robots` filter never reached the page. The `X-Robots-Tag:
+  noindex, nofollow` header and the `Disallow` in robots.txt were still in
+  place throughout, so the member area was not opened to search engines; the
+  page's own tags were wrong. Now, on member-area requests, Rank Math is given
+  `noindex, nofollow`, no canonical, no schema and the screen's own title, and
+  its sharing tags are lifted before they print. Checked locally with Rank
+  Math on: `/dashboard/` and `/dashboard/join/` print `noindex, nofollow`, no
+  canonical, no `og:` or `twitter:` tags and no JSON-LD, with the header still
+  sent; `/news/`, `/directory/` and a WordPress page are unchanged. Not
+  checked locally: the title in the browser tab, because the test theme
+  prints no title tag in the member-area shell. Also in 0.59.3: the home
+  page's directory search box showed two teal lines when focused, the theme's
+  1px focus border and its 3px ring 2px further out. The ring now sits flush
+  against the border, so it is one 4px teal line. Measured on the live page
+  at 390px and 1280px with the rule applied in the browser. The dark-text fix
+  from 0.59.2 was confirmed live at both widths after that release went out:
+  white field, text `rgb(30, 50, 50)`, focused and not. Unit suite 2826;
+  integration suite as 0.59.2.
+- **0.59.4, 13 November.** The platform's sitemap answers again with Rank
+  Math on. Rank Math's rewrite rule matches any address ending
+  `-sitemap.xml`, `/dgl-sitemap.xml` included, and is tried before ours, so
+  the plugin's query var was never set and the address answered 404 on the
+  live site as soon as Rank Math was switched on. The plugin now also
+  recognises the request by its address. Reproduced locally: 404 with the
+  0.59.3 file and Rank Math on, 200 with 15 addresses with this change, and
+  still 200 with Rank Math off. Rank Math's own `/sitemap_index.xml` is
+  unaffected. Unit suite 2826; integration suite as 0.59.2.
+- **0.59.5, 13 November.** Old stories that were never brought over go to the
+  news list. The old site's stories lived at `/news/story-name/`,
+  `/blog/story-name/` and `/good-news/story-name/`. A converted story already
+  redirects to its new address; one that was never converted answered 404.
+  Now a 404 with that shape (one of those three sections, then exactly one
+  more segment) is sent to `/news/` with a 301. `/news/` itself, a page of
+  the list such as `/news/page/9/`, and 404s anywhere else are untouched.
+  Checked on the local WordPress: the three shapes redirect, `/news/` answers
+  200, `/news/page/9/`, `/events/not-a-real-event/` and `/nothing-here/` stay
+  404. Side effect to know about: a mistyped address under `/news/` now lands
+  on the news list instead of the 404 page. Unit suite 2833; integration
+  suite as 0.59.2.

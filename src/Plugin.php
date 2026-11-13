@@ -108,6 +108,7 @@ final class Plugin {
 		Invites::init();
 		Privacy::init();
 		\DGL\Jobs\ValJobs::init();
+		\DGL\Training\ValTraining::init();
 		\DGL\Padlet\Board::init();
 		\DGL\Padlet\Settings::init();
 
@@ -131,6 +132,7 @@ final class Plugin {
 			\DGL\Demo\Command::register();
 			\DGL\Spaces\Command::register();
 			\DGL\Jobs\Command::register();
+			\DGL\Training\Command::register();
 			\DGL\Padlet\Command::register();
 		}
 
@@ -144,6 +146,8 @@ final class Plugin {
 		add_action( self::EXPIRY_HOOK, [ Transition::class, 'run_expiry_sweep' ], 10, 0 );
 		add_action( self::EXPIRY_HOOK, static fn() => \DGL\Dashboard\Wizard::purge_empty_drafts() );
 		add_action( self::DIGEST_HOOK, [ self::class, 'run_digests' ] );
+		// An account deleted in wp-admin takes its digest row with it. The privacy eraser already does the same for an erasure request.
+		add_action( 'deleted_user', [ \DGL\Email\Digest\Store::class, 'forget' ], 10, 1 );
 		add_filter( 'cron_schedules', [ Install::class, 'schedules' ] ); // phpcs:ignore WordPress.WP.CronInterval.CronSchedulesInterval -- five minutes, under real server cron.
 	}
 

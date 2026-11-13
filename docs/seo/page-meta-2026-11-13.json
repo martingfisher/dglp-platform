@@ -1,0 +1,296 @@
+[
+ {
+  "id": 9548,
+  "path": "/",
+  "focus_keyword": "Doing Good Leeds",
+  "title": null,
+  "description": null
+ },
+ {
+  "id": 11126,
+  "path": "/about/",
+  "focus_keyword": "Doing Good Leeds Partnership",
+  "title": "About the Doing Good Leeds Partnership",
+  "description": "The Doing Good Leeds Partnership brings together Forum Central, Leeds Older People’s Forum and Voluntary Action Leeds. Read our vision, mission and focus."
+ },
+ {
+  "id": 16,
+  "path": "/contact-us/",
+  "focus_keyword": "contact Doing Good Leeds",
+  "title": "Contact Doing Good Leeds",
+  "description": "Contact Doing Good Leeds, run by Voluntary Action Leeds, Forum Central and Leeds Older People’s Forum. Find the right email address for your query."
+ },
+ {
+  "id": 1688,
+  "path": "/support/",
+  "focus_keyword": "support for community groups in Leeds",
+  "title": "Support for community groups in Leeds %sep% Doing Good Leeds",
+  "description": "Support for community groups in Leeds: help to start or manage your group, find funding and book training, from the Doing Good Leeds Partnership."
+ },
+ {
+  "id": 1959,
+  "path": "/support/funding/",
+  "focus_keyword": "funding for community groups in Leeds",
+  "title": "Funding for community groups in Leeds %sep% Doing Good Leeds",
+  "description": "Funding for community groups in Leeds: the latest sources of grant funding, a funding search, bid writing support and the Leeds Funding Support Network."
+ },
+ {
+  "id": 9753,
+  "path": "/support/safeguarding/",
+  "focus_keyword": "safeguarding for charities",
+  "title": "Safeguarding for charities and community groups in Leeds",
+  "description": "Safeguarding for charities and community groups in Leeds: what it means, why it matters for your organisation, training, and who to tell if you are worried."
+ },
+ {
+  "id": 2201,
+  "path": "/support/trustees/",
+  "focus_keyword": "charity trustees",
+  "title": "Charity trustees: roles and responsibilities in Leeds",
+  "description": "Charity trustees are responsible for making sure a group is well run. What trustees do, who can be one, the chair’s role and how boards work."
+ },
+ {
+  "id": 2129,
+  "path": "/support/governance-how-to-start-and-run-your-group/",
+  "focus_keyword": "how to start a community group",
+  "title": "How to start a community group or charity in Leeds",
+  "description": "How to start a community group or charity in Leeds: legal structures, registering as a charity, running your group well and a readiness checklist."
+ },
+ {
+  "id": 10375,
+  "path": "/workforce-wellbeing/",
+  "focus_keyword": "workforce wellbeing",
+  "title": "Workforce wellbeing for the Leeds third sector",
+  "description": "Workforce wellbeing support for people working in the Leeds third sector: health and wellbeing resources gathered by the Doing Good Leeds Partnership."
+ },
+ {
+  "id": 7108,
+  "path": "/signposting-to-support/",
+  "focus_keyword": "support for charities in Leeds",
+  "title": "Support for charities in Leeds: where to get help",
+  "description": "Support for charities in Leeds under pressure: help with finances, staff and HR, the cost of living, wellbeing, peer networks, training and events."
+ },
+ {
+  "id": 3888,
+  "path": "/representation/",
+  "focus_keyword": "third sector representation",
+  "title": "Third sector representation in Leeds health and care",
+  "description": "Third sector representation in Leeds health and care: our approach, how to become a Rep or request one, and the boards where Reps take part."
+ },
+ {
+  "id": 2472,
+  "path": "/resources/",
+  "focus_keyword": "third sector resources",
+  "title": "Third sector resources for Leeds %sep% Doing Good Leeds",
+  "description": "Third sector resources for Leeds organisations: the organisation directory, community venues for hire, signposting to support and sector research."
+ },
+ {
+  "id": 2541,
+  "path": "/resources/state-of-the-leeds-third-sector/",
+  "focus_keyword": "State of the Leeds Third Sector",
+  "title": "State of the Leeds Third Sector reports %sep% Doing Good Leeds",
+  "description": "State of the Leeds Third Sector: the 2023 and 2020 reports on charities and community groups in Leeds, drawn from Charity Commission returns and other sources."
+ },
+ {
+  "id": 2470,
+  "path": "/resources/leeds-venue-hire/",
+  "focus_keyword": "community venue hire in Leeds",
+  "title": "Community venue hire in Leeds from third sector groups",
+  "description": "Community venue hire in Leeds: book a room from a local charity or community group, and add your own community venue to the map."
+ },
+ {
+  "id": 1658,
+  "path": "/volunteering/",
+  "focus_keyword": "volunteering in Leeds",
+  "title": "Volunteering in Leeds %sep% Doing Good Leeds",
+  "description": "Volunteering in Leeds: find a role, get help to recruit volunteers and read the city’s volunteering strategy, from the Doing Good Leeds Partnership."
+ },
+ {
+  "id": 1660,
+  "path": "/volunteering/find-a-volunteer-role/",
+  "focus_keyword": "volunteer opportunities in Leeds",
+  "title": "Volunteer opportunities in Leeds: find a role",
+  "description": "Find volunteer opportunities in Leeds. Our volunteering platform has hundreds of roles added by local organisations, so you can find one that suits you."
+ },
+ {
+  "id": 2791,
+  "path": "/volunteering/advertise-volunteer-roles/",
+  "focus_keyword": "advertise volunteer roles",
+  "title": "Advertise volunteer roles in Leeds %sep% Doing Good Leeds",
+  "description": "Advertise volunteer roles to people across Leeds who are looking for volunteering. Create and manage your opportunities on the volunteering platform."
+ },
+ {
+  "id": 2739,
+  "path": "/volunteering/help-to-recruit-volunteers/",
+  "focus_keyword": "recruit volunteers",
+  "title": "Help to recruit volunteers in Leeds %sep% Doing Good Leeds",
+  "description": "Help to recruit volunteers in Leeds: advertise your roles, use the guides for volunteer managers and talk to Volunteer Centre Leeds."
+ },
+ {
+  "id": 2742,
+  "path": "/volunteering/inclusive-volunteering/",
+  "focus_keyword": "inclusive volunteering",
+  "title": "Inclusive volunteering resources %sep% Doing Good Leeds",
+  "description": "Inclusive volunteering resources: the Leeds Inclusive Volunteering Principles, downloads and projects to help make your volunteering programme inclusive."
+ },
+ {
+  "id": 2723,
+  "path": "/volunteering/leeds-volunteering-strategy/",
+  "focus_keyword": "Leeds Volunteering Strategy",
+  "title": "Leeds Volunteering Strategy %sep% Doing Good Leeds",
+  "description": "The Leeds Volunteering Strategy was launched in October 2023 alongside the Volunteers of Leeds campaign. Read and download the strategy documents."
+ },
+ {
+  "id": 3848,
+  "path": "/volunteering/leeds-volunteering-quality-mark/",
+  "focus_keyword": "Leeds Volunteering Quality Mark",
+  "title": "Leeds Volunteering Quality Mark %sep% Doing Good Leeds",
+  "description": "The Leeds Volunteering Quality Mark, developed by Voluntary Action Leeds and the Leeds Volunteer Managers Network: the awards, costs and how to apply."
+ },
+ {
+  "id": 3863,
+  "path": "/volunteering/corporate-volunteering-social-value/",
+  "focus_keyword": "corporate volunteering in Leeds",
+  "title": "Corporate volunteering in Leeds and social value",
+  "description": "Corporate volunteering in Leeds: we help businesses give back through volunteering and skill shares, with benefits for everyone involved."
+ },
+ {
+  "id": 3685,
+  "path": "/volunteering/trustee-recruitment/",
+  "focus_keyword": "trustee recruitment",
+  "title": "Trustee recruitment in Leeds %sep% Doing Good Leeds",
+  "description": "Trustee recruitment support for Leeds charities and community groups: submit your trustee role and use our toolkits, guides and top tips."
+ },
+ {
+  "id": 3647,
+  "path": "/volunteering/resources-for-volunteer-managers/",
+  "focus_keyword": "resources for volunteer managers",
+  "title": "Resources for volunteer managers %sep% Doing Good Leeds",
+  "description": "Resources for volunteer managers in Leeds: guides, toolkits and best practice tips, plus a Trello board of useful links ordered by topic."
+ },
+ {
+  "id": 3638,
+  "path": "/volunteering/volunteer-managers-network/",
+  "focus_keyword": "Volunteer Managers Network",
+  "title": "Leeds Volunteer Managers Network %sep% Doing Good Leeds",
+  "description": "The Leeds Volunteer Managers Network is for people who manage and support volunteers. Join the steering group, find resources and sign up for updates."
+ },
+ {
+  "id": 3825,
+  "path": "/volunteer-centre-leeds/",
+  "focus_keyword": "Volunteer Centre Leeds",
+  "title": "Volunteer Centre Leeds %sep% Doing Good Leeds",
+  "description": "Volunteer Centre Leeds helps people find volunteer roles and helps organisations advertise them. Visit us Tuesday to Friday, 10am to 4pm."
+ },
+ {
+  "id": 3729,
+  "path": "/volunteers-of-leeds/",
+  "focus_keyword": "Volunteers of Leeds",
+  "title": "Volunteers of Leeds %sep% Doing Good Leeds",
+  "description": "Volunteers of Leeds celebrates people who give their time across the city. Meet the volunteers and read about the difference they make."
+ },
+ {
+  "id": 3697,
+  "path": "/become-a-trustee/",
+  "focus_keyword": "become a trustee",
+  "title": "Become a trustee in Leeds %sep% Doing Good Leeds",
+  "description": "Become a trustee in Leeds: share your skills, shape your community and find a trustee role with a local charity or community group."
+ },
+ {
+  "id": 1412,
+  "path": "/networks-and-forums/",
+  "focus_keyword": "networks and forums",
+  "title": "Networks and forums for the Leeds third sector",
+  "description": "Networks and forums for the Leeds third sector, each centred on a community, topic or area, offering connection, peer support and information."
+ },
+ {
+  "id": 11297,
+  "path": "/networks-and-forums/age-friendly-leeds/",
+  "focus_keyword": "Age Friendly Leeds",
+  "title": "Age Friendly Leeds %sep% Doing Good Leeds",
+  "description": "Age Friendly Leeds: the Age Friendly Leeds Network, how to get involved, and how to become an Age and Dementia Friendly Business."
+ },
+ {
+  "id": 10008,
+  "path": "/networks-and-forums/health-and-care-leaders/",
+  "focus_keyword": "Health and Care Leaders Network",
+  "title": "Health and Care Leaders Network %sep% Doing Good Leeds",
+  "description": "The Health and Care Leaders Network links Leeds third sector leaders with NHS and council partners. See our approach, network meetings and how to join."
+ },
+ {
+  "id": 7968,
+  "path": "/networks-and-forums/young-lives-leeds/",
+  "focus_keyword": "Young Lives Leeds",
+  "title": "Young Lives Leeds %sep% Doing Good Leeds",
+  "description": "Young Lives Leeds gives third sector organisations a voice in services for children and young people in Leeds. See how we work and get in touch."
+ },
+ {
+  "id": 7987,
+  "path": "/networks-and-forums/young-lives-leeds/young-lives-leeds-advocates/",
+  "focus_keyword": "Young Lives Leeds Advocates",
+  "title": "Young Lives Leeds Advocates %sep% Doing Good Leeds",
+  "description": "Meet the Young Lives Leeds Advocates: who they are and the organisations they come from."
+ },
+ {
+  "id": 7815,
+  "path": "/networks-and-forums/third-sector-leeds/",
+  "focus_keyword": "Third Sector Leeds",
+  "title": "Third Sector Leeds (TSL) %sep% Doing Good Leeds",
+  "description": "Third Sector Leeds works with Leeds City Council and health partners on behalf of the sector. Read our priorities, membership, minutes and reports."
+ },
+ {
+  "id": 7226,
+  "path": "/networks-and-forums/culturally-diverse-hub/",
+  "focus_keyword": "Culturally Diverse Hub",
+  "title": "Culturally Diverse Hub %sep% Doing Good Leeds",
+  "description": "The Culturally Diverse Hub is shaped by people from culturally diverse communities in Leeds. Read our mission, recent projects and how to join."
+ },
+ {
+  "id": 3427,
+  "path": "/networks-and-forums/learning-disability/",
+  "focus_keyword": "Learning Disability Network",
+  "title": "Leeds Learning Disability Network %sep% Doing Good Leeds",
+  "description": "The Leeds Learning Disability Network: who we are, why to join, member meet-ups, upcoming meeting dates, pop-up sessions and resources."
+ },
+ {
+  "id": 3385,
+  "path": "/networks-and-forums/physical-sensory-impairment/",
+  "focus_keyword": "Physical Sensory Impairment Network",
+  "title": "Physical Sensory Impairment Network %sep% Doing Good Leeds",
+  "description": "The Physical Sensory Impairment Network in Leeds: what we do, network meetings and notes, how to join, and links to resources."
+ },
+ {
+  "id": 2273,
+  "path": "/networks-and-forums/local-care-partnerships/",
+  "focus_keyword": "Local Care Partnerships",
+  "title": "Local Care Partnerships in Leeds %sep% Doing Good Leeds",
+  "description": "Local Care Partnerships in Leeds: what they are, how they map onto Primary Care Networks, and how third sector organisations can join one."
+ },
+ {
+  "id": 1408,
+  "path": "/networks-and-forums/mental-health-network/",
+  "focus_keyword": "Mental Health Network",
+  "title": "Leeds Mental Health Network %sep% Doing Good Leeds",
+  "description": "The Leeds Mental Health Network: what we do, who can join, our members, meeting dates and the Living with Lived Experience films."
+ },
+ {
+  "id": 1738,
+  "path": "/jobs/",
+  "focus_keyword": "charity jobs in Leeds",
+  "title": "Charity jobs in Leeds %sep% Doing Good Leeds",
+  "description": "Charity jobs in Leeds and across the third sector, listed by Voluntary Action Leeds. Each one opens the full advert on the VAL website."
+ },
+ {
+  "id": 11284,
+  "path": "/privacy-policy/",
+  "focus_keyword": null,
+  "title": null,
+  "description": "How the Doing Good Leeds Partnership collects, uses and protects your personal data on this website."
+ },
+ {
+  "id": 10163,
+  "path": "/terms-of-use/",
+  "focus_keyword": null,
+  "title": null,
+  "description": "The terms of use for the Doing Good Leeds website and member platform."
+ }
+]

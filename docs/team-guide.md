@@ -311,6 +311,18 @@ every night, and each one opens the full advert on VAL's website in a
 new tab. If the
 update stops working, System health says so under "Jobs from VAL".
 
+VAL's training courses come onto `/training/` by themselves too, as ordinary
+Training items owned by Voluntary Action Leeds. They are read from
+val.org.uk/training every night. Each course is one item, starting on its next
+date; VAL's page is the source for dates, price, venue and booking link, so
+those change on their own and are overwritten every night. The words
+(summary, description, who it is for, topics) are written once when the item
+is made, so you can edit them and the edit stays. A course VAL takes off its
+page comes off ours at the next hourly expiry. `wp dgl training pull --dry-run`
+shows what would change; `wp dgl training status` says how the last night went.
+If a night fails, the site administrator address gets an email saying so, once; the
+courses already on the site stay as they were.
+
 ## Listing pages: title and introduction
 
 `/news/`, `/events/`, `/training/`, `/funding/` and `/volunteering/` are
@@ -564,6 +576,11 @@ and runs as a dry run unless told to apply.
 - `wp dgl news fetch --since=<day> --org=<id> [--owner=] [--limit=] [--dry-run]`:
   bring over stories published on the old site since a day. Safe to run
   twice; a story already here is skipped.
+- `wp dgl digest own-org [--apply --actor=<id>]`: include every subscriber's own
+  organisation in their digest, changing nothing else about their subscription.
+  A dry run unless `--apply`.
+- `wp dgl digest tidy [--apply --actor=<id>]`: remove digest rows whose account
+  no longer exists. A dry run unless `--apply`.
 - `wp dgl news move-legacy --to=<org-id> --actor=<user-id> [--fetched] [--only=]`:
   move imported or fetched stories to another organisation.
 - `wp dgl news suggest-topics [--apply] [--first]`: suggest topics for

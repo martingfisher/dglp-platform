@@ -2058,6 +2058,34 @@ $ok( 'approval' === ( $alice_row['consent_source'] ?? '' ), 'and the consent rec
 $ok( ! DigestStore::subscribe_default( $alice, 'approval' ), 'a second approval changes nothing' );
 DigestStore::unsubscribe( $alice );
 $ok( ! DigestStore::subscribe_default( $alice, 'approval' ) && ! DigestStore::for_user( $alice )->has_consent(), 'an unsubscribed member is never re-subscribed by an approval' );
+
+$group( 'Digests: flipping own organisation changes that and nothing else' );
+
+DigestStore::save( $aaron, [ PostTypes::EVENT ], [ 7 ], Frequency::MONTHLY, false );
+$aaron_before = DigestStore::for_user( $aaron );
+$ok( in_array( $aaron, DigestStore::without_own_org(), true ), 'a subscriber whose own organisation is left out is listed' );
+$ok( ! in_array( $alice, DigestStore::without_own_org(), true ), 'an unsubscribed member is not listed' );
+$ok( DigestStore::set_own_org( $aaron, true ), 'the flip is saved' );
+$aaron_after = DigestStore::for_user( $aaron );
+$ok( null !== $aaron_after && $aaron_after->include_own_org, 'their own organisation is now included' );
+$ok( $aaron_after->types === $aaron_before->types && $aaron_after->topic_ids === $aaron_before->topic_ids && $aaron_after->frequency === $aaron_before->frequency, 'and their types, topics and cadence are exactly as they were' );
+$ok( $aaron_after->consent_at === $aaron_before->consent_at && $aaron_after->unsubscribe_token === $aaron_before->unsubscribe_token && $aaron_after->last_sent_at === $aaron_before->last_sent_at, 'with the same consent record, link and last send' );
+$ok( ! in_array( $aaron, DigestStore::without_own_org(), true ), 'and they are no longer listed' );
+$ok( ! DigestStore::set_own_org( 99999999, true ), 'a user with no subscription is refused' );
+
+$group( 'Digests: a deleted account takes its digest row with it' );
+
+require_once ABSPATH . 'wp-admin/includes/user.php';
+$gone = $make_member( 'dgl_gone', $org_a, 'contributor' );
+DigestStore::save( $gone, [ PostTypes::EVENT ], [], Frequency::WEEKLY, true );
+$ok( null !== DigestStore::for_user( $gone ), 'a subscriber has a row' );
+wp_delete_user( $gone );
+$gone_rows = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM ' . DigestStore::name() . ' WHERE user_id = %d', $gone ) );
+$ok( 0 === $gone_rows, 'deleting the account removes the row' );
+$ok( ! in_array( $gone, DigestStore::orphans(), true ), 'so it does not become an orphan' );
+$wpdb->insert( DigestStore::name(), [ 'user_id' => 99999998, 'types' => '[]', 'topic_ids' => '[]', 'frequency' => 'weekly', 'unsubscribe_token' => 'orphan-test-token-0000000000000000000000000000', 'updated_at' => '2026-01-01 00:00:00' ] );
+$ok( in_array( 99999998, DigestStore::orphans(), true ), 'a row with no account is found as an orphan' );
+$ok( DigestStore::forget( 99999998 ) && ! in_array( 99999998, DigestStore::orphans(), true ), 'and removed' );
 $gap = DigestStore::approved_without_row();
 $ok( in_array( $aaron, $gap, true ) && in_array( $bella, $gap, true ) && ! in_array( $alice, $gap, true ), 'approved members without a row are the backfill list' );
 foreach ( $gap as $gap_id ) {
@@ -4629,6 +4657,28 @@ $home_seo = \DGL\Frontend\Seo::page();
 $ok( \DGL\Frontend\Home::is_request() && \DGL\Frontend\Frontend::is_ours(), 'the router owns the request' );
 $ok( is_array( $home_seo ) && 'home' === $home_seo['kind'] && 'noindex,follow' === $home_seo['robots'] && 'WebSite' === $home_seo['schema']['main']['@type'] && '' !== $home_seo['image']['url'], 'the head describes it, noindex while it is a sample, with a social card' );
 $ok( str_starts_with( \DGL\Frontend\Frontend::directory_title( 'x' ), 'Home page sample | ' ), 'and the title says what it is' );
+
+// An SEO plugin that answers the document title by asking us for it, the way Rank Math's
+// rank_math/frontend/title does. On 13 November 2026 that took every page of ours down:
+// describing the page asks for the title, and the title asked for the page, without end.
+$seo_calls = 0;
+$seo_asker = static function ( $title ) use ( &$seo_calls ) {
+	++$seo_calls;
+
+	if ( $seo_calls > 5 ) {
+		return 'stopped'; // The loop the guard is there to prevent; bail rather than exhaust memory.
+	}
+
+	return \DGL\Frontend\Seo::rank_math_title( 'Their own guess' );
+};
+add_filter( 'pre_get_document_title', $seo_asker, 15 );
+\DGL\Frontend\Seo::reset();
+$home_seo = \DGL\Frontend\Seo::page();
+remove_filter( 'pre_get_document_title', $seo_asker, 15 );
+$ok( is_array( $home_seo ) && 1 === $seo_calls, 'a title filter that asks us for the page is answered once, not for ever' );
+$ok( is_array( $home_seo ) && 'Their own guess' === $home_seo['title'], 'and asked from inside, we say we do not know yet, so it keeps its own title' );
+$ok( is_array( $home_seo ) && 'home' === $home_seo['kind'], 'and the page is still described in full' );
+
 set_query_var( \DGL\Frontend\Home::QUERY_VAR, '' );
 \DGL\Frontend\Seo::reset();
 
