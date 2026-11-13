@@ -1977,4 +1977,19 @@ Wordify's `replace_in_post`; every page edit left a revision.
   courses already on the site are untouched. Not covered: WordPress's own
   cron not running at all, which no code inside the plugin can report; `wp dgl
   training status` shows the last run. Unit suite 2819.
+- **13 November, live site by hand (no code change).** After 0.59.0 and 0.59.1
+  went live: (1) the first real `wp dgl training pull --actor=1` created 18
+  Training items for Voluntary Action Leeds and adopted the hand-added "Meet the
+  Funder"; a dry run straight after showed 19 unchanged. (2) Three summaries
+  from that first run were poor and were corrected by hand with `wp post meta
+  update` (summary and who-for): Designated Safeguarding Lead (11445),
+  Professional Boundaries (11451) and Lone Working (11457; who-for was already
+  right). 0.59.1 fixes the cause for new courses. (3) The home page (page 9548)
+  gained two sections after "What's on", each with the same 40px spacer: `[dgl_feed
+  type="training"]` (Training and learning, four courses) and `[dgl_val_jobs
+  layout="feed" count="6"]` (Jobs in the sector). Each edit is one page revision
+  and can be restored from the page's history. Caches cleared (object, SmartCache,
+  CDN). Open: VAL's pages have no pictures, so its courses show the navy
+  "TRAINING" tile; Martin is deciding between one default training picture
+  (Settings, Topic feed pictures), VAL's logo on the 18, or a picture per topic.
 
