@@ -2201,3 +2201,17 @@ Wordify's `replace_in_post`; every page edit left a revision.
   afterwards. The same for `wp dgl digest subscribe` without `--types`, and a
   round-up no longer calls itself "narrowed" for leaving out a hidden type.
   Existing subscriptions are untouched (DGLP to decide after approval).
+- **0.61.0, 13 November. The team manages the funding sources.** Review team >
+  Grants and Funding in the dashboard lists every funder's page the weekly run
+  reads, with how many of its funds are on the site (linking to the list
+  filtered to that funder), what the last run found there, Add (name and page
+  address, checked for a real https host and duplicates) and Delete (takes that
+  funder's funds off the site at once, after a confirmation), funds from
+  elsewhere (the hand-written Arts Council entries), and the Show / Hide switch
+  for administrators. The list now lives on the site (`dgl_funding_sources`);
+  the Worker reads it at the start of each run and seeded it from its own list
+  the first time. Each run records per-source results for the screen. Adds and
+  deletes go in the audit log. Unit suite 2920; integration suite 1724 with the
+  same three failures as `main`. Checked through the real dashboard on the local
+  WordPress: 118 sources listed, add and delete both work, no sideways scrolling
+  at phone width.

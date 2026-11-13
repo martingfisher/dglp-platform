@@ -6316,6 +6316,51 @@ $ok( str_contains( $fv_on, 'dgl-home__row--fund' ) && ! str_contains( $fv_on, 'P
 delete_option( \DGL\Funding\Visibility::OPTION );
 wp_set_current_user( $fv_was );
 
+$group( 'Funding: the team\'s list of funders\' pages' );
+
+delete_option( \DGL\Funding\Sources::OPTION );
+$ok( 2 === \DGL\Funding\Sources::seed( [ [ 'id' => 'fu-src', 'name' => 'Test Trust', 'url' => 'https://example.org/fund' ], [ 'id' => 'other', 'name' => 'Other', 'url' => 'https://other.example.org/' ], [ 'id' => 'bad', 'url' => 'javascript:x' ] ] ), 'an empty list is seeded, bad rows left out' );
+$ok( 0 === \DGL\Funding\Sources::seed( [ [ 'id' => 'z', 'name' => 'Z', 'url' => 'https://z.example.org/' ] ] ) && 2 === count( \DGL\Funding\Sources::all() ), 'and a second seed never overwrites the list' );
+$fs_added = \DGL\Funding\Sources::add( 'New Fund', 'newfund.example.org/apply', '', 1 );
+$ok( is_array( $fs_added ) && 'new-fund' === $fs_added['id'] && 3 === count( \DGL\Funding\Sources::all() ), 'the team can add one' );
+$ok( is_string( \DGL\Funding\Sources::add( 'Copy', 'https://www.example.org/fund/', '', 1 ) ), 'but not the same page twice' );
+$fs_counts = \DGL\Funding\Sources::live_counts();
+$ok( ( $fs_counts['fu-src'] ?? 0 ) >= 1, 'live funds are counted per source (' . (int) ( $fs_counts['fu-src'] ?? 0 ) . ')' );
+$fs_live = \DGL\Funding\Sources::fund_ids( 'fu-src', [ Statuses::LIVE ] );
+$fs_taken = \DGL\Funding\Sources::remove( 'fu-src', 1 );
+$ok( null !== $fs_taken && $fs_taken >= count( $fs_live ) && [] === \DGL\Funding\Sources::fund_ids( 'fu-src', [ Statuses::LIVE, Statuses::PENDING ] ), 'deleting one takes its funds off the site at once' );
+$ok( null === \DGL\Funding\Sources::remove( 'no-such', 1 ), 'deleting one that is not there says so' );
+
+$fs_token = \DGL\Funding\Endpoint::new_token();
+$fs_get   = new WP_REST_Request( 'GET', '/dgl/v1/funding/sources' );
+$fs_get->set_header( 'Authorization', 'Bearer ' . $fs_token );
+$fs_body  = rest_do_request( $fs_get )->get_data();
+$ok( 2 === count( (array) ( $fs_body['sources'] ?? [] ) ) && isset( $fs_body['sources'][0]['url'] ), 'the Worker reads the list with its token' );
+$fs_anon = new WP_REST_Request( 'GET', '/dgl/v1/funding/sources' );
+$ok( in_array( rest_do_request( $fs_anon )->get_status(), [ 401, 403 ], true ), 'and nobody else can' );
+delete_option( \DGL\Funding\Endpoint::OPTION_TOKEN );
+
+$fs_html = \DGL\Dashboard\View::render(
+	'dashboard/review-funding',
+	[
+		'sources'   => \DGL\Funding\Sources::all(),
+		'counts'    => [ 'new-fund' => 3 ],
+		'others'    => [ 'arts-council-england' => 2 ],
+		'last'      => [ 'at' => time(), 'read' => 2, 'sources' => 3, 'by_source' => [ 'new-fund' => [ 'ok' => true, 'funds' => 3 ], 'other' => [ 'ok' => false, 'funds' => 0 ] ] ],
+		'by_source' => [ 'new-fund' => [ 'ok' => true, 'funds' => 3 ], 'other' => [ 'ok' => false, 'funds' => 0 ] ],
+		'notice'    => [],
+		'is_admin'  => true,
+		'is_on'     => false,
+		'list_url'  => home_url( '/grants/' ),
+	]
+);
+$ok( str_contains( $fs_html, 'New Fund' ) && str_contains( $fs_html, 'newfund.example.org/apply' ) && str_contains( $fs_html, 'Read: 3 open' ) && str_contains( $fs_html, 'Could not be read' ), 'the screen lists each page, its link and how the last run went' );
+$ok( str_contains( $fs_html, 'source=new-fund' ) && str_contains( $fs_html, 'value="remove_source"' ) && str_contains( $fs_html, 'value="add_source"' ), 'with a count that opens its funds, and add and delete' );
+$ok( str_contains( $fs_html, 'Show funding to the public' ) && str_contains( $fs_html, 'arts-council-england' ), 'and the switch, and funds from elsewhere' );
+$fs_html_mod = \DGL\Dashboard\View::render( 'dashboard/review-funding', [ 'sources' => [], 'is_admin' => false, 'is_on' => false ] );
+$ok( ! str_contains( $fs_html_mod, 'Show funding to the public' ) && str_contains( $fs_html_mod, 'Only a site administrator' ), 'only an administrator gets the switch' );
+delete_option( \DGL\Funding\Sources::OPTION );
+
 $group( 'Funding: the sync endpoint needs its token' );
 
 $fu_token = \DGL\Funding\Endpoint::new_token();

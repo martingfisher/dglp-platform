@@ -133,3 +133,26 @@ funding existed do not include it, so existing subscribers get funding only if
 they tick it. While funding is held back, new members are not signed up for it
 either (0.60.6); once it is on, new members get it by default like every other
 type. Adding it to existing subscribers waits for DGLP's decision after approval.
+
+## The team's Funding screen
+
+Review team > **Grants and Funding** in the dashboard (`/dashboard/review/funding/`):
+
+- every funder's page the weekly run reads, with its link, any note, how many of
+  its funds are on the site now (the number opens `/grants/?source=<id>`, the list
+  filtered to that funder), and what the last run found there: "Read: 3 open",
+  "Read: nothing open", "Could not be read" or "Read at the next run";
+- **Add a funder**: a name and the address of its funding page (https, a real
+  host, not already on the list). It is read at the next Monday run;
+- **Delete**: the page is not read again and its funds come off the site at once
+  (live ones expire, ones waiting for review leave the queue). Asks first;
+- **Also on the site**: funds from elsewhere, such as the Arts Council write-ups in
+  `workers/funding/manual.json`;
+- the Show / Hide switch for the public, administrators only.
+
+The list itself is the option `dgl_funding_sources`. The Worker reads it from
+`GET /wp-json/dgl/v1/funding/sources` (same token as the sync) at the start of
+every run. The first time it was empty, so the Worker seeded it from its own
+`sources.json` (`POST` to the same route, accepted only while the list is empty).
+From then on the site's list is the list; `sources.json` is only the fallback if
+the site cannot be reached. Every add and delete is in the audit log.

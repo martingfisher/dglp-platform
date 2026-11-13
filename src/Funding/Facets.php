@@ -85,6 +85,10 @@ final class Facets {
 
 		$out['fit'] = isset( $request['fit'] ) && 'mine' === $request['fit'] ? 'mine' : '';
 
+		// One funder's page, from the count on the team's Funding screen.
+		$source        = isset( $request['source'] ) && is_scalar( $request['source'] ) ? strtolower( (string) $request['source'] ) : '';
+		$out['source'] = preg_match( '/^[a-z0-9][a-z0-9-]{0,119}$/', $source ) ? $source : '';
+
 		return $out;
 	}
 
@@ -112,6 +116,10 @@ final class Facets {
 			} else {
 				$clauses[] = [ 'key' => 'dgl_' . $facet, 'value' => '"' . $value . '"', 'compare' => 'LIKE' ];
 			}
+		}
+
+		if ( '' !== (string) ( $args['source'] ?? '' ) ) {
+			$clauses[] = [ 'key' => Import::META_SOURCE, 'value' => (string) $args['source'], 'compare' => '=' ];
 		}
 
 		$band = Vocab::amounts()[ (string) ( $args['amount'] ?? '' ) ] ?? null;

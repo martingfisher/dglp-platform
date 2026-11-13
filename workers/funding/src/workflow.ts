@@ -15,6 +15,33 @@ interface ManualSource {
 	grants: Grant[];
 }
 
+const SITE_HEADERS = (token: string) => ({
+	'content-type': 'application/json',
+	'user-agent': 'dgl-funding/1.0 (+https://doinggoodleeds.org.uk/grants/)',
+	referer: 'https://dgl-funding.martingfisher.workers.dev/',
+	authorization: `Bearer ${token}`,
+});
+
+/** The funders' pages to read, from the site. Seeds an empty list once. [] means "use the built-in list". */
+export async function siteSources(env: Env): Promise<Source[]> {
+	if (!env.DGL_TOKEN) return [];
+	const url = (env.DGL_SYNC_URL || DEFAULT_SYNC_URL).replace(/\/sync\/?$/, '/sources');
+	const token = await env.DGL_TOKEN.get();
+	const read = async (): Promise<Source[]> => {
+		const res = await fetch(url, { headers: SITE_HEADERS(token), signal: AbortSignal.timeout(30_000) });
+		if (!res.ok) throw new Error(`sources GET ${res.status}`);
+		const body = (await res.json()) as { sources?: Source[] };
+		return (body.sources ?? []).filter((s) => s && typeof s.id === 'string' && typeof s.url === 'string' && s.url.startsWith('https://'));
+	};
+	let list = await read();
+	if (!list.length) {
+		const seed = await fetch(url, { method: 'POST', headers: SITE_HEADERS(token), body: JSON.stringify({ sources: SOURCES }), signal: AbortSignal.timeout(30_000) });
+		if (!seed.ok) throw new Error(`sources seed ${seed.status}`);
+		list = await read();
+	}
+	return list;
+}
+
 /** Hand-written sources still within their check_by date, in the shape the site expects. */
 export function manualSources(day: string) {
 	return (manualJson.sources as ManualSource[])
@@ -37,7 +64,19 @@ export class FundingWorkflow extends WorkflowEntrypoint<Env, RunParams> {
 		const env = this.env;
 		const runId = event.payload?.runId || new Date().toISOString().replace(/\.\d+Z$/, 'Z');
 		const wanted = event.payload?.ids;
-		const sources = wanted?.length ? SOURCES.filter((s) => wanted.includes(s.id)) : SOURCES;
+		// The list lives on the site, where the team adds and deletes funders.
+		// The first time it is empty, so it is seeded from the list this Worker
+		// was built with; if the site cannot be reached, the built-in list is used.
+		const listed = await step.do('sources', { retries: { limit: 2, delay: '30 seconds', backoff: 'exponential' }, timeout: '2 minutes' }, async () => {
+			try {
+				return await siteSources(env);
+			} catch (e) {
+				console.log('dgl-funding: could not read the site\'s source list, using the built-in one: ' + String(e));
+				return [];
+			}
+		});
+		const all = listed.length ? listed : SOURCES;
+		const sources = wanted?.length ? all.filter((s) => wanted.includes(s.id)) : all;
 		const batches = chunk(sources, BATCH_SIZE);
 
 		let usage: Usage = emptyUsage();
@@ -82,12 +121,7 @@ export class FundingWorkflow extends WorkflowEntrypoint<Env, RunParams> {
 			const res = await fetch(env.DGL_SYNC_URL || DEFAULT_SYNC_URL, {
 				method: 'POST',
 				// Wordfence on the site refuses a POST with no user-agent and no referer, so say who we are.
-				headers: {
-					'content-type': 'application/json',
-					'user-agent': 'dgl-funding/1.0 (+https://doinggoodleeds.org.uk/grants/)',
-					referer: 'https://dgl-funding.martingfisher.workers.dev/',
-					authorization: `Bearer ${await token()}`,
-				},
+				headers: SITE_HEADERS(await token()),
 				body: JSON.stringify(payload),
 				signal: AbortSignal.timeout(120_000),
 			});

@@ -42,6 +42,44 @@ final class Endpoint {
 				'permission_callback' => [ self::class, 'allowed' ],
 			]
 		);
+
+		// The list of funders' pages the Worker reads, kept on this site.
+		register_rest_route(
+			self::NAMESPACE,
+			'/funding/sources',
+			[
+				[
+					'methods'             => 'GET',
+					'callback'            => [ self::class, 'sources' ],
+					'permission_callback' => [ self::class, 'allowed' ],
+				],
+				[
+					// Only fills an empty list: never overwrites the team's changes.
+					'methods'             => 'POST',
+					'callback'            => [ self::class, 'seed' ],
+					'permission_callback' => [ self::class, 'allowed' ],
+				],
+			]
+		);
+	}
+
+	public static function sources(): WP_REST_Response {
+		return new WP_REST_Response(
+			[
+				'sources' => array_map(
+					static fn( array $s ): array => [ 'id' => $s['id'], 'name' => $s['name'], 'url' => $s['url'], 'notes' => $s['notes'] ],
+					Sources::all()
+				),
+			],
+			200
+		);
+	}
+
+	public static function seed( WP_REST_Request $request ): WP_REST_Response {
+		$payload = $request->get_json_params();
+		$stored  = Sources::seed( is_array( $payload['sources'] ?? null ) ? $payload['sources'] : [] );
+
+		return new WP_REST_Response( [ 'seeded' => $stored, 'total' => count( Sources::all() ) ], 200 );
 	}
 
 	/** Whether the request carries the token. */
