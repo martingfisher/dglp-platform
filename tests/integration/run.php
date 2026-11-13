@@ -6302,6 +6302,13 @@ $ok( $fv_admin > 0 && str_contains( $fv_html, 'Preview for administrators' ) && 
 wp_set_current_user( 0 );
 $fv_block = do_blocks( '<!-- wp:paragraph {"className":"dgl-funding-launch"} --><p class="dgl-funding-launch">Held</p><!-- /wp:paragraph --><!-- wp:paragraph --><p>Always</p><!-- /wp:paragraph -->' );
 $ok( ! str_contains( $fv_block, 'Held' ) && str_contains( $fv_block, 'Always' ), 'a block marked dgl-funding-launch is held back with funding; others are not' );
+$fv_new = $make_member( 'dgl_fv_newcomer', $org_a, 'contributor' );
+\DGL\Email\Digest\Store::subscribe_default( $fv_new, 'test' );
+$ok( ! in_array( PostTypes::GRANT, \DGL\Email\Digest\Store::for_user( $fv_new )->types, true ) && in_array( PostTypes::NEWS, \DGL\Email\Digest\Store::for_user( $fv_new )->types, true ), 'off: somebody joining is not signed up for funding unasked' );
+update_option( \DGL\Funding\Visibility::OPTION, '1' );
+$fv_later = $make_member( 'dgl_fv_later', $org_a, 'contributor' );
+\DGL\Email\Digest\Store::subscribe_default( $fv_later, 'test' );
+$ok( in_array( PostTypes::GRANT, \DGL\Email\Digest\Store::for_user( $fv_later )->types, true ), 'on: somebody joining gets funding by default, like every other type' );
 update_option( \DGL\Funding\Visibility::OPTION, '1' );
 $ok( str_contains( do_blocks( '<!-- wp:paragraph {"className":"dgl-funding-launch"} --><p class="dgl-funding-launch">Held</p><!-- /wp:paragraph -->' ), 'Held' ), 'and shows once funding is on' );
 $fv_on = do_shortcode( '[dgl_home_funding]' );
