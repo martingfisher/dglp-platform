@@ -18,6 +18,7 @@ use DGL\Org\Directory;
 use DGL\Org\DirectoryQuery;
 use DGL\Org\Org;
 use DGL\PostTypes;
+use DGL\Taxonomies;
 use DGL\Schema\FieldRegistry;
 use DGL\Statuses;
 use WP_Post;
@@ -277,6 +278,40 @@ final class Frontend {
 		// on a theme page.
 		Assets::style( 'assets/finder.css', 'dgl-finder' );
 		Assets::script( 'assets/finder.js', 'dgl-finder' );
+
+		// A topic page is the theme's archive, with numbered pages. It loads
+		// the next page as the reader reaches the end instead, using the same
+		// script as the plugin's own lists, pointed at Blocksy's grid and pager.
+		// Without JavaScript the numbered pages are still there.
+		if ( is_tax( Taxonomies::TOPIC ) ) {
+			Assets::autoload();
+			wp_add_inline_script(
+				'dgl-autoload',
+				'window.dglAutoload = window.dglAutoload || {}; window.dglAutoload.theme = ' . wp_json_encode(
+					[
+						'list'  => '.entries[data-archive]',
+						'pager' => 'nav.ct-pagination',
+						'item'  => 'article',
+					]
+				) . ';',
+				'before'
+			);
+
+			// The theme page does not load the plugin's stylesheet, so the
+			// button and the hidden pager get their few rules here.
+			Assets::style( 'assets/tokens.css', 'dgl-tokens' );
+			wp_add_inline_style(
+				'dgl-tokens',
+				'.dgl-js nav.ct-pagination[hidden]{display:none!important}'
+				. '.dgl-more{margin-top:var(--dgl-gap-lg);text-align:center;grid-column:1/-1}'
+				. '.dgl-more__sentinel{height:1px}'
+				. '.dgl-more__button{display:inline-flex;align-items:center;min-height:44px;padding:0 20px;border:var(--dgl-field-border) solid var(--dgl-field-outline);border-radius:var(--dgl-radius-button);background:var(--dgl-white);color:var(--dgl-link);font:inherit;font-weight:var(--dgl-weight-button);cursor:pointer}'
+				. '.dgl-more__button:hover,.dgl-more__button:focus{background:var(--dgl-surface)}'
+				. '.dgl-more__button[disabled]{cursor:progress;opacity:.7}'
+				. '.dgl-more__status{margin:10px 0 0;color:var(--dgl-text-muted);font-size:.9em}'
+				. '.dgl-more__status:empty{display:none}'
+			);
+		}
 
 		if ( ! self::is_ours() ) {
 			return;

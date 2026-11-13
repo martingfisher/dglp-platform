@@ -17,6 +17,7 @@ defined( 'ABSPATH' ) || exit;
  * ## EXAMPLES
  *
  *     wp dgl funding token
+ *     wp dgl funding public on
  *     wp dgl funding status
  *     wp dgl funding import run.json --dry-run
  */
@@ -51,6 +52,37 @@ final class Command {
 
 		WP_CLI::log( 'New token (shown once; the previous one no longer works):' );
 		WP_CLI::line( $token );
+	}
+
+	/**
+	 * Show funding to the public, hold it back, or say which it is.
+	 *
+	 * While it is held back, only signed-in administrators see /grants/, the
+	 * funds' pages and the funding blocks; the weekly import keeps running.
+	 *
+	 * ## OPTIONS
+	 *
+	 * <state>
+	 * : on, off or status.
+	 * ---
+	 * options:
+	 *   - on
+	 *   - off
+	 *   - status
+	 * ---
+	 *
+	 * @param string[]              $args
+	 * @param array<string, string> $assoc
+	 */
+	public function public( array $args, array $assoc ): void {
+		$state = (string) ( $args[0] ?? 'status' );
+
+		if ( 'on' === $state || 'off' === $state ) {
+			update_option( Visibility::OPTION, 'on' === $state ? '1' : '0', true );
+			wp_cache_delete( 'alloptions', 'options' );
+		}
+
+		WP_CLI::success( Visibility::is_on() ? 'Funding is ON: the public sees /grants/, the funding blocks and the funds in topics, search and digests.' : 'Funding is OFF: hidden from the public, visible only to signed-in administrators. The weekly import keeps running.' );
 	}
 
 	/**

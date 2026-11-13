@@ -2173,3 +2173,17 @@ Wordify's `replace_in_post`; every page edit left a revision.
   year (the Details card says "Open all year: no closing date") instead of
   showing the six-week re-check date as a deadline. Unit suite 2906; integration
   suite 1701 with the same three failures as `main`.
+- **0.60.4, 13 November. Funding held back until signed off; infinite scroll on
+  topic pages.** One switch, `wp dgl funding public on|off|status`, decides
+  whether the public sees funding. Off (set on production the same evening, to
+  wait for DGLP's approval on Tuesday): `/grants/` and fund pages answer 404 and
+  are noindex, funding blocks and feeds draw nothing, funds are left out of topic
+  pages, search, organisation pages, sitemaps and the digest. Signed-in
+  administrators see it all, marked "Preview for administrators". Any block with
+  the class `dgl-funding-launch` is held back with it (the topic feeds on
+  `/support/funding/`). `/support/funding/` gains two rows of funding
+  (`[dgl_home_funding count="6"]`) above its feeds, and the home page block is
+  back in place; both stay hidden until the switch. Topic pages
+  (`/topic/<slug>/`, the theme's archive) now load the next page as the reader
+  reaches the end, using the plugin's autoload script pointed at Blocksy's grid
+  and pager; the numbered pages remain without JavaScript.

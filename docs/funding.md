@@ -94,3 +94,37 @@ Rules the plugin applies, whatever the Worker sends:
 - Text is plain text only, stripped and capped. Links must be https.
 
 The answer: `{"ok":true,"added":n,"updated":n,"revived":n,"withdrawn":n,"skipped":n,"errors":[...]}`.
+
+## Holding it back until it is signed off
+
+One switch decides whether the public sees funding:
+
+```
+wp dgl funding public off     # hidden: only signed-in administrators see it
+wp dgl funding public on      # live
+wp dgl funding public status
+```
+
+(`wp option update dgl_funding_public 0|1` does the same.) It was switched off on
+13 November 2026 to wait for DGLP's approval.
+
+While it is off, `/grants/` and every fund's page answer 404 to the public and are
+noindex; the funding blocks and feeds draw nothing; funds are left out of topic
+pages, search, organisation pages, the sitemaps, the digest and the digest
+choices. Administrators see everything with a "Preview for administrators" line.
+The weekly import keeps running, so the list is current when it goes on.
+
+Any other block that should go live with funding gets the extra CSS class
+`dgl-funding-launch` (Advanced > Additional CSS class(es) in the block editor):
+it draws nothing until funding is switched on. The news, events and training
+feeds on `/support/funding/` carry it.
+
+On the day: `wp dgl funding public on`, then clear the page cache (SmartCache).
+Nothing else changes. To be told who subscribes to funding in the digest, see
+"Digest subscribers" below.
+
+### Digest subscribers
+
+A member's digest lists the types they ticked. Subscriptions saved before
+funding existed do not include it, so existing subscribers get funding only if
+they tick it. New members signed up since 13 November get it by default.
