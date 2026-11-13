@@ -175,3 +175,36 @@ desktop size in the Customizer; that changes all of them at once.
   content tidy-ups.
 
 Every page has a WordPress revision from before these edits.
+
+## Mobile header and menu (13 November, later)
+
+Martin reported that the phone menu had no route to the top menu (News,
+Events, Training, Jobs), that its logo was missing, and that the header bar
+was too deep. All three were settings in Blocksy's header builder.
+
+The live header is the custom one named "DGL Partnership"
+(`ct-custom-NWQeb6Oy8c1stUf33NoG4`), not the default `type-1` that the
+Customizer opens on. Editing `type-1` changes nothing on the site. Both were
+given the same changes so they stay in step.
+
+- **Logo in the menu panel:** the off-canvas logo's phone image pointed at
+  attachment 3321, which no longer exists. Now the header logo (7156), 64px
+  high.
+- **Top menu:** a "Mobile Menu 2" element showing menu 23 (News, Events,
+  Training, Jobs) added to the panel under the main menu, styled the same.
+- **Bar depth:** phone logo height 105px to 56px and phone row height 90px to
+  70px. The bar is 82px deep where it was 131px. Tablet and desktop values
+  are unchanged; the desktop rows measure 82px and 137px as before.
+- **Order at the bottom of the panel:** Sign in and Register now come before
+  the three partner buttons (Forum Central, VAL, LOPF).
+
+Still to decide, not changed:
+
+- "News" appears twice in the panel: once in the main mobile menu (with a
+  submenu) and once in the top menu.
+- The phone menu lists Volunteering, Support, Networks and Forums, Resources,
+  News, Contact. The desktop menu has About where the phone menu has News, so
+  About cannot be reached from the phone menu.
+- The three partner buttons have no label saying they lead to other sites,
+  and each is a different width and colour.
+- "Sign in" is a text link 23px high, a small target next to 42px buttons.
