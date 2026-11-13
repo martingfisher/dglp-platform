@@ -312,6 +312,8 @@ final class Import {
 			'skipped'   => 0,
 			'errors'    => [],
 			'new'       => [],
+			// Per source: read or not, funds found, and why not. For the Funding screen.
+			'by_source' => [],
 		];
 
 		$org_id = self::org_id();
@@ -350,7 +352,8 @@ final class Import {
 
 			if ( '' === $source_id || empty( $source['ok'] ) ) {
 				if ( '' !== $source_id ) {
-					$out['errors'][] = sprintf( '%s: %s', $source_id, self::plain( $source['error'] ?? 'not read', 200 ) );
+					$out['errors'][]                 = sprintf( '%s: %s', $source_id, self::plain( $source['error'] ?? 'not read', 200 ) );
+					$out['by_source'][ $source_id ] = [ 'ok' => false, 'funds' => 0, 'error' => self::plain( $source['error'] ?? 'not read', 200 ) ];
 				}
 				continue;
 			}
@@ -407,6 +410,8 @@ final class Import {
 
 				++$out['added'];
 			}
+
+			$out['by_source'][ $source_id ] = [ 'ok' => true, 'funds' => count( $seen ), 'error' => '' ];
 
 			// Only a page that still lists something is trusted to say a fund has gone.
 			if ( [] !== $seen ) {

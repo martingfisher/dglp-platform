@@ -131,3 +131,27 @@ Harness::assert_false( Cards::fund_date_parts( '2026-11-28', false, '2026-11-13'
 Harness::assert_true( Cards::fund_date_parts( '2026-12-28', true, '2026-11-13' )['rolling'], 'a rolling fund never shows its refresh date' );
 Harness::assert_same( '', Cards::fund_date_parts( '2026-12-28', true, '2026-11-13' )['day'], 'and has no day' );
 Harness::assert_same( null, Cards::fund_date_parts( '', false ), 'no date and not rolling, no leaf' );
+
+Harness::group( 'Funding: the list of funders\' pages' );
+
+use DGL\Funding\Sources;
+
+Harness::assert_same( 'https://example.org/grants', Sources::clean_url( 'example.org/grants' ), 'a bare address gets https' );
+Harness::assert_same( 'https://example.org/grants', Sources::clean_url( 'http://example.org/grants' ), 'http becomes https' );
+Harness::assert_same( '', Sources::clean_url( 'not a web address' ), 'nonsense is refused' );
+Harness::assert_same( '', Sources::clean_url( 'javascript:alert(1)' ), 'a script link is refused' );
+Harness::assert_same( 'the-key-fund-2', Sources::make_id( 'The Key Fund!', [ 'the-key-fund' ] ), 'an id is made from the name and never repeats' );
+Harness::assert_true( Sources::same_page( 'https://www.example.org/apply/', 'http://example.org/apply' ), 'the same page with or without www, https or a trailing slash' );
+Harness::assert_false( Sources::same_page( 'https://example.org/apply', 'https://example.org/about' ), 'different pages differ' );
+
+$existing = [ [ 'id' => 'key-fund', 'name' => 'Key Fund', 'url' => 'https://thekeyfund.co.uk/apply' ] ];
+Harness::assert_true( is_string( Sources::prepare( '', 'https://a.org', '', $existing ) ), 'no name is refused' );
+Harness::assert_true( is_string( Sources::prepare( 'A', 'nope', '', $existing ) ), 'no usable address is refused' );
+Harness::assert_true( str_contains( (string) Sources::prepare( 'Again', 'https://www.thekeyfund.co.uk/apply/', '', $existing ), 'Key Fund' ), 'a page already on the list is refused, naming it' );
+$fresh = Sources::prepare( '  Leeds <b>Fund</b> ', 'leedsfund.org/grants', 'Small grants', $existing );
+Harness::assert_same( [ 'id' => 'leeds-fund', 'name' => 'Leeds Fund', 'url' => 'https://leedsfund.org/grants', 'notes' => 'Small grants' ], $fresh, 'a good one is cleaned and given an id' );
+
+$req = Facets::from_request( [ 'source' => 'key-fund' ] );
+Harness::assert_same( 'key-fund', $req['source'], 'the source filter takes an id' );
+Harness::assert_same( '', Facets::from_request( [ 'source' => "x' OR 1=1" ] )['source'], 'and nothing else' );
+Harness::assert_same( [ 'key' => 'dgl_funding_source', 'value' => 'key-fund', 'compare' => '=' ], Facets::meta_query( [ 'source' => 'key-fund' ], '2026-11-16' )[0], 'and narrows to that source\'s funds' );
