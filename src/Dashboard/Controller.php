@@ -2213,6 +2213,8 @@ final class Controller {
 	 */
 	private static function screen( string $template, array $data, string $title, ?UserContext $user = null ): void {
 		add_filter( 'pre_get_document_title', static fn(): string => $title . ' | ' . get_bloginfo( 'name' ) );
+		// Rank Math answers the document title after us and would put its own guess in the tab.
+		add_filter( 'rank_math/frontend/title', static fn(): string => $title . ' | ' . get_bloginfo( 'name' ), 99 );
 
 		// The editor only appears in the wizard, so only the wizard pays for it.
 		Assets::enqueue( in_array( $template, [ 'wizard' ], true ) );

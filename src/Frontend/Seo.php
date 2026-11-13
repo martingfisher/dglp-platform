@@ -39,6 +39,17 @@ final class Seo {
 	/** @var array<string, mixed>|null|false What the current page is; false once looked up and found not ours. */
 	private static array|null|false $page = null;
 
+	/**
+	 * True while the page is being described. An SEO plugin that answers the
+	 * document title asks us for it through its own filter, and describing
+	 * the page asks WordPress for the document title: without this, each
+	 * calls the other until PHP runs out of stack.
+	 */
+	private static bool $describing = false;
+
+	/** True once our schema has gone into Rank Math's graph, so head() does not print it a second time. */
+	private static bool $schema_fed = false;
+
 	public static function init(): void {
 		add_action( 'wp_head', [ self::class, 'head' ], 2 );
 
@@ -78,9 +89,13 @@ final class Seo {
 
 		echo "\n<!-- DGLP: page description -->\n";
 
-		// Rank Math printed the tags already, fed by the filters below; only the schema is ours to add.
+		// Rank Math printed the tags already, fed by the filters below. The schema is ours to add
+		// only when Rank Math printed none of its own; when it did, ours went into its graph.
 		if ( did_action( 'rank_math/head' ) ) {
-			self::print_schema( $page['schema'] );
+			if ( ! self::$schema_fed ) {
+				self::print_schema( $page['schema'] );
+			}
+
 			echo "<!-- /DGLP -->\n";
 			return;
 		}
@@ -189,7 +204,7 @@ final class Seo {
 		return $value;
 	}
 
-	/* ---- Rank Math bridge (not exercised here; Rank Math is not installed locally) ---- */
+	/* ---- Rank Math bridge ---- */
 
 	public static function rank_math_title( mixed $title ): mixed {
 		$page = self::page();
@@ -255,6 +270,8 @@ final class Seo {
 			$data[ 'dgl_' . $key ] = $entity;
 		}
 
+		self::$schema_fed = true;
+
 		// All of it, Rank Math's own nodes too (an author's name is in them): we cannot see how it encodes.
 		return self::script_safe( $data );
 	}
@@ -272,7 +289,17 @@ final class Seo {
 			return false === self::$page ? null : self::$page;
 		}
 
-		$page = self::describe();
+		if ( self::$describing ) {
+			return null; // Asked again from inside describe(): not known yet, so the caller keeps its own answer.
+		}
+
+		self::$describing = true;
+
+		try {
+			$page = self::describe();
+		} finally {
+			self::$describing = false;
+		}
 
 		self::$page = null === $page ? false : $page;
 
@@ -282,6 +309,7 @@ final class Seo {
 	/** For tests: forget the current page. */
 	public static function reset(): void {
 		self::$page = null;
+		self::$schema_fed = false;
 	}
 
 	private static function describe(): ?array {
@@ -351,7 +379,7 @@ final class Seo {
 
 		return [
 			'kind'        => 'spaces',
-			'title'       => self::plain( wp_get_document_title() ),
+			'title'       => self::document_title(),
 			'description' => $desc,
 			'url'         => $url,
 			'og_type'     => 'website',
@@ -392,7 +420,7 @@ final class Seo {
 
 		return [
 			'kind'        => 'single',
-			'title'       => self::plain( wp_get_document_title() ),
+			'title'       => self::document_title(),
 			'description' => $desc,
 			'url'         => $url,
 			'og_type'     => $is_doc ? 'article' : 'website',
@@ -437,7 +465,7 @@ final class Seo {
 
 		return [
 			'kind'        => 'archive',
-			'title'       => self::plain( wp_get_document_title() ),
+			'title'       => self::document_title(),
 			'description' => $desc,
 			'url'         => $url,
 			'og_type'     => 'website',
@@ -471,7 +499,7 @@ final class Seo {
 
 		return [
 			'kind'        => 'directory',
-			'title'       => self::plain( wp_get_document_title() ),
+			'title'       => self::document_title(),
 			'description' => $desc,
 			'url'         => $url,
 			'og_type'     => 'website',
@@ -529,7 +557,7 @@ final class Seo {
 
 		return [
 			'kind'        => 'org',
-			'title'       => self::plain( wp_get_document_title() ),
+			'title'       => self::document_title(),
 			'description' => '' !== $desc ? $desc : sprintf(
 				/* translators: %s: organisation. */
 				__( '%s, on the Doing Good Leeds platform.', 'dgl-platform' ),
@@ -563,7 +591,7 @@ final class Seo {
 
 		return [
 			'kind'        => 'calendar',
-			'title'       => self::plain( wp_get_document_title() ),
+			'title'       => self::document_title(),
 			'description' => $desc,
 			'url'         => $url,
 			'og_type'     => 'website',
@@ -596,7 +624,7 @@ final class Seo {
 
 		return [
 			'kind'        => 'home',
-			'title'       => self::plain( wp_get_document_title() ),
+			'title'       => self::document_title(),
 			'description' => $desc,
 			'url'         => $url,
 			'og_type'     => 'website',
@@ -1033,6 +1061,61 @@ final class Seo {
 
 	private static function org_url( int $org_id ): string {
 		return home_url( '/' . Directory::BASE . '/' . get_post_field( 'post_name', $org_id ) . '/' );
+	}
+
+	/**
+	 * The title WordPress and this plugin give the page, without Rank Math's.
+	 *
+	 * Rank Math answers pre_get_document_title after everyone else, so with it
+	 * switched on wp_get_document_title() returns Rank Math's own guess and
+	 * the directory's title (Frontend::directory_title) is lost. Its hooks are
+	 * lifted for this one call and put straight back.
+	 */
+	private static function document_title(): string {
+		$hook = $GLOBALS['wp_filter']['pre_get_document_title'] ?? null;
+		$held = [];
+
+		if ( $hook instanceof \WP_Hook ) {
+			foreach ( $hook->callbacks as $priority => $callbacks ) {
+				foreach ( $callbacks as $callback ) {
+					if ( self::belongs_to( $callback['function'], 'RankMath' ) ) {
+						$held[] = [ (int) $priority, $callback['function'], (int) $callback['accepted_args'] ];
+					}
+				}
+			}
+		}
+
+		foreach ( $held as [ $priority, $function ] ) {
+			remove_filter( 'pre_get_document_title', $function, $priority );
+		}
+
+		try {
+			return self::plain( wp_get_document_title() );
+		} finally {
+			foreach ( $held as [ $priority, $function, $args ] ) {
+				add_filter( 'pre_get_document_title', $function, $priority, $args );
+			}
+		}
+	}
+
+	/**
+	 * Whether a hooked callback is a method of a class in the given namespace.
+	 *
+	 * @param mixed  $callback  What add_filter() was given.
+	 * @param string $namespace Top-level namespace, without slashes.
+	 */
+	public static function belongs_to( mixed $callback, string $namespace ): bool {
+		if ( is_string( $callback ) && str_contains( $callback, '::' ) ) {
+			$callback = explode( '::', $callback, 2 );
+		}
+
+		if ( ! is_array( $callback ) || ! isset( $callback[0] ) ) {
+			return false;
+		}
+
+		$class = is_object( $callback[0] ) ? get_class( $callback[0] ) : (string) $callback[0];
+
+		return str_starts_with( ltrim( $class, '\\' ), $namespace . '\\' );
 	}
 
 	private static function plain( string $text ): string {

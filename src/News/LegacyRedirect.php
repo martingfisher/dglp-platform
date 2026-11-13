@@ -6,7 +6,8 @@
  * lives at /news/story-name/. WordPress's own 404 guess usually finds it by
  * name, but that guess is filterable and some plugins switch it off, so this
  * is explicit: a 404 whose last path segment names a converted, live story is
- * sent to the story with a permanent redirect.
+ * sent to the story with a permanent redirect. A 404 that has the shape of
+ * an old story's address but names no converted story goes to the news list.
  *
  * @package DGL
  */
@@ -36,6 +37,21 @@ final class LegacyRedirect {
 		return $last;
 	}
 
+	/** The old site's story categories, which were the first part of every story's address. */
+	private const OLD_SECTIONS = [ 'news', 'blog', 'good-news' ];
+
+	/**
+	 * Whether a path has the shape of an old story's address: one of the old
+	 * sections, then exactly one more segment. /news/ itself, a paged list
+	 * (/news/page/3/) and anything deeper are not. Pure.
+	 */
+	public static function is_old_story_path( string $path ): bool {
+		$path  = (string) preg_replace( '/[?#].*$/', '', $path );
+		$parts = array_values( array_filter( explode( '/', trim( $path, '/' ) ), static fn( string $part ): bool => '' !== $part ) );
+
+		return 2 === count( $parts ) && in_array( strtolower( $parts[0] ), self::OLD_SECTIONS, true );
+	}
+
 	public static function maybe(): void {
 		if ( ! is_404() ) {
 			return;
@@ -52,6 +68,12 @@ final class LegacyRedirect {
 		$post_id = LegacyImport::live_by_slug( $slug ) ?? LegacyImport::duplicate_target_by_slug( $slug );
 
 		if ( null === $post_id ) {
+			// A story from the old site that was never brought over: the news list, not a dead end.
+			if ( self::is_old_story_path( (string) ( $_SERVER['REQUEST_URI'] ?? '' ) ) ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- only compared.
+				wp_safe_redirect( \DGL\Frontend\Frontend::archive_url( \DGL\PostTypes::NEWS ), 301 );
+				exit;
+			}
+
 			return;
 		}
 
