@@ -1883,7 +1883,7 @@ Wordify's `replace_in_post`; every page edit left a revision.
     fundraising graphic attached (attachment 10365). Flagged to Martin; not
     changed.
   - **Not verified:** how the digest renders in Outlook and Gmail.
-- **0.58.4 (not yet deployed): the digest's own words, and summaries at last.**
+- **0.58.4 (deployed since; production runs 0.59.5 on 13 November): the digest's own words, and summaries at last.**
   Jenny Bull, 28 October. (1) The line under the heading is now "Here is
   what's been added to the DGL Platform in the last week." (last day, last
   month for the other cadences). When the subscriber has chosen topics or only
@@ -1929,7 +1929,7 @@ Wordify's `replace_in_post`; every page edit left a revision.
   the new digest subject (needs the next digest or a test send), and the
   second Forum Central account. Not done: the Site Title change (15 November)
   and switching existing subscribers to include their own organisation.
-- **0.58.6 (not yet deployed): `wp dgl digest own-org`.** Martin asked on 12
+- **0.58.6 deployed to production, 12 November: `wp dgl digest own-org`.** Martin asked on 12
   November to switch existing subscribers to include their own organisation
   (new ones have since 0.58.5). `wp dgl digest subscribe <user> --own-org`
   cannot do that safely: it rebuilds the row from defaults and would reset
@@ -1938,7 +1938,15 @@ Wordify's `replace_in_post`; every page edit left a revision.
   dry run unless `--apply --actor=<id>`. Unit suite unchanged (2731); a new
   integration test checks that types, topics, cadence, consent, link and last
   send survive the flip. Not run (needs WordPress).
-- **0.58.7 (not yet deployed): a deleted account takes its digest row with it.**
+  **Deployed and run:** merged as `8966686` (PR 34), installed from the
+  commit-pinned zip; `wp plugin list` reads 0.58.6, active. `wp dgl digest
+  own-org` dry run listed 22 subscribers; `--apply --actor=1` changed 21 (one
+  row, user 15, belongs to an account that no longer exists and has no email;
+  left, then removed by 0.58.7's tidy). A second dry run lists only that row. Jenny's two accounts keep their
+  types, cadence and last-sent dates. Her `forumcentral.org.uk` account has no
+  organisation linked; her `hotmail.co.uk` one has, which fits the missing
+  Forum Central training (not proven: the earlier digest cannot be rebuilt).
+- **0.58.7 deployed to production, 12 November: a deleted account takes its digest row with it.**
   Martin asked on 12 November how a digest row could have no email (user 15).
   The table stores no email; it is read from the account, so a row with a blank
   one has no account behind it, and the sender already skips such rows. Cause:
@@ -1952,7 +1960,39 @@ Wordify's `replace_in_post`; every page edit left a revision.
   decide. Audit rows keep the actor's id by design. Unit suite 2731; a new
   integration test (delete an account, row gone; a planted orphan is found and
   removed) not run, as it needs WordPress.
-- **0.59.0 (not yet deployed): VAL's training courses are pulled in.** Andrina
+  **Deployed and run:** merged as `51a9141` (PR 36), installed from the
+  commit-pinned zip; `wp plugin list` reads 0.58.7, active. `wp dgl digest tidy`
+  dry run found one row, user 15 (no account); `--apply --actor=1` removed it,
+  and a second dry run finds none. `wp dgl digest own-org` now finds nothing
+  to change. `wp dgl digest status`: 28 weekly and 1 monthly subscribers; 8
+  approved members have no row (not looked at: they may have declined at
+  registration).
+
+### 12 November 2026: stories from the old site, cleaned, with topics
+
+- **Fetched** the 10 stories the old site published between 28 October and 12
+  November (`wp dgl news fetch --since=2026-10-23 --org=10445`, ids 11359 to
+  11398). The call timed out at Wordify's 60 seconds but finished on the
+  server: a dry run afterwards showed all 13 since 23 October present.
+  Nothing runs this on a schedule. After Sunday 15 November the old site is
+  behind a login and the command cannot read it, so run it again on 14 or 15
+  November.
+- **Tidied** the 8 that needed it (`wp dgl content tidy --apply --post=`, one at
+  a time, so three older member items it also found were left alone). No
+  `mso-` or `xmlns` markup in any news story; `MsoNormal` remains in two older
+  ones (5537, 6289). `wp dgl media dedupe --apply` removed a doubled main
+  picture on 11392; `wp dgl media alts --apply` gave 3 pictures in one post
+  their library alt text. No files needed copying.
+- **Topics** set by hand with `wp dgl news set-topics`, audit row each, on
+  those 10 only. `suggest-topics --apply` was not used: it cannot be limited
+  to new stories and would also have set topics on 42 older ones. The
+  keyword suggestions were changed where they looked wrong (the Poppy Run was
+  "Children and Young People", now Health and Social Care and Wellbeing).
+  11392 (Christmas Appeal) is a low-confidence "Wellbeing".
+- **No picture:** 11359, 11379, 11381 and 11386 have none (the old site had
+  none) and show the plain placeholder tile; no News stand-in picture is set.
+  For the team to add.
+- **0.59.0 (deployed since; production runs 0.59.5 on 13 November): VAL's training courses are pulled in.** Andrina
   Dawson asked on 12 November for VAL's training page to come through "like we
   do with jobs". VAL has no feed and its REST API is closed (401), so
   `val.org.uk/training/` is read as served: 19 courses, 22 dated sessions on 13
@@ -1971,7 +2011,7 @@ Wordify's `replace_in_post`; every page edit left a revision.
   Interest) is treated as online. No pictures on VAL's course pages, so none
   here. Unit suite 2809 (78 new); the importer's WordPress side is not covered
   by it, and is checked on the live site with a dry run first.
-- **0.59.1 (not yet deployed): VAL training, first live run fixed up and made
+- **0.59.1 (deployed since; production runs 0.59.5 on 13 November): VAL training, first live run fixed up and made
   safe.** The first real run (13 November, 18 new items) showed three poor
   summaries: a bare heading ("Learning Outcomes"), a one-line tag-line (Lone
   Working) and the venue line (Professional Boundaries). A summary is now the
