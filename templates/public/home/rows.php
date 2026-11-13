@@ -2,7 +2,9 @@
 /**
  * A dated list for the home page: events, training or funding, three
  * across. Each row is the calendar leaf, the picture, the title, the
- * where/organisation line and a line or two of the summary.
+ * where/organisation line and a line or two of the summary. A fund's row
+ * puts its closing leaf on the right instead and says who offers it and
+ * how much.
  *
  * Expects `$data['items']` (WP_Post[]), `$data['heading']`, `$data['all_url']`,
  * `$data['all_label']`, `$data['id']`, and optionally `$data['placeholder']`
@@ -53,13 +55,21 @@ $empty       = (string) ( $data['empty'] ?? __( 'Nothing is listed at the moment
 				if ( ! $item instanceof WP_Post ) {
 					continue;
 				}
-				$org   = Frontend::organisation( $item )['name'];
-				$where = Frontend::where( $item );
-				$line  = implode( ' · ', array_filter( [ $where, $org ] ) );
+				// Funding: who offers it and how much, and the closing leaf on the right.
+				$is_fund = PostTypes::GRANT === $item->post_type;
+				if ( $is_fund ) {
+					$line = implode( ' · ', array_slice( Cards::meta( $item ), 0, 2 ) );
+				} else {
+					$org   = Frontend::organisation( $item )['name'];
+					$where = Frontend::where( $item );
+					$line  = implode( ' · ', array_filter( [ $where, $org ] ) );
+				}
 				?>
-				<li class="dgl-home__row">
-					<?php echo Cards::date_block( $item ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside. ?>
+				<li class="dgl-home__row<?php echo $is_fund ? ' dgl-home__row--fund' : ''; ?>">
+					<?php echo $is_fund ? '' : Cards::date_block( $item ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside. ?>
+					<?php if ( ! $is_fund || Cards::has_picture( $item ) ) : ?>
 					<a class="dgl-home__rowpic" href="<?php echo esc_url( (string) get_permalink( $item ) ); ?>" tabindex="-1" aria-hidden="true"><?php echo Cards::picture( $item, 'thumbnail' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside. ?></a>
+					<?php endif; ?>
 					<div class="dgl-home__rowbody">
 						<?php if ( Home::is_featured( $item ) ) : ?>
 							<span class="dgl-pub__pin"><?php esc_html_e( 'Featured', 'dgl-platform' ); ?></span>
@@ -75,6 +85,7 @@ $empty       = (string) ( $data['empty'] ?? __( 'Nothing is listed at the moment
 							<p class="dgl-home__rowsummary"><?php echo esc_html( $summary ); ?></p>
 						<?php endif; ?>
 					</div>
+					<?php echo $is_fund ? Cards::fund_date_block( $item ) : ''; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside. ?>
 				</li>
 			<?php endforeach; ?>
 		</ul>

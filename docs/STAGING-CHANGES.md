@@ -2140,3 +2140,18 @@ Wordify's `replace_in_post`; every page edit left a revision.
   imported fund sends no email to the organisation that owns it. Details in
   `docs/funding.md`. Unit suite 2899; integration suite 1695 passing, with the
   same three failures as `main` before this change.
+- **0.60.1, 13 November. Funding on the home page.** `[dgl_home_funding]`
+  lists funds like the events block, but each row carries a closing leaf on
+  the right ("Closes / DEC / 15", in the alert colour when it closes within a
+  fortnight) instead of the calendar leaf on the left, and a fund open all year
+  says "Open all year" rather than showing its six-week refresh date. Funds with
+  a real closing date come first, soonest first, then the open-all-year ones.
+  The line under the title is the funder and the amount; a funder written as a
+  sentence is cut back to its name. A fund with no picture of its own shows
+  none, so the words get the width. Also in this release, outside the plugin:
+  the weekly Worker now sends a user-agent with its post to the site, because
+  Wordfence refuses a POST with neither user-agent nor referer (the first run on
+  13 November was blocked by exactly that rule); 21 trusts' sources now point at
+  their apply pages; Arts Council England's two open funds are written up by hand
+  in `workers/funding/manual.json` because its site blocks automated reading.
+  Unit suite 2905; integration suite 1701 with the same three failures as `main`.

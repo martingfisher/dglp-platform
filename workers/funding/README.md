@@ -20,17 +20,20 @@ Categories come from [`src/Funding/vocab.json`](../../src/Funding/vocab.json), i
 
 ## Secrets
 
-Secrets Store `77bc305d0352491093bff8533d866287`: `tinyfish`, `anthropic_api_key` (both bound).
-**`dgl_funding_token` is not bound yet** because it does not exist (a binding to a missing secret fails the deploy).
-Once `wp dgl funding token` has printed the token, create it:
+Secrets Store `77bc305d0352491093bff8533d866287`: `tinyfish`, `anthropic_api_key` and `dgl_funding_token`,
+all bound. The site keeps only the SHA-256 hash of `dgl_funding_token` (option `dgl_funding_token_hash`),
+set on 13 November 2026.
+
+To rotate the token without it passing through a terminal or a transcript:
 
 ```
-npx wrangler@4 secrets-store secret create 77bc305d0352491093bff8533d866287 --name dgl_funding_token --scopes workers --remote
+umask 077; openssl rand -hex 32 | tr -d '\n' > token
+shasum -a 256 token          # the hash, for: wp option update dgl_funding_token_hash <hash> --autoload=no
+cat token | npx wrangler@4 secrets-store secret update 77bc305d0352491093bff8533d866287 --secret-id <id> --remote
+rm token
 ```
 
-then add `{ "binding": "DGL_TOKEN", "store_id": "77bc305d0352491093bff8533d866287", "secret_name": "dgl_funding_token" }`
-to `secrets_store_secrets` in `wrangler.jsonc` and `npx wrangler@4 deploy`. Until then a run
-reads everything but fails at the POST step and leaves KV untouched.
+(`wp dgl funding token` also works, but prints the token.)
 
 ## Develop
 
@@ -42,3 +45,20 @@ npx wrangler@4 deploy
 
 Do not set `ANTHROPIC_BASE_URL` for this Worker: the SDK client pins `https://api.anthropic.com`.
 If `vocab.json` or the topic list in `src/Topics/Topics.php` changes, redeploy (topics are copied into `src/vocab.ts`).
+
+## Funds written up by hand (`manual.json`)
+
+Some funders' sites refuse automated reading. Arts Council England's site
+(artscouncil.org.uk) answers every scripted request, TinyFish's included, with a
+Cloudflare challenge, and getting past that would mean evading their bot
+protection, which we do not do. Its open funds are written up by hand in
+`manual.json` instead, in exactly the shape the model produces.
+
+Each manual source has a `check_by` date. Every full run sends it until that
+date, then stops. The site then takes those funds down by their own deadlines,
+and a rolling fund comes down within six weeks, so a write-up nobody re-checks
+cannot linger. To keep one listed: check the facts against the funder, edit them,
+move `check_by` on, deploy.
+
+The cleaner long-term fix is to ask Arts Council England to allow the
+`dgl-funding` Worker through their bot protection, or to tell us of a feed.

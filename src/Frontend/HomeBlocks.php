@@ -266,7 +266,7 @@ final class HomeBlocks {
 		return View::render(
 			'public/home/rows',
 			[
-				'items'       => $on ? Home::upcoming( $post_type, $a['count'] ) : [],
+				'items'       => $on ? ( PostTypes::GRANT === $post_type ? self::closing_first( $a['count'] ) : Home::upcoming( $post_type, $a['count'] ) ) : [],
 				'heading'     => $a['heading'],
 				'all_url'     => $on && $a['link'] ? Frontend::archive_url( $post_type ) : '',
 				'all_label'   => $all_label,
@@ -278,6 +278,25 @@ final class HomeBlocks {
 				),
 			]
 		);
+	}
+
+	/**
+	 * Funds for the home page: the ones with a real closing date, soonest
+	 * first, then funds open all year. A rolling fund's stored deadline is a
+	 * refresh date six weeks out, so ordering by it alone would mix it in
+	 * among funds that really do close.
+	 *
+	 * @return \WP_Post[]
+	 */
+	private static function closing_first( int $count ): array {
+		$items = Home::upcoming( PostTypes::GRANT, $count * 4 );
+
+		usort(
+			$items,
+			static fn( \WP_Post $a, \WP_Post $b ): int => (int) (bool) Frontend::value( $a, 'rolling_deadline' ) <=> (int) (bool) Frontend::value( $b, 'rolling_deadline' )
+		);
+
+		return array_slice( $items, 0, $count );
 	}
 
 	/**

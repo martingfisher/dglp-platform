@@ -6269,6 +6269,21 @@ $fu_html = \DGL\Dashboard\View::render( 'public/archive', [ 'type' => PostTypes:
 $ok( str_contains( $fu_html, 'name="who"' ) && str_contains( $fu_html, 'name="closing"' ) && ! str_contains( $fu_html, 'name="org"' ), 'the list offers the funding filters and not "by organisation"' );
 $ok( [ 'Test Trust', '£500 to £5,000', 'Open all year' ] === \DGL\Frontend\Cards::meta( get_post( $fu_b ) ), 'a fund\'s card line: funder, amount, closing' );
 
+$group( 'Funding: the home page block' );
+
+$fu_soon = $fu_run( [ $fu_grant( 'fu-src:b', [ 'deadline' => null, 'rolling' => true ] ), $fu_grant( 'fu-src:c' ), $fu_grant( 'fu-src:d', [ 'deadline' => ( new DateTimeImmutable( $fu_today ) )->modify( '+3 days' )->format( 'Y-m-d' ) ] ) ] );
+$fu_d = $fu_find( 'fu-src:d' );
+update_post_meta( $fu_d, DGL_FIXTURE_FLAG, '1' );
+$fu_home = do_shortcode( '[dgl_home_funding count="12"]' );
+$ok( str_contains( $fu_home, 'dgl-home__row--fund' ) && str_contains( $fu_home, 'dgl-date--fund' ), 'funding rows carry the closing leaf' );
+$ok( 1 === preg_match( '#dgl-home__rowbody.*?</div>\s*<time class="dgl-date dgl-date--fund#s', $fu_home ), 'the leaf comes after the words, on the right' );
+$ok( str_contains( $fu_home, 'dgl-date--rolling' ) && str_contains( $fu_home, 'all year' ), 'a rolling fund says open all year' );
+$ok( str_contains( $fu_home, 'dgl-date--soon' ), 'one closing in three days is marked soon' );
+$fu_pos_d = strpos( $fu_home, 'Fund fu-src:d' );
+$fu_pos_b = strpos( $fu_home, 'Fund b' );
+$ok( false !== $fu_pos_d && false !== $fu_pos_b && $fu_pos_d < $fu_pos_b, 'funds that really close come before ones open all year' );
+$ok( str_contains( $fu_home, 'Test Trust · £500 to £5,000' ), 'the line says who offers it and how much' );
+
 $group( 'Funding: the sync endpoint needs its token' );
 
 $fu_token = \DGL\Funding\Endpoint::new_token();

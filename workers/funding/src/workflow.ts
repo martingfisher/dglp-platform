@@ -1,10 +1,26 @@
 import { WorkflowEntrypoint, type WorkflowEvent, type WorkflowStep } from 'cloudflare:workers';
 import sourcesJson from '../sources.json';
 import { BATCH_SIZE, chunk, dedupeAcrossSources, processBatch } from './pipeline';
-import { addUsage, emptyUsage, type BatchOutput, type Env, type Source, type SourceResult, type StoredState, type Usage } from './types';
-import { stillOpen } from './validate';
+import { addUsage, emptyUsage, type BatchOutput, type Env, type Grant, type Source, type SourceResult, type StoredState, type Usage } from './types';
+import { stillOpen, today } from './validate';
+import manualJson from '../manual.json';
 
 export const SOURCES = sourcesJson as Source[];
+
+interface ManualSource {
+	id: string;
+	name: string;
+	url: string;
+	check_by: string;
+	grants: Grant[];
+}
+
+/** Hand-written sources still within their check_by date, in the shape the site expects. */
+export function manualSources(day: string) {
+	return (manualJson.sources as ManualSource[])
+		.filter((s) => s.check_by >= day)
+		.map((s) => ({ id: s.id, name: s.name, url: s.url, ok: true, error: '', grants: stillOpen(s.grants) }));
+}
 export const DEFAULT_SYNC_URL = 'https://doinggoodleeds.org.uk/wp-json/dgl/v1/funding/sync';
 const RUN_TTL = 14 * 24 * 3600;
 const COMMIT_CHUNK = 35;
@@ -56,13 +72,22 @@ export class FundingWorkflow extends WorkflowEntrypoint<Env, RunParams> {
 					grants: r.ok ? stillOpen(r.grants) : [],
 				})),
 			};
+			// Funds written up by hand for funders whose sites refuse automated reading.
+			// Only a full run sends them, and only until their check_by date.
+			if (!wanted?.length) payload.sources.push(...manualSources(today()));
 			const token = async () => {
 				if (!env.DGL_TOKEN) throw new Error('DGL_TOKEN binding missing: add dgl_funding_token to the Secrets Store and wrangler.jsonc');
 				return env.DGL_TOKEN.get();
 			};
 			const res = await fetch(env.DGL_SYNC_URL || DEFAULT_SYNC_URL, {
 				method: 'POST',
-				headers: { 'content-type': 'application/json', authorization: `Bearer ${await token()}` },
+				// Wordfence on the site refuses a POST with no user-agent and no referer, so say who we are.
+				headers: {
+					'content-type': 'application/json',
+					'user-agent': 'dgl-funding/1.0 (+https://doinggoodleeds.org.uk/grants/)',
+					referer: 'https://dgl-funding.martingfisher.workers.dev/',
+					authorization: `Bearer ${await token()}`,
+				},
 				body: JSON.stringify(payload),
 				signal: AbortSignal.timeout(120_000),
 			});

@@ -119,3 +119,14 @@ Harness::assert_same( [ 'Funder', '£300 to £20,000', 'Closes 1 Dec 2026' ], Ca
 Harness::assert_same( [ 'Up to £500', 'Open all year' ], Cards::fund_meta( '', '', '500', '2026-12-28', true ), 'a rolling fund says so, not its moving date' );
 Harness::assert_same( [ 'From £1,000' ], Cards::fund_meta( '', 1000, '', '', false ), 'a floor alone' );
 Harness::assert_same( [ '£5,000' === '' ? '' : 'Up to £5,000' ], Cards::fund_meta( '', 5000, 5000, '', false ), 'the same floor and top is one amount' );
+
+Harness::group( 'Funding: the closing leaf' );
+
+defined( 'DAY_IN_SECONDS' ) || define( 'DAY_IN_SECONDS', 86400 );
+$leaf = Cards::fund_date_parts( '2026-12-15', false, '2026-11-13' );
+Harness::assert_same( [ 'rolling' => false, 'month' => 'Dec', 'day' => '15', 'iso' => '2026-12-15', 'soon' => false ], $leaf, 'a closing date gives month, day and its date' );
+Harness::assert_true( Cards::fund_date_parts( '2026-11-27', false, '2026-11-13' )['soon'], 'fourteen days out is soon' );
+Harness::assert_false( Cards::fund_date_parts( '2026-11-28', false, '2026-11-13' )['soon'], 'fifteen is not' );
+Harness::assert_true( Cards::fund_date_parts( '2026-12-28', true, '2026-11-13' )['rolling'], 'a rolling fund never shows its refresh date' );
+Harness::assert_same( '', Cards::fund_date_parts( '2026-12-28', true, '2026-11-13' )['day'], 'and has no day' );
+Harness::assert_same( null, Cards::fund_date_parts( '', false ), 'no date and not rolling, no leaf' );
