@@ -1993,3 +1993,31 @@ Wordify's `replace_in_post`; every page edit left a revision.
   "TRAINING" tile; Martin is deciding between one default training picture
   (Settings, Topic feed pictures), VAL's logo on the 18, or a picture per topic.
 
+- **0.59.2, 13 November.** Two fixes. **(1) Rank Math no longer takes the
+  platform's pages down.** When Rank Math's setup was completed on the live
+  site, every page the plugin owns (`/news/`, `/events/`, `/training/`,
+  `/directory/`, `/spaces/` and their items) answered HTTP 500 until Rank Math
+  was deactivated a few minutes later. Cause, reproduced on a local WordPress
+  with Rank Math 1.0.x and the trace read: `Seo::page()` describes the page,
+  describing it calls `wp_get_document_title()`, Rank Math answers that and
+  asks `rank_math/frontend/title`, the plugin's bridge answers by calling
+  `Seo::page()`, which had not finished, so it described the page again, until
+  PHP ran out of memory. `Seo::page()` now refuses to be entered twice, and
+  the title is read with Rank Math's own title hooks lifted for that one call,
+  so the plugin's titles (the directory's included) are the ones that reach
+  the page. Also fixed: with Rank Math printing schema, the plugin's schema
+  went out twice, once inside Rank Math's graph and once in its own block; it
+  now goes out once. Checked locally with Rank Math on: the five lists and a
+  WordPress page answer 200 with one description, one canonical, one
+  `og:title` and one JSON-LD block each. Not checked: Rank Math Pro, which is
+  not installable locally, and single news, event and organisation pages with
+  real content. **(2) The home page's directory search box.** The theme
+  clears a focused field's background and turns its text black, so on the
+  navy "Find an organisation" band anyone typing saw black on navy, at every
+  screen width. The field now stays white with the plugin's own text colour
+  while focused. Measured on the live page before (background transparent,
+  text black) and with the new rule applied in the browser (white, text
+  `rgb(30, 50, 50)`). Unit suite 2826; integration suite 1670 passing, with
+  three failures that also fail on 0.59.1 on the same local set-up and are
+  not about this change. The integration suite has a new check that imitates
+  an SEO plugin asking for the title from inside its own title filter.
