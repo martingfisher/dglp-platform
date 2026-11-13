@@ -175,3 +175,48 @@ desktop size in the Customizer; that changes all of them at once.
   content tidy-ups.
 
 Every page has a WordPress revision from before these edits.
+
+## Mobile header and menu (13 November, later)
+
+Martin reported that the phone menu had no route to the top menu (News,
+Events, Training, Jobs), that its logo was missing, and that the header bar
+was too deep. All three were settings in Blocksy's header builder.
+
+The live header is the custom one named "DGL Partnership"
+(`ct-custom-NWQeb6Oy8c1stUf33NoG4`), not the default `type-1` that the
+Customizer opens on. Editing `type-1` changes nothing on the site. Both were
+given the same changes so they stay in step.
+
+- **Logo in the menu panel:** the off-canvas logo's phone image pointed at
+  attachment 3321, which no longer exists. Now the header logo (7156), 64px
+  high.
+- **Top menu:** a "Mobile Menu 2" element showing menu 23 (News, Events,
+  Training, Jobs) added to the panel under the main menu, styled the same.
+- **Bar depth:** phone logo height 105px to 56px and phone row height 90px to
+  70px. The bar is 82px deep where it was 131px. Tablet and desktop values
+  are unchanged; the desktop rows measure 82px and 137px as before.
+- **Order at the bottom of the panel:** Sign in and Register now come before
+  the three partner buttons (Forum Central, VAL, LOPF).
+
+Tidied afterwards, on Martin's go-ahead:
+
+- **One News:** the News group (All News, Events, Training) was removed from
+  the phone menu, "Mobile Menu" (172). News, Events, Training and Jobs are
+  reached from the top menu below it.
+- **About:** added as the first item of the phone menu, linking to
+  `/about-2/`. The phone menu now reads About, Volunteering, Support,
+  Networks and Forums, Resources, Contact, the same as desktop.
+- **Partner buttons:** a text element reading "Our partners' websites" sits
+  above Forum Central, VAL and LOPF.
+
+- **Close icon:** the panel's close "x" was white on the pale teal panel.
+  It is now black (`menu_close_button_color` on the off-canvas element).
+- **Partner button widths:** the three buttons had side padding of 20px,
+  55px and 60px, which is why their widths bore no relation to their text.
+  On tablet and phone the padding is now 24.5px, 64px and 61px, which makes
+  all three 160px wide. Desktop padding is unchanged.
+
+Not changed:
+
+- The three partner buttons are still different colours.
+- "Sign in" is a text link 23px high, a small target next to 42px buttons.
