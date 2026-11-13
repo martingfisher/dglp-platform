@@ -24,3 +24,52 @@ page (keyword in the first paragraph, in a subheading, in image alt text,
 links out and in) need the page's own copy edited, which is for the team.
 Not covered: news, events, training, directory and spaces pages, whose
 titles and descriptions the platform writes itself.
+
+## Fixes after the technical SEO audit (13 November, evening)
+
+- **Site title** (Settings, General) changed from "DGL.org.uk" to "Doing Good
+  Leeds", and the tagline to "Support for the third sector in Leeds". The
+  platform's own pages take their title suffix from it, so news, events,
+  training and directory pages now read "News – Doing Good Leeds" like the
+  rest. It is also the name in the member area and in emails that use the
+  site name.
+- **About page** moved from `/about-2/` to `/about/`. A forgotten draft page
+  called "About" (8132) held the `about` slug; it is now `about-draft`.
+  `/about-2/` and the old site's `/about-doing-good-leeds/` both redirect to
+  `/about/` through the Cloudflare list.
+- **Redirects:** the old grant-funding address goes straight to
+  `/support/funding/` (it used to hop through `/funding/`), and the `/funding`
+  short link is a 301 where it was a 302.
+- **Broken tile on `/support/`:** the Training Opportunities tile linked to
+  `train`, which went nowhere. Its link in the page now points at
+  `/training/`. This was changed in the stored page HTML; the block's own
+  setting still says `train`, so open the page in the editor, set the tile's
+  link to `/training/` and save, or the editor may ask to recover the block.
+- **Not fixed:** the "Volunteering England" link on `/volunteer-centre-leeds/`
+  points at `volunteering.org.uk`, which answers with a server error on both
+  http and https. It needs a new destination or removing.
+- **Not done:** removing the old `/sitemap.xml` from Search Console. The
+  browser connection dropped at the confirmation step; check the Sitemaps
+  list and remove it by hand if it is still there.
+
+## Agent readiness (Cloudflare, Agent Readiness)
+
+Scanned with the same checker Cloudflare links to (isitagentready.com).
+
+- **Before:** level 1, "Basic Web Presence". **After:** level 2, "Bot-Aware".
+- **What changed:** `robots.txt` now carries
+  `Content-Signal: search=yes, ai-input=yes, ai-train=no`. It is set in Rank
+  Math, General Settings, Edit robots.txt, and that text now also holds the
+  `/dashboard/` rule. The three values are a policy choice made on the
+  partnership's behalf: search engines may index, AI assistants may use the
+  pages to answer questions, and the content is not offered for training
+  models. Change the line there if the partnership decides otherwise.
+- **Next level needs Markdown for Agents**, which Cloudflare refused for this
+  zone: "not entitled to use the config rule content_converter". The zone is
+  on the free plan.
+- **Left failing on purpose:** API catalogue, `auth.md`, OAuth protected
+  resource, MCP server card, A2A agent card, agent skills, WebMCP and the
+  rest. They describe an API or a service an agent can sign in to and act
+  through. This site publishes pages for people; it has no public API to
+  describe, and publishing those files would claim something that is not
+  there.
