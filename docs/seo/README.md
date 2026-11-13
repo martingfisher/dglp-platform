@@ -86,9 +86,9 @@ Scanned with the same checker Cloudflare links to (isitagentready.com).
   front-end stylesheet and script loaded on every public page and checked
   the page's links as people browsed. That is now paused
   (`blnotifier_pause_frontend_scanning` = 1; in wp-admin, Broken Links,
-  Settings, "Pause Front-End Scanning"). The home page went from 13
-  stylesheets to 12 and from 7 scripts to 4 (the home page's count includes
-  one that had already gone). Scans run from wp-admin still work; the emails
+  Settings, "Pause Front-End Scanning"). Checked on the home page
+  afterwards: no reference to the plugin's files remains, and the stylesheet
+  count went from 13 to 12. Scans run from wp-admin still work; the emails
   that were triggered by visitors' page loads will stop.
 - **Still heavy, not changed:** the home page's HTML is about 365KB, of
   which about 196KB is CSS that Greenshift and the theme print inline, and
