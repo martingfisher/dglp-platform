@@ -29,6 +29,17 @@ Harness::assert_true( str_contains( $xml, '<lastmod>2026-01-02T10:00:00+00:00</l
 Harness::assert_true( 1 === substr_count( $xml, '<lastmod>' ), 'and left out when not' );
 Harness::assert_true( false !== simplexml_load_string( $xml ), 'the document is well-formed XML' );
 
+Harness::group( 'Old story addresses with no story go to the news list' );
+
+$old_story = static fn( string $path ): bool => \DGL\News\LegacyRedirect::is_old_story_path( $path );
+Harness::assert_same( true, $old_story( '/news/wyfrs-is-looking-for-community-meetings/' ), 'an old news story' );
+Harness::assert_same( true, $old_story( '/blog/community-hub-spotlight' ), 'an old blog story, no trailing slash' );
+Harness::assert_same( true, $old_story( '/good-news/a-story/?utm_source=x' ), 'the third old section, with a query string' );
+Harness::assert_same( false, $old_story( '/news/' ), 'the news list itself is not a story' );
+Harness::assert_same( false, $old_story( '/news/page/3/' ), 'nor is a page of the list' );
+Harness::assert_same( false, $old_story( '/events/some-event/' ), 'nor an address in a section the old site did not have' );
+Harness::assert_same( false, $old_story( '/newsletter/sign-up/' ), 'nor a section that only starts the same' );
+
 Harness::group( 'Seo: whose hook is it' );
 
 Harness::assert_same( true, Seo::belongs_to( [ 'RankMath\\Frontend\\Head', 'title' ], 'RankMath' ), 'a static method named as an array' );

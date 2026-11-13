@@ -2053,3 +2053,15 @@ Wordify's `replace_in_post`; every page edit left a revision.
   0.59.3 file and Rank Math on, 200 with 15 addresses with this change, and
   still 200 with Rank Math off. Rank Math's own `/sitemap_index.xml` is
   unaffected. Unit suite 2826; integration suite as 0.59.2.
+- **0.59.5, 13 November.** Old stories that were never brought over go to the
+  news list. The old site's stories lived at `/news/story-name/`,
+  `/blog/story-name/` and `/good-news/story-name/`. A converted story already
+  redirects to its new address; one that was never converted answered 404.
+  Now a 404 with that shape (one of those three sections, then exactly one
+  more segment) is sent to `/news/` with a 301. `/news/` itself, a page of
+  the list such as `/news/page/9/`, and 404s anywhere else are untouched.
+  Checked on the local WordPress: the three shapes redirect, `/news/` answers
+  200, `/news/page/9/`, `/events/not-a-real-event/` and `/nothing-here/` stay
+  404. Side effect to know about: a mistyped address under `/news/` now lands
+  on the news list instead of the 404 page. Unit suite 2833; integration
+  suite as 0.59.2.
