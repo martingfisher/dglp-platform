@@ -2021,3 +2021,20 @@ Wordify's `replace_in_post`; every page edit left a revision.
   three failures that also fail on 0.59.1 on the same local set-up and are
   not about this change. The integration suite has a new check that imitates
   an SEO plugin asking for the title from inside its own title filter.
+- **0.59.3, 13 November.** The member area keeps its own head when Rank Math
+  is on. With 0.59.2 live and Rank Math switched on, the lists and item pages
+  were right, but `/dashboard/` and `/dashboard/join/` came out with Rank
+  Math's `index, follow`, the news list's canonical address and title, and
+  sharing tags. Rank Math takes WordPress's own robots tag away, so the
+  plugin's `wp_robots` filter never reached the page. The `X-Robots-Tag:
+  noindex, nofollow` header and the `Disallow` in robots.txt were still in
+  place throughout, so the member area was not opened to search engines; the
+  page's own tags were wrong. Now, on member-area requests, Rank Math is given
+  `noindex, nofollow`, no canonical, no schema and the screen's own title, and
+  its sharing tags are lifted before they print. Checked locally with Rank
+  Math on: `/dashboard/` and `/dashboard/join/` print `noindex, nofollow`, no
+  canonical, no `og:` or `twitter:` tags and no JSON-LD, with the header still
+  sent; `/news/`, `/directory/` and a WordPress page are unchanged. Not
+  checked locally: the title in the browser tab, because the test theme
+  prints no title tag in the member-area shell. Unit suite 2826; integration
+  suite as 0.59.2.
