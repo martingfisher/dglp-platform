@@ -2161,3 +2161,15 @@ Wordify's `replace_in_post`; every page edit left a revision.
   import ran the same evening: 116 funds from 118 sources (Co-op Local Community
   Fund's page could not be read), and `[dgl_home_funding count="6" heading="Grants
   and Funding"]` now sits under "What's on" on the home page.
+- **0.60.3, 13 November. Item pages: the details beside the headline.** Every
+  item page (news, events, training, funding) is now one left column of a
+  single width, from the kicker through the standfirst to the description, with
+  the Details column beside it from the headline down, so a fund's amount,
+  deadline and link are in view without scrolling. On a phone it reads headline,
+  standfirst, details, description. Funding pages also: an imported fund's
+  kicker names its funder rather than the organisation that owns imported funds,
+  and it has no "Posted by" card; an amount that was never given no longer
+  shows as £0.00; a fund whose page gives no closing date is listed as open all
+  year (the Details card says "Open all year: no closing date") instead of
+  showing the six-week re-check date as a deadline. Unit suite 2906; integration
+  suite 1701 with the same three failures as `main`.

@@ -386,10 +386,50 @@
 	outline-offset: 2px;
 }
 
+/*
+ * The item page: one left column, the same width from the kicker to the end of
+ * the description, and the facts column beside it from the headline down, so
+ * the deadline, amount and link are in view without scrolling.
+ */
+.dgl-pub__item--split {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) 320px;
+	grid-template-rows: auto 1fr auto;
+	grid-template-areas:
+		"head aside"
+		"body aside"
+		"back back";
+	column-gap: var(--dgl-gap-lg);
+	align-items: start;
+}
+
+.dgl-pub__item--split > .dgl-pub__head { grid-area: head; min-width: 0; }
+
+.dgl-pub__item--split > .dgl-pub__body { grid-area: body; }
+
+.dgl-pub__item--split > .dgl-pub__aside { grid-area: aside; }
+
+.dgl-pub__item--split > .dgl-pub__back { grid-area: back; }
+
+/* The standfirst fills the column now the column is the measure. */
+.dgl-pub__item--split .dgl-pub__standfirst { max-width: none; }
+
+/* With no description the head is the whole left column. */
+.dgl-pub__item--split.dgl-pub__item--nobody { grid-template-rows: auto auto; grid-template-areas: "head aside" "back back"; }
+
 /* ---- Narrow ------------------------------------------------------------ */
 
 @media ( max-width: 860px ) {
 	.dgl-pub__layout { grid-template-columns: minmax(0, 1fr); }
+
+	/* Narrow: headline and standfirst, then the facts, then the description. */
+	.dgl-pub__item--split,
+	.dgl-pub__item--split.dgl-pub__item--nobody {
+		grid-template-columns: minmax(0, 1fr);
+		grid-template-rows: auto;
+		grid-template-areas: "head" "aside" "body" "back";
+		row-gap: var(--dgl-gap-lg);
+	}
 
 	.dgl-pub__aside { position: static; }
 

@@ -521,6 +521,28 @@ final class Frontend {
 				continue;
 			}
 
+			if ( PostTypes::GRANT === (string) $post->post_type ) {
+				// No amount reads back as 0, and "£0.00" says the fund gives nothing.
+				if ( in_array( $field->key, [ 'amount_min', 'amount_max' ], true ) && (float) $value <= 0 ) {
+					continue;
+				}
+
+				// A rolling fund's stored deadline is only the date it is next
+				// re-checked by; it must never read as a closing date.
+				if ( 'rolling_deadline' === $field->key ) {
+					continue;
+				}
+
+				if ( 'deadline' === $field->key && ! self::is_blank( get_post_meta( (int) $post->ID, 'dgl_rolling_deadline', true ) ) ) {
+					$out[] = [
+						'key'   => 'deadline',
+						'label' => $field->label,
+						'value' => esc_html__( 'Open all year: no closing date', 'dgl-platform' ),
+					];
+					continue;
+				}
+			}
+
 			$out[] = [
 				'key'   => $field->key,
 				'label' => $field->label,

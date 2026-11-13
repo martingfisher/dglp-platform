@@ -31,7 +31,8 @@ defined( 'ABSPATH' ) || exit;
  *   and categories are written once, so the review team's edits stand.
  * - A source that could not be read changes nothing. A fund that has gone
  *   from a source that was read is withdrawn.
- * - A rolling fund's deadline is always six weeks after the last week it was
+ * - A rolling fund (or one whose page gives no closing date) is listed as open
+ *   all year; its stored deadline is always six weeks after the last week it was
  *   seen, so if the import stops, rolling funds come down by themselves.
  *
  * Everything in the request is untrusted: text is reduced to plain text and
@@ -102,7 +103,14 @@ final class Import {
 			return null;
 		}
 
-		if ( null === $deadline || $rolling ) {
+		// No closing date on the funder's page means it is open until further
+		// notice: listed as open all year, never with a made-up deadline. Its
+		// stored deadline is only the date it is next re-checked by.
+		if ( null === $deadline ) {
+			$rolling = true;
+		}
+
+		if ( $rolling ) {
 			$deadline = self::rolling_deadline( $today );
 		}
 
