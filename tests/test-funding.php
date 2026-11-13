@@ -61,6 +61,7 @@ Harness::assert_same( '2026-12-01', $f['facts']['deadline'], 'a future deadline 
 Harness::assert_same( null, Import::normalise( array_merge( $base, [ 'deadline' => '2026-11-15' ] ), $today, $topics ), 'a fund that closed yesterday is skipped' );
 Harness::assert_same( '2026-12-28', Import::normalise( array_merge( $base, [ 'deadline' => null, 'rolling' => true ] ), $today, $topics )['facts']['deadline'], 'a rolling fund gets six weeks' );
 Harness::assert_same( '2026-12-28', Import::normalise( array_merge( $base, [ 'deadline' => '2026-02-30' ] ), $today, $topics )['facts']['deadline'], 'a date that does not exist counts as none' );
+Harness::assert_true( Import::normalise( array_merge( $base, [ 'deadline' => null, 'rolling' => false ] ), $today, $topics )['facts']['rolling_deadline'], 'no closing date on the page means open all year, never a made-up deadline' );
 Harness::assert_same( null, Import::normalise( array_merge( $base, [ 'title' => '' ] ), $today, $topics ), 'no title, no fund' );
 Harness::assert_same( '', Import::normalise( array_merge( $base, [ 'application_url' => 'http://example.org' ] ), $today, $topics )['facts']['application_url'], 'a link that is not https is dropped' );
 Harness::assert_same( '', Import::normalise( array_merge( $base, [ 'application_url' => 'javascript:alert(1)' ] ), $today, $topics )['facts']['application_url'], 'a script link is dropped' );

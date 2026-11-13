@@ -49,9 +49,16 @@ $ics       = $cancelled || ( null !== $schedule && $schedule['ended'] ) || ( $pa
  * @param string $type The content type being viewed.
  */
 $show_crumbs = (bool) apply_filters( 'dgl_public_breadcrumb', false, $type );
+
+// A fund the weekly import brought in names its funder, not the organisation
+// that nominally owns it, and has no "Posted by" card: nobody posted it.
+$imported = \DGL\PostTypes::GRANT === $type && \DGL\Funding\Import::is_imported( (int) $post->ID );
+$from     = $imported ? ( \DGL\Frontend\Cards::fund_meta( (string) Frontend::value( $post, 'funder' ), '', '', '', false )[0] ?? '' ) : $org['name'];
 ?>
 <div class="dgl-pub">
-	<article class="dgl-pub__item">
+	<article class="dgl-pub__item dgl-pub__item--split<?php echo $has_body ? '' : ' dgl-pub__item--nobody'; ?>">
+
+		<div class="dgl-pub__head">
 
 		<?php if ( $show_crumbs ) : ?>
 		<nav class="dgl-pub__crumbs" aria-label="<?php esc_attr_e( 'Breadcrumb', 'dgl-platform' ); ?>">
@@ -65,13 +72,13 @@ $show_crumbs = (bool) apply_filters( 'dgl_public_breadcrumb', false, $type );
 
 		<p class="dgl-pub__kicker">
 			<?php echo esc_html( Frontend::type_label( $type ) ); ?>
-			<?php if ( '' !== $org['name'] ) : ?>
+			<?php if ( '' !== $from ) : ?>
 				<span class="dgl-pub__org">
 					<?php
 					printf(
 						/* translators: %s: organisation name. */
 						esc_html__( 'from %s', 'dgl-platform' ),
-						esc_html( $org['name'] )
+						esc_html( $from )
 					);
 					?>
 				</span>
@@ -136,13 +143,14 @@ $show_crumbs = (bool) apply_filters( 'dgl_public_breadcrumb', false, $type );
 			</div>
 		<?php endif; ?>
 
-		<?php /* No description means no left column, or the facts sit beside an empty half-page. */ ?>
-		<div class="dgl-pub__layout<?php echo $has_body ? '' : ' dgl-pub__layout--nobody'; ?>">
-			<?php if ( $has_body ) : ?>
-				<div class="dgl-pub__body">
-					<?php echo wp_kses_post( wpautop( $body ) ); ?>
-				</div>
-			<?php endif; ?>
+		</div>
+
+		<?php /* The facts column runs from the headline down, beside the head and the description. */ ?>
+		<?php if ( $has_body ) : ?>
+			<div class="dgl-pub__body">
+				<?php echo wp_kses_post( wpautop( $body ) ); ?>
+			</div>
+		<?php endif; ?>
 
 			<aside class="dgl-pub__aside">
 				<?php if ( [] !== $facts ) : ?>
@@ -168,7 +176,7 @@ $show_crumbs = (bool) apply_filters( 'dgl_public_breadcrumb', false, $type );
 					</div>
 				<?php endif; ?>
 
-				<?php if ( '' !== $org['name'] ) : ?>
+				<?php if ( '' !== $org['name'] && ! $imported ) : ?>
 					<div class="dgl-pub__card dgl-pub__card--org">
 						<h2 class="dgl-pub__card-title"><?php esc_html_e( 'Posted by', 'dgl-platform' ); ?></h2>
 						<?php if ( (int) $org['logo'] > 0 ) : ?>
@@ -184,7 +192,6 @@ $show_crumbs = (bool) apply_filters( 'dgl_public_breadcrumb', false, $type );
 					</div>
 				<?php endif; ?>
 			</aside>
-		</div>
 
 		<?php if ( '' !== $archive ) : ?>
 			<p class="dgl-pub__back">
