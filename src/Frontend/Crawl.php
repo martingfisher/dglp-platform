@@ -167,11 +167,19 @@ final class Crawl {
 	}
 
 	public static function serve(): void {
-		if ( '1' !== (string) get_query_var( self::QUERY_VAR, '' ) ) {
+		global $wp, $wp_query;
+
+		/*
+		 * Rank Math's sitemap rule matches anything ending "-sitemap.xml", ours
+		 * included, and is tried first, so with Rank Math on the query var is
+		 * never set and the address answered 404. The address itself is
+		 * enough to know the request is ours.
+		 */
+		$by_path = isset( $wp->request ) && self::PATH === trim( (string) $wp->request, '/' );
+
+		if ( ! $by_path && '1' !== (string) get_query_var( self::QUERY_VAR, '' ) ) {
 			return;
 		}
-
-		global $wp_query;
 
 		$wp_query->is_404 = false;
 		status_header( 200 );

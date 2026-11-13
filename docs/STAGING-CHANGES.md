@@ -2044,3 +2044,12 @@ Wordify's `replace_in_post`; every page edit left a revision.
   from 0.59.2 was confirmed live at both widths after that release went out:
   white field, text `rgb(30, 50, 50)`, focused and not. Unit suite 2826;
   integration suite as 0.59.2.
+- **0.59.4, 13 November.** The platform's sitemap answers again with Rank
+  Math on. Rank Math's rewrite rule matches any address ending
+  `-sitemap.xml`, `/dgl-sitemap.xml` included, and is tried before ours, so
+  the plugin's query var was never set and the address answered 404 on the
+  live site as soon as Rank Math was switched on. The plugin now also
+  recognises the request by its address. Reproduced locally: 404 with the
+  0.59.3 file and Rank Math on, 200 with 15 addresses with this change, and
+  still 200 with Rank Math off. Rank Math's own `/sitemap_index.xml` is
+  unaffected. Unit suite 2826; integration suite as 0.59.2.
