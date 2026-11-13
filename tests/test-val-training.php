@@ -187,6 +187,23 @@ $long = ValTraining::parse_course( '<div class="pld-tr-details-body"><p>' . str_
 Harness::assert_true( mb_strlen( $long['summary'] ) <= 300, 'a long opening is cut to fit the summary field' );
 Harness::assert_true( str_ends_with( $long['summary'], '…' ), 'with an ellipsis' );
 
+Harness::group( 'Training from VAL: choosing a summary' );
+
+Harness::assert_same( 'A proper opening sentence that says what the course is and who runs it.', ValTraining::summary_from( [ 'Learning Outcomes', 'Stay Safe and Confident', 'A proper opening sentence that says what the course is and who runs it.' ] ), 'headings and tag-lines are passed over' );
+Harness::assert_same( '', ValTraining::summary_from( [ 'Course Aims', 'Short.' ] ), 'nothing long enough is nothing' );
+Harness::assert_same( 'The words that follow the venue line say what the course is about and who it suits.', ValTraining::summary_from( [ 'Location: Voluntary Action Leeds, 34 Lupton Street, Leeds, LS10 2QW', 'The words that follow the venue line say what the course is about and who it suits.' ] ), 'a venue line is not a summary' );
+Harness::assert_same( 'Loose text that sits straight in the page with no paragraph tag around it at all.', ValTraining::summary_from( [ '', 'Loose text that sits straight in the page with no paragraph tag around it at all.' ] ), 'loose text lines count' );
+$loose = ValTraining::parse_course( '<div class="pld-tr-details-body"><p>Short tag-line</p>Professional boundaries are not barriers: they are the foundation of trust, respect and clarity.<br><ul><li>One</li></ul></div>' );
+Harness::assert_same( 'Professional boundaries are not barriers: they are the foundation of trust, respect and clarity.', $loose['summary'], 'a page with its words outside a paragraph still gets a summary' );
+
+Harness::group( 'Training from VAL: telling somebody when it fails' );
+
+Harness::assert_true( ValTraining::should_alert( false, 0, false ), 'a failed night is emailed' );
+Harness::assert_true( ValTraining::should_alert( true, 2, false ), 'so is a night when some course pages could not be read' );
+Harness::assert_false( ValTraining::should_alert( true, 0, false ), 'a good night is not' );
+Harness::assert_false( ValTraining::should_alert( false, 0, true ), 'a second bad night in a row is not emailed again' );
+Harness::assert_false( ValTraining::should_alert( true, 1, true ), 'nor is a second partly bad night' );
+
 Harness::group( 'Training from VAL: links' );
 
 Harness::assert_same( 'https://val.org.uk/training/x/', ValTraining::safe_url( 'https://val.org.uk/training/x/' ), 'VAL over https is kept' );

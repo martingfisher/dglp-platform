@@ -128,9 +128,76 @@ final class ValTraining {
 		wp_clear_scheduled_hook( self::HOOK );
 	}
 
-	/** The nightly run. Quiet: the result is kept for `wp dgl training status`. */
+	/** An email goes out on the first bad night, then not again until a good one. */
+	public const OPTION_ALERTED = 'dgl_val_training_alerted';
+
+	/** Seconds between two course pages fetched in one run. */
+	public const PAUSE = 1;
+
+	/**
+	 * The nightly run. The result is kept for `wp dgl training status`, and
+	 * a bad night is emailed to the site's administrator address.
+	 */
 	public static function nightly(): void {
-		self::run();
+		$run = self::run();
+
+		if ( self::should_alert( (bool) $run['ok'], (int) $run['failed'], false !== get_option( self::OPTION_ALERTED, false ) ) ) {
+			if ( self::alert( $run ) ) {
+				update_option( self::OPTION_ALERTED, time(), false );
+			}
+		} elseif ( $run['ok'] && 0 === (int) $run['failed'] ) {
+			delete_option( self::OPTION_ALERTED );
+		}
+	}
+
+	/**
+	 * Whether a run needs an email: it failed outright, or some courses
+	 * could not be read, and nobody has been told about this spell yet.
+	 */
+	public static function should_alert( bool $ok, int $failed, bool $already_told ): bool {
+		return ( ! $ok || $failed > 0 ) && ! $already_told;
+	}
+
+	/**
+	 * Say so, by email, to the site administrator. Plain about what happened
+	 * and what it means: the courses already on the site are untouched.
+	 *
+	 * @param array<string, mixed> $run
+	 */
+	private static function alert( array $run ): bool {
+		$to = sanitize_email( (string) get_option( 'admin_email', '' ) );
+
+		if ( '' === $to ) {
+			return false;
+		}
+
+		$what = ! $run['ok']
+			? (string) $run['error']
+			: sprintf(
+				/* translators: %d: how many courses. */
+				_n( '%d course page could not be read.', '%d course pages could not be read.', (int) $run['failed'], 'dgl-platform' ),
+				(int) $run['failed']
+			);
+
+		return \DGL\Email\Mailer::send(
+			( new \DGL\Email\Message(
+				key: 'val_training_failed',
+				audience: 'team',
+				subject: __( 'The VAL training update did not work last night', 'dgl-platform' ),
+				preheader: __( 'The courses already on the site are untouched.', 'dgl-platform' ),
+				heading: __( 'The VAL training update did not work', 'dgl-platform' ),
+				paragraphs: [
+					__( 'The nightly read of the training page on val.org.uk failed, so new courses and changes to dates and prices from VAL did not come through.', 'dgl-platform' ),
+					__( 'Nothing was removed. The courses already on the site stay listed until their own dates pass. You will not get another email about this until it has worked once and then failed again.', 'dgl-platform' ),
+					__( 'It usually clears by itself. If it fails again tomorrow, VAL may have changed their page or blocked the request: ask whoever looks after the site to check.', 'dgl-platform' ),
+				],
+				facts: [
+					__( 'What went wrong', 'dgl-platform' )  => '' !== $what ? $what : __( 'Unknown', 'dgl-platform' ),
+					__( 'Courses found on VAL\'s page', 'dgl-platform' ) => (string) (int) $run['courses'],
+					__( 'When', 'dgl-platform' )             => wp_date( 'j M Y H:i' ),
+				],
+			) )->for_recipients( [ $to ] )
+		);
 	}
 
 	// ------------------------------------------------------------------
@@ -228,23 +295,20 @@ final class ValTraining {
 			return null;
 		}
 
-		$summary = '';
-		$who     = '';
-		$paras   = [];
+		$who   = '';
+		$paras = [];
 
 		foreach ( $xpath->query( './/p', $body ) as $p ) {
 			$paras[] = self::text( $p, 1000 );
 		}
 
 		foreach ( $paras as $i => $para ) {
-			if ( '' === $summary && '' !== $para && 1 !== preg_match( '/^(course aims|who (should|is))/i', $para ) ) {
-				$summary = self::shorten( $para, 300 );
-			}
-
 			if ( '' === $who && 1 === preg_match( '/^who (should attend|is (it|this course) for)\??$/i', $para ) ) {
 				$who = $paras[ $i + 1 ] ?? '';
 			}
 		}
+
+		$summary = self::summary_from( array_merge( $paras, self::text_runs( $body ) ) );
 
 		// The listing leaves the venue off some courses that have one, so the course page is the one to trust.
 		$location = trim( (string) preg_replace( '/^\s*Location:\s*/i', '', self::text( self::first( $xpath, "//*[contains(@class,'pld-tr-details-loc')]", null ), 200 ) ) );
@@ -255,6 +319,27 @@ final class ValTraining {
 			'who'      => self::shorten( $who, 600 ),
 			'location' => $location,
 		];
+	}
+
+	/**
+	 * The first block of words long enough to be a summary: not a heading
+	 * ("Learning Outcomes"), a one-line tag-line or the start of a list.
+	 * Paragraphs come first, then any loose text lines. Pure.
+	 *
+	 * @param string[] $blocks
+	 */
+	public static function summary_from( array $blocks ): string {
+		foreach ( $blocks as $block ) {
+			$block = trim( (string) preg_replace( '/\s+/u', ' ', $block ) );
+
+			if ( mb_strlen( $block ) < 60 || 1 === preg_match( '/^(course aims?|learning outcomes?|location:|who (should|is))/i', $block ) ) {
+				continue;
+			}
+
+			return self::shorten( $block, 300 );
+		}
+
+		return '';
 	}
 
 	/**
@@ -459,6 +544,26 @@ final class ValTraining {
 		return $out;
 	}
 
+	/**
+	 * Every run of text under a node, one per text node, so words sitting
+	 * straight in a div are found as well as those in paragraphs.
+	 *
+	 * @return string[]
+	 */
+	private static function text_runs( DOMNode $node ): array {
+		$runs = [];
+
+		foreach ( $node->childNodes as $child ) {
+			if ( XML_TEXT_NODE === $child->nodeType ) {
+				$runs[] = trim( (string) $child->nodeValue );
+			} elseif ( $child instanceof DOMElement && ! in_array( strtolower( $child->nodeName ), [ 'script', 'style' ], true ) ) {
+				$runs = array_merge( $runs, self::text_runs( $child ) );
+			}
+		}
+
+		return $runs;
+	}
+
 	private static function xpath( string $html ): ?DOMXPath {
 		if ( '' === trim( $html ) ) {
 			return null;
@@ -572,6 +677,11 @@ final class ValTraining {
 		$pages = [];
 		$read  = static function ( string $url ) use ( &$pages ): ?array {
 			if ( ! array_key_exists( $url, $pages ) ) {
+				// Gentle on VAL's server: a pause before every course page after the first.
+				if ( [] !== $pages ) {
+					sleep( self::PAUSE );
+				}
+
 				$page          = self::get( $url );
 				$pages[ $url ] = is_string( $page ) ? self::parse_course( $page ) : null;
 			}
