@@ -42,6 +42,13 @@ final class Crawl {
 	public static function init(): void {
 		add_filter( 'wp_robots', [ self::class, 'robots' ], 20 );
 		add_action( 'send_headers', [ self::class, 'header' ] );
+
+		// Rank Math prints its own robots tag, canonical, sharing tags and schema, and takes
+		// core's robots tag away, so the wp_robots filter above never reaches the page.
+		add_filter( 'rank_math/frontend/robots', [ self::class, 'rank_math_robots' ], 99 );
+		add_filter( 'rank_math/frontend/canonical', [ self::class, 'rank_math_canonical' ], 99 );
+		add_filter( 'rank_math/json_ld', [ self::class, 'rank_math_json_ld' ], 999 );
+		add_action( 'wp_head', [ self::class, 'quiet_rank_math' ], 0 );
 		add_filter( 'robots_txt', [ self::class, 'robots_txt' ], 20 );
 		add_action( 'init', [ self::class, 'add_rules' ] );
 		add_filter( 'query_vars', [ self::class, 'add_query_var' ] );
@@ -62,6 +69,39 @@ final class Crawl {
 		}
 
 		return $robots;
+	}
+
+	/**
+	 * Rank Math's robots tag, for the member area.
+	 *
+	 * @param mixed $robots Rank Math's directives, keyed by name.
+	 */
+	public static function rank_math_robots( mixed $robots ): mixed {
+		if ( is_admin() || ! Router::is_dashboard() ) {
+			return $robots;
+		}
+
+		return [ 'index' => 'noindex', 'follow' => 'nofollow' ];
+	}
+
+	/** The member area has no canonical address: Rank Math guessed the news list. */
+	public static function rank_math_canonical( mixed $url ): mixed {
+		return ! is_admin() && Router::is_dashboard() ? '' : $url;
+	}
+
+	/** Nor any schema. */
+	public static function rank_math_json_ld( mixed $data ): mixed {
+		return ! is_admin() && Router::is_dashboard() ? [] : $data;
+	}
+
+	/** Nor sharing tags: lift Rank Math's before it prints them. */
+	public static function quiet_rank_math(): void {
+		if ( is_admin() || ! Router::is_dashboard() ) {
+			return;
+		}
+
+		remove_all_actions( 'rank_math/opengraph/facebook' );
+		remove_all_actions( 'rank_math/opengraph/twitter' );
 	}
 
 	/** The same instruction as a header, for anything that is not HTML. */

@@ -1985,6 +1985,9 @@ html:not(.dgl-js) .dgl-dir__ddfind { display: none; }
 	background: var(--dgl-white);
 	color: var(--dgl-text);
 	caret-color: var(--dgl-text);
+
+	/* The theme's focus ring sat 2px off its focus border: two teal lines. Flush, they read as one. */
+	outline-offset: 0;
 }
 
 .dgl-pub .dgl-home__searchbutton,
