@@ -32,6 +32,25 @@ final class Endpoint {
 	/** A bigger body than this is not a week of funding. */
 	public const MAX_BYTES = 8 * 1024 * 1024;
 
+	/**
+	 * Every answer from these routes is for the token holder alone: tell every
+	 * cache in front of the site (Wordify SmartCache, the CDN) not to keep it.
+	 * Found 13 November 2026: SmartCache cached the source list for five
+	 * minutes and served it to a request without the token.
+	 *
+	 * @param mixed $result
+	 * @return mixed
+	 */
+	public static function no_store( $result, \WP_REST_Server $server, WP_REST_Request $request ) {
+		if ( str_starts_with( (string) $request->get_route(), '/' . self::NAMESPACE . '/funding/' ) ) {
+			$server->send_header( 'Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0, private' );
+			$server->send_header( 'Pragma', 'no-cache' );
+			$server->send_header( 'Vary', 'Authorization' );
+		}
+
+		return $result;
+	}
+
 	public static function register(): void {
 		register_rest_route(
 			self::NAMESPACE,

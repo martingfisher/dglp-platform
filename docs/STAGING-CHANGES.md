@@ -2215,3 +2215,12 @@ Wordify's `replace_in_post`; every page edit left a revision.
   same three failures as `main`. Checked through the real dashboard on the local
   WordPress: 118 sources listed, add and delete both work, no sideways scrolling
   at phone width.
+- **0.61.1, 13 November. Funding routes are never cached.** Every answer from
+  `/wp-json/dgl/v1/funding/*` now says `Cache-Control: no-store, private`. Found
+  deploying 0.61.0: Wordify's SmartCache cached the token-only source list for
+  five minutes and served it to a request without the token, and the Worker read
+  that stale copy. The site's SmartCache exclusions (`/wp-json`, `/dashboard`,
+  `/wp-admin`, `/wp-login.php`) are listed in Wordify but show
+  `exclusions_applied_at: null`, so they are not in force; applying them is a
+  hosting change waiting for Martin's go-ahead. The Worker also adds a unique
+  query string to its read of the list.

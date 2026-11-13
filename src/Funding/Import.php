@@ -266,6 +266,7 @@ final class Import {
 
 	public static function init(): void {
 		add_action( 'rest_api_init', [ Endpoint::class, 'register' ] );
+		add_filter( 'rest_post_dispatch', [ Endpoint::class, 'no_store' ], 10, 3 );
 		add_action( \DGL\Plugin::EXPIRY_HOOK, [ self::class, 'check_stale' ], 30, 0 );
 	}
 
