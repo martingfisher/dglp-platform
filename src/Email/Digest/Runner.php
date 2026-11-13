@@ -229,7 +229,7 @@ final class Runner {
 		 * still lists it. Without this, turning a type off would hide it from
 		 * every screen and keep posting it to everybody who had ever ticked it.
 		 */
-		$types = array_values( array_intersect( $subscription->types, PostTypes::feed_keys() ) );
+		$types = \DGL\Funding\Visibility::filter_types( array_values( array_intersect( $subscription->types, PostTypes::feed_keys() ) ), true );
 
 		if ( [] === $types ) {
 			return [];

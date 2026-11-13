@@ -87,6 +87,8 @@ $from     = $imported ? ( \DGL\Frontend\Cards::fund_meta( (string) Frontend::val
 
 		<h1 class="dgl-pub__title"><?php echo esc_html( get_the_title( $post ) ); ?></h1>
 
+		<?php echo \DGL\PostTypes::GRANT === $type ? \DGL\Funding\Visibility::preview_note() : ''; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside. ?>
+
 		<?php if ( $cancelled ) : ?>
 			<p class="dgl-pub__passed dgl-pub__passed--off">
 				<strong><?php echo esc_html( null !== $schedule ? __( 'This series has been cancelled.', 'dgl-platform' ) : __( 'This event has been cancelled.', 'dgl-platform' ) ); ?></strong>

@@ -6284,6 +6284,31 @@ $fu_pos_b = strpos( $fu_home, 'Fund b' );
 $ok( false !== $fu_pos_d && false !== $fu_pos_b && $fu_pos_d < $fu_pos_b, 'funds that really close come before ones open all year' );
 $ok( str_contains( $fu_home, 'Test Trust · £500 to £5,000' ), 'the line says who offers it and how much' );
 
+$group( 'Funding: held back from the public until switched on' );
+
+$fv_was = get_current_user_id();
+update_option( \DGL\Funding\Visibility::OPTION, '0' );
+wp_set_current_user( 0 );
+$ok( ! \DGL\Funding\Visibility::shown() && '' === do_shortcode( '[dgl_home_funding]' ), 'off: the public sees no funding block, not even a placeholder' );
+$ok( '' === do_shortcode( '[dgl_feed type="grant"]' ) || ! str_contains( do_shortcode( '[dgl_feed type="grant"]' ), 'Test Trust' ), 'and no funding feed' );
+$ok( [] === \DGL\Funding\Visibility::filter_types( [ PostTypes::GRANT ] ) && [ PostTypes::NEWS ] === \DGL\Funding\Visibility::filter_types( [ PostTypes::NEWS, PostTypes::GRANT ] ), 'funding drops out of every type list, nothing else does' );
+$ok( ! in_array( \DGL\Frontend\Frontend::archive_url( PostTypes::GRANT ), array_column( \DGL\Frontend\Crawl::entries(), 'loc' ), true ), 'and /grants/ is not in the platform sitemap' );
+
+$fv_admin = (int) ( get_users( [ 'role' => 'administrator', 'number' => 1, 'fields' => 'ID' ] )[0] ?? 0 );
+wp_set_current_user( $fv_admin );
+$fv_html = do_shortcode( '[dgl_home_funding]' );
+$ok( $fv_admin > 0 && str_contains( $fv_html, 'Preview for administrators' ) && str_contains( $fv_html, 'dgl-home__row--fund' ), 'an administrator still sees it, marked as a preview' );
+
+wp_set_current_user( 0 );
+$fv_block = do_blocks( '<!-- wp:paragraph {"className":"dgl-funding-launch"} --><p class="dgl-funding-launch">Held</p><!-- /wp:paragraph --><!-- wp:paragraph --><p>Always</p><!-- /wp:paragraph -->' );
+$ok( ! str_contains( $fv_block, 'Held' ) && str_contains( $fv_block, 'Always' ), 'a block marked dgl-funding-launch is held back with funding; others are not' );
+update_option( \DGL\Funding\Visibility::OPTION, '1' );
+$ok( str_contains( do_blocks( '<!-- wp:paragraph {"className":"dgl-funding-launch"} --><p class="dgl-funding-launch">Held</p><!-- /wp:paragraph -->' ), 'Held' ), 'and shows once funding is on' );
+$fv_on = do_shortcode( '[dgl_home_funding]' );
+$ok( str_contains( $fv_on, 'dgl-home__row--fund' ) && ! str_contains( $fv_on, 'Preview for administrators' ), 'on: the public sees it, with no preview note' );
+delete_option( \DGL\Funding\Visibility::OPTION );
+wp_set_current_user( $fv_was );
+
 $group( 'Funding: the sync endpoint needs its token' );
 
 $fu_token = \DGL\Funding\Endpoint::new_token();

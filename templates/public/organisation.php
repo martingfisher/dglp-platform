@@ -81,7 +81,7 @@ $venue_space_total = array_sum( array_map( static fn( array $v ): int => (int) $
 
 // Their live listings, newest first, so the page is a door into what they are doing now.
 $live = [];
-foreach ( ItemsTable::for_org( $id, PostTypes::feed_keys(), [ Statuses::LIVE ], 6 ) as $live_id ) {
+foreach ( ItemsTable::for_org( $id, \DGL\Funding\Visibility::filter_types( PostTypes::feed_keys() ), [ Statuses::LIVE ], 6 ) as $live_id ) {
 	$item = get_post( (int) $live_id );
 	if ( $item instanceof WP_Post ) {
 		$live[] = $item;

@@ -263,7 +263,14 @@ final class HomeBlocks {
 		$a  = self::atts( $atts, [ 'count' => $default_count, 'heading' => $default_heading, 'link' => 'yes' ] );
 		$on = PostTypes::is_enabled( $post_type );
 
-		return View::render(
+		// Funding held back from the public draws nothing at all, not a placeholder.
+		if ( \DGL\Funding\Visibility::hides( $post_type ) ) {
+			return '';
+		}
+
+		$preview = PostTypes::GRANT === $post_type ? \DGL\Funding\Visibility::preview_note() : '';
+
+		return $preview . View::render(
 			'public/home/rows',
 			[
 				'items'       => $on ? ( PostTypes::GRANT === $post_type ? self::closing_first( $a['count'] ) : Home::upcoming( $post_type, $a['count'] ) ) : [],
