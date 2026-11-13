@@ -198,13 +198,18 @@ given the same changes so they stay in step.
 - **Order at the bottom of the panel:** Sign in and Register now come before
   the three partner buttons (Forum Central, VAL, LOPF).
 
-Still to decide, not changed:
+Tidied afterwards, on Martin's go-ahead:
 
-- "News" appears twice in the panel: once in the main mobile menu (with a
-  submenu) and once in the top menu.
-- The phone menu lists Volunteering, Support, Networks and Forums, Resources,
-  News, Contact. The desktop menu has About where the phone menu has News, so
-  About cannot be reached from the phone menu.
-- The three partner buttons have no label saying they lead to other sites,
-  and each is a different width and colour.
+- **One News:** the News group (All News, Events, Training) was removed from
+  the phone menu, "Mobile Menu" (172). News, Events, Training and Jobs are
+  reached from the top menu below it.
+- **About:** added as the first item of the phone menu, linking to
+  `/about-2/`. The phone menu now reads About, Volunteering, Support,
+  Networks and Forums, Resources, Contact, the same as desktop.
+- **Partner buttons:** a text element reading "Our partners' websites" sits
+  above Forum Central, VAL and LOPF.
+
+Not changed:
+
+- The three partner buttons are still different widths and colours.
 - "Sign in" is a text link 23px high, a small target next to 42px buttons.
