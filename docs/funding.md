@@ -97,7 +97,10 @@ The answer: `{"ok":true,"added":n,"updated":n,"revived":n,"withdrawn":n,"skipped
 
 ## Holding it back until it is signed off
 
-One switch decides whether the public sees funding:
+One switch decides whether the public sees funding. In wp-admin it is
+**Settings > Grants and Funding**: one button, "Show funding to the public" (or
+"Hide funding from the public"), beside how the weekly import last went. Each
+press is recorded in the audit log. The same switch from the command line:
 
 ```
 wp dgl funding public off     # hidden: only signed-in administrators see it

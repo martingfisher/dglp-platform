@@ -2187,3 +2187,10 @@ Wordify's `replace_in_post`; every page edit left a revision.
   (`/topic/<slug>/`, the theme's archive) now load the next page as the reader
   reaches the end, using the plugin's autoload script pointed at Blocksy's grid
   and pager; the numbered pages remain without JavaScript.
+- **0.60.5, 13 November. The funding switch in wp-admin.** Settings > Grants
+  and Funding: one button to show funding to the public or hide it again, the
+  current state in words, links to the funding list and home page, and how the
+  weekly import last went (pages read, new, updated, taken off, funds listed,
+  waiting for review). Administrators only; each press goes in the audit log.
+  Tested on the local WordPress through the real form: Show made `/grants/`
+  answer 200 to a signed-out visitor, Hide put it back to 404.
