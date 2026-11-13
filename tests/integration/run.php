@@ -1580,9 +1580,8 @@ $ok( '' !== $link, 'an email went out with a link in it' );
  * invitee is not promised something the site will not let them do.
  */
 $invite_body = implode( ' ', $sent_bodies );
-$ok( str_contains( $invite_body, 'news, events, training and spaces to hire' ), 'the email names exactly the types on the menu, in their display order' );
+$ok( str_contains( $invite_body, 'news, events, training, spaces to hire and grants and funding' ), 'the email names exactly the types on the menu, in their display order' );
 $ok( ! str_contains( strtolower( $invite_body ), 'volunteering' ), 'and not volunteering' );
-$ok( ! str_contains( strtolower( $invite_body ), 'grant' ), 'nor grants' );
 $ok( str_contains( (string) end( $sent_to ), 'newcomer@example.test' ) || '' !== (string) end( $sent_to ), 'addressed to somebody' );
 
 $token = trim( (string) wp_parse_url( $link, PHP_URL_PATH ), '/' );
@@ -2100,14 +2099,14 @@ $wpdb->query( 'DELETE FROM ' . DigestStore::name() . ' WHERE consent_source IN (
 $group( 'Switched-off types are hidden, not deleted' );
 
 /*
- * DGLP asked for volunteering and grants to be out of this version, with the
- * possibility of coming back. Hidden means hidden everywhere a person looks,
- * and still registered everywhere the data lives.
+ * DGLP asked for volunteering to be out of this version, with the possibility
+ * of coming back (grants came back on 13 November 2026). Hidden means hidden
+ * everywhere a person looks, and still registered everywhere the data lives.
  */
-$ok( ! PostTypes::is_enabled( PostTypes::GRANT ), 'grants is off' );
+$ok( PostTypes::is_enabled( PostTypes::GRANT ), 'grants is on' );
 $ok( ! PostTypes::is_enabled( PostTypes::VOLUNTEERING ), 'volunteering is off' );
 
-$grant_object = get_post_type_object( PostTypes::GRANT );
+$grant_object = get_post_type_object( PostTypes::VOLUNTEERING );
 
 $ok( null !== $grant_object, 'but the post type is still registered, so nothing it owns is orphaned' );
 $ok( false === $grant_object->public, 'it is not public' );
@@ -2119,8 +2118,8 @@ $ok( true === $event_object->public, 'events is still public' );
 $ok( 'events' === $event_object->has_archive, 'with its archive intact' );
 
 /* A switched-off type still has a home in the code. */
-$ok( isset( PostTypes::definitions()[ PostTypes::GRANT ] ), 'its definition survives' );
-$ok( in_array( PostTypes::GRANT, PostTypes::submittable(), true ), 'so do its permissions' );
+$ok( isset( PostTypes::definitions()[ PostTypes::VOLUNTEERING ] ), 'its definition survives' );
+$ok( in_array( PostTypes::VOLUNTEERING, PostTypes::submittable(), true ), 'so do its permissions' );
 
 $group( 'A digest cannot deliver a switched-off type' );
 
@@ -2143,8 +2142,8 @@ $stale_sub = new \DGL\Email\Digest\Subscription(
 
 $grant_item = wp_insert_post(
 	[
-		'post_type'   => PostTypes::GRANT,
-		'post_title'  => 'A grant that should not be posted out',
+		'post_type'   => PostTypes::VOLUNTEERING,
+		'post_title'  => 'A volunteering role that should not be posted out',
 		'post_status' => Statuses::LIVE,
 		'post_author' => $alice,
 	]
@@ -2164,7 +2163,7 @@ $ok(
 		new \DGL\Email\Digest\Subscription(
 			user_id: $bella,
 			email: 'only@example.test',
-			types: [ PostTypes::GRANT ],
+			types: [ PostTypes::VOLUNTEERING ],
 			unsubscribe_token: 'tok2',
 			consent_at: '2026-01-01 00:00:00',
 			org_id: $org_b
@@ -2240,7 +2239,7 @@ $ok( str_contains( \DGL\Frontend\Frontend::meta_line( $pub_post ), '2026' ), 'an
 
 $group( 'Public pages: switched-off types have none' );
 
-$ok( null === \DGL\Frontend\Frontend::archive_url( PostTypes::GRANT ) || '' === \DGL\Frontend\Frontend::archive_url( PostTypes::GRANT ), 'a switched-off type has no archive URL' );
+$ok( null === \DGL\Frontend\Frontend::archive_url( PostTypes::VOLUNTEERING ) || '' === \DGL\Frontend\Frontend::archive_url( PostTypes::VOLUNTEERING ), 'a switched-off type has no archive URL' );
 $ok( '' !== \DGL\Frontend\Frontend::archive_url( PostTypes::EVENT ), 'an enabled one does' );
 
 $group( 'Public listings are ordered by when the thing happens' );
@@ -3704,7 +3703,7 @@ $fl_none = $make_item( $org_a, $alice, Statuses::LIVE );
 
 $fl_args = \DGL\Frontend\Filters::args_from( [ 'topic' => $fl_slug, 'when' => 'week' ], PostTypes::EVENT );
 $ok( $fl_slug === $fl_args['topic'] && 'week' === $fl_args['when'], 'a real topic and a known window are kept' );
-$ok( [ 'topic' => '', 'when' => '', 'org' => 0 ] === \DGL\Frontend\Filters::args_from( [ 'topic' => 'no-such-topic', 'when' => 'someday', 'org' => '999999' ], PostTypes::EVENT ), 'an unknown topic, window or organisation is dropped' );
+$ok( [ 'topic' => '', 'when' => '', 'org' => 0, 'fund' => [] ] === \DGL\Frontend\Filters::args_from( [ 'topic' => 'no-such-topic', 'when' => 'someday', 'org' => '999999' ], PostTypes::EVENT ), 'an unknown topic, window or organisation is dropped' );
 $ok( $org_a === \DGL\Frontend\Filters::args_from( [ 'org' => (string) $org_a ], PostTypes::EVENT )['org'], 'an approved organisation is kept' );
 $ok( isset( \DGL\Frontend\Filters::orgs( PostTypes::EVENT )[ $org_a ] ), 'an organisation with something live is offered' );
 $ok( str_ends_with( \DGL\Frontend\Filters::url( 'https://x.test/events/', [ 'topic' => '', 'when' => '', 'org' => $org_a ] ), '/events/?org=' . $org_a ), 'the filtered address carries the organisation' );
@@ -4615,7 +4614,7 @@ $home_pos_old = array_search( $home_news['old'], $home_stories, true );
 $ok( false !== $home_pos_new && false !== $home_pos_old && $home_pos_new < $home_pos_old, 'then the newest first' );
 
 $home_data = \DGL\Frontend\Home::view_data();
-$ok( false === $home_data['grants_on'] && [] === $home_data['quotes'] && 3 === count( $home_data['partners'] ), 'the sample page knows the Grants type is off, has no testimonials yet and names three partners' );
+$ok( true === $home_data['grants_on'] && [] === $home_data['quotes'] && 3 === count( $home_data['partners'] ), 'the sample page knows the Grants type is on, has no testimonials yet and names three partners' );
 $ok( str_ends_with( $home_data['join_url'], '/dashboard/join/' ) && str_ends_with( $home_data['dir_url'], '/directory/' ), 'join and directory links point at the real pages' );
 
 update_option( \DGL\Frontend\Home::OPTION_QUOTES, wp_json_encode( [ [ 'quote' => 'It filled our event.', 'name' => 'A Person', 'role' => 'Manager, Home Org' ], [ 'quote' => '   ' ], [ 'quote' => 'Second.' ], [ 'quote' => 'Third.' ], [ 'quote' => 'Fourth.' ] ] ) );
@@ -4626,7 +4625,7 @@ delete_option( \DGL\Frontend\Home::OPTION_QUOTES );
 $home_html = \DGL\Dashboard\View::render( 'public/home', \DGL\Frontend\Home::view_data() );
 $ok( str_contains( $home_html, 'The people doing good in Leeds, in one place.' ) && str_contains( $home_html, 'What&#039;s on' ) && str_contains( $home_html, 'Latest news' ) && str_contains( $home_html, 'Training and learning' ) && str_contains( $home_html, 'Funding and grants' ) && str_contains( $home_html, 'Find an organisation' ) && str_contains( $home_html, 'What members say' ) && str_contains( $home_html, 'Get the weekly round-up' ), 'the page renders every section of the wireframe' );
 $ok( str_contains( $home_html, 'Home event later' ) && str_contains( $home_html, 'Home story pinned' ) && ! str_contains( $home_html, 'Home event pending' ), 'with the live items in it and the pending one out' );
-$ok( 3 === substr_count( $home_html, 'Testimonial to be supplied' ) && str_contains( $home_html, 'once that section is switched on' ), 'funding and testimonials are drawn as labelled placeholders' );
+$ok( 3 === substr_count( $home_html, 'Testimonial to be supplied' ), 'testimonials are drawn as labelled placeholders' );
 $ok( str_contains( $home_html, 'class="dgl-date"' ) && str_contains( $home_html, 'Posted: ' ), 'events carry the calendar leaf and stories say when they were posted' );
 $ok( 1 === preg_match( '#<form class="dgl-home__search" method="get" action="[^"]*/directory/"#', $home_html ) && str_contains( $home_html, 'name="q"' ), 'the search box posts to the directory' );
 $ok( str_contains( $home_html, 'Forum Central' ) && str_contains( $home_html, 'Voluntary Action Leeds' ), 'the partners are named' );
@@ -4643,7 +4642,7 @@ $ok( 1 === substr_count( do_shortcode( '[dgl_home_events count="0"]' ), 'class="
 $sc_news = do_shortcode( '[dgl_home_news count="3" heading="In the news"]' );
 $ok( str_contains( $sc_news, '>In the news</h2>' ) && 1 === substr_count( $sc_news, 'dgl-home__lead"' ) && 2 === substr_count( $sc_news, 'dgl-home__row--news' ) && str_contains( $sc_news, 'Home story pinned' ), 'news: a custom heading, the featured story large, two beside it' );
 $sc_funding = do_shortcode( '[dgl_home_funding]' );
-$ok( str_contains( $sc_funding, 'dgl-home__placeholderbox' ) && str_contains( $sc_funding, 'once that section is switched on' ) && ! str_contains( $sc_funding, 'dgl-home__all' ), 'funding: a labelled placeholder and no link while the Grants type is off' );
+$ok( ! str_contains( $sc_funding, 'once that section is switched on' ) && str_contains( $sc_funding, '/grants/' ), 'funding: the live list with its link, now the Grants type is on' );
 $sc_dir = do_shortcode( '[dgl_home_directory areas="2"]' );
 $ok( str_contains( $sc_dir, 'action="' . home_url( '/directory/' ) . '"' ) && 2 === substr_count( $sc_dir, 'class="dgl-home__chip"' ) && str_contains( $sc_dir, 'verified organisation' ), 'directory: the search form, two chips and the live count' );
 $sc_round = do_shortcode( '[dgl_home_roundup heading="Stay in touch" text="One email a week."]' );
@@ -4692,7 +4691,7 @@ $sp_other = $make_org( 'Other Spaces Org' );
 $sp_stranger = $make_member( 'dgl_spaces_stranger', $sp_other, 'owner' );
 
 $ok( in_array( PostTypes::VENUE, PostTypes::enabled_keys(), true ) && in_array( PostTypes::SPACE, PostTypes::enabled_keys(), true ), 'venues and spaces are enabled types' );
-$ok( ! in_array( PostTypes::VENUE, PostTypes::feed_keys(), true ) && ! in_array( PostTypes::SPACE, PostTypes::feed_keys(), true ) && [ PostTypes::NEWS, PostTypes::EVENT, PostTypes::TRAINING ] === PostTypes::feed_keys(), 'neither is a feed type: digests and search stay news, events, training' );
+$ok( ! in_array( PostTypes::VENUE, PostTypes::feed_keys(), true ) && ! in_array( PostTypes::SPACE, PostTypes::feed_keys(), true ) && [ PostTypes::NEWS, PostTypes::EVENT, PostTypes::TRAINING, PostTypes::GRANT ] === PostTypes::feed_keys(), 'neither is a feed type: digests and search are news, events, training and funding' );
 $ok( isset( PostTypes::menu()[ PostTypes::VENUE ] ) && ! isset( PostTypes::menu()[ PostTypes::SPACE ] ), 'venues are on the menu, spaces are reached through their venue' );
 $sp_type_obj = get_post_type_object( PostTypes::SPACE );
 $sp_venue_obj = get_post_type_object( PostTypes::VENUE );
@@ -6178,6 +6177,119 @@ $attr = [ 'data-id' => 'search-input' ];
 include \DGL\PLUGIN_DIR . 'templates/blocksy/search-input/view.php';
 $fb_html = (string) ob_get_clean();
 $ok( str_contains( $fb_html, 'data-dgl-finder-open' ) && str_contains( $fb_html, 'dgl-finder-trigger__ring' ) && str_contains( $fb_html, 'data-id="search-input"' ) && str_contains( $fb_html, 'aria-controls="dgl-finder"' ) && ! str_contains( $fb_html, '<form' ), 'the element is the magnifier disc that opens the dialog, not a form' );
+
+$group( 'Funding: the weekly import' );
+
+$fu_org = $make_org( 'Funding Import Owner' );
+update_option( \DGL\Funding\Import::OPTION_ORG, $fu_org );
+delete_option( \DGL\Funding\Import::OPTION_AUTOPUBLISH );
+$fu_today = wp_date( 'Y-m-d' );
+$fu_later = ( new DateTimeImmutable( $fu_today ) )->modify( '+20 days' )->format( 'Y-m-d' );
+$fu_grant = static fn( string $key, array $over = [] ): array => array_merge(
+	[
+		'key'             => $key,
+		'title'           => 'Fund ' . $key,
+		'funder'          => 'Test Trust',
+		'summary'         => 'Money for groups.',
+		'body'            => 'About the fund.',
+		'amount_min'      => 500,
+		'amount_max'      => 5000,
+		'deadline'        => $fu_later,
+		'rolling'         => false,
+		'eligibility'     => 'Constituted groups in Leeds.',
+		'how_to_apply'    => 'Online form.',
+		'application_url' => 'https://example.org/' . $key,
+		'fund_type'       => [ 'grant' ],
+		'applicants'      => [ 'cic' ],
+		'costs'           => [ 'project' ],
+		'beneficiaries'   => [ 'carers' ],
+		'area'            => 'leeds',
+		'topics'          => [ 'wellbeing' ],
+	],
+	$over
+);
+$fu_run = static fn( array $grants, bool $ok = true ): array => \DGL\Funding\Import::run( [ 'run_id' => 'test', 'sources' => [ [ 'id' => 'fu-src', 'ok' => $ok, 'grants' => $grants ] ] ] );
+
+$fu_dry = \DGL\Funding\Import::run( [ 'sources' => [ [ 'id' => 'fu-src', 'ok' => true, 'grants' => [ $fu_grant( 'fu-src:a' ) ] ] ] ], true );
+$ok( 1 === $fu_dry['added'] && [] === get_posts( [ 'post_type' => PostTypes::GRANT, 'post_status' => 'any', 'meta_key' => \DGL\Funding\Import::META_KEY, 'meta_value' => 'fu-src:a', 'fields' => 'ids' ] ), 'a dry run says what it would add and adds nothing' );
+
+$fu_first = $fu_run( [ $fu_grant( 'fu-src:a' ), $fu_grant( 'b', [ 'deadline' => null, 'rolling' => true, 'beneficiaries' => [] ] ), $fu_grant( 'fu-src:old', [ 'deadline' => '2001-01-01' ] ) ] );
+$fu_find = static fn( string $key ): int => (int) ( get_posts( [ 'post_type' => PostTypes::GRANT, 'post_status' => Statuses::all(), 'meta_key' => \DGL\Funding\Import::META_KEY, 'meta_value' => $key, 'fields' => 'ids' ] )[0] ?? 0 );
+$fu_a = $fu_find( 'fu-src:a' );
+$fu_b = $fu_find( 'fu-src:b' );
+foreach ( [ $fu_a, $fu_b ] as $fu_id ) {
+	update_post_meta( $fu_id, DGL_FIXTURE_FLAG, '1' );
+}
+$ok( 2 === $fu_first['added'] && 1 === $fu_first['skipped'] && $fu_a > 0 && $fu_b > 0, 'two open funds are added and a closed one is skipped' );
+$ok( Statuses::LIVE === get_post_status( $fu_a ), 'published straight away by default' );
+$ok( $fu_org === (int) get_post_meta( $fu_a, Meta::ITEM_ORG, true ) && 'Test Trust' === get_post_meta( $fu_a, 'dgl_funder', true ) && [ 'cic' ] === get_post_meta( $fu_a, 'dgl_applicants', true ), 'owned by the import\'s organisation, with funder and categories' );
+$ok( has_term( 'wellbeing', \DGL\Taxonomies::TOPIC, $fu_a ) && has_term( 'grants-and-funding', \DGL\Taxonomies::TOPIC, $fu_a ), 'with its topics and always Grants and Funding' );
+$ok( 'fu-src:b' === get_post_meta( $fu_b, \DGL\Funding\Import::META_KEY, true ), 'a key is made to name its source' );
+$ok( \DGL\Funding\Import::rolling_deadline( $fu_today ) === get_post_meta( $fu_b, 'dgl_deadline', true ) && '' !== (string) get_post_meta( $fu_b, Meta::ITEM_EXPIRES_AT, true ), 'a rolling fund gets six weeks and an expiry' );
+$ok( \DGL\Funding\Import::is_imported( $fu_a ), 'and is known as imported' );
+
+// The team edits a fund; the funder changes its amount.
+update_post_meta( $fu_a, 'dgl_summary', 'Edited by the team.' );
+$fu_second = $fu_run( [ $fu_grant( 'fu-src:a', [ 'amount_max' => 9000, 'summary' => 'New words from the model.' ] ), $fu_grant( 'fu-src:b', [ 'deadline' => null, 'rolling' => true ] ) ] );
+$ok( $fu_second['updated'] >= 1 && 0 === $fu_second['added'], 'a fund seen again is refreshed, not duplicated' );
+$ok( 9000.0 === (float) get_post_meta( $fu_a, 'dgl_amount_max', true ), 'its facts follow the funder' );
+$ok( 'Edited by the team.' === get_post_meta( $fu_a, 'dgl_summary', true ), 'its words keep the team\'s edit' );
+
+$ok( 0 === $fu_run( [], false )['withdrawn'] && Statuses::LIVE === get_post_status( $fu_a ), 'a source that could not be read changes nothing' );
+$ok( 0 === $fu_run( [] )['withdrawn'], 'nor does one read with nothing on it' );
+$fu_third = $fu_run( [ $fu_grant( 'fu-src:b', [ 'deadline' => null, 'rolling' => true ] ) ] );
+$ok( 1 === $fu_third['withdrawn'] && '' !== (string) get_post_meta( $fu_a, Meta::ITEM_EXPIRES_AT, true ) && strtotime( (string) get_post_meta( $fu_a, Meta::ITEM_EXPIRES_AT, true ) ) <= time() + 60, 'a fund gone from a page that still lists others is withdrawn' );
+
+update_option( \DGL\Funding\Import::OPTION_AUTOPUBLISH, '0' );
+$fu_rev = $fu_run( [ $fu_grant( 'fu-src:b', [ 'deadline' => null, 'rolling' => true ] ), $fu_grant( 'fu-src:c' ) ] );
+$fu_c   = $fu_find( 'fu-src:c' );
+update_post_meta( $fu_c, DGL_FIXTURE_FLAG, '1' );
+$ok( 1 === $fu_rev['added'] && Statuses::PENDING === get_post_status( $fu_c ), 'with autopublish off, a new fund waits for review' );
+delete_option( \DGL\Funding\Import::OPTION_AUTOPUBLISH );
+
+$group( 'Funding: the filters find the right funds' );
+
+$fu_q = static function ( array $get ): array {
+	$q = new WP_Query();
+	$q->set( 'post_type', PostTypes::GRANT );
+	$q->set( 'post_status', Statuses::LIVE );
+	$q->set( 'fields', 'ids' );
+	$q->set( 'posts_per_page', -1 );
+	\DGL\Frontend\Filters::apply( $q, \DGL\Frontend\Filters::args_from( $get, PostTypes::GRANT ) );
+
+	return array_map( 'intval', $q->get_posts() );
+};
+$ok( in_array( $fu_b, $fu_q( [ 'who' => 'cic' ] ), true ) && ! in_array( $fu_b, $fu_q( [ 'who' => 'individual' ] ), true ), 'who can apply' );
+$ok( in_array( $fu_b, $fu_q( [ 'for' => 'veterans' ] ), true ), 'a fund open to anyone matches any "work with"' );
+$ok( in_array( $fu_b, $fu_q( [ 'amount' => '1k_10k' ] ), true ) && ! in_array( $fu_b, $fu_q( [ 'amount' => '50k_plus' ] ), true ), 'amount bands overlap the fund\'s range' );
+$ok( in_array( $fu_b, $fu_q( [ 'closing' => 'rolling' ] ), true ) && ! in_array( $fu_b, $fu_q( [ 'closing' => '2_weeks' ] ), true ), 'a rolling fund is "open all year", not "closing soon"' );
+$ok( in_array( $fu_b, $fu_q( [ 'area' => 'leeds', 'kind' => 'grant', 'pays' => 'project' ] ), true ), 'filters combine' );
+
+$fu_html = \DGL\Dashboard\View::render( 'public/archive', [ 'type' => PostTypes::GRANT ] );
+$ok( str_contains( $fu_html, 'name="who"' ) && str_contains( $fu_html, 'name="closing"' ) && ! str_contains( $fu_html, 'name="org"' ), 'the list offers the funding filters and not "by organisation"' );
+$ok( [ 'Test Trust', '£500 to £5,000', 'Open all year' ] === \DGL\Frontend\Cards::meta( get_post( $fu_b ) ), 'a fund\'s card line: funder, amount, closing' );
+
+$group( 'Funding: the sync endpoint needs its token' );
+
+$fu_token = \DGL\Funding\Endpoint::new_token();
+$fu_req   = static function ( string $auth ): int {
+	$r = new WP_REST_Request( 'POST', '/dgl/v1/funding/sync' );
+	$r->set_header( 'Content-Type', 'application/json' );
+	if ( '' !== $auth ) {
+		$r->set_header( 'Authorization', $auth );
+	}
+	$r->set_query_params( [ 'dry_run' => '1' ] );
+	$r->set_body( wp_json_encode( [ 'sources' => [ [ 'id' => 'fu-src', 'ok' => true, 'grants' => [] ] ] ] ) );
+
+	return rest_do_request( $r )->get_status();
+};
+$ok( 401 === $fu_req( '' ) || 403 === $fu_req( '' ), 'no token is refused' );
+$ok( in_array( $fu_req( 'Bearer wrong' ), [ 401, 403 ], true ), 'a wrong token is refused' );
+$ok( 200 === $fu_req( 'Bearer ' . $fu_token ), 'the right token is let in' );
+$ok( 64 === strlen( (string) get_option( \DGL\Funding\Endpoint::OPTION_TOKEN ) ) && $fu_token !== get_option( \DGL\Funding\Endpoint::OPTION_TOKEN ), 'only its hash is stored' );
+delete_option( \DGL\Funding\Endpoint::OPTION_TOKEN );
+delete_option( \DGL\Funding\Import::OPTION_ORG );
+delete_option( \DGL\Funding\Import::OPTION_LAST );
 
 /* ----------------------------------------------------------------- report */
 

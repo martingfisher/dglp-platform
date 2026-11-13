@@ -17,8 +17,8 @@ use DGL\Spaces\SpacesQuery;
 
 Harness::group( 'Spaces to hire: types, steps and fields' );
 
-Harness::assert_same( [ PostTypes::NEWS, PostTypes::EVENT, PostTypes::TRAINING ], PostTypes::feed_keys(), 'the feed types are the three listings' );
-Harness::assert_same( [ PostTypes::NEWS, PostTypes::EVENT, PostTypes::TRAINING, PostTypes::VENUE ], array_keys( PostTypes::menu() ), 'the menu stops at venues' );
+Harness::assert_same( [ PostTypes::NEWS, PostTypes::EVENT, PostTypes::TRAINING, PostTypes::GRANT ], PostTypes::feed_keys(), 'the feed types are the four listings' );
+Harness::assert_same( [ PostTypes::NEWS, PostTypes::EVENT, PostTypes::TRAINING, PostTypes::VENUE, PostTypes::GRANT ], array_keys( PostTypes::menu() ), 'the menu ends with venues and funding' );
 Harness::assert_same( PostTypes::KIND_SPACE, PostTypes::kind_of( PostTypes::SPACE ), 'a space knows its kind' );
 Harness::assert_same( PostTypes::KIND_LISTING, PostTypes::kind_of( 'dgl_nothing' ), 'an unknown type is a listing' );
 Harness::assert_false( PostTypes::has_page( PostTypes::SPACE ), 'a space has no page' );

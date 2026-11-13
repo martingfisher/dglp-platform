@@ -9,6 +9,7 @@ declare( strict_types=1 );
 
 namespace DGL\Schema\Types;
 
+use DGL\Funding\Vocab;
 use DGL\Schema\Field;
 use DGL\Schema\TypeDefinition;
 
@@ -80,6 +81,43 @@ final class Grant implements TypeDefinition {
 				key: 'application_url',
 				label: __( 'Application link', 'dgl-platform' ),
 				type: Field::URL,
+			),
+			/*
+			 * The categories people search and subscribe by. The lists live in
+			 * src/Funding/vocab.json, shared with the weekly import, so a fund a
+			 * member posts and one the import brings in are filed the same way.
+			 */
+			new Field(
+				key: 'fund_type',
+				label: __( 'What kind of funding is it?', 'dgl-platform' ),
+				type: Field::CHOICES,
+				options: Vocab::options( 'fund_type' ),
+			),
+			new Field(
+				key: 'applicants',
+				label: __( 'Which kinds of organisation can apply?', 'dgl-platform' ),
+				type: Field::CHOICES,
+				options: Vocab::options( 'applicants' ),
+				help: __( 'Tick every kind the funder accepts.', 'dgl-platform' ),
+			),
+			new Field(
+				key: 'costs',
+				label: __( 'What will it pay for?', 'dgl-platform' ),
+				type: Field::CHOICES,
+				options: Vocab::options( 'costs' ),
+			),
+			new Field(
+				key: 'beneficiaries',
+				label: __( 'Is it for work with particular people?', 'dgl-platform' ),
+				type: Field::CHOICES,
+				options: Vocab::options( 'beneficiaries' ),
+				help: __( 'Leave all unticked if it is open to work with anyone.', 'dgl-platform' ),
+			),
+			new Field(
+				key: 'area',
+				label: __( 'Where must the work happen?', 'dgl-platform' ),
+				type: Field::SELECT,
+				options: Vocab::options( 'area' ),
 			),
 		];
 	}

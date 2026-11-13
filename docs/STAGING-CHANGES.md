@@ -2115,3 +2115,28 @@ Wordify's `replace_in_post`; every page edit left a revision.
   404. Side effect to know about: a mistyped address under `/news/` now lands
   on the news list instead of the 404 page. Unit suite 2833; integration
   suite as 0.59.2.
+- **0.60.0, 13 November. Grants and Funding is switched on and filled every
+  week by an automated import.** It replaces the "Sources of Grant Funding" Word
+  document that VAL put together by hand (around 15 pages, about 140 funder links,
+  days of one person's time each edition). A Cloudflare Worker (`workers/funding`)
+  reads the funders' own pages every Monday through TinyFish and has Claude Haiku
+  turn each changed page into a fund: funder, amounts, deadline, who can apply,
+  what it pays for, who it is for, area, topics, all in our own words with a link
+  to the funder. It posts the week's results to
+  `/wp-json/dgl/v1/funding/sync` (bearer token, hash stored). New funds go live at
+  once (DGLP's choice; `wp option update dgl_funding_autopublish 0` sends them to
+  the review queue instead) and one email lists them. Facts are refreshed weekly,
+  words are written once so the team's edits stand, funds gone from a funder's
+  page are withdrawn, and an open-all-year fund always carries a deadline six
+  weeks after it was last seen, so if the import stops the list empties itself
+  instead of going stale. An email goes out if no run arrives for ten days.
+  The type is labelled "Grants and Funding" (decided 13 November). The list at
+  `/grants/` gains filters for kind of funding, who can apply, what it pays for,
+  who the work is with, area, amount band and closing date, and signed-in members
+  get "Only funding my organisation can apply for", worked out from their
+  directory profile (legal status and who they work with). Cards show the funder,
+  the amount range and the closing date or "Open all year". The categories live in
+  `src/Funding/vocab.json`, shared by the plugin and the Worker. Approving an
+  imported fund sends no email to the organisation that owns it. Details in
+  `docs/funding.md`. Unit suite 2899; integration suite 1695 passing, with the
+  same three failures as `main` before this change.

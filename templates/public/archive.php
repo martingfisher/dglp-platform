@@ -26,11 +26,16 @@ $filter_args = \DGL\Frontend\Filters::args_from( wp_unslash( $_GET ), $type );
 $topics      = \DGL\Frontend\Filters::topics();
 $whens       = \DGL\PostTypes::EVENT === $type ? \DGL\Frontend\Filters::whens() : [];
 $dated       = in_array( $type, [ \DGL\PostTypes::EVENT, \DGL\PostTypes::TRAINING ], true ); // These carry a calendar leaf.
-$orgs        = \DGL\Frontend\Filters::orgs( $type );
+// Imported funding all belongs to one organisation, so "by organisation" is no help there.
+$is_fund     = \DGL\PostTypes::GRANT === $type;
+$orgs        = $is_fund ? [] : \DGL\Frontend\Filters::orgs( $type );
+$fund_args   = (array) ( $filter_args['fund'] ?? [] );
+$fund_facets = $is_fund ? \DGL\Funding\Facets::labels() : [];
+$fund_fit    = $is_fund && null !== \DGL\Funding\Facets::fit_for_user( get_current_user_id() );
 $filtering   = \DGL\Frontend\Filters::is_active( $filter_args );
-$filters_on  = count( array_filter( $filter_args ) );
+$filters_on  = count( array_filter( array_diff_key( $filter_args, [ 'fund' => 1 ] ) ) ) + count( $fund_args );
 $list_base   = Frontend::archive_url( $type );
-$show_form   = [] !== $topics || [] !== $whens || [] !== $orgs;
+$show_form   = [] !== $topics || [] !== $whens || [] !== $orgs || [] !== $fund_facets;
 
 global $wp_query;
 $found     = (int) $wp_query->found_posts;
@@ -114,6 +119,23 @@ $meta_line = static function ( WP_Post $item ): string {
 									<option value="<?php echo (int) $org_id; ?>"<?php selected( (int) $filter_args['org'], (int) $org_id ); ?>><?php echo esc_html( $org_name ); ?></option>
 								<?php endforeach; ?>
 							</select>
+						</label>
+					<?php endif; ?>
+					<?php foreach ( $fund_facets as $param => $facet_label ) : ?>
+						<label class="dgl-listing__filter">
+							<span class="dgl-listing__filterlabel"><?php echo esc_html( $facet_label ); ?></span>
+							<select class="dgl-listing__select" name="<?php echo esc_attr( $param ); ?>">
+								<option value=""><?php esc_html_e( 'Any', 'dgl-platform' ); ?></option>
+								<?php foreach ( \DGL\Funding\Facets::options( $param ) as $value => $option_label ) : ?>
+									<option value="<?php echo esc_attr( (string) $value ); ?>"<?php selected( (string) ( $fund_args[ $param ] ?? '' ), (string) $value ); ?>><?php echo esc_html( $option_label ); ?></option>
+								<?php endforeach; ?>
+							</select>
+						</label>
+					<?php endforeach; ?>
+					<?php if ( $fund_fit ) : ?>
+						<label class="dgl-listing__filter dgl-listing__filter--check">
+							<input type="checkbox" name="fit" value="mine"<?php checked( 'mine', (string) ( $fund_args['fit'] ?? '' ) ); ?>>
+							<span><?php esc_html_e( 'Only funding my organisation can apply for', 'dgl-platform' ); ?></span>
 						</label>
 					<?php endif; ?>
 					<button class="dgl-listing__apply" type="submit"><?php esc_html_e( 'Show', 'dgl-platform' ); ?></button>

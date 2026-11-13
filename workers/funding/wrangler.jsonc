@@ -1,0 +1,19 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "dgl-funding",
+	"main": "src/index.ts",
+	"account_id": "a34b10229c4e780babe70dc9df70a311",
+	"compatibility_date": "2026-10-01",
+	"compatibility_flags": ["nodejs_compat"],
+	"workers_dev": true,
+	"observability": { "enabled": true },
+	"triggers": { "crons": ["0 4 * * 1"] },
+	"vars": { "DGL_SYNC_URL": "https://doinggoodleeds.org.uk/wp-json/dgl/v1/funding/sync" },
+	"kv_namespaces": [{ "binding": "STATE", "id": "875022892f2b4af09dd3d2bba7ecc9ce" }],
+	"workflows": [{ "name": "dgl-funding-run", "binding": "FUNDING_WORKFLOW", "class_name": "FundingWorkflow" }],
+	// DGL_TOKEN (secret_name dgl_funding_token) is added to this list once the token exists: see README.
+	"secrets_store_secrets": [
+		{ "binding": "TINYFISH", "store_id": "77bc305d0352491093bff8533d866287", "secret_name": "tinyfish" },
+		{ "binding": "ANTHROPIC", "store_id": "77bc305d0352491093bff8533d866287", "secret_name": "anthropic_api_key" }
+	]
+}

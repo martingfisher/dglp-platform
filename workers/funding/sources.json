@@ -1,0 +1,782 @@
+[
+ {
+  "id": "tnlcf-programmes",
+  "name": "National Lottery Community Fund: all funding programmes",
+  "url": "https://www.tnlcommunityfund.org.uk/funding/funding-programmes",
+  "funder": "The National Lottery Community Fund",
+  "notes": "Listing page: one grant per open programme"
+ },
+ {
+  "id": "tnlcf-awards-for-all",
+  "name": "National Lottery Community Fund: Awards for All England",
+  "url": "https://www.tnlcommunityfund.org.uk/funding/funding-programmes/national-lottery-awards-for-all-england",
+  "funder": "The National Lottery Community Fund"
+ },
+ {
+  "id": "tnlcf-awards-for-all-env",
+  "name": "National Lottery Community Fund: Awards for All England, Environment",
+  "url": "https://www.tnlcommunityfund.org.uk/funding/funding-programmes/national-lottery-awards-for-all-england-environment",
+  "funder": "The National Lottery Community Fund"
+ },
+ {
+  "id": "tnlcf-reaching-communities",
+  "name": "National Lottery Community Fund: Reaching Communities England",
+  "url": "https://www.tnlcommunityfund.org.uk/funding/funding-programmes/reaching-communities-england",
+  "funder": "The National Lottery Community Fund"
+ },
+ {
+  "id": "tnlcf-uk-fund",
+  "name": "National Lottery Community Fund: The UK Fund",
+  "url": "https://www.tnlcommunityfund.org.uk/funding/funding-programmes/the-uk-fund",
+  "funder": "The National Lottery Community Fund"
+ },
+ {
+  "id": "tnlcf-climate-food",
+  "name": "National Lottery Community Fund: Climate Action Fund, Food Systems",
+  "url": "https://www.tnlcommunityfund.org.uk/funding/funding-programmes/climate-action-fund-food-systems",
+  "funder": "The National Lottery Community Fund"
+ },
+ {
+  "id": "heritage-fund",
+  "name": "National Lottery Heritage Fund: funding",
+  "url": "https://www.heritagefund.org.uk/funding",
+  "funder": "The National Lottery Heritage Fund",
+  "notes": "Listing of heritage programmes"
+ },
+ {
+  "id": "sport-england-funding",
+  "name": "Sport England: our funding",
+  "url": "https://www.sportengland.org/funding-and-campaigns/our-funding",
+  "funder": "Sport England",
+  "notes": "Includes Movement Fund"
+ },
+ {
+  "id": "sport-england-green",
+  "name": "Sport England: Green Investment Fund",
+  "url": "https://www.sportengland.org/green-investment",
+  "funder": "Sport England"
+ },
+ {
+  "id": "football-foundation",
+  "name": "Football Foundation: looking for funding",
+  "url": "https://footballfoundation.org.uk/looking-for-funding",
+  "funder": "Football Foundation"
+ },
+ {
+  "id": "leedscf-open-grants",
+  "name": "Leeds Community Foundation: open grants",
+  "url": "https://www.leedscf.org.uk/open-grants/",
+  "funder": "Leeds Community Foundation",
+  "notes": "Listing of open Leeds funds"
+ },
+ {
+  "id": "mindwell-small-sparks",
+  "name": "Mindwell: Small Sparks funding",
+  "url": "https://www.mindwell-leeds.org.uk/wellbeing-activities-leeds/small-sparks-funding-leeds/",
+  "funder": "Mindwell Leeds"
+ },
+ {
+  "id": "cuf-windrush-day",
+  "name": "Church Urban Fund: Windrush Day Grant Scheme",
+  "url": "https://cuf.org.uk/take-action/explore-near-neighbours/windrush-grant-scheme/windrush-day-grant-scheme-2027",
+  "funder": "Church Urban Fund (Near Neighbours)"
+ },
+ {
+  "id": "lgbt-youth-joy",
+  "name": "LGBT Foundation: Youth Joy Fund",
+  "url": "https://lgbtfund.org.uk/live-funds/youth-joy-fund/",
+  "funder": "LGBT Consortium"
+ },
+ {
+  "id": "paddle-trust",
+  "name": "Paddle Trust",
+  "url": "https://www.paddletrust.org.uk/",
+  "funder": "Paddle Trust"
+ },
+ {
+  "id": "historic-england-nhg",
+  "name": "Historic England: Neighbourhood Heritage Grants",
+  "url": "https://historicengland.org.uk/campaigns/help-write-history/neighbourhood-heritage-grants/",
+  "funder": "Historic England"
+ },
+ {
+  "id": "green-allotments",
+  "name": "Green Allotments: New Allotment Site Fund",
+  "url": "https://greenallotments.org.uk/learn_more/",
+  "funder": "Green Allotments"
+ },
+ {
+  "id": "rosa-voices-frontline",
+  "name": "Rosa: Voices from the Frontline",
+  "url": "https://rosauk.org/our-programmes/voices-from-the-frontline/",
+  "funder": "Rosa"
+ },
+ {
+  "id": "cash4clubs",
+  "name": "Cash4Clubs",
+  "url": "https://cash4clubs.org/",
+  "funder": "Cash4Clubs"
+ },
+ {
+  "id": "garfield-weston",
+  "name": "Garfield Weston Foundation",
+  "url": "https://garfieldweston.org/",
+  "funder": "Garfield Weston Foundation",
+  "notes": "Single-programme trust"
+ },
+ {
+  "id": "leeds-phil-lit",
+  "name": "Leeds Philosophical and Literary Society",
+  "url": "http://www.leedsphilandlit.org.uk",
+  "funder": "Leeds Philosophical and Literary Society"
+ },
+ {
+  "id": "charles-hayward",
+  "name": "Charles Hayward Foundation",
+  "url": "https://charleshaywardfoundation.org.uk/about-us/",
+  "funder": "Charles Hayward Foundation"
+ },
+ {
+  "id": "alec-dickson",
+  "name": "Alec Dickson Trust",
+  "url": "https://www.alecdicksontrust.org.uk/",
+  "funder": "Alec Dickson Trust"
+ },
+ {
+  "id": "albert-hunt",
+  "name": "Albert Hunt Trust",
+  "url": "https://www.alberthunttrust.org.uk/about/",
+  "funder": "Albert Hunt Trust"
+ },
+ {
+  "id": "austin-hope-pilkington",
+  "name": "Austin and Hope Pilkington Trust",
+  "url": "https://austin-hope-pilkington.org.uk/",
+  "funder": "Austin and Hope Pilkington Trust"
+ },
+ {
+  "id": "bcbn-grant-initiative",
+  "name": "Better Community Business Network: Grant Initiative",
+  "url": "https://bcbn.org.uk/grant-initiative/",
+  "funder": "Better Community Business Network"
+ },
+ {
+  "id": "seedlings-foundation",
+  "name": "Seedlings Foundation",
+  "url": "https://seedlings-foundation.org.uk/",
+  "funder": "Seedlings Foundation"
+ },
+ {
+  "id": "elephant-trust",
+  "name": "Elephant Trust",
+  "url": "https://www.elephanttrust.org.uk/",
+  "funder": "Elephant Trust"
+ },
+ {
+  "id": "mccarthy-stone",
+  "name": "McCarthy Stone Foundation",
+  "url": "https://mccarthystonefoundation.org/our-grant-programmes/",
+  "funder": "McCarthy Stone Foundation"
+ },
+ {
+  "id": "movement-for-good",
+  "name": "Movement for Good (Benefact Group)",
+  "url": "https://movementforgood.com/",
+  "funder": "Benefact Group"
+ },
+ {
+  "id": "hedley-foundation",
+  "name": "Hedley Foundation",
+  "url": "https://hedleyfoundation.org.uk/",
+  "funder": "Hedley Foundation"
+ },
+ {
+  "id": "postcode-neighbourhood-trust",
+  "name": "Postcode Neighbourhood Trust",
+  "url": "https://www.postcodeneighbourhoodtrust.org.uk/apply-for-a-grant",
+  "funder": "Postcode Neighbourhood Trust"
+ },
+ {
+  "id": "sported-postcode",
+  "name": "Sported: People's Postcode Lottery",
+  "url": "https://sported.org.uk/peoples-postcode-lottery/",
+  "funder": "Sported"
+ },
+ {
+  "id": "groundwork-grassroots",
+  "name": "Groundwork: Grassroots Grants",
+  "url": "https://www.groundwork.org.uk/grassroots-grants/",
+  "funder": "Groundwork"
+ },
+ {
+  "id": "cosaraf-hardship",
+  "name": "COSARAF: hardship grants",
+  "url": "https://www.cosaraf.org/what-we-do/hardship-grants/",
+  "funder": "COSARAF"
+ },
+ {
+  "id": "ybs-foundation",
+  "name": "Yorkshire Building Society Charitable Foundation",
+  "url": "https://www.ybs.co.uk/your-society/charitable-foundation",
+  "funder": "Yorkshire Building Society Charitable Foundation"
+ },
+ {
+  "id": "asda-foundation-grants",
+  "name": "Asda Foundation: our grants",
+  "url": "https://asdafoundation.org/our-grants/foodbank-fundamentals-fund/",
+  "funder": "Asda Foundation",
+  "notes": "Check other Asda Foundation programmes mentioned on the page"
+ },
+ {
+  "id": "bq-foundation",
+  "name": "B&Q Foundation",
+  "url": "https://bqfoundation.org.uk/apply-for-a-grant/",
+  "funder": "B&Q Foundation"
+ },
+ {
+  "id": "weavers-company",
+  "name": "Weavers Company: charitable grants",
+  "url": "https://www.weavers.org.uk/charity/charitable-grants/",
+  "funder": "Weavers Company"
+ },
+ {
+  "id": "hillards-trust",
+  "name": "Hillards Charitable Trust",
+  "url": "https://www.hillardstrust.org/grants",
+  "funder": "Gay and Peter Hartley's Hillards Charitable Trust"
+ },
+ {
+  "id": "true-colours-uk-small-grants",
+  "name": "True Colours Trust: UK small grants",
+  "url": "https://www.truecolourstrust.org.uk/uk-small-grants",
+  "funder": "True Colours Trust"
+ },
+ {
+  "id": "gosling-foundation",
+  "name": "Gosling Foundation",
+  "url": "https://www.thegoslingfoundation.com/",
+  "funder": "Gosling Foundation"
+ },
+ {
+  "id": "aviva-community-fund",
+  "name": "Aviva Community Fund",
+  "url": "https://www.avivacommunityfund.co.uk/start-crowdfunding",
+  "funder": "Aviva"
+ },
+ {
+  "id": "arnold-clark",
+  "name": "Arnold Clark Community Fund",
+  "url": "https://www.arnoldclark.com/community-fund",
+  "funder": "Arnold Clark"
+ },
+ {
+  "id": "tesco-fruit-veg",
+  "name": "Tesco: Fruit and Veg Grants",
+  "url": "https://www.tescoplc.com/sustainability/communities/fruit-and-veg-grants",
+  "funder": "Tesco"
+ },
+ {
+  "id": "npower-foundation",
+  "name": "npower Business Solutions Foundation",
+  "url": "https://npowerbusinesssolutions.com/foundation",
+  "funder": "npower Business Solutions"
+ },
+ {
+  "id": "masonic-charitable-foundation",
+  "name": "Masonic Charitable Foundation: grants to charities",
+  "url": "https://mcf.org.uk/get-support/grants-to-charities/",
+  "funder": "Masonic Charitable Foundation"
+ },
+ {
+  "id": "warburtons-community",
+  "name": "Warburtons: community giving",
+  "url": "https://www.warburtons.co.uk/goodstuff/sustainability/within-the-community/giving-donating/",
+  "funder": "Warburtons"
+ },
+ {
+  "id": "screwfix-foundation",
+  "name": "Screwfix Foundation",
+  "url": "https://www.screwfix.com/help/screwfixfoundation/",
+  "funder": "Screwfix Foundation"
+ },
+ {
+  "id": "charles-elsie-sykes",
+  "name": "Charles and Elsie Sykes Trust",
+  "url": "http://www.charlesandelsiesykestrust.co.uk/",
+  "funder": "Charles and Elsie Sykes Trust"
+ },
+ {
+  "id": "henry-smith-enterprise-gateway",
+  "name": "Henry Smith Foundation: Enterprise Gateway",
+  "url": "https://henrysmith.foundation/grants/enterprise-gateway/",
+  "funder": "Henry Smith Foundation"
+ },
+ {
+  "id": "henry-smith-grants",
+  "name": "Henry Smith Foundation: grants",
+  "url": "https://henrysmith.foundation/grants/",
+  "funder": "Henry Smith Foundation"
+ },
+ {
+  "id": "henry-smith-charity",
+  "name": "Henry Smith Charity: explore our grants",
+  "url": "https://www.henrysmithcharity.org.uk/explore-our-grants-and-apply/",
+  "funder": "Henry Smith Foundation"
+ },
+ {
+  "id": "metcalfe-smith",
+  "name": "Metcalfe Smith Trust",
+  "url": "https://metcalfesmithtrust.org.uk/",
+  "funder": "Metcalfe Smith Trust"
+ },
+ {
+  "id": "allen-lane",
+  "name": "Allen Lane Foundation",
+  "url": "https://allenlane.org.uk/applying-for-funding/",
+  "funder": "Allen Lane Foundation"
+ },
+ {
+  "id": "benefact-trust",
+  "name": "Benefact Trust: general grants",
+  "url": "https://www.benefacttrust.co.uk/grants/",
+  "funder": "Benefact Trust"
+ },
+ {
+  "id": "brelms-trust",
+  "name": "Brelms Trust",
+  "url": "https://www.brelmstrust.org.uk/",
+  "funder": "Brelms Trust"
+ },
+ {
+  "id": "morrisons-foundation",
+  "name": "Morrisons Foundation",
+  "url": "https://www.morrisonsfoundation.com/",
+  "funder": "Morrisons Foundation"
+ },
+ {
+  "id": "the-fore",
+  "name": "The Fore",
+  "url": "https://thefore.org/",
+  "funder": "The Fore"
+ },
+ {
+  "id": "hdruk-take-the-lead",
+  "name": "Health Data Research UK: Take the Lead community grants",
+  "url": "https://www.hdruk.ac.uk/funding-opportunities/take-the-lead-community-grants/",
+  "funder": "Health Data Research UK"
+ },
+ {
+  "id": "paul-hamlyn",
+  "name": "Paul Hamlyn Foundation: our funding",
+  "url": "https://www.phf.org.uk/our-funding/",
+  "funder": "Paul Hamlyn Foundation"
+ },
+ {
+  "id": "parkinsons-uk-physical-activity",
+  "name": "Parkinson's UK: grants for physical activity providers",
+  "url": "https://www.parkinsons.org.uk/information-and-support/grants-physical-activity-providers",
+  "funder": "Parkinson's UK"
+ },
+ {
+  "id": "sir-george-martin",
+  "name": "Sir George Martin Trust",
+  "url": "http://www.sirgeorgemartintrust.org.uk",
+  "funder": "Sir George Martin Trust"
+ },
+ {
+  "id": "help-the-homeless",
+  "name": "Help the Homeless",
+  "url": "https://www.help-the-homeless.org.uk/applying-for-funding",
+  "funder": "Help the Homeless"
+ },
+ {
+  "id": "esmee-fairbairn",
+  "name": "Esmee Fairbairn Foundation",
+  "url": "https://esmeefairbairn.org.uk/",
+  "funder": "Esmee Fairbairn Foundation"
+ },
+ {
+  "id": "wades-charity-grants",
+  "name": "Wade's Charity: grants criteria",
+  "url": "https://www.wadescharity.org/grants-criteria/",
+  "funder": "Wade's Charity",
+  "notes": "Leeds trust"
+ },
+ {
+  "id": "wades-charity-main",
+  "name": "Wade's Charity: main grants programme",
+  "url": "https://www.wadescharity.org/main-grants-programme/",
+  "funder": "Wade's Charity",
+  "notes": "Leeds trust"
+ },
+ {
+  "id": "artemis-foundation",
+  "name": "Artemis Charitable Foundation",
+  "url": "https://www.artemisfunds.com/en-gb/individual/about/artemis-charitable-foundation/",
+  "funder": "Artemis Charitable Foundation"
+ },
+ {
+  "id": "jordan-sinnott",
+  "name": "Jordan Sinnott Foundation Trust",
+  "url": "https://www.js25.co.uk/",
+  "funder": "Jordan Sinnott Foundation Trust"
+ },
+ {
+  "id": "bbc-cin-grants",
+  "name": "BBC Children in Need: grants",
+  "url": "https://www.bbcchildreninneed.co.uk/grants/apply/",
+  "funder": "BBC Children in Need"
+ },
+ {
+  "id": "yapp-trust",
+  "name": "Yapp Charitable Trust",
+  "url": "https://yappcharitabletrust.org.uk/",
+  "funder": "Yapp Charitable Trust"
+ },
+ {
+  "id": "cadent-foundation",
+  "name": "Cadent Foundation",
+  "url": "https://cadentgas.com/cadent-foundation",
+  "funder": "Cadent Foundation"
+ },
+ {
+  "id": "national-churches-trust",
+  "name": "National Churches Trust: our grants",
+  "url": "https://www.nationalchurchestrust.org/our-grants",
+  "funder": "National Churches Trust"
+ },
+ {
+  "id": "leeds-building-society-foundation",
+  "name": "Leeds Building Society Foundation",
+  "url": "https://www.leedsbuildingsociety.co.uk/your-society/about-us/foundation/",
+  "funder": "Leeds Building Society Foundation"
+ },
+ {
+  "id": "strategic-legal-fund",
+  "name": "Strategic Legal Fund",
+  "url": "https://strategiclegalfund.org.uk/about/",
+  "funder": "Strategic Legal Fund"
+ },
+ {
+  "id": "theatres-trust",
+  "name": "Theatres Trust: grants and funding",
+  "url": "http://www.theatrestrust.org.uk/how-we-help/grants-funding",
+  "funder": "Theatres Trust"
+ },
+ {
+  "id": "veolia-trust",
+  "name": "Veolia Environmental Trust",
+  "url": "http://www.veoliatrust.org/funding/index.php?page=Postcode_Checker_1",
+  "funder": "Veolia Environmental Trust"
+ },
+ {
+  "id": "fim-trust",
+  "name": "Forces in Mind Trust",
+  "url": "https://www.fim-trust.org/apply/",
+  "funder": "Forces in Mind Trust"
+ },
+ {
+  "id": "biffa-community-buildings",
+  "name": "Biffa Award: community buildings",
+  "url": "https://www.biffa-award.org/community-buildings/",
+  "funder": "Biffa Award"
+ },
+ {
+  "id": "biffa-biodiversity",
+  "name": "Biffa Award: rebuilding biodiversity",
+  "url": "https://www.biffa-award.org/rebuilding-biodiversity/",
+  "funder": "Biffa Award"
+ },
+ {
+  "id": "biffa-recreation",
+  "name": "Biffa Award: recreation",
+  "url": "https://www.biffa-award.org/recreation/",
+  "funder": "Biffa Award"
+ },
+ {
+  "id": "bhc-foundation",
+  "name": "Barchester Charitable Foundation",
+  "url": "https://www.bhcfoundation.org.uk/apply",
+  "funder": "Barchester Charitable Foundation"
+ },
+ {
+  "id": "energy-redress",
+  "name": "Energy Redress Scheme",
+  "url": "https://energyredress.org.uk/funding/our-funding/",
+  "funder": "Energy Redress Scheme"
+ },
+ {
+  "id": "fcc-community-action",
+  "name": "FCC Communities Foundation: Community Action Fund",
+  "url": "https://fcccommunitiesfoundation.org.uk/funds/fcc-community-action-fund",
+  "funder": "FCC Communities Foundation"
+ },
+ {
+  "id": "grantscape-suez",
+  "name": "Grantscape: Suez Communities Fund",
+  "url": "https://grantscape.org.uk/fund/suez-communities-fund-england/",
+  "funder": "Grantscape"
+ },
+ {
+  "id": "point-north-hook-moor",
+  "name": "Point North: Hook Moor Wind Farm Community Fund",
+  "url": "https://pointnorth.org.uk/grants/hook-moor-wind-farm-community-fund/",
+  "funder": "Point North"
+ },
+ {
+  "id": "sib-funding",
+  "name": "Social Investment Business: funding",
+  "url": "https://www.sibgroup.org.uk/funding/",
+  "funder": "Social Investment Business",
+  "notes": "Loans and grants listing"
+ },
+ {
+  "id": "sib-flexible-finance",
+  "name": "Social Investment Business: Flexible Finance",
+  "url": "https://www.sibgroup.org.uk/funds/flexible-finance/",
+  "funder": "Social Investment Business"
+ },
+ {
+  "id": "thekey-fund",
+  "name": "The Key Fund",
+  "url": "https://thekeyfund.co.uk/funding/",
+  "funder": "The Key Fund",
+  "notes": "Loans and grants for enterprise"
+ },
+ {
+  "id": "unltd-awards",
+  "name": "UnLtd: awards",
+  "url": "https://www.unltd.org.uk/awards",
+  "funder": "UnLtd",
+  "notes": "Mostly individuals, keep only community awards"
+ },
+ {
+  "id": "sse-social-commitment",
+  "name": "SSE: social commitment programmes",
+  "url": "https://www.the-sse.org/programme/the-dps-social-commitment-programmes/",
+  "notes": "Funder not identified: check it is a funder page"
+ },
+ {
+  "id": "wyca-funding-opportunities",
+  "name": "West Yorkshire Combined Authority: funding opportunities",
+  "url": "https://www.westyorks-ca.gov.uk/policing-and-crime/partnership-working/funding-opportunities/",
+  "funder": "West Yorkshire Combined Authority"
+ },
+ {
+  "id": "wyca-safer-communities",
+  "name": "West Yorkshire Combined Authority: Mayor's Safer Communities Fund",
+  "url": "https://www.westyorks-ca.gov.uk/policing-and-crime/communities/mayors-safer-communities-fund/",
+  "funder": "West Yorkshire Combined Authority"
+ },
+ {
+  "id": "digital-inclusion-leeds",
+  "name": "Digital Inclusion Leeds: grants",
+  "url": "https://digitalinclusionleeds.com/grants/",
+  "funder": "Digital Inclusion Leeds"
+ },
+ {
+  "id": "fundingleeds",
+  "name": "Funding Leeds",
+  "url": "http://www.fundingleeds.co.uk",
+  "notes": "Directory: may list many funds"
+ },
+ {
+  "id": "two-ridings",
+  "name": "Two Ridings Community Foundation",
+  "url": "https://www.tworidingscf.org.uk/",
+  "funder": "Two Ridings Community Foundation"
+ },
+ {
+  "id": "comic-relief",
+  "name": "Comic Relief: funding",
+  "url": "https://www.comicrelief.com/funding/",
+  "funder": "Comic Relief"
+ },
+ {
+  "id": "lloyds-bank-foundation",
+  "name": "Lloyds Bank Foundation for England and Wales",
+  "url": "https://www.lloydsbankfoundation.org.uk/",
+  "funder": "Lloyds Bank Foundation"
+ },
+ {
+  "id": "tudor-trust",
+  "name": "Tudor Trust",
+  "url": "https://tudortrust.org.uk/",
+  "funder": "Tudor Trust"
+ },
+ {
+  "id": "postcode-community-trust",
+  "name": "Postcode Community Trust",
+  "url": "https://www.postcodecommunitytrust.org.uk/",
+  "funder": "Postcode Community Trust"
+ },
+ {
+  "id": "postcode-local-trust",
+  "name": "Postcode Local Trust",
+  "url": "https://www.postcodelocaltrust.org.uk/",
+  "funder": "Postcode Local Trust"
+ },
+ {
+  "id": "postcode-earth-trust",
+  "name": "Postcode Earth Trust",
+  "url": "https://www.postcodeearthtrust.org.uk/",
+  "funder": "Postcode Earth Trust"
+ },
+ {
+  "id": "leeds-city-council-community-committee",
+  "name": "Leeds City Council: community committee funding",
+  "url": "https://www.leeds.gov.uk/consultations-and-feedback/community-committees",
+  "funder": "Leeds City Council"
+ },
+ {
+  "id": "foyle-foundation",
+  "name": "Foyle Foundation",
+  "url": "https://www.foylefoundation.org.uk/",
+  "funder": "Foyle Foundation"
+ },
+ {
+  "id": "co-op-local-community-fund",
+  "name": "Co-op Local Community Fund",
+  "url": "https://www.coop.co.uk/membership/local-community-fund",
+  "funder": "Co-op"
+ },
+ {
+  "id": "co-op-foundation",
+  "name": "Co-op Foundation",
+  "url": "https://www.coopfoundation.org.uk/",
+  "funder": "Co-op Foundation"
+ },
+ {
+  "id": "power-to-change",
+  "name": "Power to Change",
+  "url": "https://www.powertochange.org.uk/get-support/",
+  "funder": "Power to Change"
+ },
+ {
+  "id": "rank-foundation",
+  "name": "The Rank Foundation",
+  "url": "https://www.rankfoundation.com/",
+  "funder": "The Rank Foundation"
+ },
+ {
+  "id": "clothworkers-foundation",
+  "name": "Clothworkers' Foundation",
+  "url": "https://www.clothworkersfoundation.org.uk/",
+  "funder": "Clothworkers' Foundation"
+ },
+ {
+  "id": "barrow-cadbury",
+  "name": "Barrow Cadbury Trust",
+  "url": "https://barrowcadbury.org.uk/our-work/applying-for-funding/",
+  "funder": "Barrow Cadbury Trust"
+ },
+ {
+  "id": "joseph-rowntree-charitable-trust",
+  "name": "Joseph Rowntree Charitable Trust",
+  "url": "https://www.jrct.org.uk/",
+  "funder": "Joseph Rowntree Charitable Trust"
+ },
+ {
+  "id": "nationwide-foundation",
+  "name": "Nationwide Foundation",
+  "url": "https://www.nationwidefoundation.org.uk/",
+  "funder": "Nationwide Foundation"
+ },
+ {
+  "id": "youth-endowment-fund",
+  "name": "Youth Endowment Fund",
+  "url": "https://youthendowmentfund.org.uk/funding/",
+  "funder": "Youth Endowment Fund"
+ },
+ {
+  "id": "spirit-of-2012",
+  "name": "Spirit of 2012",
+  "url": "https://www.spiritof2012.org.uk/",
+  "funder": "Spirit of 2012"
+ },
+ {
+  "id": "persimmon-foundation",
+  "name": "Persimmon Charitable Foundation",
+  "url": "https://www.persimmonhomes.com/charity",
+  "funder": "Persimmon"
+ },
+ {
+  "id": "sainsburys-communities",
+  "name": "Sainsbury's community grants",
+  "url": "https://www.about.sainsburys.co.uk/sustainability/community",
+  "funder": "Sainsbury's"
+ },
+ {
+  "id": "yorkshire-cricket-foundation",
+  "name": "Yorkshire Cricket Foundation",
+  "url": "https://www.yorkshirecricketfoundation.com/",
+  "funder": "Yorkshire Cricket Foundation"
+ },
+ {
+  "id": "localgiving",
+  "name": "Localgiving",
+  "url": "https://localgiving.org/",
+  "funder": "Localgiving",
+  "notes": "Match funding"
+ },
+ {
+  "id": "sir-halley-stewart",
+  "name": "Sir Halley Stewart Trust",
+  "url": "https://www.sirhalleystewart.org.uk/",
+  "funder": "Sir Halley Stewart Trust"
+ },
+ {
+  "id": "souter-charitable-trust",
+  "name": "Souter Charitable Trust",
+  "url": "https://www.souter.org.uk/",
+  "funder": "Souter Charitable Trust"
+ },
+ {
+  "id": "coalfields-regeneration-trust",
+  "name": "Coalfields Regeneration Trust",
+  "url": "https://www.coalfields-regen.org.uk/",
+  "funder": "Coalfields Regeneration Trust"
+ },
+ {
+  "id": "the-childwick-trust",
+  "name": "Childwick Trust",
+  "url": "https://www.childwicktrust.org/",
+  "funder": "Childwick Trust"
+ },
+ {
+  "id": "leeds-hospitals-charity",
+  "name": "Leeds Hospitals Charity",
+  "url": "https://www.leedshospitalscharity.org.uk/",
+  "funder": "Leeds Hospitals Charity"
+ },
+ {
+  "id": "community-first-yorkshire",
+  "name": "Community First Yorkshire",
+  "url": "https://www.communityfirstyorkshire.org.uk/",
+  "funder": "Community First Yorkshire"
+ },
+ {
+  "id": "benefact-community-impact",
+  "name": "Benefact Trust: Community Impact Grants",
+  "url": "https://www.benefacttrust.co.uk/grants/community-impact-grants/",
+  "funder": "Benefact Trust"
+ },
+ {
+  "id": "leeds-crisis-resilience-fund",
+  "name": "Leeds City Council: Crisis and Resilience Fund",
+  "url": "https://www.leeds.gov.uk/benefits/crisis-and-resilience-fund",
+  "funder": "Leeds City Council"
+ },
+ {
+  "id": "leeds-neighbourhood-fund",
+  "name": "Leeds City Council: Neighbourhood Fund",
+  "url": "https://www.leeds.gov.uk/planning/planning-policy/neighbourhood-planning/neighbourhood-fund",
+  "funder": "Leeds City Council"
+ },
+ {
+  "id": "energy-redress-apply",
+  "name": "Energy Redress Scheme: apply for funding",
+  "url": "https://energyredress.org.uk/funding/apply/",
+  "funder": "Energy Redress Scheme"
+ }
+]

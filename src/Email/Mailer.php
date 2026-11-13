@@ -82,6 +82,12 @@ final class Mailer {
 			return;
 		}
 
+		// A fund the weekly import brought in has no member behind it: approving
+		// one must not email the organisation that nominally owns it.
+		if ( \DGL\Funding\Import::is_imported( $post_id ) ) {
+			return;
+		}
+
 		$context = self::context( $post_id, $actor_id, $note );
 
 		if ( null === $context ) {
