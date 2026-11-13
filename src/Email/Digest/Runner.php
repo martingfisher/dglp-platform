@@ -173,7 +173,7 @@ final class Runner {
 			unsubscribe_url: self::unsubscribe_url( $subscription->unsubscribe_token ),
 			preferences_url: \DGL\Dashboard\Router::url( 'profile', 'email' ),
 			browse_url: home_url( '/' ),
-			filtered: $subscription->narrows( PostTypes::feed_keys() )
+			filtered: $subscription->narrows( \DGL\Funding\Visibility::filter_types( PostTypes::feed_keys(), true ) )
 		);
 
 		if ( $dry_run ) {

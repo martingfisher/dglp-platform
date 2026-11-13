@@ -130,4 +130,6 @@ Nothing else changes. To be told who subscribes to funding in the digest, see
 
 A member's digest lists the types they ticked. Subscriptions saved before
 funding existed do not include it, so existing subscribers get funding only if
-they tick it. New members signed up since 13 November get it by default.
+they tick it. While funding is held back, new members are not signed up for it
+either (0.60.6); once it is on, new members get it by default like every other
+type. Adding it to existing subscribers waits for DGLP's decision after approval.

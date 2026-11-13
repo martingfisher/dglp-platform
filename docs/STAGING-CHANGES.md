@@ -2194,3 +2194,10 @@ Wordify's `replace_in_post`; every page edit left a revision.
   waiting for review). Administrators only; each press goes in the audit log.
   Tested on the local WordPress through the real form: Show made `/grants/`
   answer 200 to a signed-out visitor, Hide put it back to 404.
+- **0.60.6, 13 November. No funding in round-up choices until it is switched
+  on.** Somebody who joins and accepts the weekly round-up is signed up for
+  every type the public can see; while funding is held back that no longer
+  includes funding, so nobody joining before the launch gets funds unasked
+  afterwards. The same for `wp dgl digest subscribe` without `--types`, and a
+  round-up no longer calls itself "narrowed" for leaving out a hidden type.
+  Existing subscriptions are untouched (DGLP to decide after approval).

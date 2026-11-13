@@ -306,7 +306,9 @@ final class Store {
 			return false;
 		}
 
-		$types = array_values( \DGL\PostTypes::feed_keys() );
+		// Every type the public can see. Funding held back until it is signed off
+		// is not one: nobody joining before then is signed up for it unasked.
+		$types = \DGL\Funding\Visibility::filter_types( array_values( \DGL\PostTypes::feed_keys() ), true );
 
 		return [] !== $types && self::save( $user_id, $types, [], Frequency::WEEKLY, true, $source );
 	}

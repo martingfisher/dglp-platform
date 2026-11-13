@@ -318,7 +318,7 @@ final class Command {
 		$requested = (string) ( $assoc['types'] ?? 'all' );
 
 		$types = 'all' === $requested
-			? array_values( \DGL\PostTypes::feed_keys() )
+			? \DGL\Funding\Visibility::filter_types( array_values( \DGL\PostTypes::feed_keys() ), true )
 			: array_values( array_filter(
 				array_map( 'trim', explode( ',', $requested ) ),
 				static fn( string $t ): bool => in_array( $t, \DGL\PostTypes::feed_keys(), true )
