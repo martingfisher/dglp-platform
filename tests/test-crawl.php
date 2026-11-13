@@ -29,6 +29,16 @@ Harness::assert_true( str_contains( $xml, '<lastmod>2026-01-02T10:00:00+00:00</l
 Harness::assert_true( 1 === substr_count( $xml, '<lastmod>' ), 'and left out when not' );
 Harness::assert_true( false !== simplexml_load_string( $xml ), 'the document is well-formed XML' );
 
+Harness::group( 'Seo: whose hook is it' );
+
+Harness::assert_same( true, Seo::belongs_to( [ 'RankMath\\Frontend\\Head', 'title' ], 'RankMath' ), 'a static method named as an array' );
+Harness::assert_same( true, Seo::belongs_to( '\\RankMath\\Frontend\\Head::title', 'RankMath' ), 'a static method named as a string, leading slash and all' );
+Harness::assert_same( false, Seo::belongs_to( [ 'RankMathematics\\Head', 'title' ], 'RankMath' ), 'a namespace that only starts the same is somebody else' );
+Harness::assert_same( false, Seo::belongs_to( [ 'DGL\\Frontend\\Frontend', 'directory_title' ], 'RankMath' ), 'our own directory title stays hooked' );
+Harness::assert_same( false, Seo::belongs_to( 'strtoupper', 'RankMath' ), 'a plain function belongs to nobody' );
+Harness::assert_same( false, Seo::belongs_to( static fn(): string => '', 'RankMath' ), 'nor does a closure' );
+Harness::assert_same( true, Seo::belongs_to( [ new \DGL\Frontend\Seo(), 'head' ], 'DGL' ), 'an object is judged by its class' );
+
 Harness::group( 'Seo: offers need a price' );
 
 Harness::assert_same( '0', Seo::offer( 'free', '', '', 'https://x.test/e/' )['price'], 'free is price 0' );

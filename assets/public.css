@@ -1975,6 +1975,18 @@ html:not(.dgl-js) .dgl-dir__ddfind { display: none; }
 	font-size: 1em;
 }
 
+/*
+ * The theme clears a focused field's background and sets its text to black.
+ * On this navy band that left black type on navy for as long as someone was
+ * typing. Keep the field white and its text ours while it has focus.
+ */
+.dgl-pub .dgl-home__input:focus,
+.dgl-home-block .dgl-home__input:focus {
+	background: var(--dgl-white);
+	color: var(--dgl-text);
+	caret-color: var(--dgl-text);
+}
+
 .dgl-pub .dgl-home__searchbutton,
 .dgl-home-block .dgl-home__searchbutton {
 	flex: none;

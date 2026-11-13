@@ -4657,6 +4657,28 @@ $home_seo = \DGL\Frontend\Seo::page();
 $ok( \DGL\Frontend\Home::is_request() && \DGL\Frontend\Frontend::is_ours(), 'the router owns the request' );
 $ok( is_array( $home_seo ) && 'home' === $home_seo['kind'] && 'noindex,follow' === $home_seo['robots'] && 'WebSite' === $home_seo['schema']['main']['@type'] && '' !== $home_seo['image']['url'], 'the head describes it, noindex while it is a sample, with a social card' );
 $ok( str_starts_with( \DGL\Frontend\Frontend::directory_title( 'x' ), 'Home page sample | ' ), 'and the title says what it is' );
+
+// An SEO plugin that answers the document title by asking us for it, the way Rank Math's
+// rank_math/frontend/title does. On 13 November 2026 that took every page of ours down:
+// describing the page asks for the title, and the title asked for the page, without end.
+$seo_calls = 0;
+$seo_asker = static function ( $title ) use ( &$seo_calls ) {
+	++$seo_calls;
+
+	if ( $seo_calls > 5 ) {
+		return 'stopped'; // The loop the guard is there to prevent; bail rather than exhaust memory.
+	}
+
+	return \DGL\Frontend\Seo::rank_math_title( 'Their own guess' );
+};
+add_filter( 'pre_get_document_title', $seo_asker, 15 );
+\DGL\Frontend\Seo::reset();
+$home_seo = \DGL\Frontend\Seo::page();
+remove_filter( 'pre_get_document_title', $seo_asker, 15 );
+$ok( is_array( $home_seo ) && 1 === $seo_calls, 'a title filter that asks us for the page is answered once, not for ever' );
+$ok( is_array( $home_seo ) && 'Their own guess' === $home_seo['title'], 'and asked from inside, we say we do not know yet, so it keeps its own title' );
+$ok( is_array( $home_seo ) && 'home' === $home_seo['kind'], 'and the page is still described in full' );
+
 set_query_var( \DGL\Frontend\Home::QUERY_VAR, '' );
 \DGL\Frontend\Seo::reset();
 
