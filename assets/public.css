@@ -1893,6 +1893,42 @@ html:not(.dgl-js) .dgl-dir__ddfind { display: none; }
 
 .dgl-home__row .dgl-date__day { font-size: 1.35rem; }
 
+/*
+ * Funding rows: picture, words, then the closing leaf on the right, where the
+ * eye ends up after reading what the fund is. "Closes" sits above the date;
+ * a fund open all year says so instead of showing a date it does not have.
+ */
+.dgl-home__row.dgl-home__row--fund { grid-template-columns: auto minmax(0, 1fr) auto; grid-template-rows: auto; }
+
+/* No picture of its own: the words take the first column. */
+.dgl-home__row.dgl-home__row--fund:not(:has(> .dgl-home__rowpic)) { grid-template-columns: minmax(0, 1fr) auto; }
+
+.dgl-home__row.dgl-home__row--fund:not(:has(> .dgl-home__rowpic)) > .dgl-home__rowbody { grid-column: 1; }
+
+.dgl-home__row.dgl-home__row--fund:not(:has(> .dgl-home__rowpic)) > .dgl-date { grid-column: 2; }
+
+.dgl-home__row.dgl-home__row--fund:not(.dgl-home__row--news) > .dgl-home__rowpic { grid-column: 1; grid-row: 1; }
+
+.dgl-home__row.dgl-home__row--fund:not(.dgl-home__row--news) > .dgl-home__rowbody { grid-column: 2; grid-row: 1; }
+
+.dgl-home__row.dgl-home__row--fund:not(.dgl-home__row--news) > .dgl-date { grid-column: 3; grid-row: 1; }
+
+.dgl-date__label {
+	font-size: 0.6rem;
+	font-weight: 600;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--dgl-text-muted);
+}
+
+.dgl-date--rolling .dgl-date__label { font-size: 0.68rem; font-weight: 700; color: var(--dgl-teal-text); }
+
+.dgl-date__all { font-size: 0.78rem; font-weight: 700; line-height: 1.1; }
+
+/* Closing within a fortnight: the date itself turns to the alert colour. */
+.dgl-date--soon .dgl-date__month,
+.dgl-date--soon .dgl-date__day { color: var(--dgl-danger); }
+
 .dgl-home__rowpic { display: block; width: 64px; height: 64px; border-radius: 10px; overflow: hidden; background: var(--dgl-surface); }
 
 .dgl-home__rowpic .dgl-card__img { display: block; width: 100%; height: 100%; object-fit: cover; }

@@ -81,7 +81,13 @@ export class FundingWorkflow extends WorkflowEntrypoint<Env, RunParams> {
 			};
 			const res = await fetch(env.DGL_SYNC_URL || DEFAULT_SYNC_URL, {
 				method: 'POST',
-				headers: { 'content-type': 'application/json', authorization: `Bearer ${await token()}` },
+				// Wordfence on the site refuses a POST with no user-agent and no referer, so say who we are.
+				headers: {
+					'content-type': 'application/json',
+					'user-agent': 'dgl-funding/1.0 (+https://doinggoodleeds.org.uk/grants/)',
+					referer: 'https://dgl-funding.martingfisher.workers.dev/',
+					authorization: `Bearer ${await token()}`,
+				},
 				body: JSON.stringify(payload),
 				signal: AbortSignal.timeout(120_000),
 			});
