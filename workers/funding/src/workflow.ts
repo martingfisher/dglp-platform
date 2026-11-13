@@ -28,7 +28,8 @@ export async function siteSources(env: Env): Promise<Source[]> {
 	const url = (env.DGL_SYNC_URL || DEFAULT_SYNC_URL).replace(/\/sync\/?$/, '/sources');
 	const token = await env.DGL_TOKEN.get();
 	const read = async (): Promise<Source[]> => {
-		const res = await fetch(url, { headers: SITE_HEADERS(token), signal: AbortSignal.timeout(30_000) });
+		// A unique query string, so a cache in front of the site can never answer for it.
+		const res = await fetch(`${url}?fresh=${Date.now()}`, { headers: { ...SITE_HEADERS(token), 'cache-control': 'no-cache' }, cache: 'no-store', signal: AbortSignal.timeout(30_000) });
 		if (!res.ok) throw new Error(`sources GET ${res.status}`);
 		const body = (await res.json()) as { sources?: Source[] };
 		return (body.sources ?? []).filter((s) => s && typeof s.id === 'string' && typeof s.url === 'string' && s.url.startsWith('https://'));
