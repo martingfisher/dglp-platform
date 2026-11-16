@@ -2260,3 +2260,7 @@ Wordify's `replace_in_post`; every page edit left a revision.
   screen to the whole review team again with no other step. The 119 pending
   grants in the review queue are untouched. `Visibility::screen_open_to()` is
   unit-tested. Unit suite 2935.
+- **0.61.5: `wp dgl funding screen`.** Read only. Lists every administrator
+  and moderator and whether the live code lets them see the Grants and
+  Funding screen, so the 0.61.4 hiding can be checked without signing in as
+  each person.

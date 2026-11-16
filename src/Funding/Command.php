@@ -19,6 +19,7 @@ defined( 'ABSPATH' ) || exit;
  *     wp dgl funding token
  *     wp dgl funding public on
  *     wp dgl funding status
+ *     wp dgl funding screen
  *     wp dgl funding import run.json --dry-run
  */
 final class Command {
@@ -117,6 +118,35 @@ final class Command {
 		}
 
 		$run['ok'] ? WP_CLI::success( $dry ? 'Dry run finished. Nothing was written.' : 'Done.' ) : WP_CLI::error( 'Nothing changed.' );
+	}
+
+	/**
+	 * Who sees the review team's Grants and Funding screen, as the live code decides it.
+	 *
+	 * Read only. Lists every administrator and moderator with yes or no.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp dgl funding screen
+	 *
+	 * @param string[]              $args
+	 * @param array<string, string> $assoc
+	 */
+	public function screen( array $args, array $assoc ): void {
+		$allowed = get_option( Visibility::SCREEN_USERS_OPTION, [] );
+
+		WP_CLI::log( sprintf( 'Funding is %s. %s: %s.', Visibility::is_on() ? 'ON' : 'OFF', Visibility::SCREEN_USERS_OPTION, wp_json_encode( $allowed ) ) );
+
+		$users = get_users(
+			[
+				'role__in' => [ \DGL\Access\UserContext::ROLE_ADMIN, \DGL\Access\UserContext::ROLE_MODERATOR ],
+				'orderby'  => 'ID',
+			]
+		);
+
+		foreach ( $users as $user ) {
+			WP_CLI::log( sprintf( '%-4d %-40s %-14s %s', $user->ID, $user->user_login, implode( ',', $user->roles ), Visibility::screen_visible( (int) $user->ID ) ? 'SEES IT' : 'hidden' ) );
+		}
 	}
 
 	/**

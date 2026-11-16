@@ -130,6 +130,7 @@ is hidden too while funding is off: the menu item goes and the address answers
 ```
 wp option update dgl_funding_screen_users '[1]' --format=json
 wp option get dgl_funding_screen_users --format=json
+wp dgl funding screen      # each administrator and moderator: SEES IT or hidden
 ```
 
 Switching funding on opens the screen to the whole review team again.
