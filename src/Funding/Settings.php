@@ -27,6 +27,11 @@ final class Settings {
 	}
 
 	public static function menu(): void {
+		// While funding is off, only the people listed see this page (Martin, 16 November 2026).
+		if ( Visibility::hidden_here() ) {
+			return;
+		}
+
 		add_options_page(
 			__( 'Grants and Funding', 'dgl-platform' ),
 			__( 'Grants and Funding', 'dgl-platform' ),
@@ -37,7 +42,7 @@ final class Settings {
 	}
 
 	public static function save(): void {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( 'manage_options' ) || Visibility::hidden_here() ) {
 			wp_die( esc_html__( 'You do not have permission to do that.', 'dgl-platform' ) );
 		}
 
@@ -61,7 +66,7 @@ final class Settings {
 	}
 
 	public static function screen(): void {
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( 'manage_options' ) || Visibility::hidden_here() ) {
 			return;
 		}
 

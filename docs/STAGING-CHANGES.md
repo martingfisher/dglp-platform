@@ -2264,3 +2264,17 @@ Wordify's `replace_in_post`; every page edit left a revision.
   and moderator and whether the live code lets them see the Grants and
   Funding screen, so the 0.61.4 hiding can be checked without signing in as
   each person.
+- **0.61.6: funding hidden everywhere from all but Martin.** Martin asked
+  (16 November) for it to be hidden from everyone but him, not only the
+  review screen. While funding is off, anyone not in
+  `dgl_funding_screen_users` gets no wp-admin Funding opportunities screens,
+  menu, admin-bar "New" or REST route (`register_post_type_args`); is refused
+  edit, delete and read on a fund through WordPress (`map_meta_cap`); no
+  Settings > Grants and Funding; no funds or pending edits to them in the
+  review queue, its count, the Approved list or organisation lists
+  (`dgl_items_hidden_types` in `ItemsTable`); a 404 on a fund's review or
+  edit address; no "Funding opportunities" submit tile; and a 404 on
+  `/grants/` and fund pages (the preview is now the listed people only, not
+  every administrator). The monthly report's "waiting" figure and the
+  wp-admin dashboard widget count leave funds out too while it is off.
+  `held_admin_args()` and `blocks_cap()` are unit-tested. Unit suite 2948.

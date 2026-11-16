@@ -114,7 +114,9 @@ wp dgl funding public status
 While it is off, `/grants/` and every fund's page answer 404 to the public and are
 noindex; the funding blocks and feeds draw nothing; funds are left out of topic
 pages, search, organisation pages, the sitemaps, the digest and the digest
-choices. Administrators see everything with a "Preview for administrators" line.
+choices. Only the people listed in `dgl_funding_screen_users` (Martin) see it,
+with a "Preview for administrators" line; other administrators do not (since
+16 November 2026).
 The weekly import keeps running, so the list is current when it goes on.
 
 Any other block that should go live with funding gets the extra CSS class
@@ -133,7 +135,20 @@ wp option get dgl_funding_screen_users --format=json
 wp dgl funding screen      # each administrator and moderator: SEES IT or hidden
 ```
 
-Switching funding on opens the screen to the whole review team again.
+Since 0.61.6 the same list decides everywhere else funding shows. For anyone
+not listed, while funding is off:
+
+- wp-admin: no Funding opportunities menu, list or edit screen, no "New" in the
+  admin bar, no REST route, and editing, deleting or reading a fund through
+  WordPress is refused;
+- Settings > Grants and Funding is not in the menu and its button is refused;
+- the review queue, its count, the Approved list and organisation lists leave
+  funds (and pending edits to them) out, and a fund's review or edit address
+  answers 404;
+- members are not offered "Funding opportunities" to submit;
+- `/grants/` and every fund's page answer 404, as for the public.
+
+Switching funding on opens all of it to everyone again.
 
 On the day: `wp dgl funding public on`, then clear the page cache (SmartCache).
 Nothing else changes. To be told who subscribes to funding in the digest, see

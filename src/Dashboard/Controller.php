@@ -1131,6 +1131,12 @@ final class Controller {
 		$schema_type = $is_edit ? Revisions::type_of( $post_id ) : (string) $post->post_type;
 		$parent      = $is_edit ? get_post( Revisions::target( $post_id ) ) : null;
 
+		// Funding, held back from this person while it is switched off: not there at all.
+		if ( PostTypes::GRANT === $schema_type && \DGL\Funding\Visibility::hidden_here() ) {
+			self::not_found( $user );
+			return;
+		}
+
 		if ( $is_edit && ( '' === $schema_type || null === $parent ) ) {
 			self::not_found( $user );
 			return;
@@ -1306,7 +1312,7 @@ final class Controller {
 	private static function new_item( string $slug, UserContext $user ): void {
 		$post_type = self::type_for( $slug );
 
-		if ( null === $post_type ) {
+		if ( null === $post_type || ( PostTypes::GRANT === $post_type && \DGL\Funding\Visibility::hidden_here() ) ) {
 			self::not_found( $user );
 			return;
 		}
@@ -1355,7 +1361,7 @@ final class Controller {
 		$step    = max( 1, min( FieldRegistry::STEP_REVIEW, (int) ( $segments[2] ?? 1 ) ) );
 		$post    = get_post( $post_id );
 
-		if ( null === $post || ! PostTypes::is_reviewable( $post->post_type ) ) {
+		if ( null === $post || ! PostTypes::is_reviewable( $post->post_type ) || self::held_fund( $post ) ) {
 			self::not_found( $user );
 			return;
 		}
@@ -2237,6 +2243,12 @@ final class Controller {
 
 		$is_edit  = PostTypes::REVISION === $post->post_type;
 		$type_key = $is_edit ? Revisions::type_of( $post_id ) : (string) $post->post_type;
+
+		// A pending edit to a fund is left out with the fund, for anyone funding is held back from.
+		if ( PostTypes::GRANT === $type_key && \DGL\Funding\Visibility::hidden_here() ) {
+			return [];
+		}
+
 		$def      = PostTypes::definitions()[ $type_key ] ?? [ 'singular' => '', 'slug' => '' ];
 		$modified = get_post_modified_time( 'Y-m-d H:i:s', true, $post );
 
@@ -2268,6 +2280,13 @@ final class Controller {
 		];
 	}
 
+	/** A fund, or a pending edit to one, that funding being held back hides from this person. */
+	private static function held_fund( \WP_Post $post ): bool {
+		$type = PostTypes::REVISION === $post->post_type ? Revisions::type_of( (int) $post->ID ) : (string) $post->post_type;
+
+		return PostTypes::GRANT === $type && \DGL\Funding\Visibility::hidden_here();
+	}
+
 	/**
 	 * The "submit something" tiles from wireframe 1d.
 	 *
@@ -2286,6 +2305,10 @@ final class Controller {
 		$tiles = [];
 
 		foreach ( PostTypes::menu() as $post_type => $def ) {
+			if ( PostTypes::GRANT === $post_type && \DGL\Funding\Visibility::hidden_here() ) {
+				continue;
+			}
+
 			$tiles[] = [
 				'label' => $def['plural'],
 				'blurb' => $blurbs[ $post_type ] ?? '',

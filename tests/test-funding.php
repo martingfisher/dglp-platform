@@ -165,3 +165,24 @@ Harness::assert_false( \DGL\Funding\Visibility::screen_open_to( 14, false, [ 1 ]
 Harness::assert_false( \DGL\Funding\Visibility::screen_open_to( 1, false, [] ), 'while off with nobody listed, nobody sees it' );
 Harness::assert_false( \DGL\Funding\Visibility::screen_open_to( 0, false, [ 0 ] ), 'never a logged-out visitor' );
 
+
+Harness::group( 'Funding: held back everywhere from all but the people listed' );
+
+$v = \DGL\Funding\Visibility::class;
+$g = \DGL\PostTypes::GRANT;
+
+$held = $v::held_admin_args( [ 'show_ui' => true, 'show_in_menu' => true, 'show_in_rest' => true, 'public' => true ], true );
+Harness::assert_false( $held['show_ui'], 'held back: no wp-admin screens for funds' );
+Harness::assert_false( $held['show_in_menu'], 'held back: no wp-admin menu item' );
+Harness::assert_false( $held['show_in_admin_bar'], 'held back: no "New" in the admin bar' );
+Harness::assert_false( $held['show_in_rest'], 'held back: no REST route' );
+Harness::assert_true( $held['public'], 'the public setting is left alone (the 404 gate decides that)' );
+Harness::assert_same( [ 'show_ui' => true ], $v::held_admin_args( [ 'show_ui' => true ], false ), 'not held back: settings untouched' );
+
+Harness::assert_true( $v::blocks_cap( 'edit_post', $g, 14, false, [ 1 ] ), 'an administrator not listed cannot edit a fund while off' );
+Harness::assert_true( $v::blocks_cap( 'read_dgl_item', $g, 14, false, [ 1 ] ), 'nor read one through WordPress' );
+Harness::assert_false( $v::blocks_cap( 'edit_post', $g, 1, false, [ 1 ] ), 'the listed person can' );
+Harness::assert_false( $v::blocks_cap( 'edit_post', $g, 14, true, [ 1 ] ), 'once funding is on, nothing extra is refused' );
+Harness::assert_false( $v::blocks_cap( 'edit_post', \DGL\PostTypes::EVENT, 14, false, [ 1 ] ), 'other types are never touched' );
+Harness::assert_false( $v::blocks_cap( 'edit_post', $g, 0, false, [ 1 ] ), 'nobody signed in (import, cron) is not refused here' );
+Harness::assert_false( $v::blocks_cap( 'manage_options', $g, 14, false, [ 1 ] ), 'only the per-post capabilities are touched' );
