@@ -564,8 +564,10 @@ until it comes back.
 "Discourage search engines from indexing this site". The member area is
 `noindex` whatever that box says. Once it is unticked the platform adds its
 own sitemap, `/dgl-sitemap.xml` (directory, organisation pages, calendar
-and listing pages, which no SEO plugin lists), and a `Disallow` for the
-member area to robots.txt. Submit the sitemap once in Search Console.
+and listing pages, which no SEO plugin lists), to robots.txt. Submit the
+sitemap once in Search Console. Do not block `/dashboard/` in robots.txt
+(including in Rank Math's robots.txt editor): search engines must be able to
+fetch those pages to read their noindex, or they list the address anyway.
 
 ## Command-line tools
 

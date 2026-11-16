@@ -12,11 +12,12 @@ use DGL\Frontend\Seo;
 
 Harness::group( 'Crawl: robots.txt' );
 
-$out = Crawl::robots_txt_extra( "User-agent: *\nDisallow: /wp-admin/\n", 'dashboard', 'https://x.test/dgl-sitemap.xml' );
-Harness::assert_true( str_contains( $out, "Disallow: /dashboard/\n" ), 'the member area is disallowed' );
+$out = Crawl::robots_txt_extra( "User-agent: *\nDisallow: /wp-admin/\n", 'https://x.test/dgl-sitemap.xml' );
+Harness::assert_false( str_contains( $out, 'dashboard' ), 'the member area is not disallowed: its noindex must be readable' );
 Harness::assert_true( str_contains( $out, "Sitemap: https://x.test/dgl-sitemap.xml\n" ), 'the sitemap is named' );
-Harness::assert_same( $out, Crawl::robots_txt_extra( $out, 'dashboard', 'https://x.test/dgl-sitemap.xml' ), 'running twice adds nothing' );
-Harness::assert_true( str_contains( Crawl::robots_txt_extra( '', '/members/', 'https://x.test/s.xml' ), "User-agent: *\nDisallow: /members/\n" ), 'an empty file gets a user-agent group, and slashes are tidied' );
+Harness::assert_true( str_contains( $out, "Disallow: /wp-admin/\n" ), 'what was there is kept' );
+Harness::assert_same( $out, Crawl::robots_txt_extra( $out, 'https://x.test/dgl-sitemap.xml' ), 'running twice adds nothing' );
+Harness::assert_same( "\n\nUser-agent: *\nDisallow:\nSitemap: https://x.test/s.xml\n", Crawl::robots_txt_extra( '', 'https://x.test/s.xml' ), 'an empty file gets an allow-all group before the sitemap' );
 
 Harness::group( 'Crawl: sitemap' );
 
