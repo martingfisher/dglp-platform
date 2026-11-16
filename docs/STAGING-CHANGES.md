@@ -2286,3 +2286,13 @@ Wordify's `replace_in_post`; every page edit left a revision.
   many of those are funds. Correction to the 0.61.4 note: the review queue
   holds no funds (0 waiting); the 119 funds are 116 live, 1 expired and the
   rest drafts or trashed, and the live ones are what the Approved list showed.
+- **0.61.9: Reports too.** Martin confirmed (16 November) "everybody
+  everywhere". The review team's Reports screen leaves funds out of the
+  approved-by-type and on-the-site-now figures and the decisions spreadsheet,
+  and offers no funding download (`Visibility::enabled_here()`), for anyone
+  not listed while funding is off. The public site was checked anonymously:
+  no link to `/grants/` on the home, support, news, events, training or
+  search pages. Left as they are, because they are not the funds list:
+  the `/support/funding/` page (VAL's funding advice service), the "Grants
+  and Funding" topic on news, events and training, and the index-drift line
+  on the wp-admin Health page, which names a type only if it is out of step.

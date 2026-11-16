@@ -146,6 +146,8 @@ not listed, while funding is off:
   funds (and pending edits to them) out, and a fund's review or edit address
   answers 404;
 - members are not offered "Funding opportunities" to submit;
+- the review team's Reports (0.61.9) leave funds out of the month's figures,
+  the "on the site now" counts, the decisions spreadsheet and the downloads;
 - `/grants/` and every fund's page answer 404, as for the public.
 
 Switching funding on opens all of it to everyone again.

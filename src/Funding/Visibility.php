@@ -201,6 +201,22 @@ final class Visibility {
 	}
 
 	/**
+	 * PostTypes::enabled(), without funding for anyone it is held back from.
+	 * For the review team's reports and their downloads.
+	 *
+	 * @return array<string, array<string, mixed>>
+	 */
+	public static function enabled_here(): array {
+		$types = PostTypes::enabled();
+
+		if ( self::hidden_here() ) {
+			unset( $types[ PostTypes::GRANT ] );
+		}
+
+		return $types;
+	}
+
+	/**
 	 * Hooked on dgl_items_hidden_types: the review queue, its count, the
 	 * Approved list and organisation lists leave funding out for anyone it
 	 * is held back from.

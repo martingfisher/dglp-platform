@@ -991,7 +991,7 @@ final class Controller {
 			$what = sanitize_key( (string) ( $rest[1] ?? '' ) );
 			$type = null;
 
-			foreach ( PostTypes::enabled() as $key => $def ) {
+			foreach ( \DGL\Funding\Visibility::enabled_here() as $key => $def ) {
 				if ( $what === (string) $def['slug'] ) {
 					$type = $key;
 				}
@@ -1013,7 +1013,7 @@ final class Controller {
 		}
 
 		$exports = [];
-		foreach ( PostTypes::enabled() as $key => $def ) {
+		foreach ( \DGL\Funding\Visibility::enabled_here() as $key => $def ) {
 			$exports[ (string) $def['plural'] ] = Router::url( 'review', 'reports', 'csv', (string) $def['slug'] );
 		}
 

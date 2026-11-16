@@ -161,7 +161,7 @@ final class Monthly {
 		);
 
 		$out = [];
-		foreach ( PostTypes::enabled() as $type => $def ) {
+		foreach ( \DGL\Funding\Visibility::enabled_here() as $type => $def ) {
 			$out[ $type ] = 0;
 		}
 		$out['edits'] = 0;
@@ -270,7 +270,7 @@ final class Monthly {
 		$rows = $wpdb->get_results( $wpdb->prepare( "SELECT post_type, COUNT(*) AS n FROM {$items} WHERE status = %s GROUP BY post_type", Statuses::LIVE ), ARRAY_A );
 
 		$live = [];
-		foreach ( PostTypes::enabled() as $type => $def ) {
+		foreach ( \DGL\Funding\Visibility::enabled_here() as $type => $def ) {
 			$live[ $type ] = 0;
 		}
 		foreach ( (array) $rows as $row ) {
