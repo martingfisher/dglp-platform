@@ -220,3 +220,56 @@ Not changed:
 
 - The three partner buttons are still different colours.
 - "Sign in" is a text link 23px high, a small target next to 42px buttons.
+
+## Evening (13 November)
+
+Re-scan of all 39 pages at 390px after the afternoon fixes: nothing runs off
+the screen, no tablet or phone colour differs from desktop except the two
+items below, and every heading follows Blocksy's scale apart from the home
+hero and the two 42.9px titles already listed.
+
+- **Breadcrumb bar (row `a60de25`, Blocksy content block 1563 "Breadcrumbs
+  Header", on every page):** was `#f3f7ff` on desktop and `#edf3f3` on tablet
+  and phone. The tablet and phone values were cleared in the block and the
+  two matching rules removed from its `_gspb_post_css`, so `#f3f7ff` applies
+  at every width. Checked at 1280, 800 and 390px.
+- **Column `5f01a23` in synced pattern 9754 "Boxes"** (Safeguarding,
+  Representation): a tablet-only background of `#ebfff2`, the same green as
+  the row behind it at every width, so nothing visible changes. Left alone.
+- **Phone H1 40px to 36px** (Blocksy, Customizer published by Martin).
+  "Representation" was one word too wide for a phone at 40px: 323px needed,
+  320px available at 390px wide, so Chrome broke it as "Representatio / n".
+  At 36px it fits on one line at 360, 375, 390, 393, 414 and 430px (4px to
+  spare at 360px). Desktop stays 75px. Martin's iPhone 16 Pro Max (440px
+  wide) never showed the break; standard phones did.
+- **Workforce HR Network (page 2233) published** on Martin's say-so. It was a
+  draft, so both menu links to `/support/workforce-hr-network/` (phone menu
+  item 10424, desktop "Megamenu | Support" content block 1292) gave 404; they
+  now answer 200. Its HR Network meeting dates are still 2025; the client is
+  to update them.
+- **Home Training tile:** already pointed at `/training/` by the time it was
+  checked (the old `/category/training/` link was gone).
+
+Still open: palette colours 17 to 25 that are not in Blocksy's palette of 16
+(`palette-color-20`, `-22`, `-23`, `-25` in use, including the breadcrumb link
+colour); "WORDPROCESSINGML" text on Young Lives Leeds; the two 42.9px titles.
+
+## Rank Math and the platform's post types (13 November, evening)
+
+Rank Math flagged new post types `dgl_news`, `dgl_event`, `dgl_training` and
+`dgl_venue`. Checked first: on a live news story, event and course there is
+exactly one title, description, canonical, set of social tags and JSON-LD
+block, with NewsArticle, Event and EducationEvent schema, because the plugin
+feeds Rank Math through its filters (`src/Frontend/Seo.php`). The sitemap
+index already lists news (three files), events, training and topics; venues
+are absent only because none is published.
+
+Changed in Rank Math's Titles & Meta (`rank-math-options-titles`), for all
+four types:
+
+- `pt_<type>_default_rich_snippet` set to `off`: the plugin supplies the
+  schema, so Rank Math adds none of its own to be stripped.
+- `pt_<type>_add_meta_box` set to `off`: the plugin sets these pages' titles
+  and descriptions, so anything typed in Rank Math's box would be ignored.
+
+Re-checked after clearing caches: the same single tags and schema types.
