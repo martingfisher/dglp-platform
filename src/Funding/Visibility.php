@@ -78,6 +78,37 @@ final class Visibility {
 		return is_user_logged_in() && current_user_can( 'manage_options' );
 	}
 
+	/**
+	 * The people who still see the review team's Grants and Funding screen
+	 * while funding is switched off: user ids, kept in this option. Martin
+	 * asked (16 November 2026) for the screen to be hidden from everyone but
+	 * him until DGLP approve funding; set with
+	 * `wp option update dgl_funding_screen_users '[1]' --format=json`.
+	 */
+	public const SCREEN_USERS_OPTION = 'dgl_funding_screen_users';
+
+	/**
+	 * Whether a user sees the Grants and Funding screen. Once funding is on,
+	 * everyone who can review does. While it is off, only the users listed.
+	 * Pure.
+	 *
+	 * @param int[] $allowed
+	 */
+	public static function screen_open_to( int $user_id, bool $is_on, array $allowed ): bool {
+		if ( $is_on ) {
+			return true;
+		}
+
+		return $user_id > 0 && in_array( $user_id, array_map( 'intval', $allowed ), true );
+	}
+
+	/** Whether this user sees the Grants and Funding screen. */
+	public static function screen_visible( int $user_id ): bool {
+		$allowed = get_option( self::SCREEN_USERS_OPTION, [] );
+
+		return self::screen_open_to( $user_id, self::is_on(), is_array( $allowed ) ? $allowed : [] );
+	}
+
 	/** Whether funding is shown to whoever is looking. */
 	public static function shown(): bool {
 		return self::is_on() || self::can_preview();

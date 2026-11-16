@@ -155,3 +155,13 @@ $req = Facets::from_request( [ 'source' => 'key-fund' ] );
 Harness::assert_same( 'key-fund', $req['source'], 'the source filter takes an id' );
 Harness::assert_same( '', Facets::from_request( [ 'source' => "x' OR 1=1" ] )['source'], 'and nothing else' );
 Harness::assert_same( [ 'key' => 'dgl_funding_source', 'value' => 'key-fund', 'compare' => '=' ], Facets::meta_query( [ 'source' => 'key-fund' ], '2026-11-16' )[0], 'and narrows to that source\'s funds' );
+
+Harness::group( 'Funding: the Grants and Funding screen while funding is held back' );
+
+Harness::assert_true( \DGL\Funding\Visibility::screen_open_to( 7, true, [] ), 'once funding is on, the screen is open to the review team' );
+Harness::assert_true( \DGL\Funding\Visibility::screen_open_to( 1, false, [ 1 ] ), 'while off, a listed user still sees it' );
+Harness::assert_true( \DGL\Funding\Visibility::screen_open_to( 1, false, [ '1' ] ), 'ids stored as strings still match' );
+Harness::assert_false( \DGL\Funding\Visibility::screen_open_to( 14, false, [ 1 ] ), 'while off, anyone not listed does not, administrators included' );
+Harness::assert_false( \DGL\Funding\Visibility::screen_open_to( 1, false, [] ), 'while off with nobody listed, nobody sees it' );
+Harness::assert_false( \DGL\Funding\Visibility::screen_open_to( 0, false, [ 0 ] ), 'never a logged-out visitor' );
+

@@ -122,6 +122,18 @@ Any other block that should go live with funding gets the extra CSS class
 it draws nothing until funding is switched on. The news, events and training
 feeds on `/support/funding/` carry it.
 
+The review team's **Grants and Funding** screen (`/dashboard/review/funding/`)
+is hidden too while funding is off: the menu item goes and the address answers
+404, administrators included, except for the user ids listed in
+`dgl_funding_screen_users` (Martin only, from 16 November 2026):
+
+```
+wp option update dgl_funding_screen_users '[1]' --format=json
+wp option get dgl_funding_screen_users --format=json
+```
+
+Switching funding on opens the screen to the whole review team again.
+
 On the day: `wp dgl funding public on`, then clear the page cache (SmartCache).
 Nothing else changes. To be told who subscribes to funding in the digest, see
 "Digest subscribers" below.

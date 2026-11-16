@@ -2251,3 +2251,12 @@ Wordify's `replace_in_post`; every page edit left a revision.
   member-area route, keep `noindex, nofollow` in the page and the header.
   `Crawl::is_public_route()` decides, and is unit-tested. Unit suite 2929.
 
+- **0.61.4: the review team's Grants and Funding screen is hidden.** Martin
+  asked (16 November) for it to be hidden from everyone but him while funding
+  waits for DGLP's approval, other administrators included. While
+  `dgl_funding_public` is off, the "Grants and Funding" item in the review
+  menu and `/dashboard/review/funding/` (404) are open only to the user ids in
+  the new option `dgl_funding_screen_users`. Switching funding on opens the
+  screen to the whole review team again with no other step. The 119 pending
+  grants in the review queue are untouched. `Visibility::screen_open_to()` is
+  unit-tested. Unit suite 2935.

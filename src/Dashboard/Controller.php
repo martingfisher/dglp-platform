@@ -287,6 +287,12 @@ final class Controller {
 		}
 
 		if ( 'funding' === ( $segments[1] ?? '' ) ) {
+			// Not there at all for anyone it is hidden from, not merely missing from the menu.
+			if ( ! \DGL\Funding\Visibility::screen_visible( get_current_user_id() ) ) {
+				self::not_found( $user );
+				return;
+			}
+
 			self::funding( $user );
 			return;
 		}
