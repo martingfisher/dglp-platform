@@ -2243,4 +2243,11 @@ Wordify's `replace_in_post`; every page edit left a revision.
   robots.txt editor (`rank-math-options-general` `robots_txt_content`), which
   is where the live file came from. The noindex header and tag are
   unchanged. Unit suite 2921.
+- **0.61.3: the Join page appears in Google.** Martin asked (16 November) for
+  `/dashboard/join/` to be findable. It now says `index, follow` (Rank Math
+  and core), has a canonical to itself and a 149-character description, and
+  is listed in `/dgl-sitemap.xml`. Only the bare page: a join link with a
+  token (`/dashboard/join/<token>/`) or any query string, and every other
+  member-area route, keep `noindex, nofollow` in the page and the header.
+  `Crawl::is_public_route()` decides, and is unit-tested. Unit suite 2929.
 

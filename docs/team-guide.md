@@ -568,6 +568,11 @@ and listing pages, which no SEO plugin lists), to robots.txt. Submit the
 sitemap once in Search Console. Do not block `/dashboard/` in robots.txt
 (including in Rank Math's robots.txt editor): search engines must be able to
 fetch those pages to read their noindex, or they list the address anyway.
+The one member-area page search engines do list is the Join page,
+`/dashboard/join/`: it says index, has its own description and canonical,
+and is in `/dgl-sitemap.xml`. A join link with an invitation token or a
+query string, sign in, invitations, unsubscribe and every member screen stay
+noindex.
 
 ## Command-line tools
 
