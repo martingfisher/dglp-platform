@@ -147,6 +147,20 @@ final class Command {
 		foreach ( $users as $user ) {
 			WP_CLI::log( sprintf( '%-4d %-40s %-14s %s', $user->ID, $user->user_login, implode( ',', $user->roles ), Visibility::screen_visible( (int) $user->ID ) ? 'SEES IT' : 'hidden' ) );
 		}
+		$me = get_current_user_id();
+
+		if ( $me <= 0 ) {
+			WP_CLI::log( 'Add --user=<id> to see what that person gets in the review queue and wp-admin.' );
+			return;
+		}
+
+		$fund  = get_posts( [ 'post_type' => \DGL\PostTypes::GRANT, 'post_status' => 'any', 'posts_per_page' => 1, 'fields' => 'ids' ] );
+		$type  = get_post_type_object( \DGL\PostTypes::GRANT );
+		$queue = \DGL\Index\ItemsTable::queue( null, 1000 );
+		$funds = count( array_filter( $queue, static fn( int $id ): bool => \DGL\PostTypes::GRANT === get_post_type( $id ) ) );
+
+		WP_CLI::log( sprintf( 'As user %d: review queue %d waiting, of which funds %d.', $me, \DGL\Index\ItemsTable::queue_count(), $funds ) );
+		WP_CLI::log( sprintf( 'As user %d: wp-admin funds screens %s; can edit a fund %s; Settings page %s.', $me, null !== $type && $type->show_ui ? 'yes' : 'no', [] !== $fund && current_user_can( 'edit_post', (int) $fund[0] ) ? 'yes' : 'no', Visibility::hidden_here() ? 'no' : 'yes' ) );
 	}
 
 	/**

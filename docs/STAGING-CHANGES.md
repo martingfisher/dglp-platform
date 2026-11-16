@@ -2278,3 +2278,7 @@ Wordify's `replace_in_post`; every page edit left a revision.
   every administrator). The monthly report's "waiting" figure and the
   wp-admin dashboard widget count leave funds out too while it is off.
   `held_admin_args()` and `blocks_cap()` are unit-tested. Unit suite 2948.
+- **0.61.7: `wp dgl funding screen --user=<id>`** also prints what that
+  person gets: review queue count and how many of those are funds, whether
+  wp-admin shows fund screens, whether they can edit a fund and whether the
+  Settings page is theirs. Read only.
