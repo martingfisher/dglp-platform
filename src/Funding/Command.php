@@ -160,6 +160,11 @@ final class Command {
 		$funds = count( array_filter( $queue, static fn( int $id ): bool => \DGL\PostTypes::GRANT === get_post_type( $id ) ) );
 
 		WP_CLI::log( sprintf( 'As user %d: review queue %d waiting, of which funds %d.', $me, \DGL\Index\ItemsTable::queue_count(), $funds ) );
+
+		$decided = \DGL\Index\ItemsTable::decided( \DGL\Index\ItemsTable::decided_statuses(), 5000 );
+		$dfunds  = count( array_filter( $decided, static fn( int $id ): bool => \DGL\PostTypes::GRANT === get_post_type( $id ) ) );
+
+		WP_CLI::log( sprintf( 'As user %d: Approved list %d, of which funds %d.', $me, \DGL\Index\ItemsTable::decided_count( \DGL\Index\ItemsTable::decided_statuses() ), $dfunds ) );
 		WP_CLI::log( sprintf( 'As user %d: wp-admin funds screens %s; can edit a fund %s; Settings page %s.', $me, null !== $type && $type->show_ui ? 'yes' : 'no', [] !== $fund && current_user_can( 'edit_post', (int) $fund[0] ) ? 'yes' : 'no', Visibility::hidden_here() ? 'no' : 'yes' ) );
 	}
 

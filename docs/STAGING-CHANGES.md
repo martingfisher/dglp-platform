@@ -2257,8 +2257,8 @@ Wordify's `replace_in_post`; every page edit left a revision.
   `dgl_funding_public` is off, the "Grants and Funding" item in the review
   menu and `/dashboard/review/funding/` (404) are open only to the user ids in
   the new option `dgl_funding_screen_users`. Switching funding on opens the
-  screen to the whole review team again with no other step. The 119 pending
-  grants in the review queue are untouched. `Visibility::screen_open_to()` is
+  screen to the whole review team again with no other step.
+  `Visibility::screen_open_to()` is
   unit-tested. Unit suite 2935.
 - **0.61.5: `wp dgl funding screen`.** Read only. Lists every administrator
   and moderator and whether the live code lets them see the Grants and
@@ -2282,3 +2282,7 @@ Wordify's `replace_in_post`; every page edit left a revision.
   person gets: review queue count and how many of those are funds, whether
   wp-admin shows fund screens, whether they can edit a fund and whether the
   Settings page is theirs. Read only.
+- **0.61.8:** the same command also prints the Approved list's count and how
+  many of those are funds. Correction to the 0.61.4 note: the review queue
+  holds no funds (0 waiting); the 119 funds are 116 live, 1 expired and the
+  rest drafts or trashed, and the live ones are what the Approved list showed.
