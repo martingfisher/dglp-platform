@@ -66,6 +66,7 @@ $meta_line = static function ( WP_Post $item ): string {
 <div class="dgl-pub dgl-listing">
 	<header class="dgl-pub__head">
 		<h1 class="dgl-pub__title"><?php echo esc_html( \DGL\Frontend\ListingIntro::title( $type ) ); ?></h1>
+		<?php echo $is_fund ? \DGL\Funding\Visibility::preview_note() : ''; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside. ?>
 		<div class="dgl-pub__lede">
 			<?php echo \DGL\Frontend\ListingIntro::intro_html( $type ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped or kses'd inside. ?>
 			<?php if ( \DGL\PostTypes::EVENT === $type ) : ?>

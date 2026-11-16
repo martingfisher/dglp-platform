@@ -1,0 +1,55 @@
+{
+	"_about": "Funds whose funder's site refuses automated reading, so they are written up by hand. Each source goes out with every run until its check_by date, then stops being sent: the site then takes the funds down by their own deadlines (a rolling fund within six weeks). To keep one listed, check the facts against the funder and move check_by on. Facts below were confirmed 13 November 2026 from Arts Council England's own pages and guidance, as shown in search results; artscouncil.org.uk blocks automated fetching.",
+	"sources": [
+		{
+			"id": "arts-council-england",
+			"name": "Arts Council England (written up by hand)",
+			"url": "https://www.artscouncil.org.uk/our-open-funds",
+			"check_by": "2027-01-31",
+			"grants": [
+				{
+					"key": "arts-council-england:national-lottery-project-grants",
+					"title": "National Lottery Project Grants",
+					"funder": "Arts Council England",
+					"summary": "Grants of £1,000 to £100,000 for arts, museum and library projects that reach and engage people and communities in England. Open all year.",
+					"body": "Arts Council England's open-access programme for creative and cultural projects, run with National Lottery money. It funds arts, museum and library work, including community projects, that people in England can take part in or enjoy.\n\nThere are two routes: applications of £30,000 and under, and applications from £30,001 to £100,000. Projects can last up to three years. There is no closing date. Applications of £30,000 and under get a decision within about eight weeks; larger ones take up to fourteen weeks.",
+					"amount_min": 1000,
+					"amount_max": 100000,
+					"deadline": null,
+					"rolling": true,
+					"eligibility": "Individuals and organisations working in the arts, museums or libraries, including community and voluntary organisations, for projects that benefit people in England. Check Arts Council England's guidance for the route that fits your amount.",
+					"how_to_apply": "Apply online through Arts Council England's Grantium system. Read the guidance for your amount before you start.",
+					"application_url": "https://www.artscouncil.org.uk/ProjectGrants",
+					"fund_type": ["grant"],
+					"applicants": ["registered_charity", "cio", "cic", "constituted_group", "social_enterprise", "individual"],
+					"costs": ["project", "events", "development"],
+					"beneficiaries": [],
+					"area": "england",
+					"topics": ["grants-and-funding", "arts-culture-and-heritage"],
+					"confidence": 0.9
+				},
+				{
+					"key": "arts-council-england:national-portfolio-2028-33",
+					"title": "National Portfolio 2028-33",
+					"funder": "Arts Council England",
+					"summary": "Five years of regular funding, at least £50,000 a year from April 2028, for arts organisations, museums and libraries. Applications close at noon on 15 December 2026.",
+					"body": "The National Portfolio is Arts Council England's long-term investment in organisations. Funding runs from 1 April 2028 to 31 March 2033.\n\nOrganisations apply for at least £50,000 a year, with no upper limit. Applications opened on 20 October 2026 and close at 12 noon on Tuesday 15 December 2026, with decisions expected in July 2027.",
+					"amount_min": 50000,
+					"amount_max": null,
+					"deadline": "2026-12-15",
+					"rolling": false,
+					"eligibility": "Arts organisations, museums and libraries in England. Individuals cannot apply. Read Arts Council England's applicant guidance for the full criteria.",
+					"how_to_apply": "Apply online by 12 noon on 15 December 2026. The Applicant Hub has the guidance, an easy-read version and access support.",
+					"application_url": "https://www.artscouncil.org.uk/NationalPortfolio28",
+					"fund_type": ["grant"],
+					"applicants": ["registered_charity", "cio", "cic", "community_benefit_society", "social_enterprise"],
+					"costs": ["core", "staff", "project"],
+					"beneficiaries": [],
+					"area": "england",
+					"topics": ["grants-and-funding", "arts-culture-and-heritage"],
+					"confidence": 0.95
+				}
+			]
+		}
+	]
+}

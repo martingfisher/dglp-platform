@@ -51,12 +51,6 @@
   "notes": "Includes Movement Fund"
  },
  {
-  "id": "sport-england-green",
-  "name": "Sport England: Green Investment Fund",
-  "url": "https://www.sportengland.org/green-investment",
-  "funder": "Sport England"
- },
- {
   "id": "football-foundation",
   "name": "Football Foundation: looking for funding",
   "url": "https://footballfoundation.org.uk/looking-for-funding",
@@ -127,32 +121,37 @@
  {
   "id": "leeds-phil-lit",
   "name": "Leeds Philosophical and Literary Society",
-  "url": "http://www.leedsphilandlit.org.uk",
-  "funder": "Leeds Philosophical and Literary Society"
+  "url": "https://www.leedsphilandlit.org.uk/grants/",
+  "funder": "Leeds Philosophical and Literary Society",
+  "notes": "Grants £100-£1,000 for cultural and scientific projects in Leeds, individuals and organisations; committee meets Jan, May, Sep (close end of preceding month)"
  },
  {
   "id": "charles-hayward",
   "name": "Charles Hayward Foundation",
-  "url": "https://charleshaywardfoundation.org.uk/about-us/",
-  "funder": "Charles Hayward Foundation"
+  "url": "https://charleshaywardfoundation.org.uk/grants/our-process-when-to-apply/",
+  "funder": "Charles Hayward Foundation",
+  "notes": "Social & Criminal Justice (UK charities, deadlines 5 Feb, 28 May, 24 Sep 2027); Older People and Heritage currently closed"
  },
  {
   "id": "alec-dickson",
   "name": "Alec Dickson Trust",
-  "url": "https://www.alecdicksontrust.org.uk/",
-  "funder": "Alec Dickson Trust"
+  "url": "https://www.alecdicksontrust.org.uk/https-docs-google-com-forms-d-1vpghw3q1ofi0zf-arbovxr6rwxwpxgrhi54rd0hexuy-viewformedit-requestedtrue/funding/",
+  "funder": "Alec Dickson Trust",
+  "notes": "Grants up to £500 for young people (30 or under) running volunteering projects, individuals or groups; mostly not charities"
  },
  {
   "id": "albert-hunt",
   "name": "Albert Hunt Trust",
-  "url": "https://www.alberthunttrust.org.uk/about/",
-  "funder": "Albert Hunt Trust"
+  "url": "https://www.alberthunttrust.org.uk/philosophy/",
+  "funder": "Albert Hunt Trust",
+  "notes": "Hospices, homelessness, health and wellbeing core grants £2k-£30k; closed to charities that have never been funded since 1 Feb 2026, no capital"
  },
  {
   "id": "austin-hope-pilkington",
   "name": "Austin and Hope Pilkington Trust",
   "url": "https://austin-hope-pilkington.org.uk/",
-  "funder": "Austin and Hope Pilkington Trust"
+  "funder": "Austin and Hope Pilkington Trust",
+  "notes": "2027 rounds: loneliness 60s+ and young carers mental health; UK registered charities with income £100k-£1m (£1m+ for £5k rounds); no capital"
  },
  {
   "id": "bcbn-grant-initiative",
@@ -165,12 +164,6 @@
   "name": "Seedlings Foundation",
   "url": "https://seedlings-foundation.org.uk/",
   "funder": "Seedlings Foundation"
- },
- {
-  "id": "elephant-trust",
-  "name": "Elephant Trust",
-  "url": "https://www.elephanttrust.org.uk/",
-  "funder": "Elephant Trust"
  },
  {
   "id": "mccarthy-stone",
@@ -187,8 +180,9 @@
  {
   "id": "hedley-foundation",
   "name": "Hedley Foundation",
-  "url": "https://hedleyfoundation.org.uk/",
-  "funder": "Hedley Foundation"
+  "url": "https://hedleyfoundation.org.uk/apply-now",
+  "funder": "Hedley Foundation",
+  "notes": "Grants up to £5,000 (from £250) to UK registered charities with income under £1m; no core salaries or CICs; rolling"
  },
  {
   "id": "postcode-neighbourhood-trust",
@@ -254,8 +248,9 @@
  {
   "id": "gosling-foundation",
   "name": "Gosling Foundation",
-  "url": "https://www.thegoslingfoundation.com/",
-  "funder": "Gosling Foundation"
+  "url": "https://www.thegoslingfoundation.com/funding-criteria",
+  "funder": "Gosling Foundation",
+  "notes": "Min £5,000, capital and project costs for youth groups and Royal Navy/Marines charities; charities, CIOs, CICs with two years of accounts; no health"
  },
  {
   "id": "aviva-community-fund",
@@ -284,8 +279,9 @@
  {
   "id": "masonic-charitable-foundation",
   "name": "Masonic Charitable Foundation: grants to charities",
-  "url": "https://mcf.org.uk/get-support/grants-to-charities/",
-  "funder": "Masonic Charitable Foundation"
+  "url": "https://freemasonscharity.org.uk/grants-to-charities/",
+  "funder": "Masonic Charitable Foundation",
+  "notes": "Grants to charities in England and Wales for Early Years (0-5), children affected by domestic abuse, and children with SEND; eligibility quiz then expression of interest"
  },
  {
   "id": "warburtons-community",
@@ -315,12 +311,6 @@
   "id": "henry-smith-grants",
   "name": "Henry Smith Foundation: grants",
   "url": "https://henrysmith.foundation/grants/",
-  "funder": "Henry Smith Foundation"
- },
- {
-  "id": "henry-smith-charity",
-  "name": "Henry Smith Charity: explore our grants",
-  "url": "https://www.henrysmithcharity.org.uk/explore-our-grants-and-apply/",
   "funder": "Henry Smith Foundation"
  },
  {
@@ -356,8 +346,9 @@
  {
   "id": "the-fore",
   "name": "The Fore",
-  "url": "https://thefore.org/",
-  "funder": "The Fore"
+  "url": "https://thefore.org/application-process/",
+  "funder": "The Fore",
+  "notes": "Unrestricted grants up to £45k for charities, CICs and CBSs under £500k income; three rounds a year, registration week then application; next registration 25 Nov-4 Dec 2026"
  },
  {
   "id": "hdruk-take-the-lead",
@@ -392,8 +383,9 @@
  {
   "id": "esmee-fairbairn",
   "name": "Esmee Fairbairn Foundation",
-  "url": "https://esmeefairbairn.org.uk/",
-  "funder": "Esmee Fairbairn Foundation"
+  "url": "https://esmeefairbairn.org.uk/apply-for-a-grant/",
+  "funder": "Esmee Fairbairn Foundation",
+  "notes": "Rolling; min £30,000, 3-5 year core and project grants; turnover over £100,000; no healthcare or capital; very competitive (5% success)"
  },
  {
   "id": "wades-charity-grants",
@@ -407,13 +399,14 @@
   "name": "Wade's Charity: main grants programme",
   "url": "https://www.wadescharity.org/main-grants-programme/",
   "funder": "Wade's Charity",
-  "notes": "Leeds trust"
+  "notes": "Leeds recreation and open space grants; no form, email application; trustee meetings Feb, Jun, Oct (deadlines late Jan, late May, mid Sep); the 2026 dates have passed so check for 2027 dates"
  },
  {
   "id": "artemis-foundation",
   "name": "Artemis Charitable Foundation",
   "url": "https://www.artemisfunds.com/en-gb/individual/about/artemis-charitable-foundation/",
-  "funder": "Artemis Charitable Foundation"
+  "funder": "Artemis Charitable Foundation",
+  "notes": "Closed to new applications in 2026; supports its own charity partners"
  },
  {
   "id": "jordan-sinnott",
@@ -454,14 +447,16 @@
  {
   "id": "strategic-legal-fund",
   "name": "Strategic Legal Fund",
-  "url": "https://strategiclegalfund.org.uk/about/",
-  "funder": "Strategic Legal Fund"
+  "url": "https://strategiclegalfund.org.uk/",
+  "funder": "Strategic Legal Fund",
+  "notes": "Grants for strategic legal work for migrant rights (pre-litigation research, third party interventions); only legal organisations, rarely a Leeds community group"
  },
  {
   "id": "theatres-trust",
   "name": "Theatres Trust: grants and funding",
-  "url": "http://www.theatrestrust.org.uk/how-we-help/grants-funding",
-  "funder": "Theatres Trust"
+  "url": "https://www.theatrestrust.org.uk/smallgrants",
+  "funder": "Theatres Trust",
+  "notes": "Small Grants up to £7,500 for essential works at not-for-profit theatre buildings; only relevant to theatre operators"
  },
  {
   "id": "veolia-trust",
@@ -472,8 +467,9 @@
  {
   "id": "fim-trust",
   "name": "Forces in Mind Trust",
-  "url": "https://www.fim-trust.org/apply/",
-  "funder": "Forces in Mind Trust"
+  "url": "https://fim-trust.org/our-grant-making-approach-2027-2031",
+  "funder": "Forces in Mind Trust",
+  "notes": "Armed Forces community: grants up to £250,000 through FiMT Challenges 2027-2031; mostly national and systems change work, not small local groups"
  },
  {
   "id": "biffa-community-buildings",
@@ -546,9 +542,9 @@
  {
   "id": "unltd-awards",
   "name": "UnLtd: awards",
-  "url": "https://www.unltd.org.uk/awards",
+  "url": "https://unltd.org.uk/awards/",
   "funder": "UnLtd",
-  "notes": "Mostly individuals, keep only community awards"
+  "notes": "Social entrepreneur awards up to £8,000 (Starting Up) and £18,000 (Scaling Up); ventures under 4 years old; rounds quarterly, next 1 Oct-30 Nov 2026; mostly individuals, keep only community awards"
  },
  {
   "id": "sse-social-commitment",
@@ -560,7 +556,8 @@
   "id": "wyca-funding-opportunities",
   "name": "West Yorkshire Combined Authority: funding opportunities",
   "url": "https://www.westyorks-ca.gov.uk/policing-and-crime/partnership-working/funding-opportunities/",
-  "funder": "West Yorkshire Combined Authority"
+  "funder": "West Yorkshire Combined Authority",
+  "notes": "Policing and crime commissioning and grant rounds from the Violence Reduction Partnership (EOI rounds, e.g. deadline 26 Oct 2026); see also Mayor's Safer Communities Fund"
  },
  {
   "id": "wyca-safer-communities",
@@ -571,8 +568,16 @@
  {
   "id": "digital-inclusion-leeds",
   "name": "Digital Inclusion Leeds: grants",
-  "url": "https://digitalinclusionleeds.com/grants/",
-  "funder": "Digital Inclusion Leeds"
+  "url": "https://digitalinclusionleeds.com/leeds-digital-inclusion-fund-2026",
+  "funder": "Digital Inclusion Leeds",
+  "notes": "Leeds Digital Inclusion Fund up to £10k via Leeds Community Foundation; annual round, 2026 closed 1 Sep with decisions in December, next likely mid 2027"
+ },
+ {
+  "id": "digital-inclusion-leeds-health-hub",
+  "name": "Digital Inclusion Leeds: Digital Health Hub Fund",
+  "url": "https://digitalinclusionleeds.com/support-for-organisations/grants/digital-health-hub-fund",
+  "funder": "Digital Inclusion Leeds",
+  "notes": "Grants £1,000-£10,000 with Beeston and Middleton Local Care Partnership for third sector digital health hubs"
  },
  {
   "id": "fundingleeds",
@@ -581,58 +586,45 @@
   "notes": "Directory: may list many funds"
  },
  {
-  "id": "two-ridings",
-  "name": "Two Ridings Community Foundation",
-  "url": "https://www.tworidingscf.org.uk/",
-  "funder": "Two Ridings Community Foundation"
- },
- {
   "id": "comic-relief",
   "name": "Comic Relief: funding",
-  "url": "https://www.comicrelief.com/funding/",
-  "funder": "Comic Relief"
+  "url": "https://www.comicrelief.com/funding/funding-opportunities/",
+  "funder": "Comic Relief",
+  "notes": "Lists live Comic Relief funding opportunities; currently no live opportunities"
  },
  {
   "id": "lloyds-bank-foundation",
   "name": "Lloyds Bank Foundation for England and Wales",
-  "url": "https://www.lloydsbankfoundation.org.uk/",
-  "funder": "Lloyds Bank Foundation"
+  "url": "https://lloydsbankfoundation.org.uk/funding",
+  "funder": "Lloyds Bank Foundation",
+  "notes": "Programmes: Good Place to Live New Beginnings (up to £200k over 4 years, closed 9 Sep 2026), local collaborations; check for new rounds"
  },
  {
   "id": "tudor-trust",
   "name": "Tudor Trust",
-  "url": "https://tudortrust.org.uk/",
-  "funder": "Tudor Trust"
- },
- {
-  "id": "postcode-community-trust",
-  "name": "Postcode Community Trust",
-  "url": "https://www.postcodecommunitytrust.org.uk/",
-  "funder": "Postcode Community Trust"
+  "url": "https://www.tudortrust.org.uk/our-work/our-grant-making/",
+  "funder": "Tudor Trust",
+  "notes": "Invitation only: Tudor does not consider unsolicited funding requests (grants £100k to £1m)"
  },
  {
   "id": "postcode-local-trust",
   "name": "Postcode Local Trust",
-  "url": "https://www.postcodelocaltrust.org.uk/",
-  "funder": "Postcode Local Trust"
+  "url": "https://www.postcodelocaltrust.org.uk/apply-for-a-grant",
+  "funder": "Postcode Local Trust",
+  "notes": "Three-year grants up to £50,000 for charities, CICs with income £10k-£1m; 2026 rounds closed, 2027 rounds published in the new year"
  },
  {
   "id": "postcode-earth-trust",
   "name": "Postcode Earth Trust",
-  "url": "https://www.postcodeearthtrust.org.uk/",
-  "funder": "Postcode Earth Trust"
+  "url": "https://www.postcodeearthtrust.org.uk/about-us/how-to-apply",
+  "funder": "Postcode Earth Trust",
+  "notes": "Invitation only: does not accept unsolicited applications"
  },
  {
   "id": "leeds-city-council-community-committee",
   "name": "Leeds City Council: community committee funding",
   "url": "https://www.leeds.gov.uk/consultations-and-feedback/community-committees",
   "funder": "Leeds City Council"
- },
- {
-  "id": "foyle-foundation",
-  "name": "Foyle Foundation",
-  "url": "https://www.foylefoundation.org.uk/",
-  "funder": "Foyle Foundation"
  },
  {
   "id": "co-op-local-community-fund",
@@ -643,8 +635,9 @@
  {
   "id": "co-op-foundation",
   "name": "Co-op Foundation",
-  "url": "https://www.coopfoundation.org.uk/",
-  "funder": "Co-op Foundation"
+  "url": "https://www.coopfoundation.org.uk/how-we-fund/",
+  "funder": "Co-op Foundation",
+  "notes": "Future Communities Fund closed until 2028; Green Opportunities Fund round 2 in 2027; no open fund now"
  },
  {
   "id": "power-to-change",
@@ -656,43 +649,43 @@
   "id": "rank-foundation",
   "name": "The Rank Foundation",
   "url": "https://www.rankfoundation.com/",
-  "funder": "The Rank Foundation"
+  "funder": "The Rank Foundation",
+  "notes": "Invitation only: does not accept unsolicited applications (works through RankNet members and partners)"
  },
  {
   "id": "clothworkers-foundation",
   "name": "Clothworkers' Foundation",
-  "url": "https://www.clothworkersfoundation.org.uk/",
-  "funder": "Clothworkers' Foundation"
+  "url": "https://www.clothworkersfoundation.org.uk/open-funding",
+  "funder": "Clothworkers' Foundation",
+  "notes": "Open Grants Programme: capital grants (small up to £15,000, large above £15,000 two-stage) for charities; eligibility quiz first; rolling"
  },
  {
   "id": "barrow-cadbury",
   "name": "Barrow Cadbury Trust",
   "url": "https://barrowcadbury.org.uk/our-work/applying-for-funding/",
-  "funder": "Barrow Cadbury Trust"
+  "funder": "Barrow Cadbury Trust",
+  "notes": "Rolling applications via enquiry form but programmes are Birmingham-focused and criminal justice is closed to new applications; limited fit for Leeds"
  },
  {
   "id": "joseph-rowntree-charitable-trust",
   "name": "Joseph Rowntree Charitable Trust",
-  "url": "https://www.jrct.org.uk/",
-  "funder": "Joseph Rowntree Charitable Trust"
+  "url": "https://jrct.org.uk/what-we-fund",
+  "funder": "Joseph Rowntree Charitable Trust",
+  "notes": "Quaker trust: five programmes (rights and justice, peace and security, etc), average grant about £50,000; apply via Apply now page"
  },
  {
   "id": "nationwide-foundation",
   "name": "Nationwide Foundation",
-  "url": "https://www.nationwidefoundation.org.uk/",
-  "funder": "Nationwide Foundation"
+  "url": "https://nationwidefoundation.org.uk/available-funding/",
+  "funder": "Nationwide Foundation",
+  "notes": "Housing-focused; not accepting unsolicited applications at present"
  },
  {
   "id": "youth-endowment-fund",
   "name": "Youth Endowment Fund",
-  "url": "https://youthendowmentfund.org.uk/funding/",
-  "funder": "Youth Endowment Fund"
- },
- {
-  "id": "spirit-of-2012",
-  "name": "Spirit of 2012",
-  "url": "https://www.spiritof2012.org.uk/",
-  "funder": "Spirit of 2012"
+  "url": "https://youthendowmentfund.org.uk/grants/open-call/",
+  "funder": "Youth Endowment Fund",
+  "notes": "Open Call paused since Sept due to limited funding; check for reopening"
  },
  {
   "id": "persimmon-foundation",
@@ -701,16 +694,11 @@
   "funder": "Persimmon"
  },
  {
-  "id": "sainsburys-communities",
-  "name": "Sainsbury's community grants",
-  "url": "https://www.about.sainsburys.co.uk/sustainability/community",
-  "funder": "Sainsbury's"
- },
- {
   "id": "yorkshire-cricket-foundation",
   "name": "Yorkshire Cricket Foundation",
-  "url": "https://www.yorkshirecricketfoundation.com/",
-  "funder": "Yorkshire Cricket Foundation"
+  "url": "https://yorkshirecricketfoundation.com/clubs-and-leagues/grants-and-funding/",
+  "funder": "Yorkshire Cricket Foundation",
+  "notes": "Grants for affiliated Yorkshire cricket clubs (ECB County Grants Fund); cricket clubs only"
  },
  {
   "id": "localgiving",
@@ -722,38 +710,30 @@
  {
   "id": "sir-halley-stewart",
   "name": "Sir Halley Stewart Trust",
-  "url": "https://www.sirhalleystewart.org.uk/",
-  "funder": "Sir Halley Stewart Trust"
- },
- {
-  "id": "souter-charitable-trust",
-  "name": "Souter Charitable Trust",
-  "url": "https://www.souter.org.uk/",
-  "funder": "Souter Charitable Trust"
+  "url": "https://www.sirhalleystewart.org.uk/apply-for-funding/main-grants-programme/",
+  "funder": "Sir Halley Stewart Trust",
+  "notes": "Main grants £5,001-£60,000 (up to £80,000) in medical, social and religious priority areas; income up to £3m; no deadlines"
  },
  {
   "id": "coalfields-regeneration-trust",
   "name": "Coalfields Regeneration Trust",
   "url": "https://www.coalfields-regen.org.uk/",
-  "funder": "Coalfields Regeneration Trust"
+  "funder": "Coalfields Regeneration Trust",
+  "notes": "Grants only in eligible coalfield wards (30% most deprived); programme pages describe support rather than open rounds; Yorkshire regional manager"
  },
  {
   "id": "the-childwick-trust",
   "name": "Childwick Trust",
   "url": "https://www.childwicktrust.org/",
-  "funder": "Childwick Trust"
+  "funder": "Childwick Trust",
+  "notes": "Health, horseracing welfare, Jewish charities and South African early years; windows open April and October only; not typical for Leeds community groups"
  },
  {
   "id": "leeds-hospitals-charity",
   "name": "Leeds Hospitals Charity",
-  "url": "https://www.leedshospitalscharity.org.uk/",
-  "funder": "Leeds Hospitals Charity"
- },
- {
-  "id": "community-first-yorkshire",
-  "name": "Community First Yorkshire",
-  "url": "https://www.communityfirstyorkshire.org.uk/",
-  "funder": "Community First Yorkshire"
+  "url": "https://www.leedshospitalscharity.org.uk/applying-for-standard-funding",
+  "funder": "Leeds Hospitals Charity",
+  "notes": "Standard funding for projects improving patient care at Leeds hospitals (under £10k decided in a month); also periodic themed grants £10k-£25k"
  },
  {
   "id": "benefact-community-impact",
@@ -768,15 +748,10 @@
   "funder": "Leeds City Council"
  },
  {
-  "id": "leeds-neighbourhood-fund",
-  "name": "Leeds City Council: Neighbourhood Fund",
-  "url": "https://www.leeds.gov.uk/planning/planning-policy/neighbourhood-planning/neighbourhood-fund",
-  "funder": "Leeds City Council"
- },
- {
   "id": "energy-redress-apply",
   "name": "Energy Redress Scheme: apply for funding",
-  "url": "https://energyredress.org.uk/funding/apply/",
-  "funder": "Energy Redress Scheme"
+  "url": "https://energyredress.org.uk/funding/application-process/",
+  "funder": "Energy Redress Scheme",
+  "notes": "Register first, then apply in quarterly rounds; grants from £20k; Phase 3 Round 3 dates to be announced"
  }
 ]

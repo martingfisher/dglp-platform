@@ -237,7 +237,7 @@ final class Home {
 	 * @return WP_Post[]
 	 */
 	private static function posts( array $args ): array {
-		if ( ! PostTypes::is_enabled( (string) $args['post_type'] ) ) {
+		if ( ! PostTypes::is_enabled( (string) $args['post_type'] ) || \DGL\Funding\Visibility::hides( (string) $args['post_type'] ) ) {
 			return [];
 		}
 

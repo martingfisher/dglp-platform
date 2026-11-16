@@ -1,6 +1,6 @@
 # Sources
 
-`sources.json` holds 128 sources, built on 13 November 2026 from VAL's October 2026 "Sources of Grant Funding"
+`sources.json` holds 118 sources, built on 13 November 2026 from VAL's October 2026 "Sources of Grant Funding"
 document (its funder links) plus major funders the document relies on but does not link.
 Every URL was fetched through TinyFish (`POST /check`) and read into a funding result in a dry run
 (`samples/dry-run.json`), 127 of 128 returned readable pages.
@@ -44,6 +44,43 @@ Co-op local community fund and Souter Charitable Trust return `unreadable` (bot 
 `ok: false` each week without changing anything on the site. Many home pages (Esmee Fairbairn, Tudor, Lloyds,
 Foyle, Co-op Foundation, Nationwide, Rank) read as `not_funding`; point them at the funder's "apply" page when
 someone has time to look.
+
+## Source review, 13 November 2026
+
+Sources that returned no grants in the first dry run were re-pointed from funder home or "about" pages to the
+page that describes the open programme, using TinyFish fetch and search. `notes` on each entry carries the
+amounts and timing found.
+
+Removed (cannot apply, or duplicate):
+
+| Source | Why |
+|---|---|
+| elephant-trust | Grants to visual artists only |
+| postcode-community-trust | Wales only |
+| foyle-foundation | Permanently closed, all schemes ended 2025 |
+| spirit-of-2012 | Spend-out trust, closed January 2026 |
+| two-ridings | East Yorkshire, Hull, North Yorkshire and York only (not Leeds) |
+| community-first-yorkshire | North Yorkshire and York only |
+| souter-charitable-trust | Domain is a hosting placeholder, no site |
+| leeds-neighbourhood-fund | Describes CIL allocation by community committees, no grant listing |
+| sport-england-green | Duplicate of `sport-england-funding` (the Movement Fund) |
+| henry-smith-charity | Old domain now redirects to `henry-smith-grants`; its current programmes are closed |
+| sainsburys-communities | No direct application (store nominations through Neighbourly) |
+
+Kept, with the reason in `notes` (expect little or nothing until they reopen): invitation only (Tudor Trust,
+Postcode Earth Trust, Rank Foundation, Nationwide Foundation), closed now (Albert Hunt to new applicants,
+Artemis, Co-op Foundation until 2027/2028, Comic Relief, Youth Endowment Fund open call paused, Lloyds Bank
+Foundation round closed, Postcode Local Trust until the 2027 rounds, Charles Hayward Older People and Heritage),
+limited fit for Leeds groups (Strategic Legal Fund, Theatres Trust, Forces in Mind Trust, UnLtd, Barrow Cadbury,
+Childwick, Coalfields Regeneration Trust, Yorkshire Cricket Foundation, Alec Dickson Trust).
+
+Added: `digital-inclusion-leeds-health-hub` (Digital Health Hub Fund, Leeds).
+
+Re-pointed to the programme page: Charles Hayward, Alec Dickson, Albert Hunt, Hedley, Gosling, Masonic Charitable
+Foundation (now freemasonscharity.org.uk), The Fore, Esmee Fairbairn, Strategic Legal Fund, Theatres Trust,
+Forces in Mind Trust, UnLtd, Digital Inclusion Leeds, Comic Relief, Lloyds Bank Foundation, Tudor, Postcode Local
+Trust, Postcode Earth Trust, Co-op Foundation, Clothworkers, JRCT, Nationwide, Youth Endowment Fund, Yorkshire
+Cricket Foundation, Sir Halley Stewart, Leeds Hospitals Charity, Energy Redress (apply), Leeds Phil and Lit.
 
 ## Adding a source
 

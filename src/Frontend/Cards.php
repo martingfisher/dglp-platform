@@ -139,7 +139,65 @@ final class Cards {
 			$closes = sprintf( __( 'Closes %s', 'dgl-platform' ), date( 'j M Y', (int) strtotime( $deadline . ' 12:00:00' ) ) ); // phpcs:ignore WordPress.DateTime.RestrictedFunctions.date_date -- a calendar date with no time zone.
 		}
 
+		// A funder is a name, but some pages give a sentence: keep the name part.
+		$funder = trim( (string) preg_split( '/\s*[(,;]|\s+-\s+/', $funder, 2 )[0] );
+		$funder = mb_strlen( $funder ) > 60 ? rtrim( mb_substr( $funder, 0, 57 ) ) . '...' : $funder;
+
 		return array_values( array_filter( [ $funder, $amount, $closes ] ) );
+	}
+
+	/**
+	 * A fund's closing leaf: "Closes / DEC / 15", or "Open / all year" for a
+	 * rolling fund, whose stored deadline is only a refresh date and must
+	 * never be shown as a closing day. '' when there is neither.
+	 */
+	public static function fund_date_block( WP_Post $post ): string {
+		$parts = self::fund_date_parts( (string) Frontend::value( $post, 'deadline' ), (bool) Frontend::value( $post, 'rolling_deadline' ) );
+
+		if ( null === $parts ) {
+			return '';
+		}
+
+		if ( $parts['rolling'] ) {
+			return '<span class="dgl-date dgl-date--fund dgl-date--rolling" aria-hidden="true"><span class="dgl-date__label">' . esc_html__( 'Open', 'dgl-platform' ) . '</span><span class="dgl-date__all">' . esc_html__( 'all year', 'dgl-platform' ) . '</span></span>';
+		}
+
+		return sprintf(
+			'<time class="dgl-date dgl-date--fund%s" datetime="%s" aria-hidden="true"><span class="dgl-date__label">%s</span><span class="dgl-date__month">%s</span><span class="dgl-date__day">%s</span></time>',
+			$parts['soon'] ? ' dgl-date--soon' : '',
+			esc_attr( $parts['iso'] ),
+			esc_html__( 'Closes', 'dgl-platform' ),
+			esc_html( $parts['month'] ),
+			esc_html( $parts['day'] )
+		);
+	}
+
+	/**
+	 * Pure: what a fund's leaf says. Null with no usable date and not rolling.
+	 * "Soon" is within fourteen days of $today.
+	 *
+	 * @return array{rolling:bool, month:string, day:string, iso:string, soon:bool}|null
+	 */
+	public static function fund_date_parts( string $deadline, bool $rolling, ?string $today = null ): ?array {
+		if ( $rolling ) {
+			return [ 'rolling' => true, 'month' => '', 'day' => '', 'iso' => '', 'soon' => false ];
+		}
+
+		if ( ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $deadline ) ) {
+			return null;
+		}
+
+		$ts    = (int) strtotime( $deadline . ' 12:00:00 UTC' );
+		$today = $today ?? gmdate( 'Y-m-d' );
+		$days  = (int) floor( ( $ts - (int) strtotime( $today . ' 12:00:00 UTC' ) ) / DAY_IN_SECONDS );
+
+		return [
+			'rolling' => false,
+			'month'   => gmdate( 'M', $ts ),
+			'day'     => gmdate( 'j', $ts ),
+			'iso'     => $deadline,
+			'soon'    => $days >= 0 && $days <= 14,
+		];
 	}
 
 	/** The day it was published, as people write it. */

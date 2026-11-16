@@ -286,6 +286,11 @@ final class Controller {
 			return;
 		}
 
+		if ( 'funding' === ( $segments[1] ?? '' ) ) {
+			self::funding( $user );
+			return;
+		}
+
 		if ( 'reports' === ( $segments[1] ?? '' ) ) {
 			self::reports( array_slice( $segments, 2 ), $user );
 			return;
@@ -1017,6 +1022,85 @@ final class Controller {
 				'exports'       => $exports,
 			],
 			__( 'Reports', 'dgl-platform' ),
+			$user
+		);
+	}
+
+	/**
+	 * Grants and Funding: the funders' pages the weekly import reads, how many
+	 * funds each has on the site, adding and deleting them, and whether the
+	 * public sees funding at all (administrators only).
+	 */
+	private static function funding( UserContext $user ): void {
+		$uid      = get_current_user_id();
+		$is_admin = current_user_can( 'manage_options' );
+
+		if ( 'POST' === ( $_SERVER['REQUEST_METHOD'] ?? 'GET' ) ) {
+			check_admin_referer( Wizard::NONCE );
+
+			$intent = isset( $_POST['dgl_intent'] ) ? sanitize_key( wp_unslash( $_POST['dgl_intent'] ) ) : '';
+			$say    = [];
+
+			if ( 'add_source' === $intent ) {
+				$added = \DGL\Funding\Sources::add(
+					isset( $_POST['dgl_name'] ) ? (string) wp_unslash( $_POST['dgl_name'] ) : '', // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- cleaned by Sources::prepare().
+					isset( $_POST['dgl_url'] ) ? (string) wp_unslash( $_POST['dgl_url'] ) : '', // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- cleaned by Sources::prepare().
+					isset( $_POST['dgl_notes'] ) ? (string) wp_unslash( $_POST['dgl_notes'] ) : '', // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- cleaned by Sources::prepare().
+					$uid
+				);
+				$say = is_string( $added ) ? [ 'error' => $added ] : [ 'added' => (string) $added['name'] ];
+			} elseif ( 'remove_source' === $intent ) {
+				$id    = isset( $_POST['dgl_source'] ) ? sanitize_title( wp_unslash( (string) $_POST['dgl_source'] ) ) : '';
+				$name  = '';
+				foreach ( \DGL\Funding\Sources::all() as $s ) {
+					if ( $s['id'] === $id ) {
+						$name = (string) $s['name'];
+					}
+				}
+				$taken = \DGL\Funding\Sources::remove( $id, $uid );
+				$say   = null === $taken ? [ 'error' => __( 'That source was not on the list.', 'dgl-platform' ) ] : [ 'removed' => $name, 'taken' => (string) $taken ];
+			} elseif ( 'public' === $intent && $is_admin ) {
+				$on = isset( $_POST['dgl_public'] ) && '1' === sanitize_key( wp_unslash( (string) $_POST['dgl_public'] ) );
+				update_option( \DGL\Funding\Visibility::OPTION, $on ? '1' : '0', true );
+				\DGL\Audit\Log::record( $on ? 'funding_shown' : 'funding_hidden', 'setting', 0, 0, $on ? 'Funding shown to the public.' : 'Funding hidden from the public.', [], $uid );
+				$say = [ 'public' => $on ? 'on' : 'off' ];
+			}
+
+			wp_safe_redirect( add_query_arg( array_map( 'rawurlencode', $say ), Router::url( 'review', 'funding' ) ) );
+			exit;
+		}
+
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- read-only notices after a redirect.
+		$notice = [
+			'added'   => isset( $_GET['added'] ) ? sanitize_text_field( wp_unslash( $_GET['added'] ) ) : '',
+			'removed' => isset( $_GET['removed'] ) ? sanitize_text_field( wp_unslash( $_GET['removed'] ) ) : '',
+			'taken'   => isset( $_GET['taken'] ) ? (int) $_GET['taken'] : 0,
+			'error'   => isset( $_GET['error'] ) ? sanitize_text_field( wp_unslash( $_GET['error'] ) ) : '',
+			'public'  => isset( $_GET['public'] ) ? sanitize_key( wp_unslash( $_GET['public'] ) ) : '',
+		];
+		// phpcs:enable
+
+		$last    = \DGL\Funding\Import::last();
+		$counts  = \DGL\Funding\Sources::live_counts();
+		$sources = \DGL\Funding\Sources::all();
+		$listed  = array_column( $sources, 'id' );
+		$others  = array_diff_key( $counts, array_flip( $listed ) );
+
+		self::screen(
+			'review-funding',
+			[
+				'user'      => $user,
+				'is_admin'  => $is_admin,
+				'is_on'     => \DGL\Funding\Visibility::is_on(),
+				'sources'   => $sources,
+				'counts'    => $counts,
+				'others'    => $others,
+				'last'      => $last,
+				'by_source' => (array) ( $last['by_source'] ?? [] ),
+				'notice'    => $notice,
+				'list_url'  => \DGL\Frontend\Frontend::archive_url( PostTypes::GRANT ),
+			],
+			__( 'Grants and Funding', 'dgl-platform' ),
 			$user
 		);
 	}

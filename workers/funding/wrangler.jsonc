@@ -11,9 +11,9 @@
 	"vars": { "DGL_SYNC_URL": "https://doinggoodleeds.org.uk/wp-json/dgl/v1/funding/sync" },
 	"kv_namespaces": [{ "binding": "STATE", "id": "875022892f2b4af09dd3d2bba7ecc9ce" }],
 	"workflows": [{ "name": "dgl-funding-run", "binding": "FUNDING_WORKFLOW", "class_name": "FundingWorkflow" }],
-	// DGL_TOKEN (secret_name dgl_funding_token) is added to this list once the token exists: see README.
 	"secrets_store_secrets": [
 		{ "binding": "TINYFISH", "store_id": "77bc305d0352491093bff8533d866287", "secret_name": "tinyfish" },
-		{ "binding": "ANTHROPIC", "store_id": "77bc305d0352491093bff8533d866287", "secret_name": "anthropic_api_key" }
+		{ "binding": "ANTHROPIC", "store_id": "77bc305d0352491093bff8533d866287", "secret_name": "anthropic_api_key" },
+		{ "binding": "DGL_TOKEN", "store_id": "77bc305d0352491093bff8533d866287", "secret_name": "dgl_funding_token" }
 	]
 }

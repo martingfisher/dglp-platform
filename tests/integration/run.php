@@ -6269,6 +6269,98 @@ $fu_html = \DGL\Dashboard\View::render( 'public/archive', [ 'type' => PostTypes:
 $ok( str_contains( $fu_html, 'name="who"' ) && str_contains( $fu_html, 'name="closing"' ) && ! str_contains( $fu_html, 'name="org"' ), 'the list offers the funding filters and not "by organisation"' );
 $ok( [ 'Test Trust', '£500 to £5,000', 'Open all year' ] === \DGL\Frontend\Cards::meta( get_post( $fu_b ) ), 'a fund\'s card line: funder, amount, closing' );
 
+$group( 'Funding: the home page block' );
+
+$fu_soon = $fu_run( [ $fu_grant( 'fu-src:b', [ 'deadline' => null, 'rolling' => true ] ), $fu_grant( 'fu-src:c' ), $fu_grant( 'fu-src:d', [ 'deadline' => ( new DateTimeImmutable( $fu_today ) )->modify( '+3 days' )->format( 'Y-m-d' ) ] ) ] );
+$fu_d = $fu_find( 'fu-src:d' );
+update_post_meta( $fu_d, DGL_FIXTURE_FLAG, '1' );
+$fu_home = do_shortcode( '[dgl_home_funding count="12"]' );
+$ok( str_contains( $fu_home, 'dgl-home__row--fund' ) && str_contains( $fu_home, 'dgl-date--fund' ), 'funding rows carry the closing leaf' );
+$ok( 1 === preg_match( '#dgl-home__rowbody.*?</div>\s*<time class="dgl-date dgl-date--fund#s', $fu_home ), 'the leaf comes after the words, on the right' );
+$ok( str_contains( $fu_home, 'dgl-date--rolling' ) && str_contains( $fu_home, 'all year' ), 'a rolling fund says open all year' );
+$ok( str_contains( $fu_home, 'dgl-date--soon' ), 'one closing in three days is marked soon' );
+$fu_pos_d = strpos( $fu_home, 'Fund fu-src:d' );
+$fu_pos_b = strpos( $fu_home, 'Fund b' );
+$ok( false !== $fu_pos_d && false !== $fu_pos_b && $fu_pos_d < $fu_pos_b, 'funds that really close come before ones open all year' );
+$ok( str_contains( $fu_home, 'Test Trust · £500 to £5,000' ), 'the line says who offers it and how much' );
+
+$group( 'Funding: held back from the public until switched on' );
+
+$fv_was = get_current_user_id();
+update_option( \DGL\Funding\Visibility::OPTION, '0' );
+wp_set_current_user( 0 );
+$ok( ! \DGL\Funding\Visibility::shown() && '' === do_shortcode( '[dgl_home_funding]' ), 'off: the public sees no funding block, not even a placeholder' );
+$ok( '' === do_shortcode( '[dgl_feed type="grant"]' ) || ! str_contains( do_shortcode( '[dgl_feed type="grant"]' ), 'Test Trust' ), 'and no funding feed' );
+$ok( [] === \DGL\Funding\Visibility::filter_types( [ PostTypes::GRANT ] ) && [ PostTypes::NEWS ] === \DGL\Funding\Visibility::filter_types( [ PostTypes::NEWS, PostTypes::GRANT ] ), 'funding drops out of every type list, nothing else does' );
+$ok( ! in_array( \DGL\Frontend\Frontend::archive_url( PostTypes::GRANT ), array_column( \DGL\Frontend\Crawl::entries(), 'loc' ), true ), 'and /grants/ is not in the platform sitemap' );
+
+$fv_admin = (int) ( get_users( [ 'role' => 'administrator', 'number' => 1, 'fields' => 'ID' ] )[0] ?? 0 );
+wp_set_current_user( $fv_admin );
+$fv_html = do_shortcode( '[dgl_home_funding]' );
+$ok( $fv_admin > 0 && str_contains( $fv_html, 'Preview for administrators' ) && str_contains( $fv_html, 'dgl-home__row--fund' ), 'an administrator still sees it, marked as a preview' );
+
+wp_set_current_user( 0 );
+$fv_block = do_blocks( '<!-- wp:paragraph {"className":"dgl-funding-launch"} --><p class="dgl-funding-launch">Held</p><!-- /wp:paragraph --><!-- wp:paragraph --><p>Always</p><!-- /wp:paragraph -->' );
+$ok( ! str_contains( $fv_block, 'Held' ) && str_contains( $fv_block, 'Always' ), 'a block marked dgl-funding-launch is held back with funding; others are not' );
+$fv_new = $make_member( 'dgl_fv_newcomer', $org_a, 'contributor' );
+\DGL\Email\Digest\Store::subscribe_default( $fv_new, 'test' );
+$ok( ! in_array( PostTypes::GRANT, \DGL\Email\Digest\Store::for_user( $fv_new )->types, true ) && in_array( PostTypes::NEWS, \DGL\Email\Digest\Store::for_user( $fv_new )->types, true ), 'off: somebody joining is not signed up for funding unasked' );
+update_option( \DGL\Funding\Visibility::OPTION, '1' );
+$fv_later = $make_member( 'dgl_fv_later', $org_a, 'contributor' );
+\DGL\Email\Digest\Store::subscribe_default( $fv_later, 'test' );
+$ok( in_array( PostTypes::GRANT, \DGL\Email\Digest\Store::for_user( $fv_later )->types, true ), 'on: somebody joining gets funding by default, like every other type' );
+update_option( \DGL\Funding\Visibility::OPTION, '1' );
+$ok( str_contains( do_blocks( '<!-- wp:paragraph {"className":"dgl-funding-launch"} --><p class="dgl-funding-launch">Held</p><!-- /wp:paragraph -->' ), 'Held' ), 'and shows once funding is on' );
+$fv_on = do_shortcode( '[dgl_home_funding]' );
+$ok( str_contains( $fv_on, 'dgl-home__row--fund' ) && ! str_contains( $fv_on, 'Preview for administrators' ), 'on: the public sees it, with no preview note' );
+delete_option( \DGL\Funding\Visibility::OPTION );
+wp_set_current_user( $fv_was );
+
+$group( 'Funding: the team\'s list of funders\' pages' );
+
+delete_option( \DGL\Funding\Sources::OPTION );
+$ok( 2 === \DGL\Funding\Sources::seed( [ [ 'id' => 'fu-src', 'name' => 'Test Trust', 'url' => 'https://example.org/fund' ], [ 'id' => 'other', 'name' => 'Other', 'url' => 'https://other.example.org/' ], [ 'id' => 'bad', 'url' => 'javascript:x' ] ] ), 'an empty list is seeded, bad rows left out' );
+$ok( 0 === \DGL\Funding\Sources::seed( [ [ 'id' => 'z', 'name' => 'Z', 'url' => 'https://z.example.org/' ] ] ) && 2 === count( \DGL\Funding\Sources::all() ), 'and a second seed never overwrites the list' );
+$fs_added = \DGL\Funding\Sources::add( 'New Fund', 'newfund.example.org/apply', '', 1 );
+$ok( is_array( $fs_added ) && 'new-fund' === $fs_added['id'] && 3 === count( \DGL\Funding\Sources::all() ), 'the team can add one' );
+$ok( is_string( \DGL\Funding\Sources::add( 'Copy', 'https://www.example.org/fund/', '', 1 ) ), 'but not the same page twice' );
+$fs_counts = \DGL\Funding\Sources::live_counts();
+$ok( ( $fs_counts['fu-src'] ?? 0 ) >= 1, 'live funds are counted per source (' . (int) ( $fs_counts['fu-src'] ?? 0 ) . ')' );
+$fs_live = \DGL\Funding\Sources::fund_ids( 'fu-src', [ Statuses::LIVE ] );
+$fs_taken = \DGL\Funding\Sources::remove( 'fu-src', 1 );
+$ok( null !== $fs_taken && $fs_taken >= count( $fs_live ) && [] === \DGL\Funding\Sources::fund_ids( 'fu-src', [ Statuses::LIVE, Statuses::PENDING ] ), 'deleting one takes its funds off the site at once' );
+$ok( null === \DGL\Funding\Sources::remove( 'no-such', 1 ), 'deleting one that is not there says so' );
+
+$fs_token = \DGL\Funding\Endpoint::new_token();
+$fs_get   = new WP_REST_Request( 'GET', '/dgl/v1/funding/sources' );
+$fs_get->set_header( 'Authorization', 'Bearer ' . $fs_token );
+$fs_body  = rest_do_request( $fs_get )->get_data();
+$ok( 2 === count( (array) ( $fs_body['sources'] ?? [] ) ) && isset( $fs_body['sources'][0]['url'] ), 'the Worker reads the list with its token' );
+$fs_anon = new WP_REST_Request( 'GET', '/dgl/v1/funding/sources' );
+$ok( in_array( rest_do_request( $fs_anon )->get_status(), [ 401, 403 ], true ), 'and nobody else can' );
+delete_option( \DGL\Funding\Endpoint::OPTION_TOKEN );
+
+$fs_html = \DGL\Dashboard\View::render(
+	'dashboard/review-funding',
+	[
+		'sources'   => \DGL\Funding\Sources::all(),
+		'counts'    => [ 'new-fund' => 3 ],
+		'others'    => [ 'arts-council-england' => 2 ],
+		'last'      => [ 'at' => time(), 'read' => 2, 'sources' => 3, 'by_source' => [ 'new-fund' => [ 'ok' => true, 'funds' => 3 ], 'other' => [ 'ok' => false, 'funds' => 0 ] ] ],
+		'by_source' => [ 'new-fund' => [ 'ok' => true, 'funds' => 3 ], 'other' => [ 'ok' => false, 'funds' => 0 ] ],
+		'notice'    => [],
+		'is_admin'  => true,
+		'is_on'     => false,
+		'list_url'  => home_url( '/grants/' ),
+	]
+);
+$ok( str_contains( $fs_html, 'New Fund' ) && str_contains( $fs_html, 'newfund.example.org/apply' ) && str_contains( $fs_html, 'Read: 3 open' ) && str_contains( $fs_html, 'Could not be read' ), 'the screen lists each page, its link and how the last run went' );
+$ok( str_contains( $fs_html, 'source=new-fund' ) && str_contains( $fs_html, 'value="remove_source"' ) && str_contains( $fs_html, 'value="add_source"' ), 'with a count that opens its funds, and add and delete' );
+$ok( str_contains( $fs_html, 'Show funding to the public' ) && str_contains( $fs_html, 'arts-council-england' ), 'and the switch, and funds from elsewhere' );
+$fs_html_mod = \DGL\Dashboard\View::render( 'dashboard/review-funding', [ 'sources' => [], 'is_admin' => false, 'is_on' => false ] );
+$ok( ! str_contains( $fs_html_mod, 'Show funding to the public' ) && str_contains( $fs_html_mod, 'Only a site administrator' ), 'only an administrator gets the switch' );
+delete_option( \DGL\Funding\Sources::OPTION );
+
 $group( 'Funding: the sync endpoint needs its token' );
 
 $fu_token = \DGL\Funding\Endpoint::new_token();

@@ -13,6 +13,12 @@
  * Its pager carries `data-dgl-pager="hide"` (replaced by the button) or
  * `data-dgl-pager="keep"` (left as it is, only read for the next link),
  * and a link with `rel="next"` or the class `next`.
+ *
+ * A list the theme renders (Blocksy's archive grid on the topic pages) cannot
+ * carry those attributes in its markup, so `window.dglAutoload.theme` names
+ * its list and pager selectors instead. They are marked here, and the same
+ * selectors find the list and pager in each fetched page
+ * (`data-dgl-autoload-from`, `data-dgl-pager-from`).
  */
 ( function () {
 	'use strict';
@@ -33,6 +39,30 @@
 
 	function fill( template, a, b ) {
 		return template.replace( '%1$d', String( a ) ).replace( '%2$d', String( b ) );
+	}
+
+	function fromDoc( doc, node, attr, fallback ) {
+		return doc.querySelector( node.getAttribute( attr ) || fallback );
+	}
+
+	function markTheme() {
+		var theme = words.theme;
+
+		if ( ! theme || ! theme.list || ! theme.pager ) {
+			return;
+		}
+
+		var list  = document.querySelector( theme.list );
+		var pager = document.querySelector( theme.pager );
+
+		if ( ! list || ! pager || list.hasAttribute( 'data-dgl-autoload' ) ) {
+			return;
+		}
+
+		list.setAttribute( 'data-dgl-autoload', theme.item || '' );
+		list.setAttribute( 'data-dgl-autoload-from', theme.list );
+		pager.setAttribute( 'data-dgl-pager', 'hide' );
+		pager.setAttribute( 'data-dgl-pager-from', theme.pager );
 	}
 
 	function pagerFor( list ) {
@@ -126,8 +156,8 @@
 				} )
 				.then( function ( html ) {
 					var doc      = new DOMParser().parseFromString( html, 'text/html' );
-					var fetched  = doc.querySelector( '[data-dgl-autoload]' );
-					var newPager = doc.querySelector( '[data-dgl-pager]' );
+					var fetched  = fromDoc( doc, list, 'data-dgl-autoload-from', '[data-dgl-autoload]' );
+					var newPager = fromDoc( doc, pager, 'data-dgl-pager-from', '[data-dgl-pager]' );
 					var added    = 0;
 					var first    = null;
 
@@ -147,6 +177,10 @@
 					var newNext = nextLink( newPager );
 
 					if ( ! keep && newPager ) {
+						if ( pager.hasAttribute( 'data-dgl-pager-from' ) ) {
+							newPager.setAttribute( 'data-dgl-pager', 'hide' );
+							newPager.setAttribute( 'data-dgl-pager-from', pager.getAttribute( 'data-dgl-pager-from' ) );
+						}
 						pager.parentNode.replaceChild( newPager, pager );
 						pager = newPager;
 						pager.hidden = true;
@@ -208,6 +242,7 @@
 	}
 
 	function init() {
+		markTheme();
 		Array.prototype.forEach.call( document.querySelectorAll( '[data-dgl-autoload]' ), enhance );
 	}
 

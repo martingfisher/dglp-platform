@@ -112,6 +112,8 @@ final class Plugin {
 		\DGL\Padlet\Board::init();
 		\DGL\Padlet\Settings::init();
 		\DGL\Funding\Import::init();
+		\DGL\Funding\Visibility::init();
+		\DGL\Funding\Settings::init();
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			MailCommand::register();

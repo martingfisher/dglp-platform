@@ -61,6 +61,7 @@ Harness::assert_same( '2026-12-01', $f['facts']['deadline'], 'a future deadline 
 Harness::assert_same( null, Import::normalise( array_merge( $base, [ 'deadline' => '2026-11-15' ] ), $today, $topics ), 'a fund that closed yesterday is skipped' );
 Harness::assert_same( '2026-12-28', Import::normalise( array_merge( $base, [ 'deadline' => null, 'rolling' => true ] ), $today, $topics )['facts']['deadline'], 'a rolling fund gets six weeks' );
 Harness::assert_same( '2026-12-28', Import::normalise( array_merge( $base, [ 'deadline' => '2026-02-30' ] ), $today, $topics )['facts']['deadline'], 'a date that does not exist counts as none' );
+Harness::assert_true( Import::normalise( array_merge( $base, [ 'deadline' => null, 'rolling' => false ] ), $today, $topics )['facts']['rolling_deadline'], 'no closing date on the page means open all year, never a made-up deadline' );
 Harness::assert_same( null, Import::normalise( array_merge( $base, [ 'title' => '' ] ), $today, $topics ), 'no title, no fund' );
 Harness::assert_same( '', Import::normalise( array_merge( $base, [ 'application_url' => 'http://example.org' ] ), $today, $topics )['facts']['application_url'], 'a link that is not https is dropped' );
 Harness::assert_same( '', Import::normalise( array_merge( $base, [ 'application_url' => 'javascript:alert(1)' ] ), $today, $topics )['facts']['application_url'], 'a script link is dropped' );
@@ -119,3 +120,38 @@ Harness::assert_same( [ 'Funder', '£300 to £20,000', 'Closes 1 Dec 2026' ], Ca
 Harness::assert_same( [ 'Up to £500', 'Open all year' ], Cards::fund_meta( '', '', '500', '2026-12-28', true ), 'a rolling fund says so, not its moving date' );
 Harness::assert_same( [ 'From £1,000' ], Cards::fund_meta( '', 1000, '', '', false ), 'a floor alone' );
 Harness::assert_same( [ '£5,000' === '' ? '' : 'Up to £5,000' ], Cards::fund_meta( '', 5000, 5000, '', false ), 'the same floor and top is one amount' );
+
+Harness::group( 'Funding: the closing leaf' );
+
+defined( 'DAY_IN_SECONDS' ) || define( 'DAY_IN_SECONDS', 86400 );
+$leaf = Cards::fund_date_parts( '2026-12-15', false, '2026-11-13' );
+Harness::assert_same( [ 'rolling' => false, 'month' => 'Dec', 'day' => '15', 'iso' => '2026-12-15', 'soon' => false ], $leaf, 'a closing date gives month, day and its date' );
+Harness::assert_true( Cards::fund_date_parts( '2026-11-27', false, '2026-11-13' )['soon'], 'fourteen days out is soon' );
+Harness::assert_false( Cards::fund_date_parts( '2026-11-28', false, '2026-11-13' )['soon'], 'fifteen is not' );
+Harness::assert_true( Cards::fund_date_parts( '2026-12-28', true, '2026-11-13' )['rolling'], 'a rolling fund never shows its refresh date' );
+Harness::assert_same( '', Cards::fund_date_parts( '2026-12-28', true, '2026-11-13' )['day'], 'and has no day' );
+Harness::assert_same( null, Cards::fund_date_parts( '', false ), 'no date and not rolling, no leaf' );
+
+Harness::group( 'Funding: the list of funders\' pages' );
+
+use DGL\Funding\Sources;
+
+Harness::assert_same( 'https://example.org/grants', Sources::clean_url( 'example.org/grants' ), 'a bare address gets https' );
+Harness::assert_same( 'https://example.org/grants', Sources::clean_url( 'http://example.org/grants' ), 'http becomes https' );
+Harness::assert_same( '', Sources::clean_url( 'not a web address' ), 'nonsense is refused' );
+Harness::assert_same( '', Sources::clean_url( 'javascript:alert(1)' ), 'a script link is refused' );
+Harness::assert_same( 'the-key-fund-2', Sources::make_id( 'The Key Fund!', [ 'the-key-fund' ] ), 'an id is made from the name and never repeats' );
+Harness::assert_true( Sources::same_page( 'https://www.example.org/apply/', 'http://example.org/apply' ), 'the same page with or without www, https or a trailing slash' );
+Harness::assert_false( Sources::same_page( 'https://example.org/apply', 'https://example.org/about' ), 'different pages differ' );
+
+$existing = [ [ 'id' => 'key-fund', 'name' => 'Key Fund', 'url' => 'https://thekeyfund.co.uk/apply' ] ];
+Harness::assert_true( is_string( Sources::prepare( '', 'https://a.org', '', $existing ) ), 'no name is refused' );
+Harness::assert_true( is_string( Sources::prepare( 'A', 'nope', '', $existing ) ), 'no usable address is refused' );
+Harness::assert_true( str_contains( (string) Sources::prepare( 'Again', 'https://www.thekeyfund.co.uk/apply/', '', $existing ), 'Key Fund' ), 'a page already on the list is refused, naming it' );
+$fresh = Sources::prepare( '  Leeds <b>Fund</b> ', 'leedsfund.org/grants', 'Small grants', $existing );
+Harness::assert_same( [ 'id' => 'leeds-fund', 'name' => 'Leeds Fund', 'url' => 'https://leedsfund.org/grants', 'notes' => 'Small grants' ], $fresh, 'a good one is cleaned and given an id' );
+
+$req = Facets::from_request( [ 'source' => 'key-fund' ] );
+Harness::assert_same( 'key-fund', $req['source'], 'the source filter takes an id' );
+Harness::assert_same( '', Facets::from_request( [ 'source' => "x' OR 1=1" ] )['source'], 'and nothing else' );
+Harness::assert_same( [ 'key' => 'dgl_funding_source', 'value' => 'key-fund', 'compare' => '=' ], Facets::meta_query( [ 'source' => 'key-fund' ], '2026-11-16' )[0], 'and narrows to that source\'s funds' );

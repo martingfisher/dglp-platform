@@ -2148,3 +2148,87 @@ Wordify's `replace_in_post`; every page edit left a revision.
   the four platform post types. Details and checks in
   `docs/mobile-audit-2026-11-13.md`.
 
+- **0.60.1, 13 November. Funding on the home page.** `[dgl_home_funding]`
+  lists funds like the events block, but each row carries a closing leaf on
+  the right ("Closes / DEC / 15", in the alert colour when it closes within a
+  fortnight) instead of the calendar leaf on the left, and a fund open all year
+  says "Open all year" rather than showing its six-week refresh date. Funds with
+  a real closing date come first, soonest first, then the open-all-year ones.
+  The line under the title is the funder and the amount; a funder written as a
+  sentence is cut back to its name. A fund with no picture of its own shows
+  none, so the words get the width. Also in this release, outside the plugin:
+  the weekly Worker now sends a user-agent with its post to the site, because
+  Wordfence refuses a POST with neither user-agent nor referer (the first run on
+  13 November was blocked by exactly that rule); 21 trusts' sources now point at
+  their apply pages; Arts Council England's two open funds are written up by hand
+  in `workers/funding/manual.json` because its site blocks automated reading.
+  Unit suite 2905; integration suite 1701 with the same three failures as `main`.
+- **0.60.2, 13 November.** The home page funding row's line under the title is
+  the funder and the amount only. With no amount it used to fall through to the
+  closing date, which the leaf on the right already shows. The first real
+  import ran the same evening: 116 funds from 118 sources (Co-op Local Community
+  Fund's page could not be read), and `[dgl_home_funding count="6" heading="Grants
+  and Funding"]` now sits under "What's on" on the home page.
+- **0.60.3, 13 November. Item pages: the details beside the headline.** Every
+  item page (news, events, training, funding) is now one left column of a
+  single width, from the kicker through the standfirst to the description, with
+  the Details column beside it from the headline down, so a fund's amount,
+  deadline and link are in view without scrolling. On a phone it reads headline,
+  standfirst, details, description. Funding pages also: an imported fund's
+  kicker names its funder rather than the organisation that owns imported funds,
+  and it has no "Posted by" card; an amount that was never given no longer
+  shows as £0.00; a fund whose page gives no closing date is listed as open all
+  year (the Details card says "Open all year: no closing date") instead of
+  showing the six-week re-check date as a deadline. Unit suite 2906; integration
+  suite 1701 with the same three failures as `main`.
+- **0.60.4, 13 November. Funding held back until signed off; infinite scroll on
+  topic pages.** One switch, `wp dgl funding public on|off|status`, decides
+  whether the public sees funding. Off (set on production the same evening, to
+  wait for DGLP's approval on Tuesday): `/grants/` and fund pages answer 404 and
+  are noindex, funding blocks and feeds draw nothing, funds are left out of topic
+  pages, search, organisation pages, sitemaps and the digest. Signed-in
+  administrators see it all, marked "Preview for administrators". Any block with
+  the class `dgl-funding-launch` is held back with it (the topic feeds on
+  `/support/funding/`). `/support/funding/` gains two rows of funding
+  (`[dgl_home_funding count="6"]`) above its feeds, and the home page block is
+  back in place; both stay hidden until the switch. Topic pages
+  (`/topic/<slug>/`, the theme's archive) now load the next page as the reader
+  reaches the end, using the plugin's autoload script pointed at Blocksy's grid
+  and pager; the numbered pages remain without JavaScript.
+- **0.60.5, 13 November. The funding switch in wp-admin.** Settings > Grants
+  and Funding: one button to show funding to the public or hide it again, the
+  current state in words, links to the funding list and home page, and how the
+  weekly import last went (pages read, new, updated, taken off, funds listed,
+  waiting for review). Administrators only; each press goes in the audit log.
+  Tested on the local WordPress through the real form: Show made `/grants/`
+  answer 200 to a signed-out visitor, Hide put it back to 404.
+- **0.60.6, 13 November. No funding in round-up choices until it is switched
+  on.** Somebody who joins and accepts the weekly round-up is signed up for
+  every type the public can see; while funding is held back that no longer
+  includes funding, so nobody joining before the launch gets funds unasked
+  afterwards. The same for `wp dgl digest subscribe` without `--types`, and a
+  round-up no longer calls itself "narrowed" for leaving out a hidden type.
+  Existing subscriptions are untouched (DGLP to decide after approval).
+- **0.61.0, 13 November. The team manages the funding sources.** Review team >
+  Grants and Funding in the dashboard lists every funder's page the weekly run
+  reads, with how many of its funds are on the site (linking to the list
+  filtered to that funder), what the last run found there, Add (name and page
+  address, checked for a real https host and duplicates) and Delete (takes that
+  funder's funds off the site at once, after a confirmation), funds from
+  elsewhere (the hand-written Arts Council entries), and the Show / Hide switch
+  for administrators. The list now lives on the site (`dgl_funding_sources`);
+  the Worker reads it at the start of each run and seeded it from its own list
+  the first time. Each run records per-source results for the screen. Adds and
+  deletes go in the audit log. Unit suite 2920; integration suite 1724 with the
+  same three failures as `main`. Checked through the real dashboard on the local
+  WordPress: 118 sources listed, add and delete both work, no sideways scrolling
+  at phone width.
+- **0.61.1, 13 November. Funding routes are never cached.** Every answer from
+  `/wp-json/dgl/v1/funding/*` now says `Cache-Control: no-store, private`. Found
+  deploying 0.61.0: Wordify's SmartCache cached the token-only source list for
+  five minutes and served it to a request without the token, and the Worker read
+  that stale copy. The site's SmartCache exclusions (`/wp-json`, `/dashboard`,
+  `/wp-admin`, `/wp-login.php`) are listed in Wordify but show
+  `exclusions_applied_at: null`, so they are not in force; applying them is a
+  hosting change waiting for Martin's go-ahead. The Worker also adds a unique
+  query string to its read of the list.

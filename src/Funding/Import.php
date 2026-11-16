@@ -31,7 +31,8 @@ defined( 'ABSPATH' ) || exit;
  *   and categories are written once, so the review team's edits stand.
  * - A source that could not be read changes nothing. A fund that has gone
  *   from a source that was read is withdrawn.
- * - A rolling fund's deadline is always six weeks after the last week it was
+ * - A rolling fund (or one whose page gives no closing date) is listed as open
+ *   all year; its stored deadline is always six weeks after the last week it was
  *   seen, so if the import stops, rolling funds come down by themselves.
  *
  * Everything in the request is untrusted: text is reduced to plain text and
@@ -102,7 +103,14 @@ final class Import {
 			return null;
 		}
 
-		if ( null === $deadline || $rolling ) {
+		// No closing date on the funder's page means it is open until further
+		// notice: listed as open all year, never with a made-up deadline. Its
+		// stored deadline is only the date it is next re-checked by.
+		if ( null === $deadline ) {
+			$rolling = true;
+		}
+
+		if ( $rolling ) {
 			$deadline = self::rolling_deadline( $today );
 		}
 
@@ -258,6 +266,7 @@ final class Import {
 
 	public static function init(): void {
 		add_action( 'rest_api_init', [ Endpoint::class, 'register' ] );
+		add_filter( 'rest_post_dispatch', [ Endpoint::class, 'no_store' ], 10, 3 );
 		add_action( \DGL\Plugin::EXPIRY_HOOK, [ self::class, 'check_stale' ], 30, 0 );
 	}
 
@@ -304,6 +313,8 @@ final class Import {
 			'skipped'   => 0,
 			'errors'    => [],
 			'new'       => [],
+			// Per source: read or not, funds found, and why not. For the Funding screen.
+			'by_source' => [],
 		];
 
 		$org_id = self::org_id();
@@ -342,7 +353,8 @@ final class Import {
 
 			if ( '' === $source_id || empty( $source['ok'] ) ) {
 				if ( '' !== $source_id ) {
-					$out['errors'][] = sprintf( '%s: %s', $source_id, self::plain( $source['error'] ?? 'not read', 200 ) );
+					$out['errors'][]                 = sprintf( '%s: %s', $source_id, self::plain( $source['error'] ?? 'not read', 200 ) );
+					$out['by_source'][ $source_id ] = [ 'ok' => false, 'funds' => 0, 'error' => self::plain( $source['error'] ?? 'not read', 200 ) ];
 				}
 				continue;
 			}
@@ -399,6 +411,8 @@ final class Import {
 
 				++$out['added'];
 			}
+
+			$out['by_source'][ $source_id ] = [ 'ok' => true, 'funds' => count( $seen ), 'error' => '' ];
 
 			// Only a page that still lists something is trusted to say a fund has gone.
 			if ( [] !== $seen ) {

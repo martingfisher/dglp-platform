@@ -184,7 +184,7 @@ final class Feed {
 		$a         = self::normalise( $atts );
 		$post_type = self::TYPES[ $a['type'] ];
 
-		if ( ! PostTypes::is_enabled( $post_type ) ) {
+		if ( ! PostTypes::is_enabled( $post_type ) || \DGL\Funding\Visibility::hides( $post_type ) ) {
 			return '';
 		}
 

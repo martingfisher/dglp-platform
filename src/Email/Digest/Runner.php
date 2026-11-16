@@ -173,7 +173,7 @@ final class Runner {
 			unsubscribe_url: self::unsubscribe_url( $subscription->unsubscribe_token ),
 			preferences_url: \DGL\Dashboard\Router::url( 'profile', 'email' ),
 			browse_url: home_url( '/' ),
-			filtered: $subscription->narrows( PostTypes::feed_keys() )
+			filtered: $subscription->narrows( \DGL\Funding\Visibility::filter_types( PostTypes::feed_keys(), true ) )
 		);
 
 		if ( $dry_run ) {
@@ -229,7 +229,7 @@ final class Runner {
 		 * still lists it. Without this, turning a type off would hide it from
 		 * every screen and keep posting it to everybody who had ever ticked it.
 		 */
-		$types = array_values( array_intersect( $subscription->types, PostTypes::feed_keys() ) );
+		$types = \DGL\Funding\Visibility::filter_types( array_values( array_intersect( $subscription->types, PostTypes::feed_keys() ) ), true );
 
 		if ( [] === $types ) {
 			return [];

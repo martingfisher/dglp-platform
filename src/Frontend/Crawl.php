@@ -202,7 +202,7 @@ final class Crawl {
 			[ Calendar::url(), '' ],
 		];
 
-		foreach ( PostTypes::enabled_keys() as $type ) {
+		foreach ( \DGL\Funding\Visibility::filter_types( PostTypes::enabled_keys(), true ) as $type ) {
 			$urls[] = [ Frontend::archive_url( $type ), '' ];
 		}
 

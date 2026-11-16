@@ -2299,3 +2299,12 @@ body.dgl-body {
 .dgl-field__static {
 	padding: 6px 0 10px;
 }
+
+/* Grants and Funding: the team's list of funders' pages. */
+.dgl-funding__switch { margin-bottom: var(--dgl-gap-lg); }
+.dgl-funding__add { display: grid; gap: 4px 16px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); align-items: end; }
+.dgl-funding__add p:last-child { margin: 0; }
+.dgl-card + section { margin-top: var(--dgl-gap-lg); }
+.dgl-funding__table td { vertical-align: top; }
+.dgl-funding__url { font-size: 0.9em; overflow-wrap: anywhere; }
+.dgl-funding__num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }

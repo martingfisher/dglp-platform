@@ -109,7 +109,7 @@ final class Navigation {
 				// 500 stops being a number and starts being a guess.
 				'count'   => ItemsTable::queue_count() + count( \DGL\Org\Profile::awaiting_review() ) + \DGL\Joining\Store::awaiting_count(),
 				'section' => __( 'Review team', 'dgl-platform' ),
-				'current' => 'review' === $first && ! in_array( $second, [ 'decided', 'reports', 'orgs' ], true ),
+				'current' => 'review' === $first && ! in_array( $second, [ 'decided', 'reports', 'orgs', 'funding' ], true ),
 			];
 
 			$items[] = [
@@ -126,6 +126,14 @@ final class Navigation {
 				'count'   => null,
 				'section' => __( 'Review team', 'dgl-platform' ),
 				'current' => 'review' === $first && 'decided' === $second,
+			];
+
+			$items[] = [
+				'label'   => __( 'Grants and Funding', 'dgl-platform' ),
+				'url'     => Router::url( 'review', 'funding' ),
+				'count'   => null,
+				'section' => __( 'Review team', 'dgl-platform' ),
+				'current' => 'review' === $first && 'funding' === $second,
 			];
 
 			$items[] = [
