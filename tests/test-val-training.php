@@ -212,3 +212,11 @@ Harness::assert_same( '', ValTraining::safe_url( 'http://val.org.uk/x' ), 'plain
 Harness::assert_same( '', ValTraining::safe_url( 'https://val.org.uk.evil.example/x' ), 'a look-alike host is not' );
 Harness::assert_same( '', ValTraining::safe_url( 'https://evil.example/https://val.org.uk/' ), 'nor a link that only mentions VAL' );
 Harness::assert_same( '', ValTraining::safe_url( 'javascript:alert(1)' ), 'nor a script' );
+
+// The booking note for VAL items (Andrina Dawson, 18 November 2026).
+Harness::assert_same( true, ValTraining::books_on_val( 'https://val.org.uk/training/lone-working-training/' ), 'a VAL course page books on VAL' );
+Harness::assert_same( true, ValTraining::books_on_val( 'http://www.VAL.org.uk/training/x/' ), 'www, plain http and capitals still count' );
+Harness::assert_same( false, ValTraining::books_on_val( 'https://forumcentral.org.uk/events/x/' ), 'another organisation does not' );
+Harness::assert_same( false, ValTraining::books_on_val( 'https://val.org.uk.evil.example/x' ), 'a look-alike host does not' );
+Harness::assert_same( false, ValTraining::books_on_val( '' ), 'no link does not' );
+Harness::assert_same( 'https://val.org.uk/account/', ValTraining::SIGN_IN_URL, 'sign-in link goes to VAL accounts' );

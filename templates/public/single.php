@@ -169,12 +169,27 @@ $from     = $imported ? ( \DGL\Frontend\Cards::fund_meta( (string) Frontend::val
 
 				<?php if ( '' !== $booking && ! $passed && ! $cancelled ) : ?>
 					<div class="dgl-pub__card dgl-pub__card--action">
-						<a class="dgl-pub__button" href="<?php echo esc_url( $booking ); ?>" rel="nofollow noopener" target="_blank">
-							<?php esc_html_e( 'Book or find out more', 'dgl-platform' ); ?>
-						</a>
-						<p class="dgl-pub__note">
-							<?php esc_html_e( 'This opens the organisation\'s own page. Booking is handled by them, not by us.', 'dgl-platform' ); ?>
-						</p>
+						<?php if ( \DGL\Training\ValTraining::books_on_val( $booking ) ) : ?>
+							<a class="dgl-pub__button" href="<?php echo esc_url( $booking ); ?>" rel="nofollow noopener" target="_blank">
+								<?php esc_html_e( 'Book on the VAL website', 'dgl-platform' ); ?>
+							</a>
+							<p class="dgl-pub__note">
+								<?php
+								printf(
+									/* translators: %s: link to VAL's sign-in page */
+									esc_html__( 'Booking is through VAL\'s own website and uses a VAL account, which is separate from your Doing Good Leeds sign-in. If you have a VAL account, %s so any member discount is applied.', 'dgl-platform' ),
+									'<a href="' . esc_url( \DGL\Training\ValTraining::SIGN_IN_URL ) . '" rel="nofollow noopener" target="_blank">' . esc_html__( 'sign in to VAL first', 'dgl-platform' ) . '</a>'
+								);
+								?>
+							</p>
+						<?php else : ?>
+							<a class="dgl-pub__button" href="<?php echo esc_url( $booking ); ?>" rel="nofollow noopener" target="_blank">
+								<?php esc_html_e( 'Book or find out more', 'dgl-platform' ); ?>
+							</a>
+							<p class="dgl-pub__note">
+								<?php esc_html_e( 'This opens the organisation\'s own page. Booking is handled by them, not by us.', 'dgl-platform' ); ?>
+							</p>
+						<?php endif; ?>
 					</div>
 				<?php endif; ?>
 

@@ -2296,3 +2296,19 @@ Wordify's `replace_in_post`; every page edit left a revision.
   the `/support/funding/` page (VAL's funding advice service), the "Grants
   and Funding" topic on news, events and training, and the index-drift line
   on the wp-admin Health page, which names a type only if it is out of step.
+
+## 18 November: VAL booking note (0.61.10)
+
+Andrina Dawson (18 November): people booking VAL training from DGL were asked
+to sign in to VAL, tried their DGL password, and some then saw "event isn't
+available". DGL only links to VAL's public course page; the sign-in request
+comes from VAL's booking form, which asks anyone whose email already has a VAL
+account to sign in first (member discounts). The VAL-side fixes (clearer
+message, Log in returning to the same booking, the error after sign-in) were
+passed to Liam Pedley Design.
+
+- **0.61.10:** on any item whose booking link goes to val.org.uk, the button
+  reads "Book on the VAL website" and the note says booking uses a VAL
+  account, separate from a Doing Good Leeds sign-in, with a link to sign in to
+  VAL first (`ValTraining::books_on_val()`, `ValTraining::SIGN_IN_URL`). Other
+  organisations' items keep "Book or find out more" and the old note.
