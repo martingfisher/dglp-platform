@@ -2251,3 +2251,64 @@ Wordify's `replace_in_post`; every page edit left a revision.
   member-area route, keep `noindex, nofollow` in the page and the header.
   `Crawl::is_public_route()` decides, and is unit-tested. Unit suite 2929.
 
+- **0.61.4: the review team's Grants and Funding screen is hidden.** Martin
+  asked (16 November) for it to be hidden from everyone but him while funding
+  waits for DGLP's approval, other administrators included. While
+  `dgl_funding_public` is off, the "Grants and Funding" item in the review
+  menu and `/dashboard/review/funding/` (404) are open only to the user ids in
+  the new option `dgl_funding_screen_users`. Switching funding on opens the
+  screen to the whole review team again with no other step.
+  `Visibility::screen_open_to()` is
+  unit-tested. Unit suite 2935.
+- **0.61.5: `wp dgl funding screen`.** Read only. Lists every administrator
+  and moderator and whether the live code lets them see the Grants and
+  Funding screen, so the 0.61.4 hiding can be checked without signing in as
+  each person.
+- **0.61.6: funding hidden everywhere from all but Martin.** Martin asked
+  (16 November) for it to be hidden from everyone but him, not only the
+  review screen. While funding is off, anyone not in
+  `dgl_funding_screen_users` gets no wp-admin Funding opportunities screens,
+  menu, admin-bar "New" or REST route (`register_post_type_args`); is refused
+  edit, delete and read on a fund through WordPress (`map_meta_cap`); no
+  Settings > Grants and Funding; no funds or pending edits to them in the
+  review queue, its count, the Approved list or organisation lists
+  (`dgl_items_hidden_types` in `ItemsTable`); a 404 on a fund's review or
+  edit address; no "Funding opportunities" submit tile; and a 404 on
+  `/grants/` and fund pages (the preview is now the listed people only, not
+  every administrator). The monthly report's "waiting" figure and the
+  wp-admin dashboard widget count leave funds out too while it is off.
+  `held_admin_args()` and `blocks_cap()` are unit-tested. Unit suite 2948.
+- **0.61.7: `wp dgl funding screen --user=<id>`** also prints what that
+  person gets: review queue count and how many of those are funds, whether
+  wp-admin shows fund screens, whether they can edit a fund and whether the
+  Settings page is theirs. Read only.
+- **0.61.8:** the same command also prints the Approved list's count and how
+  many of those are funds. Correction to the 0.61.4 note: the review queue
+  holds no funds (0 waiting); the 119 funds are 116 live, 1 expired and the
+  rest drafts or trashed, and the live ones are what the Approved list showed.
+- **0.61.9: Reports too.** Martin confirmed (16 November) "everybody
+  everywhere". The review team's Reports screen leaves funds out of the
+  approved-by-type and on-the-site-now figures and the decisions spreadsheet,
+  and offers no funding download (`Visibility::enabled_here()`), for anyone
+  not listed while funding is off. The public site was checked anonymously:
+  no link to `/grants/` on the home, support, news, events, training or
+  search pages. Left as they are, because they are not the funds list:
+  the `/support/funding/` page (VAL's funding advice service), the "Grants
+  and Funding" topic on news, events and training, and the index-drift line
+  on the wp-admin Health page, which names a type only if it is out of step.
+
+## 18 November: VAL booking note (0.61.10)
+
+Andrina Dawson (18 November): people booking VAL training from DGL were asked
+to sign in to VAL, tried their DGL password, and some then saw "event isn't
+available". DGL only links to VAL's public course page; the sign-in request
+comes from VAL's booking form, which asks anyone whose email already has a VAL
+account to sign in first (member discounts). The VAL-side fixes (clearer
+message, Log in returning to the same booking, the error after sign-in) were
+passed to Liam Pedley Design.
+
+- **0.61.10:** on any item whose booking link goes to val.org.uk, the button
+  reads "Book on the VAL website" and the note says booking uses a VAL
+  account, separate from a Doing Good Leeds sign-in, with a link to sign in to
+  VAL first (`ValTraining::books_on_val()`, `ValTraining::SIGN_IN_URL`). Other
+  organisations' items keep "Book or find out more" and the old note.

@@ -169,6 +169,27 @@ final class ItemsTable {
 	}
 
 	/**
+	 * Types held back from whoever is asking: funding, while it is switched
+	 * off, from everyone but the people listed for it (Martin, 16 November
+	 * 2026). Supplied by {@see \DGL\Funding\Visibility::items_hidden()}.
+	 * Literals, like {@see self::content_only()}: post type keys reduced to
+	 * the characters a key can have.
+	 */
+	private static function held_back(): string {
+		$sql = '';
+
+		foreach ( (array) apply_filters( 'dgl_items_hidden_types', [] ) as $type ) {
+			$type = (string) preg_replace( '/[^a-z0-9_]/', '', strtolower( (string) $type ) );
+
+			if ( '' !== $type ) {
+				$sql .= " AND post_type <> '" . $type . "'";
+			}
+		}
+
+		return $sql;
+	}
+
+	/**
 	 * One organisation's items, newest activity first. Serves the member
 	 * dashboard and the category list screens.
 	 *
@@ -182,7 +203,7 @@ final class ItemsTable {
 	public static function for_org( int $org_id, ?array $types = null, ?array $statuses = null, int $limit = 50, int $offset = 0 ): array {
 		global $wpdb;
 
-		$sql    = 'SELECT post_id FROM ' . self::name() . ' WHERE org_id = %d' . self::content_only();
+		$sql    = 'SELECT post_id FROM ' . self::name() . ' WHERE org_id = %d' . self::content_only() . self::held_back();
 		$params = [ $org_id ];
 
 		if ( ! empty( $statuses ) ) {
@@ -270,7 +291,7 @@ final class ItemsTable {
 	public static function queue( ?array $types = null, int $limit = 50, int $offset = 0 ): array {
 		global $wpdb;
 
-		$sql    = 'SELECT post_id FROM ' . self::name() . ' WHERE status = %s';
+		$sql    = 'SELECT post_id FROM ' . self::name() . ' WHERE status = %s' . self::held_back();
 		$params = [ Statuses::PENDING ];
 
 		if ( ! empty( $types ) ) {
@@ -315,6 +336,7 @@ final class ItemsTable {
 		$sql = 'SELECT post_id FROM ' . self::name()
 			. ' WHERE status IN (' . implode( ',', array_fill( 0, count( $statuses ), '%s' ) ) . ')'
 			. self::content_only()
+			. self::held_back()
 			. ' ORDER BY updated_at DESC LIMIT %d OFFSET %d';
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery
@@ -335,7 +357,8 @@ final class ItemsTable {
 
 		$sql = 'SELECT COUNT(*) FROM ' . self::name()
 			. ' WHERE status IN (' . implode( ',', array_fill( 0, count( $statuses ), '%s' ) ) . ')'
-			. self::content_only();
+			. self::content_only()
+			. self::held_back();
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery
 		return (int) $wpdb->get_var( $wpdb->prepare( $sql, $statuses ) );
@@ -349,7 +372,7 @@ final class ItemsTable {
 	public static function queue_count( ?array $types = null ): int {
 		global $wpdb;
 
-		$sql    = 'SELECT COUNT(*) FROM ' . self::name() . ' WHERE status = %s';
+		$sql    = 'SELECT COUNT(*) FROM ' . self::name() . ' WHERE status = %s' . self::held_back();
 		$params = [ Statuses::PENDING ];
 
 		if ( ! empty( $types ) ) {
@@ -475,7 +498,7 @@ final class ItemsTable {
 	public static function counts_for_org( int $org_id, ?string $post_type = null ): array {
 		global $wpdb;
 
-		$sql    = 'SELECT status, COUNT(*) AS total FROM ' . self::name() . ' WHERE org_id = %d' . self::content_only();
+		$sql    = 'SELECT status, COUNT(*) AS total FROM ' . self::name() . ' WHERE org_id = %d' . self::content_only() . self::held_back();
 		$params = [ $org_id ];
 
 		if ( null !== $post_type ) {

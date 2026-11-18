@@ -30,9 +30,11 @@ defined( 'ABSPATH' ) || exit;
  *   sitemaps and the digest, and the digest choices do not offer them.
  *
  * The weekly import keeps running, so the list is current the moment it goes
- * on. Signed-in site administrators still see all of it, marked as a
- * preview, so it can be checked before the switch; those pages are
- * noindex.
+ * on. Only the people listed in SCREEN_USERS_OPTION (Martin) still see it,
+ * marked as a preview, so it can be checked before the switch; those pages
+ * are noindex. Everyone else, other administrators included, sees no
+ * funding anywhere: wp-admin, settings, the review area or the site
+ * (Martin, 16 November 2026).
  */
 final class Visibility {
 
@@ -45,6 +47,10 @@ final class Visibility {
 		add_filter( 'wp_sitemaps_post_types', [ self::class, 'core_sitemap' ] );
 		add_filter( 'rank_math/sitemap/exclude_post_type', [ self::class, 'rank_math_sitemap' ], 10, 2 );
 		add_filter( 'render_block', [ self::class, 'held_block' ], 10, 2 );
+		// Everywhere else funding shows, held back from all but the people listed (Martin, 16 November 2026).
+		add_filter( 'register_post_type_args', [ self::class, 'admin_args' ], 10, 2 );
+		add_filter( 'map_meta_cap', [ self::class, 'deny_caps' ], 20, 4 );
+		add_filter( 'dgl_items_hidden_types', [ self::class, 'items_hidden' ] );
 	}
 
 	/** A block given this class in the editor is held back with funding. */
@@ -73,9 +79,153 @@ final class Visibility {
 		return '0' !== (string) get_option( self::OPTION, '1' );
 	}
 
-	/** Whether this visitor may see it anyway: site administrators, as a preview (Martin, 13 November 2026). */
+	/**
+	 * Whether this visitor may see it anyway, as a preview. Was every site
+	 * administrator (13 November 2026); since 16 November only the people
+	 * listed in SCREEN_USERS_OPTION (Martin).
+	 */
 	public static function can_preview(): bool {
-		return is_user_logged_in() && current_user_can( 'manage_options' );
+		return is_user_logged_in() && self::screen_open_to( get_current_user_id(), false, self::allowed() );
+	}
+
+	/**
+	 * The people who still see the review team's Grants and Funding screen
+	 * while funding is switched off: user ids, kept in this option. Martin
+	 * asked (16 November 2026) for the screen to be hidden from everyone but
+	 * him until DGLP approve funding; set with
+	 * `wp option update dgl_funding_screen_users '[1]' --format=json`.
+	 */
+	public const SCREEN_USERS_OPTION = 'dgl_funding_screen_users';
+
+	/**
+	 * Whether a user sees the Grants and Funding screen. Once funding is on,
+	 * everyone who can review does. While it is off, only the users listed.
+	 * Pure.
+	 *
+	 * @param int[] $allowed
+	 */
+	public static function screen_open_to( int $user_id, bool $is_on, array $allowed ): bool {
+		if ( $is_on ) {
+			return true;
+		}
+
+		return $user_id > 0 && in_array( $user_id, array_map( 'intval', $allowed ), true );
+	}
+
+	/** @return array<int|string> The people listed. */
+	private static function allowed(): array {
+		$allowed = get_option( self::SCREEN_USERS_OPTION, [] );
+
+		return is_array( $allowed ) ? $allowed : [];
+	}
+
+	/** Whether this user sees funding anywhere: the review screen, wp-admin, settings, the queue. */
+	public static function screen_visible( int $user_id ): bool {
+		return self::screen_open_to( $user_id, self::is_on(), self::allowed() );
+	}
+
+	/** Whether funding is held back from whoever is signed in here (or nobody is). */
+	public static function hidden_here(): bool {
+		return ! self::screen_visible( get_current_user_id() );
+	}
+
+	/**
+	 * The funding post type's admin settings for someone it is held back
+	 * from: no wp-admin list or edit screen (core refuses edit.php and
+	 * post.php for a type without show_ui), no menu, no "New" in the admin
+	 * bar, no REST route. Pure.
+	 *
+	 * @param array<string, mixed> $args
+	 * @return array<string, mixed>
+	 */
+	public static function held_admin_args( array $args, bool $hidden ): array {
+		if ( ! $hidden ) {
+			return $args;
+		}
+
+		foreach ( [ 'show_ui', 'show_in_menu', 'show_in_admin_bar', 'show_in_nav_menus', 'show_in_rest' ] as $key ) {
+			$args[ $key ] = false;
+		}
+
+		return $args;
+	}
+
+	/**
+	 * Hooked on register_post_type_args.
+	 *
+	 * @param array<string, mixed> $args
+	 * @return array<string, mixed>
+	 */
+	public static function admin_args( array $args, string $post_type ): array {
+		return PostTypes::GRANT === $post_type ? self::held_admin_args( $args, self::hidden_here() ) : $args;
+	}
+
+	/** The capabilities on a single post that are refused on funding for anyone it is held back from. */
+	private const HELD_CAPS = [ 'edit_post', 'delete_post', 'read_post', 'publish_post', 'edit_dgl_item', 'delete_dgl_item', 'read_dgl_item' ];
+
+	/**
+	 * Whether a capability on a post is refused because it is funding held
+	 * back from this user. Never for nobody signed in (the import and cron
+	 * run as no one and never ask). Pure.
+	 *
+	 * @param array<int|string> $allowed
+	 */
+	public static function blocks_cap( string $cap, string $post_type, int $user_id, bool $is_on, array $allowed ): bool {
+		return PostTypes::GRANT === $post_type
+			&& $user_id > 0
+			&& in_array( $cap, self::HELD_CAPS, true )
+			&& ! self::screen_open_to( $user_id, $is_on, $allowed );
+	}
+
+	/**
+	 * Hooked on map_meta_cap after the plugin's own policy, so an
+	 * administrator not listed cannot edit, delete or read a fund through
+	 * wp-admin, the REST API or admin-ajax while funding is off.
+	 *
+	 * @param string[] $caps
+	 * @param mixed[]  $args
+	 * @return string[]
+	 */
+	public static function deny_caps( array $caps, string $cap, int $user_id, array $args ): array {
+		if ( ! in_array( $cap, self::HELD_CAPS, true ) || ! isset( $args[0] ) ) {
+			return $caps;
+		}
+
+		$post = get_post( (int) $args[0] );
+
+		if ( null === $post || ! self::blocks_cap( $cap, (string) $post->post_type, $user_id, self::is_on(), self::allowed() ) ) {
+			return $caps;
+		}
+
+		return [ 'do_not_allow' ];
+	}
+
+	/**
+	 * PostTypes::enabled(), without funding for anyone it is held back from.
+	 * For the review team's reports and their downloads.
+	 *
+	 * @return array<string, array<string, mixed>>
+	 */
+	public static function enabled_here(): array {
+		$types = PostTypes::enabled();
+
+		if ( self::hidden_here() ) {
+			unset( $types[ PostTypes::GRANT ] );
+		}
+
+		return $types;
+	}
+
+	/**
+	 * Hooked on dgl_items_hidden_types: the review queue, its count, the
+	 * Approved list and organisation lists leave funding out for anyone it
+	 * is held back from.
+	 *
+	 * @param string[] $types
+	 * @return string[]
+	 */
+	public static function items_hidden( array $types ): array {
+		return self::hidden_here() ? array_merge( $types, [ PostTypes::GRANT ] ) : $types;
 	}
 
 	/** Whether funding is shown to whoever is looking. */

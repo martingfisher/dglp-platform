@@ -134,6 +134,11 @@ final class Csv {
 		];
 
 		foreach ( (array) $rows as $row ) {
+			// Decisions on funds are left out for anyone funding is held back from.
+			if ( PostTypes::GRANT === (string) $row['post_type'] && \DGL\Funding\Visibility::hidden_here() ) {
+				continue;
+			}
+
 			$type = 'revision' === (string) $row['object_type'] || PostTypes::REVISION === (string) $row['post_type']
 				? __( 'Edit', 'dgl-platform' )
 				: (string) ( PostTypes::definitions()[ (string) $row['post_type'] ]['singular'] ?? $row['post_type'] );

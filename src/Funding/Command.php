@@ -19,6 +19,7 @@ defined( 'ABSPATH' ) || exit;
  *     wp dgl funding token
  *     wp dgl funding public on
  *     wp dgl funding status
+ *     wp dgl funding screen
  *     wp dgl funding import run.json --dry-run
  */
 final class Command {
@@ -117,6 +118,54 @@ final class Command {
 		}
 
 		$run['ok'] ? WP_CLI::success( $dry ? 'Dry run finished. Nothing was written.' : 'Done.' ) : WP_CLI::error( 'Nothing changed.' );
+	}
+
+	/**
+	 * Who sees the review team's Grants and Funding screen, as the live code decides it.
+	 *
+	 * Read only. Lists every administrator and moderator with yes or no.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp dgl funding screen
+	 *
+	 * @param string[]              $args
+	 * @param array<string, string> $assoc
+	 */
+	public function screen( array $args, array $assoc ): void {
+		$allowed = get_option( Visibility::SCREEN_USERS_OPTION, [] );
+
+		WP_CLI::log( sprintf( 'Funding is %s. %s: %s.', Visibility::is_on() ? 'ON' : 'OFF', Visibility::SCREEN_USERS_OPTION, wp_json_encode( $allowed ) ) );
+
+		$users = get_users(
+			[
+				'role__in' => [ \DGL\Access\UserContext::ROLE_ADMIN, \DGL\Access\UserContext::ROLE_MODERATOR ],
+				'orderby'  => 'ID',
+			]
+		);
+
+		foreach ( $users as $user ) {
+			WP_CLI::log( sprintf( '%-4d %-40s %-14s %s', $user->ID, $user->user_login, implode( ',', $user->roles ), Visibility::screen_visible( (int) $user->ID ) ? 'SEES IT' : 'hidden' ) );
+		}
+		$me = get_current_user_id();
+
+		if ( $me <= 0 ) {
+			WP_CLI::log( 'Add --user=<id> to see what that person gets in the review queue and wp-admin.' );
+			return;
+		}
+
+		$fund  = get_posts( [ 'post_type' => \DGL\PostTypes::GRANT, 'post_status' => 'any', 'posts_per_page' => 1, 'fields' => 'ids' ] );
+		$type  = get_post_type_object( \DGL\PostTypes::GRANT );
+		$queue = \DGL\Index\ItemsTable::queue( null, 1000 );
+		$funds = count( array_filter( $queue, static fn( int $id ): bool => \DGL\PostTypes::GRANT === get_post_type( $id ) ) );
+
+		WP_CLI::log( sprintf( 'As user %d: review queue %d waiting, of which funds %d.', $me, \DGL\Index\ItemsTable::queue_count(), $funds ) );
+
+		$decided = \DGL\Index\ItemsTable::decided( \DGL\Index\ItemsTable::decided_statuses(), 5000 );
+		$dfunds  = count( array_filter( $decided, static fn( int $id ): bool => \DGL\PostTypes::GRANT === get_post_type( $id ) ) );
+
+		WP_CLI::log( sprintf( 'As user %d: Approved list %d, of which funds %d.', $me, \DGL\Index\ItemsTable::decided_count( \DGL\Index\ItemsTable::decided_statuses() ), $dfunds ) );
+		WP_CLI::log( sprintf( 'As user %d: wp-admin funds screens %s; can edit a fund %s; Settings page %s.', $me, null !== $type && $type->show_ui ? 'yes' : 'no', [] !== $fund && current_user_can( 'edit_post', (int) $fund[0] ) ? 'yes' : 'no', Visibility::hidden_here() ? 'no' : 'yes' ) );
 	}
 
 	/**

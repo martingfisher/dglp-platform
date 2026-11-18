@@ -128,13 +128,16 @@ final class Navigation {
 				'current' => 'review' === $first && 'decided' === $second,
 			];
 
-			$items[] = [
-				'label'   => __( 'Grants and Funding', 'dgl-platform' ),
-				'url'     => Router::url( 'review', 'funding' ),
-				'count'   => null,
-				'section' => __( 'Review team', 'dgl-platform' ),
-				'current' => 'review' === $first && 'funding' === $second,
-			];
+			// Hidden while funding waits for approval, except from the people listed (Martin, 16 November 2026).
+			if ( \DGL\Funding\Visibility::screen_visible( get_current_user_id() ) ) {
+				$items[] = [
+					'label'   => __( 'Grants and Funding', 'dgl-platform' ),
+					'url'     => Router::url( 'review', 'funding' ),
+					'count'   => null,
+					'section' => __( 'Review team', 'dgl-platform' ),
+					'current' => 'review' === $first && 'funding' === $second,
+				];
+			}
 
 			$items[] = [
 				'label'   => __( 'Reports', 'dgl-platform' ),

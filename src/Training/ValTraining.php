@@ -461,6 +461,20 @@ final class ValTraining {
 	}
 
 	/** A link kept only when it is https and on VAL's own host. */
+	/** VAL's own sign-in page, linked from the booking note on VAL items. */
+	public const SIGN_IN_URL = 'https://val.org.uk/account/';
+
+	/**
+	 * Whether a booking link goes to VAL's website. VAL's booking form asks anyone
+	 * whose email already has a VAL account to sign in to VAL first (for member
+	 * discounts), and that account is separate from a Doing Good Leeds one, so these
+	 * items get their own button and note (Andrina Dawson, 18 November 2026).
+	 */
+	public static function books_on_val( string $url ): bool {
+		$host = strtolower( (string) parse_url( trim( $url ), PHP_URL_HOST ) );
+		return in_array( $host, self::HOSTS, true );
+	}
+
 	public static function safe_url( string $url ): string {
 		$url   = trim( html_entity_decode( $url, ENT_QUOTES | ENT_HTML5, 'UTF-8' ) );
 		$parts = parse_url( $url );
