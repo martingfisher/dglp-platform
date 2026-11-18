@@ -22,7 +22,10 @@ defined( 'ABSPATH' ) || exit;
  * The member area is a set of virtual routes. Sign-in, join, invitation and
  * unsubscribe screens are public by design, and nothing marked them
  * `noindex`, so the day "Discourage search engines" is unticked they become
- * indexable. They now say noindex in the page, in a header and in robots.txt.
+ * indexable. They now say noindex in the page and in a header. They are not
+ * blocked in robots.txt: a crawler that may not fetch a page never sees its
+ * noindex, so Google indexed the address from links anyway and Search
+ * Console reported "Indexed, though blocked by robots.txt" (16 November).
  *
  * The directory, its organisation pages, the calendar and the listing pages
  * are also virtual or archive routes, which neither core's sitemap nor Rank
@@ -112,34 +115,26 @@ final class Crawl {
 	}
 
 	/**
-	 * Lines to add to the virtual robots.txt: keep crawlers out of the member
-	 * area and say where the sitemap is. Pure.
+	 * Lines to add to the virtual robots.txt: say where the sitemap is. Pure.
+	 *
+	 * The member area is deliberately not disallowed here. It is kept out of
+	 * search by its noindex tag and header, which a crawler can only read if
+	 * it is allowed to fetch the page.
 	 */
-	public static function robots_txt_extra( string $output, string $dashboard_base, string $sitemap_url ): string {
-		$extra = '';
-		$rule  = 'Disallow: /' . trim( $dashboard_base, '/' ) . '/';
-
-		if ( ! str_contains( $output, $rule ) ) {
-			$extra .= $rule . "\n";
-		}
-
+	public static function robots_txt_extra( string $output, string $sitemap_url ): string {
 		$line = 'Sitemap: ' . $sitemap_url;
 
-		if ( ! str_contains( $output, $line ) ) {
-			$extra .= $line . "\n";
-		}
-
-		if ( '' === $extra ) {
+		if ( str_contains( $output, $line ) ) {
 			return $output;
 		}
 
 		/*
-		 * A Disallow only means something under a User-agent group. WordPress
-		 * writes `User-agent: *` first; when it is missing, say so ourselves.
+		 * A Sitemap line stands on its own, but a file with no group at all is
+		 * read as allowing everything; keep WordPress's opening group intact.
 		 */
-		$group = str_contains( strtolower( $output ), 'user-agent:' ) ? '' : "User-agent: *\n";
+		$group = '' === trim( $output ) ? "User-agent: *\nDisallow:\n" : '';
 
-		return rtrim( $output ) . "\n\n" . $group . $extra;
+		return rtrim( $output ) . "\n\n" . $group . $line . "\n";
 	}
 
 	public static function robots_txt( mixed $output ): mixed {
@@ -147,7 +142,7 @@ final class Crawl {
 			return $output;
 		}
 
-		return self::robots_txt_extra( $output, Router::base(), home_url( '/' . self::PATH ) );
+		return self::robots_txt_extra( $output, home_url( '/' . self::PATH ) );
 	}
 
 	/* ---- The sitemap ----------------------------------------------------- */

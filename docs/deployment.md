@@ -419,10 +419,13 @@ On the Wordify console `wp dgl` needs safe mode off.
 ## After 0.57.0
 
 - The member area (`/dashboard/`, including sign-in, join, invitation and
-  unsubscribe) now says `noindex, nofollow` in the page, in an
-  `X-Robots-Tag` header, and as a `Disallow` in the virtual robots.txt. If a
-  physical robots.txt exists on the host, WordPress does not build one: add
-  `Disallow: /dashboard/` and the sitemap line by hand.
+  unsubscribe) now says `noindex, nofollow` in the page and in an
+  `X-Robots-Tag` header. Since 0.61.2 it is **not** disallowed in
+  robots.txt: a blocked page's noindex is never read, and Google indexed
+  `/dashboard/join/` from links ("Indexed, though blocked by robots.txt").
+  Do not add `Disallow: /dashboard/` by hand or in Rank Math's robots.txt
+  editor. If a physical robots.txt exists on the host, add only the sitemap
+  line.
 - A sitemap for the routes no SEO plugin lists (directory, each listed
   organisation, calendar, listing pages and spaces) is at `/dgl-sitemap.xml`.
   The version bump flushes rewrites; if it answers 404, Settings >

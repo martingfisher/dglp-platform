@@ -2232,3 +2232,15 @@ Wordify's `replace_in_post`; every page edit left a revision.
   `exclusions_applied_at: null`, so they are not in force; applying them is a
   hosting change waiting for Martin's go-ahead. The Worker also adds a unique
   query string to its read of the list.
+- **0.61.2: the member area is no longer blocked in robots.txt.** Search
+  Console (16 November) reported "Indexed, though blocked by robots.txt";
+  its performance data showed `/dashboard/join/` in Google results. Cause:
+  `Disallow: /dashboard/` stopped Google fetching the member pages, so it
+  never read their `noindex` (in the page and the `X-Robots-Tag` header) and
+  indexed the address from the Sign in and Join links on every page. The
+  plugin no longer adds the Disallow (`Crawl::robots_txt_extra()` now only
+  adds the sitemap line), and the line was removed from Rank Math's
+  robots.txt editor (`rank-math-options-general` `robots_txt_content`), which
+  is where the live file came from. The noindex header and tag are
+  unchanged. Unit suite 2921.
+
