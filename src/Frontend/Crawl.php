@@ -50,6 +50,8 @@ final class Crawl {
 		// core's robots tag away, so the wp_robots filter above never reaches the page.
 		add_filter( 'rank_math/frontend/robots', [ self::class, 'rank_math_robots' ], 99 );
 		add_filter( 'rank_math/frontend/canonical', [ self::class, 'rank_math_canonical' ], 99 );
+		add_filter( 'rank_math/frontend/description', [ self::class, 'rank_math_description' ], 99 );
+		add_action( 'wp_head', [ self::class, 'description_tag' ], 2 );
 		add_filter( 'rank_math/json_ld', [ self::class, 'rank_math_json_ld' ], 999 );
 		add_action( 'wp_head', [ self::class, 'quiet_rank_math' ], 0 );
 		add_filter( 'robots_txt', [ self::class, 'robots_txt' ], 20 );
@@ -60,12 +62,40 @@ final class Crawl {
 
 	/* ---- The member area stays out ------------------------------------- */
 
+	/** The one member-area address search engines may list: the Join page. */
+	public const PUBLIC_ROUTE = 'join';
+
+	/** What a search result says about the Join page. */
+	public const JOIN_DESCRIPTION = 'Join the Doing Good Leeds platform: a free account for Leeds voluntary and community organisations to share news, events, training and opportunities.';
+
+	/**
+	 * Whether a member-area address may be indexed. Only the bare Join page,
+	 * with no token and no query: a link with an invitation token or form
+	 * values is one person's, not a page. Pure.
+	 *
+	 * @param string[] $segments The path inside the member area.
+	 */
+	public static function is_public_route( array $segments, bool $has_query ): bool {
+		return [ self::PUBLIC_ROUTE ] === array_values( $segments ) && ! $has_query;
+	}
+
+	/** Whether this request is the indexable Join page. */
+	public static function is_public_page(): bool {
+		return ! is_admin() && Router::is_dashboard() && self::is_public_route( Router::segments(), [] !== $_GET ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- only its presence is read.
+	}
+
+	/** Whether this request is in the member area and stays out of search. */
+	private static function hidden(): bool {
+		return ! is_admin() && Router::is_dashboard() && ! self::is_public_page();
+	}
+
+
 	/**
 	 * @param array<string, mixed> $robots
 	 * @return array<string, mixed>
 	 */
 	public static function robots( array $robots ): array {
-		if ( ! is_admin() && Router::is_dashboard() ) {
+		if ( self::hidden() ) {
 			$robots['noindex']  = true;
 			$robots['nofollow'] = true;
 			unset( $robots['index'], $robots['follow'], $robots['max-image-preview'] );
@@ -80,15 +110,36 @@ final class Crawl {
 	 * @param mixed $robots Rank Math's directives, keyed by name.
 	 */
 	public static function rank_math_robots( mixed $robots ): mixed {
-		if ( is_admin() || ! Router::is_dashboard() ) {
+		if ( self::is_public_page() ) {
+			return [ 'index' => 'index', 'follow' => 'follow' ];
+		}
+
+		if ( ! self::hidden() ) {
 			return $robots;
 		}
 
 		return [ 'index' => 'noindex', 'follow' => 'nofollow' ];
 	}
 
-	/** The member area has no canonical address: Rank Math guessed the news list. */
+	/** The Join page's description; Rank Math has nothing of its own for a virtual page. */
+	public static function rank_math_description( mixed $description ): mixed {
+		return self::is_public_page() ? self::JOIN_DESCRIPTION : $description;
+	}
+
+	/** Without Rank Math, the Join page still says what it is. */
+	public static function description_tag(): void {
+		if ( self::is_public_page() && ! did_action( 'rank_math/head' ) ) {
+			printf( '<meta name="description" content="%s">' . "\n", esc_attr( self::JOIN_DESCRIPTION ) );
+			printf( '<link rel="canonical" href="%s">' . "\n", esc_url( Router::url( self::PUBLIC_ROUTE ) ) );
+		}
+	}
+
+	/** The member area has no canonical address (Rank Math guessed the news list); the Join page has its own. */
 	public static function rank_math_canonical( mixed $url ): mixed {
+		if ( self::is_public_page() ) {
+			return Router::url( self::PUBLIC_ROUTE );
+		}
+
 		return ! is_admin() && Router::is_dashboard() ? '' : $url;
 	}
 
@@ -109,7 +160,7 @@ final class Crawl {
 
 	/** The same instruction as a header, for anything that is not HTML. */
 	public static function header(): void {
-		if ( ! is_admin() && Router::is_dashboard() && ! headers_sent() ) {
+		if ( self::hidden() && ! headers_sent() ) {
 			header( 'X-Robots-Tag: noindex, nofollow' );
 		}
 	}
@@ -192,6 +243,7 @@ final class Crawl {
 	 */
 	public static function entries(): array {
 		$urls = [
+			[ Router::url( self::PUBLIC_ROUTE ), '' ],
 			[ Frontend::archive_url( PostTypes::VENUE ), '' ],
 			[ home_url( '/' . Directory::BASE . '/' ), '' ],
 			[ Calendar::url(), '' ],

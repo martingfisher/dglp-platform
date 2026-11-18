@@ -19,6 +19,17 @@ Harness::assert_true( str_contains( $out, "Disallow: /wp-admin/\n" ), 'what was 
 Harness::assert_same( $out, Crawl::robots_txt_extra( $out, 'https://x.test/dgl-sitemap.xml' ), 'running twice adds nothing' );
 Harness::assert_same( "\n\nUser-agent: *\nDisallow:\nSitemap: https://x.test/s.xml\n", Crawl::robots_txt_extra( '', 'https://x.test/s.xml' ), 'an empty file gets an allow-all group before the sitemap' );
 
+Harness::group( 'Crawl: the Join page is the one public member-area page' );
+
+Harness::assert_true( Crawl::is_public_route( [ 'join' ], false ), 'the bare Join page may be indexed' );
+Harness::assert_false( Crawl::is_public_route( [ 'join' ], true ), 'not with a query string' );
+Harness::assert_false( Crawl::is_public_route( [ 'join', 'abc123token' ], false ), 'not a personal join link with a token' );
+Harness::assert_false( Crawl::is_public_route( [], false ), 'not the member area itself' );
+Harness::assert_false( Crawl::is_public_route( [ 'sign-in' ], false ), 'not sign in' );
+Harness::assert_false( Crawl::is_public_route( [ 'invite', 'x' ], false ), 'not an invitation' );
+Harness::assert_false( Crawl::is_public_route( [ 'unsubscribe' ], false ), 'not unsubscribe' );
+Harness::assert_true( strlen( Crawl::JOIN_DESCRIPTION ) <= 160, 'the description fits a search result' );
+
 Harness::group( 'Crawl: sitemap' );
 
 $entries = Crawl::normalise( [ [ 'https://x.test/a/', '' ], [ '', '' ], [ 'https://x.test/a/', '2026-01-01' ], [ 'https://x.test/b/?x=1&y=2', '2026-01-02T10:00:00+00:00' ] ] );
