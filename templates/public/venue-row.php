@@ -78,6 +78,9 @@ $line    = array_values( array_filter( [ $ward, $org['name'], isset( $access['st
 				<?php endforeach; ?>
 			</ul>
 		<?php endif; ?>
+		<?php if ( [] === $spaces ) : ?>
+			<p class="dgl-venue-row__more"><a href="<?php echo esc_url( $url ); ?>"><?php esc_html_e( 'Rooms not listed yet: ask the venue what they offer', 'dgl-platform' ); ?></a></p>
+		<?php endif; ?>
 		<?php if ( $facts['count'] > count( $shown ) ) : ?>
 			<p class="dgl-venue-row__more">
 				<a href="<?php echo esc_url( $url ); ?>">

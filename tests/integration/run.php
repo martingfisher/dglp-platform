@@ -4813,11 +4813,13 @@ $sq_ids = static fn( array $get ): array => \DGL\Spaces\SpacesQuery::run( \DGL\S
 $sq_ours = static fn( array $ids ): array => array_values( array_intersect( $ids, [ $sq_armley, $sq_bramley, $sq_other, $sq_empty ] ) );
 
 $sq_all = $sq_ids( [] );
-$ok( in_array( $sq_armley, $sq_all, true ) && in_array( $sq_bramley, $sq_all, true ) && in_array( $sq_other, $sq_all, true ) && ! in_array( $sq_empty, $sq_all, true ), 'every live venue with a live space is listed; one with no spaces is not' );
+$ok( in_array( $sq_armley, $sq_all, true ) && in_array( $sq_bramley, $sq_all, true ) && in_array( $sq_other, $sq_all, true ) && in_array( $sq_empty, $sq_all, true ), 'every live venue is listed, one with no spaces too' );
+$ok( array_search( $sq_empty, $sq_all, true ) > array_search( $sq_other, $sq_all, true ), 'a venue with no spaces comes after the ones with spaces' );
+$ok( ! in_array( $sq_empty, $sq_ids( [ 'people' => '1' ] ), true ) && ! in_array( $sq_empty, $sq_ids( [ 'price' => 'on_request' ] ), true ) && in_array( $sq_empty, $sq_ids( [ 'ward' => 'armley' ] ), true ), 'a room filter needs a room; a venue filter does not' );
 $sq_pos = static fn( int $id ) => array_search( $id, $sq_all, true );
 $ok( $sq_pos( $sq_armley ) < $sq_pos( $sq_other ) && $sq_pos( $sq_bramley ) < $sq_pos( $sq_other ), 'priced venues come before one whose only space is price on request' );
 $ok( $sq_pos( $sq_armley ) < $sq_pos( $sq_bramley ), 'and within that, A to Z' );
-$ok( [ $sq_armley, $sq_other ] === $sq_ours( $sq_ids( [ 'ward' => 'armley' ] ) ), 'the ward filter keeps the two in Armley' );
+$ok( [ $sq_armley, $sq_other, $sq_empty ] === $sq_ours( $sq_ids( [ 'ward' => 'armley' ] ) ), 'the ward filter keeps the three in Armley' );
 $ok( [ $sq_armley ] === $sq_ours( $sq_ids( [ 'people' => '100' ] ) ), 'people 100: only the venue with a room that size, in any layout' );
 $ok( [ $sq_armley, $sq_bramley, $sq_other ] === $sq_ours( $sq_ids( [ 'people' => '30' ] ) ), 'people 30: all three' );
 $ok( [ $sq_armley, $sq_other ] === $sq_ours( $sq_ids( [ 'type' => 'meeting_room' ] ) ), 'type: venues with a meeting room' );
