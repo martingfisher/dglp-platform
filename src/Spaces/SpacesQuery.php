@@ -82,6 +82,16 @@ final class SpacesQuery {
 	}
 
 	/**
+	 * Whether the search asks something of the rooms themselves, so only a
+	 * venue with a matching room can answer it.
+	 *
+	 * @param array<string, mixed> $args
+	 */
+	public static function filters_spaces( array $args ): bool {
+		return '' !== (string) ( $args['type'] ?? '' ) || (int) ( $args['people'] ?? 0 ) > 0 || '' !== (string) ( $args['price'] ?? '' );
+	}
+
+	/**
 	 * The band a rate falls in. Hourly bands only: a day or session rate is
 	 * "priced" for ranking and matches "Any price", but is not made into
 	 * an hourly figure the venue never quoted.
@@ -308,8 +318,14 @@ final class SpacesQuery {
 			}
 		}
 
-		$where[] = "EXISTS (SELECT 1 FROM {$items} si " . implode( ' ', $space_joins ) . ' WHERE ' . implode( ' AND ', $space_where ) . ')';
-		$params  = array_merge( $params, $space_params );
+		// Only a search that looks inside the rooms (type, people, price)
+		// needs a room to match. With none of those set, a live venue that
+		// has not listed its rooms yet is still a place to hire: it is
+		// listed after the venues that have, and its page says to ask.
+		if ( self::filters_spaces( $args ) ) {
+			$where[] = "EXISTS (SELECT 1 FROM {$items} si " . implode( ' ', $space_joins ) . ' WHERE ' . implode( ' AND ', $space_where ) . ')';
+			$params  = array_merge( $params, $space_params );
+		}
 
 		if ( '' !== $q ) {
 			$like     = '%' . $wpdb->esc_like( $q ) . '%';
@@ -338,7 +354,9 @@ final class SpacesQuery {
 
 		$priced = "(SELECT COUNT(*) FROM {$items} sp INNER JOIN {$wpdb->postmeta} r ON r.post_id = sp.post_id AND r.meta_key = 'dgl_rate' AND r.meta_value + 0 > 0 WHERE sp.parent_id = p.ID AND sp.post_type = '" . PostTypes::SPACE . "' AND sp.status = '" . Statuses::LIVE . "') > 0";
 
-		$sql = "SELECT p.ID FROM {$wpdb->posts} p {$join_sql} WHERE {$where_sql} GROUP BY p.ID ORDER BY {$priced} DESC, p.post_title ASC LIMIT %d OFFSET %d";
+		$rooms = "(SELECT COUNT(*) FROM {$items} sr WHERE sr.parent_id = p.ID AND sr.post_type = '" . PostTypes::SPACE . "' AND sr.status = '" . Statuses::LIVE . "') > 0";
+
+		$sql = "SELECT p.ID FROM {$wpdb->posts} p {$join_sql} WHERE {$where_sql} GROUP BY p.ID ORDER BY {$priced} DESC, {$rooms} DESC, p.post_title ASC LIMIT %d OFFSET %d";
 
 		return [ $sql, $params ];
 	}
