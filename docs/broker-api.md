@@ -58,36 +58,36 @@ Response `200`:
 {
   "data": [
     {
-      "id": 8803,
-      "name": "Voluntary Action Leeds",
-      "slug": "voluntary-action-leeds",
-      "url": "https://doinggoodleeds.org.uk/directory/voluntary-action-leeds/",
-      "description": "Voluntary Action Leeds supports the voluntary and community sector in Leeds ...",
+      "id": 12345,
+      "name": "Example Community Group",
+      "slug": "example-community-group",
+      "url": "https://doinggoodleeds.org.uk/directory/example-community-group/",
+      "description": "We run lunch clubs and befriending for older people in west Leeds ...",
       "logo": {
-        "url": "https://doinggoodleeds.org.uk/wp-content/uploads/2026/11/val-logo.png",
+        "url": "https://doinggoodleeds.org.uk/wp-content/uploads/2026/11/example-logo.png",
         "width": 600,
         "height": 300,
-        "alt": "Voluntary Action Leeds logo"
+        "alt": "Example Community Group logo"
       },
-      "charity_or_company_number": "225863",
+      "charity_or_company_number": "1234567",
       "legal_status": { "key": "registered_charity", "label": "Registered Charity" },
-      "website": "https://val.org.uk/",
-      "email": "info@val.org.uk",
-      "phone": "0113 297 7920",
+      "website": "https://example.org.uk/",
+      "email": "hello@example.org.uk",
+      "phone": "0113 000 0000",
       "address": {
-        "line_1": "Stringer House",
-        "line_2": "34 Lupton Street",
+        "line_1": "1 Example Street",
+        "line_2": null,
         "city": "Leeds",
-        "postcode": "LS10 2QW"
+        "postcode": "LS12 1AA"
       },
-      "location": { "lat": 53.7849, "lng": -1.5317 },
-      "ward": { "key": "hunslet_and_riverside", "label": "Hunslet and Riverside" },
+      "location": { "lat": 53.7977, "lng": -1.5958 },
+      "ward": { "key": "armley", "label": "Armley" },
       "serves": [
         { "key": "age_adults", "label": "Age Groups: Adults" },
-        { "key": "people_of_faith", "label": "People of faith" }
+        { "key": "age_older_people", "label": "Age Groups: Older People" }
       ],
-      "accessibility": [ { "key": "step_free_access", "label": "Step-free access" } ],
-      "accreditations": [ { "key": "living_wage_employer", "label": "Living Wage employer" } ],
+      "accessibility": [ { "key": "step_free_access", "label": "Step Free Access" } ],
+      "accreditations": [ { "key": "living_wage_employer", "label": "Living Wage Employer" } ],
       "leeds_schemes": [],
       "paid_staff": { "key": "11_50", "label": "11 - 50" },
       "volunteers": { "key": "51_100", "label": "51 - 100" },
@@ -98,7 +98,7 @@ Response `200`:
 }
 ```
 
-The values above are illustrative, not VAL's real record; labels are the ones the site uses today.
+The organisation above is made up; keys and labels are the ones the site uses today.
 
 Rules the client can rely on:
 
@@ -122,8 +122,8 @@ Every option list with keys and labels, so the tool can build filters without ha
   "ward":          [ { "key": "leeds_wide", "label": "Leeds-wide" }, { "key": "armley", "label": "Armley" } ],
   "serves":        [ { "key": "age_adults", "label": "Age Groups: Adults" } ],
   "legal_status":  [ { "key": "registered_charity", "label": "Registered Charity" } ],
-  "accessibility": [ { "key": "step_free_access", "label": "Step-free access" } ],
-  "accreditations":[ { "key": "living_wage_employer", "label": "Living Wage employer" } ],
+  "accessibility": [ { "key": "step_free_access", "label": "Step Free Access" } ],
+  "accreditations":[ { "key": "living_wage_employer", "label": "Living Wage Employer" } ],
   "leeds_schemes": [ { "key": "neighbourhood_network", "label": "Neighbourhood Network" } ],
   "size":          [ { "key": "1_10", "label": "1 - 10" } ]
 }
@@ -168,7 +168,7 @@ keeps only a hash of it.
 {
   "business": { "name": "Example Ltd", "contact_name": "Sam Smith", "email": "sam@example.com", "phone": "", "website": "" },
   "offer": { "type": "volunteering", "summary": "Ten staff for a day of practical help", "wards": ["armley"], "serves": ["age_older_people"] },
-  "organisation_ids": [8803],
+  "organisation_ids": [12345],
   "consent": { "privacy_notice_version": "2026-11", "agreed_at": "2026-11-25T15:00:00Z" }
 }
 ```
